@@ -1,0 +1,43 @@
+{
+  "_note": "synthesized from Square API docs (Locations, Merchants, Payouts, Invoices, OAuth ObtainToken; Square-Version 2026-09-16); re-record from sandbox when keys are available. All ids, names and emails are synthetic.",
+  "merchant": { "merchant": { "id": "MLSBXMERCHANT1", "business_name": "Example Coffee Co", "country": "US", "language_code": "en-US", "currency": "USD", "status": "ACTIVE", "main_location_id": "LSBXMAIN01", "created_at": "2024-01-01T00:00:00.000Z" } },
+  "locations": { "locations": [
+    { "id": "LSBXMAIN01", "name": "Main Street", "merchant_id": "MLSBXMERCHANT1", "currency": "USD", "country": "US", "status": "ACTIVE", "created_at": "2024-01-01T00:00:00.000Z" },
+    { "id": "LSBXTORONTO", "name": "Toronto Pop-up", "merchant_id": "MLSBXMERCHANT1", "currency": "CAD", "country": "CA", "status": "INACTIVE", "created_at": "2025-05-01T00:00:00.000Z" }
+  ] },
+  "payouts": [
+    { "id": "po_sbx_A", "status": "PAID", "location_id": "LSBXMAIN01", "created_at": "2026-09-20T07:00:00Z", "updated_at": "2026-09-21T07:00:00Z", "amount_money": { "amount": 3329, "currency": "USD" }, "destination": { "type": "BANK_ACCOUNT", "id": "bact_sbx_1" }, "version": 2, "type": "BATCH", "arrival_date": "2026-09-21", "end_to_end_id": "L2100000005" },
+    { "id": "po_sbx_B", "status": "SENT", "location_id": "LSBXMAIN01", "created_at": "2026-10-05T07:00:00Z", "updated_at": "2026-10-05T07:00:00Z", "amount_money": { "amount": 10000, "currency": "USD" }, "destination": { "type": "BANK_ACCOUNT", "id": "bact_sbx_1" }, "version": 1, "type": "BATCH", "arrival_date": "2026-10-06" },
+    { "id": "po_sbx_C", "status": "FAILED", "location_id": "LSBXMAIN01", "created_at": "2026-10-07T07:00:00Z", "updated_at": "2026-10-08T07:00:00Z", "amount_money": { "amount": 2500, "currency": "USD" }, "destination": { "type": "BANK_ACCOUNT", "id": "bact_sbx_1" }, "version": 2, "type": "BATCH" },
+    { "id": "po_sbx_OLD", "status": "PAID", "location_id": "LSBXMAIN01", "created_at": "2022-01-05T07:00:00Z", "amount_money": { "amount": 100, "currency": "USD" }, "type": "BATCH" }
+  ],
+  "entries": {
+    "po_sbx_A": [
+      { "id": "poe_A1", "payout_id": "po_sbx_A", "effective_at": "2026-09-19T15:00:00Z", "type": "CHARGE", "gross_amount_money": { "amount": 3000, "currency": "USD" }, "fee_amount_money": { "amount": 117, "currency": "USD" }, "net_amount_money": { "amount": 2883, "currency": "USD" }, "type_charge_details": { "payment_id": "pay_sbx_1" } },
+      { "id": "poe_A2", "payout_id": "po_sbx_A", "effective_at": "2026-09-19T16:00:00Z", "type": "CHARGE", "gross_amount_money": { "amount": 1000, "currency": "USD" }, "fee_amount_money": { "amount": 59, "currency": "USD" }, "net_amount_money": { "amount": 941, "currency": "USD" }, "type_charge_details": { "payment_id": "pay_sbx_2" } },
+      { "id": "poe_A3", "payout_id": "po_sbx_A", "effective_at": "2026-09-19T17:00:00Z", "type": "REFUND", "gross_amount_money": { "amount": -500, "currency": "USD" }, "fee_amount_money": { "amount": -20, "currency": "USD" }, "net_amount_money": { "amount": -480, "currency": "USD" }, "type_refund_details": { "payment_id": "pay_sbx_1", "refund_id": "pay_sbx_1_ref1" } },
+      { "id": "poe_A4", "payout_id": "po_sbx_A", "effective_at": "2026-09-20T06:00:00Z", "type": "DEPOSIT_FEE", "gross_amount_money": { "amount": 0, "currency": "USD" }, "fee_amount_money": { "amount": 15, "currency": "USD" }, "net_amount_money": { "amount": -15, "currency": "USD" }, "type_deposit_fee_details": { "payout_id": "po_sbx_A" } }
+    ],
+    "po_sbx_B": [
+      { "id": "poe_B1", "payout_id": "po_sbx_B", "effective_at": "2026-10-04T15:00:00Z", "type": "CHARGE", "gross_amount_money": { "amount": 10500, "currency": "USD" }, "fee_amount_money": { "amount": 400, "currency": "USD" }, "net_amount_money": { "amount": 10100, "currency": "USD" }, "type_charge_details": { "payment_id": "pay_sbx_3" } },
+      { "id": "poe_B2", "payout_id": "po_sbx_B", "effective_at": "2026-10-04T18:00:00Z", "type": "DISPUTE", "gross_amount_money": { "amount": -100, "currency": "USD" }, "fee_amount_money": { "amount": 0, "currency": "USD" }, "net_amount_money": { "amount": -100, "currency": "USD" }, "type_dispute_details": { "payment_id": "pay_sbx_2", "dispute_id": "dsp_sbx_1" } }
+    ],
+    "po_sbx_C": [
+      { "id": "poe_C1", "payout_id": "po_sbx_C", "effective_at": "2026-10-05T15:00:00Z", "type": "CHARGE", "gross_amount_money": { "amount": 2600, "currency": "USD" }, "fee_amount_money": { "amount": 100, "currency": "USD" }, "net_amount_money": { "amount": 2500, "currency": "USD" }, "type_charge_details": { "payment_id": "pay_sbx_4" } }
+    ]
+  },
+  "invoices": { "LSBXMAIN01": [
+    { "id": "inv:0-SBX001", "version": 3, "location_id": "LSBXMAIN01", "order_id": "ord_sbx_1", "invoice_number": "000001", "title": "Catering", "status": "PAID", "created_at": "2026-09-01T10:00:00Z", "updated_at": "2026-09-05T10:00:00Z", "sale_or_service_date": "2026-08-31",
+      "primary_recipient": { "customer_id": "cust_sbx_1", "company_name": "Example Events LLC", "email_address": "events@example.com" },
+      "payment_requests": [ { "uid": "pr_1", "request_type": "BALANCE", "due_date": "2026-09-15", "computed_amount_money": { "amount": 25000, "currency": "USD" }, "total_completed_amount_money": { "amount": 25000, "currency": "USD" } } ] },
+    { "id": "inv:0-SBX002", "version": 1, "location_id": "LSBXMAIN01", "invoice_number": "000002", "status": "PARTIALLY_PAID", "created_at": "2026-10-01T10:00:00Z",
+      "primary_recipient": { "customer_id": "cust_sbx_2", "given_name": "Sample", "family_name": "Customer", "email_address": "sample@example.com" },
+      "payment_requests": [
+        { "uid": "pr_2", "request_type": "DEPOSIT", "due_date": "2026-10-05", "computed_amount_money": { "amount": 5000, "currency": "USD" }, "total_completed_amount_money": { "amount": 5000, "currency": "USD" } },
+        { "uid": "pr_3", "request_type": "BALANCE", "due_date": "2026-11-01", "computed_amount_money": { "amount": 15000, "currency": "USD" }, "total_completed_amount_money": { "amount": 0, "currency": "USD" } }
+      ] }
+  ] },
+  "token": { "access_token": "EAAAsbx-redacted-access-1", "token_type": "bearer", "expires_at": "2026-11-08T12:00:00Z", "merchant_id": "MLSBXMERCHANT1", "refresh_token": "EQAAsbx-redacted-refresh-1", "short_lived": false },
+  "refreshed_token": { "access_token": "EAAAsbx-redacted-access-2", "token_type": "bearer", "expires_at": "2026-11-12T12:00:00Z", "merchant_id": "MLSBXMERCHANT1", "refresh_token": "EQAAsbx-redacted-refresh-1", "short_lived": false },
+  "webhook_event": { "merchant_id": "MLSBXMERCHANT1", "type": "payout.paid", "event_id": "evt-sbx-0001", "created_at": "2026-10-09T11:00:00Z", "data": { "type": "payout", "id": "po_sbx_A", "object": { "payout": { "id": "po_sbx_A", "status": "PAID" } } } }
+}

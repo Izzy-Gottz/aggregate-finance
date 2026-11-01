@@ -1,0 +1,17 @@
+{
+  "name": "@agfn/invoices",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db.ts"
+  },
+  "dependencies": {
+    "@agfn/contracts": "0.0.0",
+    "@agfn/db": "0.0.0",
+    "@agfn/connector-payroll-detect": "0.0.0",
+    "kysely": "^0.29.6"
+  }
+}

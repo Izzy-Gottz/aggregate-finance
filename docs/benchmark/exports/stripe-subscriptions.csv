@@ -1,0 +1,71 @@
+id,Customer,Status,Plan Amount,Plan Interval,Plan Interval Count,Created (UTC),Canceled At (UTC),Ended At (UTC),Current Period End (UTC),Cancel At Period End
+sub_11jymssf,Ava A.,canceled,54.00,month,1,2024-10-01 12:00:00,2025-09-22 12:00:00,2025-09-22 12:00:00,,false
+sub_12dxfvpf,Ben H.,active,54.00,month,1,2024-10-01 12:00:00,,,,false
+sub_123xu6qf,Cleo R.,canceled,54.00,month,1,2024-10-01 12:00:00,2025-06-26 12:00:00,2025-06-26 12:00:00,,false
+sub_10pztpvf,Dev C.,canceled,32.00,month,1,2024-10-01 12:00:00,2025-03-09 12:00:00,2025-03-09 12:00:00,,false
+sub_10g080wf,Eli K.,active,54.00,month,1,2024-10-01 12:00:00,,,,false
+sub_119z13tf,Fay T.,canceled,54.00,month,1,2024-10-01 12:00:00,2026-03-23 12:00:00,2026-03-23 12:00:00,,false
+sub_10zzfeuf,Gus E.,canceled,54.00,month,1,2024-10-01 12:00:00,2025-02-16 12:00:00,2025-02-16 12:00:00,,false
+sub_141v21jf,Hana M.,active,32.00,month,1,2024-10-01 12:00:00,,,,false
+sub_13rvgckf,Ivo W.,canceled,54.00,month,1,2024-10-01 12:00:00,2025-12-12 12:00:00,2025-12-12 12:00:00,,false
+sub_105xgtyf,Jo G.,canceled,32.00,month,1,2024-10-01 12:00:00,2025-10-19 12:00:00,2025-10-19 12:00:00,,false
+sub_10fx2ixf,Kai P.,active,54.00,month,1,2024-10-01 12:00:00,,,,false
+sub_0zly9g0f,Lena B.,canceled,18.00,month,1,2024-10-01 12:00:00,2024-12-15 12:00:00,2024-12-15 12:00:00,,false
+sub_0zvxv4zf,Milo J.,active,54.00,month,1,2024-10-01 12:00:00,,,,false
+sub_119vvluf,Nia S.,canceled,54.00,month,1,2024-10-01 12:00:00,2025-05-04 12:00:00,2025-05-04 12:00:00,,false
+sub_11jvhatf,Omar D.,canceled,54.00,month,1,2024-11-25 12:00:00,2025-01-19 12:00:00,2025-01-19 12:00:00,,false
+sub_10pwo7wf,Pia L.,active,54.00,month,1,2024-11-04 12:00:00,,,,false
+sub_10zw9wvf,Quin V.,active,54.00,month,1,2024-12-27 12:00:00,,,,false
+sub_12duadqf,Rosa F.,canceled,54.00,month,1,2024-12-04 12:00:00,2026-07-18 12:00:00,2026-07-18 12:00:00,,false
+sub_12ntw2pf,Sam N.,canceled,54.00,month,1,2024-12-22 12:00:00,2026-04-05 12:00:00,2026-04-05 12:00:00,,false
+sub_07uyuktf,Tess A.,canceled,32.00,month,1,2025-01-03 12:00:00,2025-04-21 12:00:00,2025-04-21 12:00:00,,false
+sub_07kz8vuf,Uma H.,active,54.00,month,1,2025-01-27 12:00:00,,,,false
+sub_07azn6vf,Vic R.,active,32.00,month,1,2025-02-06 12:00:00,,,,false
+sub_07101hwf,Wren C.,active,54.00,month,1,2025-02-06 12:00:00,,,,false
+sub_06r0fsxf,Xan K.,canceled,32.00,month,1,2025-03-13 12:00:00,2026-01-21 12:00:00,2026-01-21 12:00:00,,false
+sub_06h0u3yf,Yara T.,active,32.00,month,1,2025-03-22 12:00:00,,,,false
+sub_06718ezf,Zed E.,active,54.00,month,1,2025-04-21 12:00:00,,,,false
+sub_05x1mq0f,Ava M.,active,32.00,month,1,2025-04-14 12:00:00,,,,false
+sub_05n2111f,Ben W.,canceled,32.00,month,1,2025-05-19 12:00:00,2025-07-04 12:00:00,2025-07-04 12:00:00,,false
+sub_05d2fc2f,Cleo G.,active,54.00,month,1,2025-05-27 12:00:00,,,,false
+sub_066y2x0f,Dev P.,canceled,32.00,month,1,2025-06-19 12:00:00,2025-08-13 12:00:00,2025-08-13 12:00:00,,false
+sub_06gxolzf,Eli B.,active,18.00,month,1,2025-06-04 12:00:00,,,,false
+sub_06qxaayf,Fay J.,canceled,54.00,month,1,2025-07-26 12:00:00,2026-05-22 12:00:00,2026-05-22 12:00:00,,false
+sub_070wvzxf,Gus S.,active,32.00,month,1,2025-07-14 12:00:00,,,,false
+sub_052zo54f,Hana D.,active,54.00,month,1,2025-07-23 12:00:00,,,,false
+sub_05cz9u3f,Ivo L.,canceled,32.00,month,1,2025-08-09 12:00:00,2025-11-25 12:00:00,2025-11-25 12:00:00,,false
+sub_05myvj2f,Jo V.,active,54.00,month,1,2025-08-14 12:00:00,,,,false
+sub_05wyh81f,Kai F.,active,54.00,month,1,2025-08-06 12:00:00,,,,false
+sub_03z19d8f,Lena N.,active,54.00,month,1,2025-09-01 12:00:00,,,,false
+sub_0490v27f,Milo A.,active,54.00,month,1,2025-09-23 12:00:00,,,,false
+sub_04ixb97f,Nia H.,active,32.00,month,1,2025-10-04 12:00:00,,,,false
+sub_048xpk8f,Omar R.,active,18.00,month,1,2025-10-03 12:00:00,,,,false
+sub_052win5f,Pia C.,active,32.00,month,1,2025-10-05 12:00:00,,,,false
+sub_04swwy6f,Quin K.,active,18.00,month,1,2025-11-28 12:00:00,,,,false
+sub_05mvq13f,Rosa T.,canceled,32.00,month,1,2025-11-18 12:00:00,2026-02-18 12:00:00,2026-02-18 12:00:00,,false
+sub_05cw4c4f,Sam E.,active,18.00,month,1,2025-12-14 12:00:00,,,,false
+sub_066uxf1f,Tess M.,active,54.00,month,1,2025-12-17 12:00:00,,,,false
+sub_05wvbq2f,Uma W.,active,32.00,month,1,2025-12-04 12:00:00,,,,false
+sub_02b0hpff,Vic G.,active,32.00,month,1,2026-01-26 12:00:00,,,,false
+sub_0210w0gf,Wren P.,active,54.00,month,1,2026-01-16 12:00:00,,,,false
+sub_12dfgs2f,Xan B.,active,18.00,month,1,2026-01-27 12:00:00,,,,false
+sub_12nf2h1f,Yara J.,active,32.00,month,1,2026-02-15 12:00:00,,,,false
+sub_11tg9e4f,Zed S.,active,54.00,month,1,2026-02-06 12:00:00,,,,false
+sub_123fv33f,Ava D.,active,54.00,month,1,2026-02-07 12:00:00,,,,false
+sub_119h206f,Ben L.,active,18.00,month,1,2026-03-22 12:00:00,,,,false
+sub_11jgnp5f,Cleo V.,active,54.00,month,1,2026-03-28 12:00:00,,,,false
+sub_10phum8f,Dev F.,canceled,54.00,month,1,2026-04-27 12:00:00,2026-06-19 12:00:00,2026-06-19 12:00:00,,false
+sub_10zhgb7f,Eli N.,active,18.00,month,1,2026-04-25 12:00:00,,,,false
+sub_14lcabuf,Fay A.,canceled,54.00,month,1,2026-04-09 12:00:00,2026-09-25 12:00:00,2026-09-25 12:00:00,,false
+sub_14vbw0tf,Gus H.,canceled,54.00,month,1,2026-05-11 12:00:00,2026-08-05 12:00:00,2026-08-05 12:00:00,,false
+sub_10pep49f,Hana R.,active,32.00,month,1,2026-05-10 12:00:00,,,,false
+sub_10ff3faf,Ivo C.,active,32.00,month,1,2026-05-06 12:00:00,,,,false
+sub_105fhqbf,Jo K.,active,54.00,month,1,2026-06-01 12:00:00,,,,false
+sub_0zvfw1cf,Kai T.,active,18.00,month,1,2026-06-10 12:00:00,,,,false
+sub_11td3w5f,Lena E.,active,32.00,month,1,2026-07-21 12:00:00,,,,false
+sub_11jdi76f,Milo M.,active,18.00,month,1,2026-07-25 12:00:00,,,,false
+sub_119dwi7f,Nia W.,active,18.00,month,1,2026-08-03 12:00:00,,,,false
+sub_10zeat8f,Omar G.,active,32.00,month,1,2026-08-05 12:00:00,,,,false
+sub_12xbio1f,Pia P.,active,18.00,month,1,2026-08-13 12:00:00,,,,false
+sub_12nbwz2f,Quin B.,active,32.00,month,1,2026-09-06 12:00:00,,,,false
+sub_0z1dxggf,Rosa J.,active,54.00,month,1,2026-09-11 12:00:00,,,,false

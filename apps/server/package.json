@@ -1,0 +1,52 @@
+{
+  "name": "@agfn/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "start": "node src/main.ts",
+    "dev": "node --watch src/main.ts"
+  },
+  "dependencies": {
+    "@agfn/connector-files": "*",
+    "@agfn/connector-payroll-detect": "*",
+    "@agfn/connector-registry": "*",
+    "@agfn/core": "*",
+    "@agfn/demo": "*",
+    "@agfn/equity": "*",
+    "@agfn/invoices": "*",
+    "@agfn/mcp": "*",
+    "@agfn/plaintext": "0.0.0",
+    "@agfn/recurring": "0.0.0",
+    "@fontsource/geist-sans": "5.3.0",
+    "@fontsource/newsreader": "5.3.0",
+    "@hono/node-server": "^2.1.4",
+    "@resvg/resvg-wasm": "2.6.2",
+    "hono": "^4.13.13",
+    "kysely": "^0.29.6",
+    "nodemailer": "^10.0.16",
+    "satori": "0.33.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@types/nodemailer": "^8.0.2"
+  },
+  "exports": {
+    "./boot": "./src/boot.ts",
+    "./config": "./src/config.ts",
+    "./modules": "./src/modules.ts",
+    "./app": "./src/app.ts",
+    "./equity": "./src/equity.ts",
+    "./backup": "./src/backup.ts",
+    "./reviewer": "./src/reviewer.ts",
+    "./challenge/qa-player": "./src/challenge/qa-player.ts",
+    "./challenge/reset": "./src/challenge/reset.ts",
+    "./creator-links": "./src/creator-links.ts",
+    "./free-grants": "./src/free-grants.ts",
+    "./glass-ledger": "./src/glass-ledger.ts",
+    "./prelaunch-wipe": "./src/prelaunch-wipe.ts",
+    "./orphans": "./src/orphans.ts",
+    "./plaintext": "./src/plaintext.ts"
+  }
+}

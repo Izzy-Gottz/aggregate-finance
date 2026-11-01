@@ -1,0 +1,314 @@
+{
+ "pages": {
+  "": {
+   "data": [
+    {
+     "id": "ofr_safe1",
+     "type": "portfolio_position",
+     "attributes": {
+      "offering_id": "ofr_safe1",
+      "company": {
+       "id": "co_acme-robotics",
+       "name": "Acme Robotics",
+       "slug": "acme-robotics"
+      },
+      "asset_type": "company",
+      "security": {
+       "type": "safe",
+       "label": "SAFE"
+      },
+      "status": "active",
+      "invested_at": "2025-03-01T12:00:00Z",
+      "currency": "usd",
+      "cost_basis_cents": 150000,
+      "current_value_cents": 210000,
+      "unrealized_gain_cents": 60000,
+      "realized_gain_cents": 0,
+      "return_multiple": null,
+      "shares_held": null,
+      "current_share_price": null,
+      "securities": [
+       {
+        "security": {
+         "type": "safe",
+         "label": "SAFE"
+        },
+        "early_bird": true,
+        "terms": {
+         "share_price": null,
+         "currency": "usd",
+         "note_cap_cents": 800000000,
+         "note_discount": "20",
+         "premoney_valuation_cents": null
+        },
+        "cost_basis_cents": 50000,
+        "current_value_cents": 50000,
+        "unrealized_gain_cents": 0,
+        "realized_gain_cents": 0,
+        "shares_held": null,
+        "current_share_price": null,
+        "invested_at": "2025-03-01T12:00:00Z",
+        "owner": {
+         "kind": "individual",
+         "name": "Test Investor"
+        },
+        "investor_count": 120
+       },
+       {
+        "security": {
+         "type": "safe",
+         "label": "SAFE"
+        },
+        "early_bird": false,
+        "terms": {
+         "share_price": null,
+         "currency": "usd",
+         "note_cap_cents": 1000000000,
+         "note_discount": "0.2",
+         "premoney_valuation_cents": null
+        },
+        "cost_basis_cents": 100000,
+        "current_value_cents": 100000,
+        "unrealized_gain_cents": 0,
+        "realized_gain_cents": 0,
+        "shares_held": null,
+        "current_share_price": null,
+        "invested_at": "2025-04-15T12:00:00Z",
+        "owner": {
+         "kind": "individual",
+         "name": "Test Investor"
+        },
+        "investor_count": 120
+       }
+      ],
+      "holdings": [],
+      "investor_count": 120,
+      "as_of": "2026-10-12T09:00:00.000Z"
+     }
+    },
+    {
+     "id": "ofr_pref1",
+     "type": "portfolio_position",
+     "attributes": {
+      "offering_id": "ofr_pref1",
+      "company": {
+       "id": "co_bluebird-labs",
+       "name": "Bluebird Labs",
+       "slug": "bluebird-labs"
+      },
+      "asset_type": "company",
+      "security": {
+       "type": "preferred_equity",
+       "label": "Series Seed Preferred"
+      },
+      "status": "active",
+      "invested_at": "2024-07-29T15:51:28.071Z",
+      "currency": "usd",
+      "cost_basis_cents": 215000,
+      "current_value_cents": 215000,
+      "unrealized_gain_cents": 0,
+      "realized_gain_cents": 0,
+      "return_multiple": null,
+      "shares_held": null,
+      "current_share_price": null,
+      "securities": [
+       {
+        "security": {
+         "type": "preferred_equity",
+         "label": "Series Seed Preferred"
+        },
+        "early_bird": false,
+        "terms": {
+         "share_price": "10.75",
+         "currency": "usd",
+         "note_cap_cents": null,
+         "note_discount": null,
+         "premoney_valuation_cents": null
+        },
+        "cost_basis_cents": 215000,
+        "current_value_cents": 215000,
+        "unrealized_gain_cents": 0,
+        "realized_gain_cents": 0,
+        "shares_held": "200.0",
+        "current_share_price": null,
+        "invested_at": "2024-07-29T15:51:28.071Z",
+        "owner": {
+         "kind": "individual",
+         "name": "Test Investor"
+        },
+        "investor_count": 120
+       }
+      ],
+      "holdings": [],
+      "investor_count": 120,
+      "as_of": "2026-10-12T09:00:00.000Z"
+     }
+    }
+   ],
+   "meta": {
+    "has_more": true,
+    "page_count": 2,
+    "next_cursor": 2
+   }
+  },
+  "2": {
+   "data": [
+    {
+     "id": "ofr_exit1",
+     "type": "portfolio_position",
+     "attributes": {
+      "offering_id": "ofr_exit1",
+      "company": {
+       "id": "co_cinder-coffee",
+       "name": "Cinder Coffee",
+       "slug": "cinder-coffee"
+      },
+      "asset_type": "company",
+      "security": {
+       "type": "common_equity",
+       "label": "Common Stock"
+      },
+      "status": "exited",
+      "invested_at": "2023-02-10T10:00:00Z",
+      "currency": "usd",
+      "cost_basis_cents": 100000,
+      "current_value_cents": 0,
+      "unrealized_gain_cents": -100000,
+      "realized_gain_cents": 64920,
+      "return_multiple": null,
+      "shares_held": null,
+      "current_share_price": null,
+      "securities": [
+       {
+        "security": {
+         "type": "common_equity",
+         "label": "Common Stock"
+        },
+        "early_bird": false,
+        "terms": {
+         "share_price": null,
+         "currency": "usd",
+         "note_cap_cents": null,
+         "note_discount": null,
+         "premoney_valuation_cents": null
+        },
+        "cost_basis_cents": 100000,
+        "current_value_cents": 100000,
+        "unrealized_gain_cents": 0,
+        "realized_gain_cents": 0,
+        "shares_held": "1000",
+        "current_share_price": null,
+        "invested_at": "2023-02-10T10:00:00Z",
+        "owner": {
+         "kind": "individual",
+         "name": "Test Investor"
+        },
+        "investor_count": 120
+       }
+      ],
+      "holdings": [],
+      "investor_count": 120,
+      "as_of": "2026-10-12T09:00:00.000Z",
+      "exit_reason": "acquired"
+     }
+    },
+    {
+     "id": "ofr_fail1",
+     "type": "portfolio_position",
+     "attributes": {
+      "offering_id": "ofr_fail1",
+      "company": {
+       "id": "co_dusk-audio",
+       "name": "Dusk Audio",
+       "slug": "dusk-audio"
+      },
+      "asset_type": "company",
+      "security": {
+       "type": "convertible_note",
+       "label": "Convertible Note"
+      },
+      "status": "failed",
+      "invested_at": "2022-06-01T10:00:00Z",
+      "currency": "usd",
+      "cost_basis_cents": 25000,
+      "current_value_cents": 0,
+      "unrealized_gain_cents": -25000,
+      "realized_gain_cents": -25000,
+      "return_multiple": null,
+      "shares_held": null,
+      "current_share_price": null,
+      "securities": [],
+      "holdings": [],
+      "investor_count": 120,
+      "as_of": "2026-10-12T09:00:00.000Z"
+     }
+    },
+    {
+     "id": "ofr_rev1",
+     "type": "portfolio_position",
+     "attributes": {
+      "offering_id": "ofr_rev1",
+      "company": {
+       "id": "co_ember-bakery",
+       "name": "Ember Bakery",
+       "slug": "ember-bakery"
+      },
+      "asset_type": "company",
+      "security": {
+       "type": "revenue_share",
+       "label": "Revenue Share"
+      },
+      "status": "active",
+      "invested_at": "2026-01-05T10:00:00Z",
+      "currency": "usd",
+      "cost_basis_cents": 30000,
+      "current_value_cents": null,
+      "unrealized_gain_cents": null,
+      "realized_gain_cents": 0,
+      "return_multiple": null,
+      "shares_held": null,
+      "current_share_price": null,
+      "securities": [],
+      "holdings": [],
+      "investor_count": 120,
+      "as_of": "2026-10-12T09:00:00.000Z"
+     }
+    }
+   ],
+   "meta": {
+    "has_more": false,
+    "page_count": 2,
+    "next_cursor": null
+   }
+  }
+ },
+ "token": {
+  "access_token": "at_test_redacted_access",
+  "token_type": "Bearer",
+  "expires_in": 7200,
+  "refresh_token": "rt_test_redacted_refresh",
+  "scope": "read:investments",
+  "created_at": 1791900000
+ },
+ "refreshed": {
+  "access_token": "at_test_redacted_access2",
+  "token_type": "Bearer",
+  "expires_in": 7200,
+  "refresh_token": "rt_test_redacted_refresh2",
+  "scope": "read:investments",
+  "created_at": 1791907200
+ },
+ "errors": {
+  "unauthorized": {
+   "error": {
+    "type": "unauthorized",
+    "message": "The access token is invalid",
+    "request_id": "req_redacted"
+   }
+  },
+  "invalid_grant": {
+   "error": "invalid_grant",
+   "error_description": "The refresh token is invalid"
+  }
+ }
+}

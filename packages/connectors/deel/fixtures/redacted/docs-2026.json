@@ -1,0 +1,25 @@
+{
+  "_note": "Shaped after developer.deel.com (Accounting: Retrieve payment receipts; Retrieve a payment breakdown; Rate limits; Authentication), read 2026-10-11. Envelope data.rows/has_more/next_cursor; has_more as the string \"true\" as in Deel's own example. Ids, names and amounts are synthetic.",
+  "receiptsPage1": { "data": { "rows": [
+    { "id": "rcpt_A1", "label": "REC-2026-9", "total": "5150.00", "status": "paid", "paid_at": "2026-09-29T09:38:46.235Z", "created_at": "2026-09-28T10:00:00.000Z", "total_due": "5150.00", "payment_currency": "USD", "payment_method": { "type": "ach" } },
+    { "id": "rcpt_A2", "label": "REC-2026-10", "total": "800.00", "status": "processing", "paid_at": null, "created_at": "2026-09-30T10:00:00.000Z", "total_due": "800.00", "payment_currency": "USD" }
+  ], "total": 3, "has_more": "true", "next_cursor": "CURSOR_PAGE_2", "total_count": 3 } },
+  "receiptsPage2": { "data": { "rows": [
+    { "id": "rcpt_A3", "label": "REC-2026-11", "total": "2040.00", "status": "paid", "paid_at": "2026-10-02T12:00:00.000Z", "created_at": "2026-10-01T10:00:00.000Z", "total_due": "2040.00", "payment_currency": "EUR" }
+  ], "total": 3, "has_more": false, "total_count": 3 } },
+  "breakdown": {
+    "rcpt_A1": [
+      { "contract_id": "37nex2x", "contract_type": "ongoing_time_based", "currency": "USD", "payment_currency": "USD", "total": "3000.00", "total_payment_currency": "3000.00", "processing_fee": "0.00", "contractor_employee_name": "Sample Contractor", "contractor_unique_identifier": "worker-uuid-1", "invoice_id": "inv_1" },
+      { "contract_id": "48pfy3y", "contract_type": "eor", "currency": "USD", "payment_currency": "USD", "total": "2000.00", "total_payment_currency": "2000.00", "processing_fee": "0.00", "contractor_employee_name": "Sample Employee", "contractor_unique_identifier": "worker-uuid-2", "invoice_id": "inv_2" },
+      { "contract_id": null, "contract_type": null, "currency": "USD", "payment_currency": "USD", "total": "150.00", "total_payment_currency": "150.00", "processing_fee": "0.00", "contractor_employee_name": null, "invoice_id": "inv_fee" }
+    ],
+    "rcpt_A3": [
+      { "contract_id": "59qgz4z", "contract_type": "pay_as_you_go_time_based", "currency": "EUR", "payment_currency": "EUR", "total": "2000.00", "total_payment_currency": "2000.00", "processing_fee": "40.00", "contractor_employee_name": "Sample Freelancer", "invoice_id": "inv_3" }
+    ]
+  },
+  "errors": {
+    "unauthorized": { "request": { "method": "GET", "url": "/rest/v2/payments", "status": 401, "api_req_id": "req_test", "docs": "https://developer.deel.com/api/authentication", "source": "api", "code": "UNAUTHORIZED" }, "errors": [{ "message": "Invalid or expired token", "path": "" }] },
+    "rateLimited": { "error": "Rate limit exceeded", "status": 429, "message": "Too many requests. Please wait before retrying." },
+    "server": { "errors": [{ "code": "INTERNAL", "message": "Something went wrong" }] }
+  }
+}

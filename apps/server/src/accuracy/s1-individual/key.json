@@ -1,0 +1,1211 @@
+{
+ "scenario": "s1-individual",
+ "fixture_sha256": "83ae24b12de687c3bfccbc9d00045947ae8ba5e559864214531613d19575e587",
+ "as_of": "2026-10-12T16:00:00Z",
+ "questions": [
+  {
+   "id": "s1-individual-cash",
+   "category": "cash",
+   "question": "How much cash is in the Personal space?",
+   "answer": {
+    "type": "money",
+    "value": "63012.91",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Checking + savings. The brokerage and Coinbase are investments, not cash.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Personal"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-checking",
+   "category": "cash",
+   "question": "Checking balance?",
+   "answer": {
+    "type": "money",
+    "value": "34992.84",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Bank current balance on Oct 11.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Chase Checking].balance"
+   }
+  },
+  {
+   "id": "s1-individual-savings",
+   "category": "cash",
+   "question": "Savings balance?",
+   "answer": {
+    "type": "money",
+    "value": "28020.07",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Including six monthly interest payments.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Chase Savings].balance"
+   }
+  },
+  {
+   "id": "s1-individual-card-debt",
+   "category": "cards",
+   "question": "How much is owed on credit cards?",
+   "answer": {
+    "type": "money",
+    "value": "159.30",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Sapphire (a late-September purchase) + Freedom (a pending Shell charge the bank already counts).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "card_balances",
+     "company": "Personal"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-sapphire",
+   "category": "cards",
+   "question": "What is owed on the Sapphire card?",
+   "answer": {
+    "type": "money",
+    "value": "95.10",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One purchase after the Sep 20 payment.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Sapphire Preferred].balance",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-freedom",
+   "category": "cards",
+   "question": "What is owed on the Freedom card?",
+   "answer": {
+    "type": "money",
+    "value": "64.20",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The pending Shell charge, as the bank states the balance.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Freedom Unlimited].balance",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-net-cash",
+   "category": "cash",
+   "question": "Cash minus card debt?",
+   "answer": {
+    "type": "money",
+    "value": "62853.61",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash − card balances.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_cash",
+     "company": "Personal"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-overview-cash",
+   "category": "cash",
+   "question": "Cash on the overview?",
+   "answer": {
+    "type": "money",
+    "value": "63012.91",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric cash.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "companies[0].cash"
+   }
+  },
+  {
+   "id": "s1-individual-overview-cards",
+   "category": "cards",
+   "question": "Card debt on the overview?",
+   "answer": {
+    "type": "money",
+    "value": "159.30",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as card_balances.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "companies[0].card_debt"
+   }
+  },
+  {
+   "id": "s1-individual-brokerage",
+   "category": "investments",
+   "question": "What is the Fidelity brokerage worth?",
+   "answer": {
+    "type": "money",
+    "value": "52310.44",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The broker's total: VTI + AAPL + the money market.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Fidelity Brokerage].balance"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-vti-value",
+   "category": "investments",
+   "question": "What is the VTI position worth?",
+   "answer": {
+    "type": "money",
+    "value": "33480.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the broker reported it on Oct 11.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=VTI].value"
+   }
+  },
+  {
+   "id": "s1-individual-vti-qty",
+   "category": "investments",
+   "question": "How many VTI shares?",
+   "answer": {
+    "type": "number",
+    "value": 120.0
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Units held.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=VTI].quantity"
+   }
+  },
+  {
+   "id": "s1-individual-aapl-cost",
+   "category": "investments",
+   "question": "What is the cost basis of the Apple shares?",
+   "answer": {
+    "type": "money",
+    "value": "6500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the broker reported it.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=AAPL].cost_basis"
+   }
+  },
+  {
+   "id": "s1-individual-crypto",
+   "category": "investments",
+   "question": "What is the Coinbase account worth?",
+   "answer": {
+    "type": "money",
+    "value": "22265.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "BTC + ETH at the reported values; not cash.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Coinbase].balance"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-btc-qty",
+   "category": "investments",
+   "question": "How much bitcoin is held in the Personal space?",
+   "answer": {
+    "type": "number",
+    "value": 0.25
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Units held.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=BTC].quantity"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-eth-value",
+   "category": "investments",
+   "question": "What is the ETH worth?",
+   "answer": {
+    "type": "money",
+    "value": "6615.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As Coinbase reported it.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=ETH].value"
+   }
+  },
+  {
+   "id": "s1-individual-loan",
+   "category": "loans",
+   "question": "How much is left on the car loan?",
+   "answer": {
+    "type": "money",
+    "value": "18450.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The lender's balance on Oct 11.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[name=Toyota Auto Loan].balance",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-loan-payment",
+   "category": "loans",
+   "question": "What is the monthly car payment?",
+   "answer": {
+    "type": "money",
+    "value": "450.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The lender's minimum payment.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Toyota Auto Loan].minimum_payment"
+   }
+  },
+  {
+   "id": "s1-individual-sapphire-apr",
+   "category": "cards",
+   "question": "What APR does the Sapphire card charge?",
+   "answer": {
+    "type": "number",
+    "value": 24.99
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the bank reported it.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Sapphire Preferred].apr"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-net-worth",
+   "category": "net worth",
+   "question": "What is the net worth of the Personal space?",
+   "answer": {
+    "type": "money",
+    "value": "118979.05",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash + brokerage + crypto − card debt − car loan. No single tool: asked through the apps only.",
+   "check": null,
+   "app": true
+  },
+  {
+   "id": "s1-individual-gross-burn",
+   "category": "spending",
+   "question": "Average monthly spending (last 3 full months)?",
+   "answer": {
+    "type": "money",
+    "value": "3153.97",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Every purchase and bill (card purchases at swipe), less refunds; transfers to savings, card payments and car-loan payments excluded; the pending charge not yet.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-net-burn",
+   "category": "spending",
+   "question": "Average monthly net burn?",
+   "answer": {
+    "type": "money",
+    "value": "-5349.51",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Spending minus wages and interest: negative, more comes in than goes out.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Personal"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-runway-state",
+   "category": "spending",
+   "question": "Is the Personal space burning cash or not? Answer burning or not_burning.",
+   "answer": {
+    "type": "text",
+    "value": "not_burning"
+   },
+   "tolerance": null,
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Income exceeds spending.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "runway",
+     "company": "Personal"
+    },
+    "path": "state"
+   }
+  },
+  {
+   "id": "s1-individual-spend-2026-07",
+   "category": "spending",
+   "question": "Spending in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "3377.44",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Purchases and bills.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-net-2026-07",
+   "category": "spending",
+   "question": "Net burn in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "-5125.95",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Spending − income.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-spend-2026-08",
+   "category": "spending",
+   "question": "Spending in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "2992.60",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Includes the Amazon order and its full refund (net zero).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-net-2026-08",
+   "category": "spending",
+   "question": "Net burn in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "-5510.88",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Spending − income.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Personal",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-spend-2026-09",
+   "category": "spending",
+   "question": "Spending in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "3091.86",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The pending Shell charge on Sep 30 is not counted.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-net-2026-09",
+   "category": "spending",
+   "question": "Net burn in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "-5411.71",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Spending − income.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Personal",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-interest-q3",
+   "category": "income",
+   "question": "Savings interest earned in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "10.44",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Three monthly interest payments.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~interest].amount",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-pnl-q3",
+   "category": "income",
+   "question": "Q3 income minus spending on the cash-basis P&L (posted transactions only)?",
+   "answer": {
+    "type": "money",
+    "value": "16048.54",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Wages + interest − spending, posted rows only: the $64.20 Shell charge still pending on Sep 30 is not in it.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-groceries-sep",
+   "category": "spending",
+   "question": "Groceries in September?",
+   "answer": {
+    "type": "money",
+    "value": "482.65",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Whole Foods: two shops before the payment and one on Sep 25.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "Whole Foods",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-spend-2026-04",
+   "category": "spending",
+   "question": "Spending in 2026-04?",
+   "answer": {
+    "type": "money",
+    "value": "2975.96",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Purchases and bills.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-04-01",
+     "to": "2026-04-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-spend-2026-05",
+   "category": "spending",
+   "question": "Spending in 2026-05?",
+   "answer": {
+    "type": "money",
+    "value": "2980.12",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Purchases and bills.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-05-01",
+     "to": "2026-05-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-spend-2026-06",
+   "category": "spending",
+   "question": "Spending in 2026-06?",
+   "answer": {
+    "type": "money",
+    "value": "2984.28",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Purchases and bills.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal",
+     "from": "2026-06-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s1-individual-uber-2026-07",
+   "category": "spending",
+   "question": "How much did Uber rides cost in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "26.95",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One ride a month, a little more each month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-07-31",
+     "query": "Uber",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-uber-2026-09",
+   "category": "spending",
+   "question": "How much did Uber rides cost in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "29.05",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One ride a month, a little more each month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "Uber",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-power-q3",
+   "category": "spending",
+   "question": "Electricity in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "464.43",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Three monthly bills.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "City Power",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-aapl-value",
+   "category": "investments",
+   "question": "What are the Apple shares worth?",
+   "answer": {
+    "type": "money",
+    "value": "9130.44",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the broker reported it.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=AAPL].value"
+   }
+  },
+  {
+   "id": "s1-individual-spaxx-value",
+   "category": "investments",
+   "question": "How much is in the money market fund?",
+   "answer": {
+    "type": "money",
+    "value": "9700.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash inside the brokerage, but an investment account: not counted as cash.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=SPAXX].value"
+   }
+  },
+  {
+   "id": "s1-individual-eth-qty",
+   "category": "investments",
+   "question": "How much ETH?",
+   "answer": {
+    "type": "number",
+    "value": 2.1
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Units held.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[*].positions[ticker=ETH].quantity"
+   }
+  },
+  {
+   "id": "s1-individual-brokerage-cost",
+   "category": "investments",
+   "question": "Total cost basis in the brokerage?",
+   "answer": {
+    "type": "money",
+    "value": "44200.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Sum of the reported cost basis.",
+   "check": {
+    "tool": "get_holdings",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "accounts[account=Fidelity Brokerage].positions[*].cost_basis"
+   }
+  },
+  {
+   "id": "s1-individual-loan-apr",
+   "category": "loans",
+   "question": "What rate is the car loan?",
+   "answer": {
+    "type": "number",
+    "value": 6.9
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the lender reported it.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Toyota Auto Loan].apr"
+   }
+  },
+  {
+   "id": "s1-individual-loan-principal",
+   "category": "loans",
+   "question": "How much was originally borrowed for the car?",
+   "answer": {
+    "type": "money",
+    "value": "24000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the lender reported it.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Toyota Auto Loan].original_principal"
+   }
+  },
+  {
+   "id": "s1-individual-loan-maturity",
+   "category": "loans",
+   "question": "When is the car loan paid off?",
+   "answer": {
+    "type": "text",
+    "value": "2029-03-10"
+   },
+   "tolerance": null,
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Maturity date.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Toyota Auto Loan].maturity_date"
+   }
+  },
+  {
+   "id": "s1-individual-sapphire-min",
+   "category": "cards",
+   "question": "Minimum payment due on the Sapphire card?",
+   "answer": {
+    "type": "money",
+    "value": "40.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "As the bank reported it.",
+   "check": {
+    "tool": "get_liabilities",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "liabilities[account=Sapphire Preferred].minimum_payment"
+   }
+  },
+  {
+   "id": "s1-individual-netflix",
+   "category": "recurring",
+   "question": "How much is the Netflix subscription?",
+   "answer": {
+    "type": "money",
+    "value": "15.49",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Six monthly charges of $15.49: an active monthly series.",
+   "check": {
+    "tool": "list_recurring",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "recurring[counterparty~Netflix].monthly"
+   },
+   "app": true
+  },
+  {
+   "id": "s1-individual-rent",
+   "category": "recurring",
+   "question": "What is the monthly rent?",
+   "answer": {
+    "type": "money",
+    "value": "2400.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Six monthly payments.",
+   "check": {
+    "tool": "list_recurring",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "recurring[counterparty~Maple].monthly"
+   }
+  },
+  {
+   "id": "s1-individual-overview-net-burn",
+   "category": "spending",
+   "question": "Net burn on the overview?",
+   "answer": {
+    "type": "money",
+    "value": "-5349.51",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric net_burn.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Personal"
+    },
+    "path": "companies[0].net_burn_3mo"
+   }
+  },
+  {
+   "id": "s1-individual-wages-q3",
+   "category": "income",
+   "question": "Wages in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "25500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Six paychecks of $4,250.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~wages].amount",
+    "abs": true
+   }
+  },
+  {
+   "id": "s1-individual-wages-q3-category",
+   "category": "income",
+   "question": "Wages in Q3, added up by category?",
+   "answer": {
+    "type": "money",
+    "value": "25500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The paychecks' category is wages, the same as the P&L (not other income).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "group_by": [
+      "category"
+     ],
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "groups[category=wages_income].sum"
+   }
+  }
+ ]
+}

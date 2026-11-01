@@ -1,0 +1,22 @@
+{
+  "_note": "Synthetic Integration Server answers: an export file in the shape our template produces (every text value URL-encoded, amounts in cents), the export job’s file name, and error bodies from the documented shape. Amounts hand-picked to check by hand.",
+  "fileName": "exportredacted0001.txt",
+  "files": {
+    "exportredacted0001.txt": "{\"r\":\"R00001\",\"rn\":\"October%20travel\",\"rs\":\"Approved\",\"rc\":\"USD\",\"re\":\"jane%40example.test\",\"rp\":\"Acme\",\"t\":\"T001\",\"m\":\"Delta%20Air%20Lines\",\"mm\":\"\",\"a\":\"41230\",\"ma\":\"\",\"ca\":\"41230\",\"c\":\"USD\",\"d\":\"2026-10-02\",\"md\":\"\",\"cat\":\"Airfare\",\"tag\":\"\",\"note\":\"SFO%20to%20JFK\",\"reim\":\"1\",\"card\":\"\"}\n{\"r\":\"R00001\",\"rn\":\"October%20travel\",\"rs\":\"Approved\",\"rc\":\"USD\",\"re\":\"jane%40example.test\",\"rp\":\"Acme\",\"t\":\"T002\",\"m\":\"Joe%E2%80%99s%20%22Diner%22\",\"mm\":\"\",\"a\":\"3875\",\"ma\":\"\",\"ca\":\"3875\",\"c\":\"USD\",\"d\":\"2026-10-03\",\"md\":\"\",\"cat\":\"Meals%20%26%20Entertainment\",\"tag\":\"\",\"note\":\"client%20dinner%0Awith%20Acme\",\"reim\":\"1\",\"card\":\"\"}\n{\"r\":\"R00002\",\"rn\":\"Card%20spend\",\"rs\":\"Approved\",\"rc\":\"USD\",\"re\":\"jane%40example.test\",\"rp\":\"Acme\",\"t\":\"T003\",\"m\":\"Amazon%20Web%20Services\",\"mm\":\"\",\"a\":\"12999\",\"ma\":\"\",\"ca\":\"12999\",\"c\":\"USD\",\"d\":\"2026-10-03\",\"md\":\"\",\"cat\":\"Hosting\",\"tag\":\"\",\"note\":\"\",\"reim\":\"0\",\"card\":\"card-redacted\"}\n{\"r\":\"R00002\",\"rn\":\"Card%20spend\",\"rs\":\"Approved\",\"rc\":\"USD\",\"re\":\"jane%40example.test\",\"rp\":\"Acme\",\"t\":\"T004\",\"m\":\"Uber\",\"mm\":\"Uber%20Trip\",\"a\":\"2340\",\"ma\":\"2450\",\"ca\":\"2450\",\"c\":\"USD\",\"d\":\"2026-10-04\",\"md\":\"\",\"cat\":\"Travel\",\"tag\":\"\",\"note\":\"\",\"reim\":\"0\",\"card\":\"card-redacted\"}\n{\"r\":\"R00002\",\"rn\":\"Card%20spend\",\"rs\":\"Approved\",\"rc\":\"USD\",\"re\":\"jane%40example.test\",\"rp\":\"Acme\",\"t\":\"T005\",\"m\":\"Amazon\",\"mm\":\"\",\"a\":\"-1500\",\"ma\":\"\",\"ca\":\"-1500\",\"c\":\"USD\",\"d\":\"2026-10-06\",\"md\":\"\",\"cat\":\"Office%20Supplies\",\"tag\":\"\",\"note\":\"returned%20cable\",\"reim\":\"0\",\"card\":\"card-redacted\"}\n{\"r\":\"R00003\",\"rn\":\"Coffee\",\"rs\":\"Open\",\"rc\":\"USD\",\"re\":\"sam%40example.test\",\"rp\":\"Acme\",\"t\":\"T006\",\"m\":\"Starbucks\",\"mm\":\"\",\"a\":\"650\",\"ma\":\"\",\"ca\":\"650\",\"c\":\"USD\",\"d\":\"2026-10-12\",\"md\":\"\",\"cat\":\"Meals\",\"tag\":\"\",\"note\":\"\",\"reim\":\"1\",\"card\":\"\"}\n",
+    "exportredacted0002.txt": ""
+  },
+  "errors": {
+    "badCredentials": {
+      "responseCode": 401,
+      "responseMessage": "Incorrect credentials"
+    },
+    "rate": {
+      "responseCode": 429,
+      "responseMessage": "Too many requests"
+    },
+    "validation": {
+      "responseCode": 410,
+      "responseMessage": "Invalid date range"
+    }
+  }
+}

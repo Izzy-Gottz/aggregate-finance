@@ -1,0 +1,32 @@
+{
+  "_note": "Synthetic statements in the style of real bank exports (Chase checking CSV, Amex card CSV, a German Volksbank-style CSV, a credit-union CSV with preamble lines, OFX 1.02 SGML, QFX credit card, OFX 2.1.1 XML, and a minimal PDF). Shapes follow the OFX 1.0.2/2.1.1 specs and the banks' documented CSV layouts. No real names or account numbers; at most 4 account digits visible. Re-record from real (redacted) exports when available. camt.053 files (001.02 German style; 001.08 Swiss multi-currency + UK) use the published example IBANs from ECBS/SIX. US bank CSV presets (Chase card, Bank of America checking/card, Wells Fargo, Citi, Capital One card/360, U.S. Bank, PNC, Mercury, Apple Card, Discover) follow each bank's documented column headers with made-up merchants and amounts. Apple Card and Discover headers and signs come from importer documentation (TidBITS, beancount.io), not the issuers: neither publishes its CSV columns.",
+  "files": [
+    "chase-checking.csv",
+    "amex-card.csv",
+    "german-bank.csv",
+    "preamble-credit-union.csv",
+    "ofx102-checking.ofx",
+    "qfx-card.qfx",
+    "ofx2-savings.ofx",
+    "tiny-statement.pdf",
+    "camt053-eur-checking.xml",
+    "camt053-multi-currency.xml",
+    "chase-card.csv",
+    "bofa-checking.csv",
+    "bofa-card.csv",
+    "wells-fargo.csv",
+    "citi-card.csv",
+    "capitalone-card.csv",
+    "capitalone-360.csv",
+    "usbank.csv",
+    "pnc.csv",
+    "mercury.csv",
+    "chase-checking.qfx",
+    "chase-checking-redownload.qfx",
+    "bofa-card.qfx",
+    "wells-fargo.qfx",
+    "capitalone-card.ofx",
+    "apple-card.csv",
+    "discover-card.csv"
+  ]
+}

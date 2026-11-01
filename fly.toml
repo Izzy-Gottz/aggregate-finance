@@ -1,0 +1,27 @@
+# One-click-ish deploy on Fly.io: `fly launch --copy-config`, then
+# `fly secrets set AUTH_SECRET=... AGFN_MASTER_KEY=... BASE_URL=https://<app>.fly.dev`.
+app = "agfn"
+primary_region = "iad"
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  PORT = "8787"
+
+[[mounts]]
+  source = "agfn_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"

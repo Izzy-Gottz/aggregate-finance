@@ -1,0 +1,80 @@
+{
+  "_note": "synthesized from Brex API docs (developer.brex.com transactions_api.yaml and examples); re-record from sandbox when keys are available",
+  "card_accounts": [
+    {
+      "id": "cuacc_card_1",
+      "status": "ACTIVE",
+      "current_balance": { "amount": 452050, "currency": "USD" },
+      "available_balance": { "amount": 4547950, "currency": "USD" },
+      "account_limit": { "amount": 5000000, "currency": "USD" },
+      "current_statement_period": { "start_date": "2026-10-01", "end_date": "2026-11-01" }
+    }
+  ],
+  "cash_accounts": {
+    "next_cursor": null,
+    "items": [
+      {
+        "id": "dpacc_operating",
+        "name": "Operating",
+        "status": "ACTIVE",
+        "current_balance": { "amount": 12500000, "currency": "USD" },
+        "available_balance": { "amount": 12400000, "currency": "USD" },
+        "account_number": "xxxxxx6789",
+        "routing_number": "000000000",
+        "primary": true
+      },
+      {
+        "id": "dpacc_reserve",
+        "name": "Reserve",
+        "status": "ACTIVE",
+        "current_balance": { "amount": 2001234, "currency": "USD" },
+        "available_balance": { "amount": 2001234, "currency": "USD" },
+        "account_number": "xxxxxx4321",
+        "routing_number": "000000000",
+        "primary": false
+      }
+    ]
+  },
+  "cash_txns": {
+    "dpacc_operating": {
+      "": {
+        "next_cursor": "op-2",
+        "items": [
+          { "id": "ctx_card_payment", "description": "Brex Card payment", "amount": { "amount": -100000, "currency": "USD" }, "initiated_at_date": "2026-10-02", "posted_at_date": "2026-10-02", "type": "CARD_COLLECTION", "transfer_id": null },
+          { "id": "ctx_customer_ach", "description": "ACME CORP ACH CREDIT", "amount": { "amount": 500000, "currency": "USD" }, "initiated_at_date": "2026-10-03", "posted_at_date": "2026-10-04", "type": "PAYMENT", "transfer_id": "dptx_incoming_1" }
+        ]
+      },
+      "op-2": {
+        "next_cursor": null,
+        "items": [
+          { "id": "ctx_book_out", "description": "Transfer to Reserve", "amount": { "amount": -200000, "currency": "USD" }, "initiated_at_date": "2026-10-05", "posted_at_date": "2026-10-05", "type": "INTRA_CUSTOMER_ACCOUNT_BOOK_TRANSFER", "transfer_id": "dptx_book_1" }
+        ]
+      }
+    },
+    "dpacc_reserve": {
+      "": {
+        "next_cursor": null,
+        "items": [
+          { "id": "ctx_book_in", "description": "Transfer from Operating", "amount": { "amount": 200000, "currency": "USD" }, "initiated_at_date": "2026-10-05", "posted_at_date": "2026-10-05", "type": "INTRA_CUSTOMER_ACCOUNT_BOOK_TRANSFER", "transfer_id": "dptx_book_1" },
+          { "id": "ctx_interest", "description": "Interest", "amount": { "amount": 1234, "currency": "USD" }, "initiated_at_date": "2026-09-30", "posted_at_date": "2026-09-30", "type": "INTEREST", "transfer_id": null }
+        ]
+      }
+    }
+  },
+  "card_txns": {
+    "": {
+      "next_cursor": "card-2",
+      "items": [
+        { "id": "cttx_purchase", "card_id": "card_ab12", "description": "CHILIS", "amount": { "amount": 12900, "currency": "USD" }, "initiated_at_date": "2026-10-01", "posted_at_date": "2026-10-03", "type": "PURCHASE", "merchant": { "raw_descriptor": "CHILIS #123 SAN FRANCISCO CA", "mcc": "5812", "country": "USA" }, "card_metadata": {}, "expense_id": "expense_1", "card_transaction_operation_reference_id": "op_ref_1" },
+        { "id": "cttx_refund", "card_id": "card_ab12", "description": "SAAS TOOLS", "amount": { "amount": -2500, "currency": "USD" }, "initiated_at_date": "2026-10-02", "posted_at_date": "2026-10-04", "type": "REFUND", "merchant": { "raw_descriptor": "SAAS TOOLS INC", "mcc": "5734", "country": "USA" }, "card_metadata": {}, "expense_id": null, "card_transaction_operation_reference_id": "op_ref_2" }
+      ]
+    },
+    "card-2": {
+      "next_cursor": null,
+      "items": [
+        { "id": "cttx_collection", "card_id": null, "description": "Payment - Thank you!", "amount": { "amount": -100000, "currency": "USD" }, "initiated_at_date": "2026-10-02", "posted_at_date": "2026-10-02", "type": "COLLECTION", "merchant": null, "card_metadata": null, "expense_id": null, "card_transaction_operation_reference_id": null },
+        { "id": "cttx_rewards", "card_id": null, "description": "Rewards credit", "amount": { "amount": -500, "currency": "USD" }, "initiated_at_date": "2026-10-05", "posted_at_date": "2026-10-05", "type": "REWARDS_CREDIT", "merchant": null, "card_metadata": null, "expense_id": null, "card_transaction_operation_reference_id": null }
+      ]
+    }
+  }
+}

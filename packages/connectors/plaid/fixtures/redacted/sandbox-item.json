@@ -1,0 +1,497 @@
+{
+ "_note": "Plaid Sandbox shapes (user_good @ First Platypus Bank, ins_109508). Hand-assembled from Plaid's documented sandbox responses; identifiers are synthetic. Re-record from a live sandbox Item with scripts/record-plaid.ts when sandbox keys are available.",
+ "exchange": {
+  "access_token": "access-sandbox-redacted-1",
+  "item_id": "item_SANDBOX_1",
+  "request_id": "req1"
+ },
+ "item_get": {
+  "item": {
+   "item_id": "item_SANDBOX_1",
+   "institution_id": "ins_109508",
+   "institution_name": "First Platypus Bank",
+   "error": null,
+   "products": [
+    "transactions"
+   ],
+   "consented_products": [
+    "transactions",
+    "liabilities",
+    "investments"
+   ],
+   "billed_products": [
+    "transactions"
+   ],
+   "consent_expiration_time": null,
+   "webhook": "https://meridn.example.com/webhooks/plaid"
+  }
+ },
+ "accounts_get": {
+  "item": {
+   "item_id": "item_SANDBOX_1",
+   "institution_id": "ins_109508",
+   "institution_name": "First Platypus Bank"
+  },
+  "accounts": [
+   {
+    "account_id": "acc_checking",
+    "name": "Plaid Checking",
+    "official_name": "Plaid Gold Standard 0% Interest Checking",
+    "mask": "0000",
+    "type": "depository",
+    "subtype": "checking",
+    "holder_category": "business",
+    "balances": {
+     "current": 110.0,
+     "available": 100.0,
+     "limit": null,
+     "iso_currency_code": "USD",
+     "unofficial_currency_code": null
+    }
+   },
+   {
+    "account_id": "acc_saving",
+    "name": "Plaid Saving",
+    "official_name": "Plaid Silver Standard 0.1% Interest Saving",
+    "mask": "1111",
+    "type": "depository",
+    "subtype": "savings",
+    "balances": {
+     "current": 210.0,
+     "available": 200.0,
+     "limit": null,
+     "iso_currency_code": "USD",
+     "unofficial_currency_code": null
+    }
+   },
+   {
+    "account_id": "acc_card",
+    "name": "Plaid Credit Card",
+    "official_name": "Plaid Diamond 12.5% APR Interest Credit Card",
+    "mask": "3333",
+    "type": "credit",
+    "subtype": "credit card",
+    "holder_category": "personal",
+    "balances": {
+     "current": 410.0,
+     "available": null,
+     "limit": 2000.0,
+     "iso_currency_code": "USD",
+     "unofficial_currency_code": null
+    }
+   },
+   {
+    "account_id": "acc_mortgage",
+    "name": "Plaid Mortgage",
+    "official_name": null,
+    "mask": "8888",
+    "type": "loan",
+    "subtype": "mortgage",
+    "balances": {
+     "current": 56302.06,
+     "available": null,
+     "limit": null,
+     "iso_currency_code": "USD",
+     "unofficial_currency_code": null
+    }
+   },
+   {
+    "account_id": "acc_401k",
+    "name": "Plaid 401k",
+    "official_name": null,
+    "mask": "6666",
+    "type": "investment",
+    "subtype": "401k",
+    "balances": {
+     "current": 23631.9805,
+     "available": null,
+     "limit": null,
+     "iso_currency_code": "USD",
+     "unofficial_currency_code": null
+    }
+   },
+   {
+    "account_id": "acc_eur",
+    "name": "Plaid EUR Account",
+    "official_name": null,
+    "mask": "9999",
+    "type": "depository",
+    "subtype": "checking",
+    "balances": {
+     "current": null,
+     "available": null,
+     "limit": null,
+     "iso_currency_code": "EUR",
+     "unofficial_currency_code": null
+    }
+   }
+  ]
+ },
+ "liabilities_get": {
+  "accounts": [
+   {
+    "account_id": "acc_card",
+    "name": "Plaid Credit Card",
+    "type": "credit",
+    "balances": {
+     "current": 410.0,
+     "available": null,
+     "limit": 2000.0,
+     "iso_currency_code": "USD"
+    }
+   },
+   {
+    "account_id": "acc_mortgage",
+    "name": "Plaid Mortgage",
+    "type": "loan",
+    "balances": {
+     "current": 56302.06,
+     "available": null,
+     "limit": null,
+     "iso_currency_code": "USD"
+    }
+   }
+  ],
+  "liabilities": {
+   "credit": [
+    {
+     "account_id": "acc_card",
+     "aprs": [
+      {
+       "apr_percentage": 15.24,
+       "apr_type": "balance_transfer_apr"
+      },
+      {
+       "apr_percentage": 27.95,
+       "apr_type": "purchase_apr"
+      }
+     ],
+     "is_overdue": false,
+     "last_payment_amount": 168.25,
+     "last_payment_date": "2026-09-22",
+     "last_statement_balance": 1708.77,
+     "last_statement_issue_date": "2026-09-28",
+     "minimum_payment_amount": 20.0,
+     "next_payment_due_date": "2026-10-24"
+    }
+   ],
+   "mortgage": [
+    {
+     "account_id": "acc_mortgage",
+     "interest_rate": {
+      "percentage": 3.99,
+      "type": "fixed"
+     },
+     "last_payment_amount": 3141.54,
+     "last_payment_date": "2026-09-15",
+     "maturity_date": "2045-07-31",
+     "next_monthly_payment": 3141.54,
+     "next_payment_due_date": "2026-11-15",
+     "origination_principal_amount": 425000
+    }
+   ],
+   "student": []
+  }
+ },
+ "holdings_get": {
+  "accounts": [
+   {
+    "account_id": "acc_401k",
+    "name": "Plaid 401k",
+    "type": "investment",
+    "balances": {
+     "current": 23631.9805,
+     "available": null,
+     "limit": null,
+     "iso_currency_code": "USD"
+    }
+   }
+  ],
+  "holdings": [
+   {
+    "account_id": "acc_401k",
+    "security_id": "sec_vtsax",
+    "quantity": 100.5,
+    "institution_price": 120.03,
+    "institution_value": 12063.015,
+    "cost_basis": 10000,
+    "iso_currency_code": "USD"
+   },
+   {
+    "account_id": "acc_401k",
+    "security_id": "sec_cash",
+    "quantity": 11568.9655,
+    "institution_price": 1,
+    "institution_value": 11568.9655,
+    "cost_basis": null,
+    "iso_currency_code": "USD"
+   }
+  ],
+  "securities": [
+   {
+    "security_id": "sec_vtsax",
+    "ticker_symbol": "VTSAX",
+    "name": "Vanguard Total Stock Market Index Fund",
+    "type": "mutual fund"
+   },
+   {
+    "security_id": "sec_cash",
+    "ticker_symbol": "CUR:USD",
+    "name": "U S Dollar",
+    "type": "cash"
+   }
+  ]
+ },
+ "sync_pages": {
+  "": {
+   "added": [
+    {
+     "transaction_id": "tx_united",
+     "account_id": "acc_card",
+     "amount": 500,
+     "iso_currency_code": "USD",
+     "date": "2026-09-30",
+     "authorized_date": "2026-09-29",
+     "name": "United Airlines",
+     "original_description": "UNITED AIRLINES 0162345 CHICAGO IL",
+     "merchant_name": "United Airlines",
+     "pending": false,
+     "pending_transaction_id": null,
+     "payment_channel": "in store",
+     "personal_finance_category": {
+      "primary": "TRAVEL",
+      "detailed": "TRAVEL_FLIGHTS"
+     },
+     "counterparties": [
+      {
+       "name": "United Airlines",
+       "type": "merchant"
+      }
+     ]
+    },
+    {
+     "transaction_id": "tx_payroll",
+     "account_id": "acc_checking",
+     "amount": -2500.0,
+     "iso_currency_code": "USD",
+     "date": "2026-09-30",
+     "name": "INTRST PYMNT",
+     "original_description": "ACME PAYROLL DIR DEP PPD",
+     "merchant_name": null,
+     "pending": false,
+     "payment_channel": "other",
+     "personal_finance_category": {
+      "primary": "INCOME",
+      "detailed": "INCOME_WAGES"
+     },
+     "counterparties": [
+      {
+       "name": "Acme Payroll",
+       "type": "financial_institution"
+      }
+     ],
+     "payment_meta": {
+      "reference_number": "REF123",
+      "ppd_id": "PPD9"
+     }
+    },
+    {
+     "transaction_id": "tx_card_payment",
+     "account_id": "acc_checking",
+     "amount": 25,
+     "iso_currency_code": "USD",
+     "date": "2026-09-28",
+     "name": "CREDIT CARD 3333 PAYMENT *//",
+     "merchant_name": null,
+     "pending": false,
+     "payment_channel": "other",
+     "personal_finance_category": {
+      "primary": "LOAN_PAYMENTS",
+      "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+     }
+    },
+    {
+     "transaction_id": "tx_card_payment_in",
+     "account_id": "acc_card",
+     "amount": -25,
+     "iso_currency_code": "USD",
+     "date": "2026-09-28",
+     "name": "PAYMENT THANK YOU",
+     "merchant_name": null,
+     "pending": false,
+     "payment_channel": "other",
+     "personal_finance_category": {
+      "primary": "LOAN_PAYMENTS",
+      "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+     }
+    },
+    {
+     "transaction_id": "tx_uber_pending",
+     "account_id": "acc_card",
+     "amount": 6.33,
+     "iso_currency_code": "USD",
+     "date": "2026-10-01",
+     "name": "Uber 063015 SF**POOL**",
+     "merchant_name": "Uber",
+     "pending": true,
+     "payment_channel": "online",
+     "personal_finance_category": {
+      "primary": "TRANSPORTATION",
+      "detailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+     }
+    }
+   ],
+   "modified": [],
+   "removed": [],
+   "next_cursor": "cur-1",
+   "has_more": true
+  },
+  "cur-1": {
+   "added": [
+    {
+     "transaction_id": "tx_check",
+     "account_id": "acc_checking",
+     "amount": 1000.005,
+     "iso_currency_code": "USD",
+     "date": "2026-09-20",
+     "name": "Check 201",
+     "merchant_name": null,
+     "check_number": "201",
+     "pending": false,
+     "payment_channel": "other",
+     "personal_finance_category": null
+    },
+    {
+     "transaction_id": "tx_eur",
+     "account_id": "acc_eur",
+     "amount": 12.5,
+     "iso_currency_code": "EUR",
+     "date": "2026-09-21",
+     "name": "Boulangerie",
+     "merchant_name": "Boulangerie",
+     "pending": false,
+     "payment_channel": "in store"
+    }
+   ],
+   "modified": [],
+   "removed": [],
+   "next_cursor": "cur-2",
+   "has_more": false
+  },
+  "cur-2": {
+   "added": [
+    {
+     "transaction_id": "tx_uber_posted",
+     "account_id": "acc_card",
+     "amount": 6.33,
+     "iso_currency_code": "USD",
+     "date": "2026-10-02",
+     "name": "Uber 063015 SF**POOL**",
+     "merchant_name": "Uber",
+     "pending": false,
+     "pending_transaction_id": "tx_uber_pending",
+     "payment_channel": "online",
+     "personal_finance_category": {
+      "primary": "TRANSPORTATION",
+      "detailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+     }
+    }
+   ],
+   "modified": [
+    {
+     "transaction_id": "tx_united",
+     "account_id": "acc_card",
+     "amount": 480,
+     "iso_currency_code": "USD",
+     "date": "2026-09-30",
+     "name": "United Airlines",
+     "merchant_name": "United Airlines",
+     "pending": false,
+     "payment_channel": "in store",
+     "personal_finance_category": {
+      "primary": "TRAVEL",
+      "detailed": "TRAVEL_FLIGHTS"
+     }
+    }
+   ],
+   "removed": [
+    {
+     "transaction_id": "tx_uber_pending",
+     "account_id": "acc_card"
+    }
+   ],
+   "next_cursor": "cur-3",
+   "has_more": false
+  },
+  "cur-3": {
+   "added": [],
+   "modified": [],
+   "removed": [],
+   "next_cursor": "cur-3",
+   "has_more": false
+  }
+ },
+ "inv_txns": {
+  "accounts": [],
+  "securities": [
+   {
+    "security_id": "sec_vtsax",
+    "ticker_symbol": "VTSAX",
+    "name": "Vanguard Total Stock Market Index Fund",
+    "type": "mutual fund"
+   }
+  ],
+  "total_investment_transactions": 4,
+  "investment_transactions": [
+   {
+    "investment_transaction_id": "inv_buy",
+    "account_id": "acc_401k",
+    "security_id": "sec_vtsax",
+    "date": "2026-09-15",
+    "name": "BUY VTSAX",
+    "amount": 1200.5,
+    "quantity": 10,
+    "fees": 0,
+    "type": "buy",
+    "subtype": "buy",
+    "iso_currency_code": "USD"
+   },
+   {
+    "investment_transaction_id": "inv_div",
+    "account_id": "acc_401k",
+    "security_id": "sec_vtsax",
+    "date": "2026-09-20",
+    "name": "DIVIDEND VTSAX",
+    "amount": -42.17,
+    "quantity": 0,
+    "type": "cash",
+    "subtype": "dividend",
+    "iso_currency_code": "USD"
+   },
+   {
+    "investment_transaction_id": "inv_fee",
+    "account_id": "acc_401k",
+    "security_id": null,
+    "date": "2026-09-30",
+    "name": "ACCOUNT FEE",
+    "amount": 5,
+    "quantity": 0,
+    "type": "fee",
+    "subtype": "account fee",
+    "iso_currency_code": "USD"
+   },
+   {
+    "investment_transaction_id": "inv_contrib",
+    "account_id": "acc_401k",
+    "security_id": null,
+    "date": "2026-09-01",
+    "name": "CONTRIBUTION",
+    "amount": -500,
+    "quantity": 0,
+    "type": "cash",
+    "subtype": "contribution",
+    "iso_currency_code": "USD"
+   }
+  ]
+ }
+}

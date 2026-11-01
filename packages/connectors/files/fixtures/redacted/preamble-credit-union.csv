@@ -1,0 +1,11 @@
+"Account Name : Business Checking"
+"Account Number : XXXXXX0042"
+"Date Range : 01/01/2026 - 01/31/2026"
+
+Transaction Date,Description,Withdrawal,Deposit,Balance
+01/01/2026,Beginning Balance,,,1500.00
+01/02/2026,"Transfer from savings 0042",,500.00,2000.00
+01/04/2026,"Rent - January",1200.00,,800.00
+01/04/2026,"Card purchase HARDWARE STORE",35.10,,764.90
+01/10/2026,"Mobile deposit",,"1,050.00",1814.90
+01/15/2026,"Wire fee",25.00,,1789.90

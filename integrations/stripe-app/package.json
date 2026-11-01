@@ -1,0 +1,7 @@
+{
+  "name": "aggregate-stripe-app",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "Aggregate's Stripe App: OAuth install only, no UI extensions. Uploaded with `stripe apps upload --live`."
+}

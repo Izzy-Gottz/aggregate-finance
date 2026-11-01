@@ -1,0 +1,1257 @@
+{
+ "scenario": "s2-founder",
+ "fixture_sha256": "8b0f2ca11e971cd91823807076e6cd9fdc9a158438a692a998ea6d92a553e7c5",
+ "as_of": "2026-10-12T16:00:00Z",
+ "questions": [
+  {
+   "id": "s2-founder-cash",
+   "category": "cash",
+   "question": "How much cash does Lumen Labs have?",
+   "answer": {
+    "type": "money",
+    "value": "320633.36",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash = latest current balance of accounts counted as cash: Mercury Checking + Stripe balance (card not subtracted).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-cash-checking",
+   "category": "cash",
+   "question": "What is the Mercury Checking balance?",
+   "answer": {
+    "type": "money",
+    "value": "319794.05",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The bank's current balance on Oct 11.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "accounts[name=Mercury Checking].balance"
+   }
+  },
+  {
+   "id": "s2-founder-cash-stripe",
+   "category": "cash",
+   "question": "How much is sitting in the Stripe balance?",
+   "answer": {
+    "type": "money",
+    "value": "839.31",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Two late-September charges, net of fees, not yet paid out.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "accounts[name=Stripe balance].balance"
+   }
+  },
+  {
+   "id": "s2-founder-card-balances",
+   "category": "cash",
+   "question": "What is owed on the company card?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Paid off in full on Sep 25, nothing since.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "card_balances",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-cash",
+   "category": "cash",
+   "question": "What is Lumen Labs's net cash?",
+   "answer": {
+    "type": "money",
+    "value": "320633.36",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash minus card balances.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_cash",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-gross-burn",
+   "category": "burn",
+   "question": "What is Lumen Labs's average monthly gross burn?",
+   "answer": {
+    "type": "money",
+    "value": "33676.95",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Monthly average over 2026-07-01..2026-09-30 (3 months): every expense (rent, AWS, payroll net + taxes, card purchases at swipe, Stripe fees) plus customer refunds. Card payments, payouts, the SAFE and the founder loan excluded.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-net-burn",
+   "category": "burn",
+   "question": "What is Lumen Labs's average monthly net burn?",
+   "answer": {
+    "type": "money",
+    "value": "23354.61",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue (Stripe charges at gross + invoice payments received), monthly average of the last 3 full months.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-runway",
+   "category": "runway",
+   "question": "How many months of runway does Lumen Labs have?",
+   "answer": {
+    "type": "number",
+    "value": 13.7
+   },
+   "tolerance": {
+    "abs": 0.05
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash ÷ average monthly net burn of the last 3 full months, to one decimal.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "runway",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-overview-burn",
+   "category": "burn",
+   "question": "What net burn does the overview show?",
+   "answer": {
+    "type": "money",
+    "value": "23354.61",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same figure as get_metric net_burn.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "companies[0].net_burn_3mo"
+   }
+  },
+  {
+   "id": "s2-founder-overview-runway",
+   "category": "runway",
+   "question": "What runway does the overview show?",
+   "answer": {
+    "type": "number",
+    "value": 13.7
+   },
+   "tolerance": {
+    "abs": 0.05
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric runway.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "companies[0].runway_months"
+   }
+  },
+  {
+   "id": "s2-founder-overview-cash",
+   "category": "cash",
+   "question": "What cash does the overview show?",
+   "answer": {
+    "type": "money",
+    "value": "320633.36",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric cash.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "companies[0].cash"
+   }
+  },
+  {
+   "id": "s2-founder-gross-burn-2026-07",
+   "category": "burn",
+   "question": "What was gross burn in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "32823.90",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One month asked: that month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-07",
+   "category": "burn",
+   "question": "What was net burn in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "23789.90",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-07",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "9034.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges at gross minus refunds, plus invoice payments received. Payouts are not revenue.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-gross-burn-2026-08",
+   "category": "burn",
+   "question": "What was gross burn in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "35335.05",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One month asked: that month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Lumen Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-08",
+   "category": "burn",
+   "question": "What was net burn in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "26301.05",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-08",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "6534.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges at gross minus refunds, plus invoice payments received. Payouts are not revenue.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-gross-burn-2026-09",
+   "category": "burn",
+   "question": "What was gross burn in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "32871.89",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One month asked: that month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-09",
+   "category": "burn",
+   "question": "What was net burn in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "19972.89",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-09",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "12899.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges at gross minus refunds, plus invoice payments received. Payouts are not revenue.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-gross-burn-q3",
+   "category": "burn",
+   "question": "Average monthly gross burn over Q3 (Jul-Sep)?",
+   "answer": {
+    "type": "money",
+    "value": "33676.95",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "A period: its total ÷ 3 calendar months.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-q3",
+   "category": "revenue",
+   "question": "Cash revenue in Q3 (Jul-Sep)?",
+   "answer": {
+    "type": "money",
+    "value": "28467.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Q3 total (revenue is a total, not an average).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-stripe-fees-q3",
+   "category": "fees",
+   "question": "How much did Stripe take in fees in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "817.06",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "2.9% + 30c per charge, rounded half up.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~fee].amount"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-refunds-aug",
+   "category": "revenue",
+   "question": "How much was refunded to customers in August?",
+   "answer": {
+    "type": "money",
+    "value": "2500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Initech's August charge, refunded in full (Stripe kept the fee).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Lumen Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~efund].amount",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-pnl-q3-net",
+   "category": "reports",
+   "question": "Net income for Q3 on the cash basis?",
+   "answer": {
+    "type": "money",
+    "value": "-70063.84",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Revenue − refunds − expenses = −(net burn over the quarter).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s2-founder-payroll-sep",
+   "category": "payroll",
+   "question": "What did payroll cost in September?",
+   "answer": {
+    "type": "money",
+    "value": "24000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gusto net pay + payroll taxes debited from checking (two pay dates).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "payroll_cost",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-mrr",
+   "category": "subscriptions",
+   "question": "What is Lumen Labs's MRR?",
+   "answer": {
+    "type": "money",
+    "value": "2033.25",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Active subscriptions, monthly-normalized (the yearly plan ÷ 12); the canceled one is out.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "mrr",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-arr",
+   "category": "subscriptions",
+   "question": "What is Lumen Labs's ARR?",
+   "answer": {
+    "type": "money",
+    "value": "24399.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "MRR × 12.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "arr",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-owed-to-you",
+   "category": "invoices",
+   "question": "How much do customers owe Lumen Labs?",
+   "answer": {
+    "type": "money",
+    "value": "11700.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Open receivables: what is left on each unpaid or partly paid invoice.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "ar_open",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-overdue",
+   "category": "invoices",
+   "question": "How much of that is overdue?",
+   "answer": {
+    "type": "money",
+    "value": "7200.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Past due date and not fully paid (INV-1002's remainder and INV-1004).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "ar_overdue",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-overdue-count",
+   "category": "invoices",
+   "question": "How many invoices are overdue?",
+   "answer": {
+    "type": "count",
+    "value": 2
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Counted per invoice.",
+   "check": {
+    "tool": "search_invoices",
+    "args": {
+     "company": "Lumen Labs",
+     "status": "overdue"
+    },
+    "path": "owed_to_you.invoices.length"
+   }
+  },
+  {
+   "id": "s2-founder-partly-paid-count",
+   "category": "invoices",
+   "question": "How many invoices are partly paid?",
+   "answer": {
+    "type": "count",
+    "value": 1
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "INV-1002 (also overdue).",
+   "check": {
+    "tool": "search_invoices",
+    "args": {
+     "company": "Lumen Labs",
+     "status": "partially_paid"
+    },
+    "path": "owed_to_you.invoices.length"
+   }
+  },
+  {
+   "id": "s2-founder-inv1002-left",
+   "category": "invoices",
+   "question": "How much is still owed on INV-1002?",
+   "answer": {
+    "type": "money",
+    "value": "5000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "$8,000 less the $3,000 paid on Sep 5.",
+   "check": {
+    "tool": "search_invoices",
+    "args": {
+     "company": "Lumen Labs",
+     "number": "INV-1002"
+    },
+    "path": "owed_to_you.invoices[0].outstanding"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-bills-due",
+   "category": "bills",
+   "question": "What bills are due in the next 30 days?",
+   "answer": {
+    "type": "money",
+    "value": "1800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Open bills with a due date in the next 30 days (B-77).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "ap_due",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-owner-balance",
+   "category": "owner",
+   "question": "How much does Lumen Labs owe its founder?",
+   "answer": {
+    "type": "money",
+    "value": "20000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The founder's $20,000 transfer, answered as a loan in Review; nothing repaid.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "owner_balance",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-fully-diluted",
+   "category": "equity",
+   "question": "How many fully diluted shares?",
+   "answer": {
+    "type": "count",
+    "value": 8400000
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Issued shares + granted options. The unconverted SAFE is listed separately, not counted in shares.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "fully_diluted",
+     "company": "Lumen Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s2-founder-safes",
+   "category": "equity",
+   "question": "How much has been raised on SAFEs?",
+   "answer": {
+    "type": "money",
+    "value": "250000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Acorn Ventures, $250,000 at a $10M cap.",
+   "check": {
+    "tool": "get_cap_table",
+    "args": {
+     "company": "Lumen Labs"
+    },
+    "path": "companies[0].safes_and_notes[kind=safe].amount"
+   }
+  },
+  {
+   "id": "s2-founder-safe-not-revenue",
+   "category": "revenue",
+   "question": "What was September's cash revenue, not counting the SAFE wire?",
+   "answer": {
+    "type": "money",
+    "value": "12899.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "September revenue excludes the $250,000 SAFE wire (financing, not sales).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-04",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-04?",
+   "answer": {
+    "type": "money",
+    "value": "9034.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges minus refunds plus invoice payments received.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-04-01",
+     "to": "2026-04-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-04",
+   "category": "burn",
+   "question": "What was net burn in 2026-04?",
+   "answer": {
+    "type": "money",
+    "value": "23756.45",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-04-01",
+     "to": "2026-04-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-05",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-05?",
+   "answer": {
+    "type": "money",
+    "value": "9034.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges minus refunds plus invoice payments received.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-05-01",
+     "to": "2026-05-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-05",
+   "category": "burn",
+   "question": "What was net burn in 2026-05?",
+   "answer": {
+    "type": "money",
+    "value": "23767.60",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-05-01",
+     "to": "2026-05-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-2026-06",
+   "category": "revenue",
+   "question": "What was cash revenue in 2026-06?",
+   "answer": {
+    "type": "money",
+    "value": "21034.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: Stripe charges minus refunds plus invoice payments received.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-06-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-2026-06",
+   "category": "burn",
+   "question": "What was net burn in 2026-06?",
+   "answer": {
+    "type": "money",
+    "value": "11778.75",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, that month.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-06-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-net-burn-q2",
+   "category": "burn",
+   "question": "Average monthly net burn over Q2 (Apr-Jun)?",
+   "answer": {
+    "type": "money",
+    "value": "19767.60",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Q2 total ÷ 3.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Lumen Labs",
+     "from": "2026-04-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-accrual-2026-08",
+   "category": "revenue",
+   "question": "Accrual revenue in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "14534.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Accrual: invoices by issue date plus Stripe charges, minus refunds.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31",
+     "basis": "accrual"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-revenue-accrual-2026-09",
+   "category": "revenue",
+   "question": "Accrual revenue in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "14399.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Accrual: invoices by issue date plus Stripe charges, minus refunds.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "basis": "accrual"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s2-founder-bs-assets-sep30",
+   "category": "reports",
+   "question": "Total assets on Sep 30 (cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "320633.36",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash basis: checking + Stripe balance (no rows after Sep 30 in either; receivables are accrual only).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "balance_sheet",
+     "company": "Lumen Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s2-founder-upcoming-bill",
+   "category": "bills",
+   "question": "How much is the next bill due?",
+   "answer": {
+    "type": "money",
+    "value": "1800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "B-77 Harbor Packaging, due Oct 20. Asked as an amount owed (the upcoming list shows it negative, as money out).",
+   "check": {
+    "tool": "list_upcoming",
+    "args": {
+     "company": "Lumen Labs",
+     "days": 30
+    },
+    "path": "items[what~Harbor].amount",
+    "abs": true
+   }
+  },
+  {
+   "id": "s2-founder-stripe-charges-q3-rows",
+   "category": "revenue",
+   "question": "Add up the Stripe charges in Q3 (gross).",
+   "answer": {
+    "type": "money",
+    "value": "27967.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Charges at gross, as the P&L counts them; the fee is a row of its own.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "in account:Stripe",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s2-founder-stripe-fee-rows-q3",
+   "category": "fees",
+   "question": "How much did Stripe charge in fees in Q3, adding up its fee rows?",
+   "answer": {
+    "type": "money",
+    "value": "817.06",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as the P&L's processor fees.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Lumen Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "out account:Stripe fee",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  }
+ ]
+}

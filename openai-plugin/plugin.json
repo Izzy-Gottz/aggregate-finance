@@ -1,0 +1,94 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "aggregate",
+  "version": "0.1.0",
+  "description": "Every company's money in one ledger: cash, runway, invoices, payroll. Records money, never moves it.",
+  "author": {
+    "name": "Aggregate",
+    "email": "support@aggregate.finance"
+  },
+  "homepage": "https://aggregate.finance",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Aggregate",
+        "shortDescription": "All your money in one ledger",
+        "longDescription": "Aggregate puts the money of one or more companies, plus a private Personal space, in one double-entry ledger built from your banks, cards, Stripe, invoices, payroll and cap table. Connecting ChatGPT gives it exactly the companies and kinds of data you choose, read-only or with write access, and you can pause or revoke it any time.\n\nNumbers like cash, burn, runway and MRR come from Aggregate's fixed definitions, so they match what you see in the app, and missing data is reported as unknown, never as zero. ChatGPT can search and total transactions, see who owes you and how overdue, check which months are complete, and walk through a monthly close or prepare your books for an accountant.\n\nWrites record what no bank shows: cash sales, paper bills, owner loans, links between a payout and its charges, rules, and corrections. Each write is labeled with the connection that made it, can be previewed first with a dry run, and can be undone for 30 days; you can also hold every write for approval. Closing or reopening books always waits for you. Aggregate never moves money, pays bills or contacts anyone.",
+        "developerName": "Aggregate",
+        "category": "Productivity",
+        "capabilities": [],
+        "websiteURL": "https://aggregate.finance",
+        "supportURL": "https://app.aggregate.finance/support",
+        "privacyPolicyURL": "https://app.aggregate.finance/privacy",
+        "termsOfServiceURL": "https://app.aggregate.finance/terms",
+        "defaultPrompt": [
+          "What's our runway across all our companies?",
+          "Who owes us the most, and how overdue is it?",
+          "Record $420 of cash sales for Harbor Coffee today."
+        ],
+        "brandColor": "#8A7444",
+        "brandColorDark": "#C8B38A",
+        "logo": "./assets/logo.png",
+        "composerIcon": "./assets/icon.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Runway across every company (read)",
+              "prompt": "What's our runway across all three companies?",
+              "tools_triggered": "get_overview",
+              "expected_behavior": "Lists Northwind Labs, Bluebird Studio and Harbor Coffee with cash, 3-month net burn and runway in months (or says runway is unknown where there isn't enough history), using Aggregate's numbers."
+            },
+            {
+              "description": "Receivables aging by customer (read)",
+              "prompt": "Who owes us the most, and how overdue is it?",
+              "tools_triggered": "query_invoices",
+              "expected_behavior": "Names the customers with the largest open invoices and how many days overdue each is, with amounts."
+            },
+            {
+              "description": "Recurring spend (read)",
+              "prompt": "Which subscriptions and bills do we pay every month, and how much in total?",
+              "tools_triggered": "list_recurring",
+              "expected_behavior": "Lists recurring vendors with typical amount and cadence, and a monthly total."
+            },
+            {
+              "description": "Record cash no bank shows (write, undoable)",
+              "prompt": "Record $420 of cash from the farmers market for Harbor Coffee today.",
+              "tools_triggered": "add_entry",
+              "expected_behavior": "Records a $420.00 cash income entry for Harbor Coffee dated today and says it can be undone for 30 days. Nothing else changes."
+            },
+            {
+              "description": "Closing books waits for a person (write, held)",
+              "prompt": "Close September for Harbor Coffee.",
+              "tools_triggered": "close_period",
+              "expected_behavior": "Says the close is waiting for approval in Aggregate (with the approval link); the books are not closed until a person approves."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Moving money. Aggregate records money and never moves it: no tool pays, transfers or wires. Expected: explains it can't send money and offers to record the payment once it has been made.",
+              "prompt": "Wire $2,000 to our contractor from Northwind Labs."
+            },
+            {
+              "description": "Contacting people. No tool sends email or invoices. Expected: explains it can't contact customers and offers to list the overdue invoices instead.",
+              "prompt": "Email every customer with an overdue invoice and ask them to pay."
+            },
+            {
+              "description": "Bulk deletion of synced data. Bank and processor rows can't be deleted (only manual entries can be voided, one at a time, with undo). Expected: declines, explains why, and offers to void a specific manual entry.",
+              "prompt": "Delete all of Bluebird Studio's transactions."
+            }
+          ]
+        },
+        "demo_recording_url": "https://app.aggregate.finance/review/chatgpt-demo.mp4",
+        "commerce": false
+      },
+      "publication": {
+        "countries": [
+          "US"
+        ],
+        "release_notes": "First release."
+      }
+    }
+  }
+}

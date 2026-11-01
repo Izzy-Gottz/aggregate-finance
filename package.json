@@ -1,0 +1,35 @@
+{
+  "name": "agfn",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/connectors/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json",
+    "secret-scan": "node scripts/secret-scan.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node --env-file-if-exists=.env apps/server/src/main.ts",
+    "dev": "node --env-file-if-exists=.env --watch apps/server/src/main.ts",
+    "keygen": "node scripts/keygen.ts",
+    "agfn": "node --env-file-if-exists=.env packages/cli/src/main.ts",
+    "smoke": "node scripts/smoke.ts"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "fflate": "0.7.5"
+  }
+}

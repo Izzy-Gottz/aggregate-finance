@@ -1,0 +1,521 @@
+{
+ "organizations": {
+  "items": [
+   {
+    "id": "org_1",
+    "name": "Example Labs",
+    "slug": "example-labs"
+   }
+  ],
+  "pagination": {
+   "total_count": 1,
+   "max_page": 1
+  }
+ },
+ "orders": {
+  "1": {
+   "items": [
+    {
+     "id": "ord_1",
+     "created_at": "2026-09-01T10:00:00Z",
+     "modified_at": null,
+     "status": "paid",
+     "paid": true,
+     "subtotal_amount": 1000,
+     "discount_amount": 0,
+     "net_amount": 1000,
+     "tax_amount": 200,
+     "total_amount": 1200,
+     "currency": "usd",
+     "platform_fee_amount": 90,
+     "platform_fee_currency": "usd",
+     "billing_reason": "purchase",
+     "customer_id": "cus_ord_1",
+     "customer": {
+      "id": "cus_ord_1",
+      "email": null,
+      "name": "Ada Example"
+     },
+     "subscription_id": null,
+     "description": "Example Pro"
+    },
+    {
+     "id": "ord_2",
+     "created_at": "2026-09-02T10:00:00Z",
+     "modified_at": null,
+     "status": "paid",
+     "paid": true,
+     "subtotal_amount": 2000,
+     "discount_amount": 0,
+     "net_amount": 2000,
+     "tax_amount": 400,
+     "total_amount": 2400,
+     "currency": "eur",
+     "platform_fee_amount": 160,
+     "platform_fee_currency": "usd",
+     "billing_reason": "purchase",
+     "customer_id": "cus_ord_2",
+     "customer": {
+      "id": "cus_ord_2",
+      "email": "buyer@example.com",
+      "name": null
+     },
+     "subscription_id": null,
+     "description": "Example Pro"
+    },
+    {
+     "id": "ord_3",
+     "created_at": "2026-09-03T10:00:00Z",
+     "modified_at": null,
+     "status": "pending",
+     "paid": false,
+     "subtotal_amount": 3000,
+     "discount_amount": 0,
+     "net_amount": 3000,
+     "tax_amount": 600,
+     "total_amount": 3600,
+     "currency": "usd",
+     "platform_fee_amount": 0,
+     "platform_fee_currency": "usd",
+     "billing_reason": "purchase",
+     "customer_id": "cus_ord_3",
+     "customer": {
+      "id": "cus_ord_3",
+      "email": null,
+      "name": null
+     },
+     "subscription_id": null,
+     "description": "Example Pro"
+    }
+   ],
+   "pagination": {
+    "total_count": 5,
+    "max_page": 2
+   }
+  },
+  "2": {
+   "items": [
+    {
+     "id": "ord_4",
+     "created_at": "2026-09-04T10:00:00Z",
+     "modified_at": null,
+     "status": "refunded",
+     "paid": true,
+     "subtotal_amount": 5000,
+     "discount_amount": 0,
+     "net_amount": 5000,
+     "tax_amount": 1000,
+     "total_amount": 6000,
+     "currency": "usd",
+     "platform_fee_amount": 250,
+     "platform_fee_currency": "usd",
+     "billing_reason": "purchase",
+     "customer_id": "cus_ord_4",
+     "customer": {
+      "id": "cus_ord_4",
+      "email": null,
+      "name": null
+     },
+     "subscription_id": null,
+     "description": "Example Pro"
+    },
+    {
+     "id": "ord_5",
+     "created_at": "2026-09-05T10:00:00Z",
+     "modified_at": null,
+     "status": "paid",
+     "paid": true,
+     "subtotal_amount": 0,
+     "discount_amount": 0,
+     "net_amount": 0,
+     "tax_amount": 0,
+     "total_amount": 0,
+     "currency": "usd",
+     "platform_fee_amount": 0,
+     "platform_fee_currency": "usd",
+     "billing_reason": "purchase",
+     "customer_id": "cus_ord_5",
+     "customer": {
+      "id": "cus_ord_5",
+      "email": null,
+      "name": null
+     },
+     "subscription_id": null,
+     "description": "Example Pro"
+    }
+   ],
+   "pagination": {
+    "total_count": 5,
+    "max_page": 2
+   }
+  },
+  "incremental": {
+   "items": [],
+   "pagination": {
+    "total_count": 0,
+    "max_page": 0
+   }
+  }
+ },
+ "refunds": {
+  "items": [
+   {
+    "id": "ref_2",
+    "created_at": "2026-09-20T10:00:00Z",
+    "status": "pending",
+    "reason": "customer_request",
+    "amount": 1000,
+    "tax_amount": 200,
+    "currency": "usd",
+    "order_id": "ord_1",
+    "customer_id": "cus_ord_1"
+   },
+   {
+    "id": "ref_1",
+    "created_at": "2026-09-06T10:00:00Z",
+    "status": "succeeded",
+    "reason": "customer_request",
+    "amount": 5000,
+    "tax_amount": 1000,
+    "currency": "usd",
+    "order_id": "ord_4",
+    "customer_id": "cus_ord_4"
+   },
+   {
+    "id": "ref_0",
+    "created_at": "2026-08-01T10:00:00Z",
+    "status": "succeeded",
+    "reason": "duplicate",
+    "amount": 700,
+    "tax_amount": 0,
+    "currency": "usd",
+    "order_id": "ord_0",
+    "customer_id": "cus_ord_0"
+   }
+  ],
+  "pagination": {
+   "total_count": 3,
+   "max_page": 1
+  }
+ },
+ "disputes": {
+  "items": [
+   {
+    "id": "dsp_1",
+    "created_at": "2026-09-10T10:00:00Z",
+    "status": "lost",
+    "resolved": true,
+    "closed": true,
+    "amount": 1000,
+    "tax_amount": 200,
+    "currency": "usd",
+    "order_id": "ord_1",
+    "payment_id": "pay_1"
+   },
+   {
+    "id": "dsp_2",
+    "created_at": "2026-09-11T10:00:00Z",
+    "status": "won",
+    "resolved": true,
+    "closed": true,
+    "amount": 1000,
+    "tax_amount": 200,
+    "currency": "usd",
+    "order_id": "ord_1",
+    "payment_id": "pay_2"
+   },
+   {
+    "id": "dsp_3",
+    "created_at": "2026-09-12T10:00:00Z",
+    "status": "prevented",
+    "resolved": false,
+    "closed": true,
+    "amount": 1000,
+    "tax_amount": 200,
+    "currency": "usd",
+    "order_id": "ord_1",
+    "payment_id": "pay_3"
+   },
+   {
+    "id": "dsp_4",
+    "created_at": "2026-09-13T10:00:00Z",
+    "status": "needs_response",
+    "resolved": false,
+    "closed": false,
+    "amount": 2000,
+    "tax_amount": 400,
+    "currency": "eur",
+    "order_id": "ord_2",
+    "payment_id": "pay_4"
+   }
+  ],
+  "pagination": {
+   "total_count": 4,
+   "max_page": 1
+  }
+ },
+ "subscriptions": {
+  "items": [
+   {
+    "id": "sub_m",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 1000,
+    "currency": "usd",
+    "recurring_interval": "month",
+    "recurring_interval_count": 1,
+    "status": "active",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_m",
+    "product_id": "prod_sub_m",
+    "discount_id": "dis_pct",
+    "discount": {
+     "id": "dis_pct",
+     "type": "percentage",
+     "duration": "forever",
+     "duration_in_months": null,
+     "basis_points": 2500
+    },
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_m"
+     }
+    ]
+   },
+   {
+    "id": "sub_y",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 12000,
+    "currency": "usd",
+    "recurring_interval": "year",
+    "recurring_interval_count": 1,
+    "status": "active",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_y",
+    "product_id": "prod_sub_y",
+    "discount_id": "dis_fx3",
+    "discount": {
+     "id": "dis_fx3",
+     "type": "fixed",
+     "duration": "repeating",
+     "duration_in_months": 3,
+     "amount": 1200,
+     "currency": "usd",
+     "amounts": {
+      "usd": 1200
+     }
+    },
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_y"
+     }
+    ]
+   },
+   {
+    "id": "sub_y2",
+    "created_at": "2026-06-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 12000,
+    "currency": "usd",
+    "recurring_interval": "year",
+    "recurring_interval_count": 1,
+    "status": "active",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-06-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_y2",
+    "product_id": "prod_sub_y2",
+    "discount_id": "dis_fx12",
+    "discount": {
+     "id": "dis_fx12",
+     "type": "fixed",
+     "duration": "repeating",
+     "duration_in_months": 12,
+     "amount": 1200,
+     "currency": "usd",
+     "amounts": {
+      "usd": 1200
+     }
+    },
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_y2"
+     }
+    ]
+   },
+   {
+    "id": "sub_t",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 1000,
+    "currency": "usd",
+    "recurring_interval": "month",
+    "recurring_interval_count": 1,
+    "status": "trialing",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_t",
+    "product_id": "prod_sub_t",
+    "discount_id": null,
+    "discount": null,
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_t"
+     }
+    ]
+   },
+   {
+    "id": "sub_c",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 1000,
+    "currency": "usd",
+    "recurring_interval": "month",
+    "recurring_interval_count": 1,
+    "status": "canceled",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": "2026-09-15T00:00:00Z",
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": "2026-09-15T00:00:00Z",
+    "customer_id": "cus_sub_c",
+    "product_id": "prod_sub_c",
+    "discount_id": null,
+    "discount": null,
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_c"
+     }
+    ]
+   },
+   {
+    "id": "sub_w",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 500,
+    "currency": "usd",
+    "recurring_interval": "week",
+    "recurring_interval_count": 2,
+    "status": "past_due",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_w",
+    "product_id": "prod_sub_w",
+    "discount_id": null,
+    "discount": null,
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_w"
+     }
+    ]
+   },
+   {
+    "id": "sub_once",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 2000,
+    "currency": "usd",
+    "recurring_interval": "month",
+    "recurring_interval_count": 1,
+    "status": "active",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_once",
+    "product_id": "prod_sub_once",
+    "discount_id": "dis_once",
+    "discount": {
+     "id": "dis_once",
+     "type": "percentage",
+     "duration": "once",
+     "duration_in_months": null,
+     "basis_points": 5000
+    },
+    "seats": null,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_once"
+     }
+    ]
+   },
+   {
+    "id": "sub_seats",
+    "created_at": "2026-01-01T00:00:00Z",
+    "modified_at": null,
+    "amount": 3000,
+    "currency": "usd",
+    "recurring_interval": "month",
+    "recurring_interval_count": 1,
+    "status": "active",
+    "current_period_start": "2026-10-01T00:00:00Z",
+    "current_period_end": "2026-11-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "started_at": "2026-01-01T00:00:00Z",
+    "ends_at": null,
+    "ended_at": null,
+    "customer_id": "cus_sub_seats",
+    "product_id": "prod_sub_seats",
+    "discount_id": null,
+    "discount": null,
+    "seats": 3,
+    "units": null,
+    "prices": [
+     {
+      "id": "price_sub_seats"
+     }
+    ]
+   }
+  ],
+  "pagination": {
+   "total_count": 8,
+   "max_page": 1
+  }
+ }
+}

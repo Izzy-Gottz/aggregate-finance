@@ -1,0 +1,591 @@
+{
+ "scenario": "s4-vc",
+ "now": "2026-10-12T16:00:00Z",
+ "timeZone": "UTC",
+ "company": "Harbor Seed Fund I",
+ "openingBalances": {
+  "fund_chk": 185000000
+ },
+ "connections": [
+  {
+   "id": "bank",
+   "key": "plaid",
+   "name": "Mercury",
+   "entity": "Harbor Seed Fund I",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "fund_chk",
+     "connectionId": "$conn",
+     "name": "Fund Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "4410",
+     "institution": "Mercury"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call2_granite",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": 100000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Granite Pension Fund",
+     "rawText": "WIRE IN GRANITE PENSION FUND CAPITAL CALL 2"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call2_alder",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": 60000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Alder Family Office",
+     "rawText": "WIRE IN ALDER FAMILY OFFICE CAPITAL CALL 2"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call2_juniper",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": 40000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Juniper Endowment",
+     "rawText": "WIRE IN JUNIPER ENDOWMENT CAPITAL CALL 2"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call3_granite",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 100000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Granite Pension Fund",
+     "rawText": "WIRE IN GRANITE PENSION FUND CAPITAL CALL 3"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call3_alder",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 60000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Alder Family Office",
+     "rawText": "WIRE IN ALDER FAMILY OFFICE CAPITAL CALL 3"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "call3_juniper",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 40000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Juniper Endowment",
+     "rawText": "WIRE IN JUNIPER ENDOWMENT CAPITAL CALL 3"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "mgmt_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -12500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Seed Management LLC",
+     "rawText": "WIRE OUT HARBOR SEED MANAGEMENT MGMT FEE Q2"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "mgmt_2026-04_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "mgmt_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -12500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Seed Management LLC",
+     "rawText": "WIRE OUT HARBOR SEED MANAGEMENT MGMT FEE Q3"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "mgmt_2026-07_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-05-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-06-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-08-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "carta_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": -125000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Carta",
+     "rawText": "CARTA FUND ADMIN ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cooley_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-05-28",
+     "amount": {
+      "minor": -1800000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Cooley LLP",
+     "rawText": "COOLEY LLP ACH LEGAL"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cooley_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-08-26",
+     "amount": {
+      "minor": -1240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Cooley LLP",
+     "rawText": "COOLEY LLP ACH LEGAL"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_tidewell",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": -50000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Tidewell Health",
+     "rawText": "WIRE OUT TIDEWELL HEALTH SERIES SEED INVESTMENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_tidewell_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_corvid",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-05-12",
+     "amount": {
+      "minor": -75000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Corvid Robotics",
+     "rawText": "WIRE OUT CORVID ROBOTICS SAFE INVESTMENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_corvid_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-05-12",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_pinecrest",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-06-18",
+     "amount": {
+      "minor": -40000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pinecrest AI",
+     "rawText": "WIRE OUT PINECREST AI SERIES SEED INVESTMENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_pinecrest_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-06-18",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_brightwave",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-22",
+     "amount": {
+      "minor": -100000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Brightwave Energy",
+     "rawText": "WIRE OUT BRIGHTWAVE ENERGY SERIES A INVESTMENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_brightwave_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-07-22",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_quillmark",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-09",
+     "amount": {
+      "minor": -30000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Quillmark",
+     "rawText": "WIRE OUT QUILLMARK SAFE INVESTMENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "inv_quillmark_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-09",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "exit_pinecrest",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-08-27",
+     "amount": {
+      "minor": 120000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northwind Software",
+     "rawText": "WIRE IN NORTHWIND SOFTWARE ACQUISITION PROCEEDS PINECREST AI"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_granite",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -50000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Granite Pension Fund",
+     "rawText": "WIRE OUT GRANITE PENSION FUND LP DISTRIBUTION 1"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_granite_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_alder",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -30000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Alder Family Office",
+     "rawText": "WIRE OUT ALDER FAMILY OFFICE LP DISTRIBUTION 1"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_alder_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_juniper",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -20000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Juniper Endowment",
+     "rawText": "WIRE OUT JUNIPER ENDOWMENT LP DISTRIBUTION 1"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dist_juniper_fee",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -3000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury",
+     "rawText": "OUTGOING WIRE FEE"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "fund_chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "fund_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 281180000,
+      "currency": "USD"
+     }
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Harbor Seed Fund I",
+    "match": {
+     "description_contains": "CAPITAL CALL"
+    },
+    "set": {
+     "category": "paid_in_capital"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s4-rule-calls"
+   }
+  },
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Harbor Seed Fund I",
+    "match": {
+     "description_contains": "LP DISTRIBUTION"
+    },
+    "set": {
+     "category": "paid_in_capital"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s4-rule-dist"
+   }
+  },
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Harbor Seed Fund I",
+    "match": {
+     "description_contains": "INVESTMENT"
+    },
+    "set": {
+     "category": "other_assets"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s4-rule-invest"
+   }
+  },
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Harbor Seed Fund I",
+    "match": {
+     "description_contains": "ACQUISITION PROCEEDS"
+    },
+    "set": {
+     "category": "other_assets"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s4-rule-exit"
+   }
+  },
+  {
+   "do": "confirm_all_matches"
+  }
+ ]
+}

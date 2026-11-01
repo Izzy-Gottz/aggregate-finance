@@ -1,0 +1,28 @@
+{
+  "name": "@agfn/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "dev": "node scripts/build.mjs --serve",
+    "build": "node scripts/build.mjs",
+    "build:demo": "node scripts/build.mjs --mock",
+    "screens": "node scripts/screens.mjs",
+    "screens:live": "node scripts/screens-live.ts",
+    "screens:emails": "node scripts/emails.ts"
+  },
+  "dependencies": {
+    "@agfn/contracts": "*",
+    "@agfn/equity": "0.0.0",
+    "htm": "^3.1.1",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/preact": "^3.2.4",
+    "axe-core": "4.13.0",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^20.14.6"
+  }
+}

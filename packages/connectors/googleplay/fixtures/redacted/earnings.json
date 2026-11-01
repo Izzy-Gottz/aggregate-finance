@@ -1,0 +1,113 @@
+{
+ "_note": "synthesized from Google Play earnings report docs (answer 6135870) and the Cloud Storage JSON API; re-record from a real bucket when keys are available",
+ "list": {
+  "": {
+   "kind": "storage#objects",
+   "nextPageToken": "tok2",
+   "items": [
+    {
+     "kind": "storage#object",
+     "id": "pubsite_prod_rev_0101/earnings/earnings_202301_0101.zip/901",
+     "name": "earnings/earnings_202301_0101.zip",
+     "bucket": "pubsite_prod_rev_0101",
+     "generation": "901",
+     "metageneration": "1",
+     "contentType": "application/zip",
+     "size": "1024",
+     "updated": "2026-09-05T00:00:00.000Z"
+    },
+    {
+     "kind": "storage#object",
+     "id": "pubsite_prod_rev_0101/earnings/earnings_202608_0101.zip/1001",
+     "name": "earnings/earnings_202608_0101.zip",
+     "bucket": "pubsite_prod_rev_0101",
+     "generation": "1001",
+     "metageneration": "1",
+     "contentType": "application/zip",
+     "size": "1024",
+     "updated": "2026-09-05T00:00:00.000Z"
+    }
+   ]
+  },
+  "tok2": {
+   "kind": "storage#objects",
+   "items": [
+    {
+     "kind": "storage#object",
+     "id": "pubsite_prod_rev_0101/earnings/earnings_202609_0101.zip/1002",
+     "name": "earnings/earnings_202609_0101.zip",
+     "bucket": "pubsite_prod_rev_0101",
+     "generation": "1002",
+     "metageneration": "1",
+     "contentType": "application/zip",
+     "size": "1024",
+     "updated": "2026-09-05T00:00:00.000Z"
+    },
+    {
+     "kind": "storage#object",
+     "id": "pubsite_prod_rev_0101/earnings/README.txt/5",
+     "name": "earnings/README.txt",
+     "bucket": "pubsite_prod_rev_0101",
+     "generation": "5",
+     "metageneration": "1",
+     "contentType": "application/zip",
+     "size": "1024",
+     "updated": "2026-09-05T00:00:00.000Z"
+    }
+   ]
+  }
+ },
+ "csv": {
+  "earnings/earnings_202608_0101.zip": "Description,Transaction Date,Transaction Time,Tax Type,Transaction Type,Refund Type,Product Title,Package ID,Product Type,SKU ID,Hardware,Buyer Country,Buyer State,Buyer Postcode,Buyer Currency,Amount (Buyer Currency),Currency Conversion Rate,Merchant Currency,Amount (Merchant Currency),Base Plan or Purchase Option ID,Offer ID,Group ID,First USD 1M Eligible,Service Fee %,Fee Description,Promotion ID,Sales Channel\r\nGPA.3301-1111-2222-01001,\"Aug 3, 2026\",4:33:17 AM PDT,,Charge,,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,9.99,1.000000,USD,9.99,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01001,\"Aug 3, 2026\",4:33:17 AM PDT,,Google fee,,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,-1.50,1.000000,USD,-1.50,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01001,\"Aug 3, 2026\",4:33:17 AM PDT,State Sales Tax,Tax,,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,0.80,1.000000,USD,0.80,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01002,\"Aug 10, 2026\",11:05:00 PM PDT,,Charge,,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,4.99,1.000000,USD,4.99,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01002,\"Aug 10, 2026\",11:05:00 PM PDT,,Google fee,,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,-0.75,1.000000,USD,-0.75,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01002,\"Aug 12, 2026\",9:00:00 AM PDT,,Charge refund,Full refund,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,-4.99,1.000000,USD,-4.99,monthly,,,Yes,15,,,Play Store\r\nGPA.3301-1111-2222-01002,\"Aug 12, 2026\",9:00:00 AM PDT,,Google fee refund,Full refund,Pro Monthly,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,0.75,1.000000,USD,0.75,monthly,,,Yes,15,,,Play Store\r\n,\"Aug 31, 2026\",12:00:00 PM PDT,,Adjustment,,,com.example.app,subscription,pro_monthly,,US,CA,94000,USD,1.00,1.000000,USD,1.00,monthly,,,Yes,15,,,Play Store\r\n",
+  "earnings/earnings_202609_0101.zip": "Description,Transaction Date,Transaction Time,Tax Type,Transaction Type,Refund Type,Product Title,Package ID,Product Type,SKU ID,Hardware,Buyer Country,Buyer State,Buyer Postcode,Buyer Currency,Amount (Buyer Currency),Currency Conversion Rate,Merchant Currency,Amount (Merchant Currency),Base Plan or Purchase Option ID,Offer ID,Group ID,First USD 1M Eligible,Service Fee %,Fee Description,Promotion ID,Sales Channel\nGPA.3301-1111-2222-01003,\"Sep 2, 2026\",1:00:00 AM PDT,,Charge,,\"Pro, \"\"yearly\"\"\",com.example.app,subscription,pro_monthly,,US,CA,94000,USD,19.99,1.000000,USD,19.99,monthly,,,Yes,15,,,Play Store\nGPA.3301-1111-2222-01003,\"Sep 2, 2026\",1:00:00 AM PDT,,Google fee,,\"Pro, \"\"yearly\"\"\",com.example.app,subscription,pro_monthly,,US,CA,94000,USD,-3.00,1.000000,USD,-3.00,monthly,,,Yes,15,,,Play Store\n",
+  "earnings/earnings_202301_0101.zip": "Description,Transaction Date,Transaction Time,Tax Type,Transaction Type,Refund Type,Product Title,Package ID,Product Type,SKU ID,Hardware,Buyer Country,Buyer State,Buyer Postcode,Buyer Currency,Amount (Buyer Currency),Currency Conversion Rate,Merchant Currency,Amount (Merchant Currency),Base Plan or Purchase Option ID,Offer ID,Group ID,First USD 1M Eligible,Service Fee %,Fee Description,Promotion ID,Sales Channel\n"
+ },
+ "token": {
+  "access_token": "ya29.fixture-token",
+  "expires_in": 3599,
+  "token_type": "Bearer"
+ },
+ "errors": {
+  "invalid_grant": {
+   "error": "invalid_grant",
+   "error_description": "Invalid JWT Signature."
+  },
+  "forbidden": {
+   "error": {
+    "code": 403,
+    "message": "svc@example.com does not have storage.objects.list access to the Google Cloud Storage bucket.",
+    "errors": [
+     {
+      "message": "denied",
+      "domain": "global",
+      "reason": "forbidden"
+     }
+    ]
+   }
+  },
+  "unauthorized": {
+   "error": {
+    "code": 401,
+    "message": "Invalid Credentials",
+    "errors": [
+     {
+      "message": "Invalid Credentials",
+      "domain": "global",
+      "reason": "authError"
+     }
+    ]
+   }
+  },
+  "rate_limited": {
+   "error": {
+    "code": 429,
+    "message": "The rate of change requests to the object exceeds the rate limit.",
+    "errors": [
+     {
+      "reason": "rateLimitExceeded"
+     }
+    ]
+   }
+  }
+ }
+}

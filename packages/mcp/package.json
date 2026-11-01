@@ -1,0 +1,24 @@
+{
+  "name": "@agfn/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts",
+    "./stdio": "./src/stdio.ts",
+    "./keys": "./src/keys.ts"
+  },
+  "dependencies": {
+    "@agfn/contracts": "*",
+    "@agfn/db": "*",
+    "@agfn/recurring": "0.0.0",
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "kysely": "^0.29.6",
+    "zod": "^4.6.5"
+  },
+  "bin": {
+    "agfn-mcp": "./src/cli.ts"
+  }
+}

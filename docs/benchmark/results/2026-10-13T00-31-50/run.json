@@ -1,0 +1,27 @@
+{
+  "runId": "2026-10-13T00-31-50",
+  "freezeHash": "d750b699506972f0fad290f593cb3b0f1bd1d218a5776fccb24de8e2888549b4",
+  "pilot": false,
+  "arms": [
+    "B"
+  ],
+  "runs": 1,
+  "questions": [
+    "balances-05",
+    "sales-05",
+    "sales-12",
+    "fees-05",
+    "payouts-05",
+    "transfers-05",
+    "expenses-05",
+    "bills-05",
+    "subscriptions-05",
+    "card-05"
+  ],
+  "models": [
+    "Claude Haiku 5.5"
+  ],
+  "startedAt": "2026-10-13T00:31:50.409Z",
+  "finishedAt": "2026-10-13T00:33:04.718Z",
+  "spentUsd": 0.06
+}

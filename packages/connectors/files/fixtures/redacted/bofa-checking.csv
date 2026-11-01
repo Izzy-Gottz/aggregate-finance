@@ -1,0 +1,11 @@
+Description,,Summary Amt.
+Beginning balance as of 01/01/2026,,"2,500.00"
+Total credits,,"1,200.00"
+Total debits,,"-312.45"
+Ending balance as of 01/15/2026,,"3,387.55"
+
+Date,Description,Amount,Running Bal.
+01/01/2026,Beginning balance as of 01/01/2026,,"2,500.00"
+01/03/2026,"SAMPLE UTILITY CO DES:BILL PAY ID:XXXXX1234","-112.45","2,387.55"
+01/06/2026,"SAMPLE EMPLOYER DES:PAYROLL ID:XXXXX5678","1,200.00","3,587.55"
+01/09/2026,"CHECK 1043","-200.00","3,387.55"

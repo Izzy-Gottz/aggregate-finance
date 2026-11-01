@@ -1,0 +1,24 @@
+{
+  "name": "@agfn/cli",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "bin": {
+    "agfn": "./src/main.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@agfn/connector-plaid": "*",
+    "@agfn/connector-registry": "*",
+    "@agfn/db": "*",
+    "@agfn/mcp": "*",
+    "@agfn/security": "*",
+    "@agfn/server": "*",
+    "kysely": "^0.29.6",
+    "@agfn/demo": "*",
+    "@agfn/core": "*"
+  }
+}

@@ -1,0 +1,17 @@
+# Secret scan settings (gitleaks): the default rules, minus test fixtures that only look like keys.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and form placeholders, not real secrets"
+paths = [
+  '''\.test\.ts$''',
+  '''apps/server/src/redteam/''',
+]
+# Matched against the whole line, so an entry can name where a public value sits.
+regexTarget = "line"
+regexes = [
+  '''-----BEGIN PRIVATE KEY-----…''',
+  # Cloudflare Web Analytics beacon token: public by design (every visitor's browser receives it in the page).
+  '''data-cf-beacon=''',
+]

@@ -1,0 +1,140 @@
+import type { ConnectionRef, PayrollRun } from '@agfn/contracts'
+import { MemoryRawSink, runSync } from '@agfn/connector-sdk'
+import { assertRedacted, assertValidEvents, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
+import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+import { createFinchConnector } from './connector.ts'
+
+const FIX = JSON.parse(readFileSync(new URL('../fixtures/redacted/sandbox.json', import.meta.url), 'utf8')) as {
+  payments: Array<Record<string, unknown>>
+  statements: Record<string, unknown[]>
+  directory: unknown
+}
+const NOW = Date.parse('2026-10-09T12:00:00Z')
+
+function make(extra: FixtureRoute[] = [], config: Record<string, unknown> = {}) {
+  const ff = fixtureFetch([
+    ...extra,
+    {
+      match: '/employer/payment',
+      respond: (url) => {
+        const from = url.searchParams.get('start_date') as string
+        const to = url.searchParams.get('end_date') as string
+        return { json: FIX.payments.filter((p) => (p.pay_date as string) >= from && (p.pay_date as string) <= to) }
+      },
+    },
+    {
+      method: 'POST',
+      match: '/employer/pay-statement',
+      respond: (_url, body) => {
+        const reqs = (body as { requests: Array<{ payment_id: string }> }).requests
+        return { json: { responses: reqs.map((r) => (FIX.statements[r.payment_id] ? { payment_id: r.payment_id, code: 200, body: { paging: { count: 2, offset: 0 }, pay_statements: FIX.statements[r.payment_id] } } : { payment_id: r.payment_id, code: 404, body: {} })) } }
+      },
+    },
+    { match: '/employer/directory', respond: { json: FIX.directory } },
+    { match: '/employer/company', respond: { json: { id: 'co_1', legal_name: 'Example Co' } } },
+  ])
+  const connector = createFinchConnector({
+    deps: { raw: new MemoryRawSink(), fetch: ff.fetch, clock: fakeClock(NOW), random: () => 0.5 },
+    oauth: { clientId: 'client-test', clientSecret: 'secret-test' },
+  })
+  const conn: ConnectionRef = { id: 'conn_finch', workspaceId: 'ws_1', connectorKey: 'finch', secret: { accessToken: 'tok-test' }, config: { providerId: 'gusto', ...config } }
+  return { connector, conn, ff }
+}
+
+describe('finch connector', () => {
+  it('fixtures are redacted', () => assertRedacted(FIX))
+
+  it('passes the connector contract (two years of 90-day windows)', async () => {
+    const r = await runConnectorContract({ make: () => make(), minEvents: 4 })
+    expect(r.pages).toBe(9) // 730 days back + 31 ahead, in 90-day windows
+  })
+
+  it('maps payments to provider payroll runs with per-person lines (golden)', async () => {
+    const { connector, conn, ff } = make()
+    const { events } = await runSync(connector, conn, null)
+    assertValidEvents(events, { connectionId: conn.id })
+    expect(ff.calls.every((c) => c.headers['finch-api-version'] === '2020-09-17' && c.headers.authorization === 'Bearer tok-test')).toBe(true)
+    const runs = Object.fromEntries((events as PayrollRun[]).map((r) => [r.externalId, r]))
+    expect(Object.keys(runs).sort()).toEqual(['pay_0a', 'pay_0b', 'pay_next', 'pay_old'])
+    expect(runs.pay_0a).toMatchObject({
+      payDate: '2026-09-15',
+      periodStart: '2026-09-01',
+      periodEnd: '2026-09-15',
+      gross: { minor: 1_200_000, currency: 'USD' },
+      net: { minor: 912_000, currency: 'USD' },
+      employerTaxes: { minor: 92_500, currency: 'USD' },
+      employeeTaxes: { minor: 288_000, currency: 'USD' },
+      employerBenefits: { minor: 66_000, currency: 'USD' },
+      companyDebit: { minor: 1_402_500, currency: 'USD' },
+      employeeCount: 2,
+      source: 'provider',
+      estimated: false,
+      status: 'paid',
+      provider: 'gusto',
+      lines: [
+        { person: 'Ada Example', gross: { minor: 700_000, currency: 'USD' }, net: { minor: 532_000, currency: 'USD' }, kind: 'employee' },
+        { person: 'Ben Sample', gross: { minor: 500_000, currency: 'USD' }, net: { minor: 380_000, currency: 'USD' }, kind: 'employee' },
+      ],
+    })
+    expect(runs.pay_0b?.lines).toBeUndefined()
+    expect(runs.pay_next?.status).toBe('scheduled')
+    expect(runs.pay_old).toMatchObject({ employerTaxes: { minor: 61_200, currency: 'USD' } })
+    expect(runs.pay_old?.companyDebit).toBeUndefined()
+  })
+
+  it('employer taxes come from the pay statements when the payment says 0 or nothing', async () => {
+    // Gusto via Finch: zero at payment level, the real figures on each statement.
+    const pay = { id: 'pay_x', pay_date: '2026-09-30', gross_pay: { amount: 100_000, currency: 'usd' }, net_pay: { amount: 75_000, currency: 'usd' }, employer_taxes: { amount: 0, currency: 'usd' }, company_debit: null, individual_ids: ['ind_a'] }
+    const stmt = (who: string) => ({
+      individual_id: who,
+      type: 'regular_payroll',
+      gross_pay: { amount: 50_000, currency: 'usd' },
+      net_pay: { amount: 37_500, currency: 'usd' },
+      taxes: [
+        // Finch's statement shape: integer cents and a currency field.
+        { type: 'fica', name: 'Social Security', employer: true, amount: 3_100, currency: 'usd' },
+        { type: 'fica', name: 'Social Security', employer: false, amount: 3_100, currency: 'usd' },
+        { type: 'federal', name: 'FUTA', employer: true, amount: 300, currency: 'usd' },
+      ],
+      employer_contributions: [],
+    })
+    const { connector, conn } = make([
+      { match: '/employer/payment', respond: (url) => ({ json: (url.searchParams.get('start_date') as string) <= '2026-09-30' && (url.searchParams.get('end_date') as string) >= '2026-09-30' ? [pay] : [] }) },
+      { method: 'POST', match: '/employer/pay-statement', respond: { json: { responses: [{ payment_id: 'pay_x', code: 200, body: { pay_statements: [stmt('ind_a'), stmt('ind_b')] } }] } } },
+    ])
+    const { events } = await runSync(connector, conn, null)
+    expect((events as PayrollRun[]).find((r) => r.externalId === 'pay_x')?.employerTaxes).toEqual({ minor: 6_800, currency: 'USD' })
+  })
+
+  it('incremental pass re-reads 45 days back for corrections', async () => {
+    const { connector, conn, ff } = make()
+    const first = await runSync(connector, conn, null)
+    ff.calls.length = 0
+    await runSync(connector, conn, first.cursor)
+    const windows = ff.calls.filter((c) => c.url.includes('/employer/payment')).map((c) => new URL(c.url).searchParams.get('start_date'))
+    expect(windows).toEqual(['2026-08-25'])
+  })
+
+  it('degrades when the provider has no pay statements; can be turned off', async () => {
+    const unsupported = make([{ method: 'POST', match: '/employer/pay-statement', respond: { status: 501, json: { code: 501, name: 'not_implemented_error', message: 'not supported' } } }])
+    const a = await runSync(unsupported.connector, unsupported.conn, null)
+    expect(a.events).toHaveLength(4)
+    expect(a.events.every((e) => !(e as PayrollRun).lines)).toBe(true)
+    const off = make([], { individualDetail: false })
+    await runSync(off.connector, off.conn, null)
+    expect(off.ff.calls.some((c) => c.url.includes('pay-statement'))).toBe(false)
+  })
+
+  it('errors: reauth, still-syncing (202) stops without sleeping', async () => {
+    const reauth = make([{ match: '/employer/company', respond: { status: 401, json: { code: 401, name: 'reauthenticate_user', finch_code: 'reauthenticate_user', message: 'reconnect' } } }])
+    expect((await reauth.connector.health(reauth.conn)).status).toBe('needs_reauth')
+    const syncing = make([{ match: '/employer/payment', respond: { status: 202, json: { code: 202, finch_code: 'data_sync_in_progress', message: 'syncing' } } }])
+    await expect(syncing.connector.sync(syncing.conn, null)).rejects.toMatchObject({ kind: 'rate_limited', code: 'data_sync_in_progress' })
+  })
+
+  it('connect exchanges the Finch Connect code', async () => {
+    const { connector } = make([{ method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_1', company_id: 'co_1', provider_id: 'gusto', client_type: 'sandbox' } } }])
+    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_1', companyId: 'co_1', providerId: 'gusto', clientType: 'sandbox' } })
+  })
+})

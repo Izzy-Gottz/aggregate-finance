@@ -1,0 +1,36 @@
+{
+  "_note": "synthesized from Wise API docs (docs.wise.com: profile list v2, balance list v4, balance statement statement.json); re-record from sandbox when keys are available",
+  "profiles": [
+    { "id": 1001, "publicId": "pub_personal", "userId": 501, "type": "PERSONAL", "fullName": "Test Person", "firstName": "Test", "lastName": "Person", "email": "person@example.com", "currentState": "VISIBLE", "createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z" },
+    { "id": 2002, "publicId": "pub_business", "userId": 501, "type": "BUSINESS", "businessName": "Example Labs Ltd", "fullName": "Example Labs Ltd", "email": "finance@example.com", "currentState": "VISIBLE", "companyType": "LIMITED", "createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z" }
+  ],
+  "balances": [
+    { "id": 101, "currency": "USD", "type": "STANDARD", "name": null, "icon": null, "investmentState": "NOT_INVESTED", "amount": { "value": 4310.86, "currency": "USD" }, "reservedAmount": { "value": 50, "currency": "USD" }, "cashAmount": { "value": 4310.86, "currency": "USD" }, "totalWorth": { "value": 4360.86, "currency": "USD" }, "creationTime": "2024-01-02T00:00:00Z", "modificationTime": "2026-10-05T00:00:00Z", "visible": true },
+    { "id": 102, "currency": "EUR", "type": "STANDARD", "name": "Euro ops", "icon": null, "investmentState": "NOT_INVESTED", "amount": { "value": 90.01, "currency": "EUR" }, "reservedAmount": { "value": 0, "currency": "EUR" }, "cashAmount": { "value": 90.01, "currency": "EUR" }, "totalWorth": { "value": 90.01, "currency": "EUR" }, "creationTime": "2024-01-02T00:00:00Z", "modificationTime": "2026-10-05T00:00:00Z", "visible": true }
+  ],
+  "statements": {
+    "101": {
+      "accountHolder": { "type": "BUSINESS", "address": { "city": "Example City", "country": "US" } },
+      "issuer": { "name": "Wise US Inc", "city": "New York", "country": "US" },
+      "bankDetails": null,
+      "transactions": [
+        { "type": "DEBIT", "date": "2026-10-01T08:47:05.832Z", "amount": { "value": -25.4, "currency": "USD" }, "totalFees": { "value": 0, "currency": "USD" }, "details": { "type": "CARD", "description": "Card transaction of 25.40 USD issued by Notion Labs", "amount": { "value": 25.4, "currency": "USD" }, "category": "Computer Network Services", "merchant": { "name": "Notion Labs", "city": "San Francisco", "country": "US", "category": "Computer Network Services" } }, "exchangeDetails": null, "runningBalance": { "value": 2974.6, "currency": "USD" }, "referenceNumber": "CARD-249281" },
+        { "type": "CREDIT", "date": "2026-10-02T10:00:00.000Z", "amount": { "value": 1500, "currency": "USD" }, "totalFees": { "value": 0, "currency": "USD" }, "details": { "type": "DEPOSIT", "description": "Received money from Customer Co with reference INV-1001", "senderName": "Customer Co", "senderAccount": "(ACH) xxxx1234", "paymentReference": "INV-1001" }, "exchangeDetails": null, "runningBalance": { "value": 4474.6, "currency": "USD" }, "referenceNumber": "TRANSFER-554433" },
+        { "type": "DEBIT", "date": "2026-10-03T12:00:00.000Z", "amount": { "value": -110.0, "currency": "USD" }, "totalFees": { "value": 0.59, "currency": "USD" }, "details": { "type": "CONVERSION", "description": "Converted 110.00 USD to 100.00 EUR", "sourceAmount": { "value": 110, "currency": "USD" }, "targetAmount": { "value": 100, "currency": "EUR" }, "fee": { "value": 0.59, "currency": "USD" }, "rate": 0.9142 }, "exchangeDetails": { "forAmount": { "value": 100, "currency": "EUR" }, "rate": 0.9142 }, "runningBalance": { "value": 4364.6, "currency": "USD" }, "referenceNumber": "BALANCE-778899" }
+      ],
+      "endOfStatementBalance": { "value": 4310.86, "currency": "USD" },
+      "query": { "intervalStart": "2025-10-09T12:00:00.000Z", "intervalEnd": "2026-10-09T12:00:00.000Z", "currency": "USD", "accountId": 101 }
+    },
+    "102": {
+      "accountHolder": { "type": "BUSINESS", "address": { "city": "Example City", "country": "US" } },
+      "issuer": { "name": "Wise US Inc", "city": "New York", "country": "US" },
+      "bankDetails": null,
+      "transactions": [
+        { "type": "CREDIT", "date": "2026-10-03T12:00:00.000Z", "amount": { "value": 100, "currency": "EUR" }, "totalFees": { "value": 0, "currency": "EUR" }, "details": { "type": "CONVERSION", "description": "Converted 110.00 USD to 100.00 EUR", "sourceAmount": { "value": 110, "currency": "USD" }, "targetAmount": { "value": 100, "currency": "EUR" }, "rate": 0.9142 }, "exchangeDetails": { "forAmount": { "value": 110, "currency": "USD" }, "rate": 0.9142 }, "runningBalance": { "value": 100, "currency": "EUR" }, "referenceNumber": "BALANCE-778899" },
+        { "type": "DEBIT", "date": "2026-10-04T06:00:00.000Z", "amount": { "value": -9.99, "currency": "EUR" }, "totalFees": { "value": 0, "currency": "EUR" }, "details": { "type": "DIRECT_DEBIT", "description": "Direct debit payment to Example Telecom", "paymentReference": "DD-42" }, "exchangeDetails": null, "runningBalance": { "value": 90.01, "currency": "EUR" }, "referenceNumber": "DIRECT_DEBIT-9001" }
+      ],
+      "endOfStatementBalance": { "value": 90.01, "currency": "EUR" },
+      "query": { "intervalStart": "2025-10-09T12:00:00.000Z", "intervalEnd": "2026-10-09T12:00:00.000Z", "currency": "EUR", "accountId": 102 }
+    }
+  }
+}

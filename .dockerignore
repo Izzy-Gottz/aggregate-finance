@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.worktrees
+data
+.env
+.env.*
+!.env.example
+**/dist
+.git
+docs/screens
+fixtures/raw

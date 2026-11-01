@@ -1,0 +1,5 @@
+Date (UTC),Description,Amount,Status,Source Account,Bank Description,Reference,Note,Last Four Digits,Name On Card,Category,GL Code,Timestamp,Original Currency,Check Number,Tags
+01-15-2026,Sample Cloud Hosting,-212.40,Pending,Mercury Checking ••0042,SAMPLE CLOUD HOSTING,,,,,Software,,01-15-2026 14:02:11,,,
+01-13-2026,Sample Client Inc,15000.00,Sent,Mercury Checking ••0042,SAMPLE CLIENT INC ACH CREDIT,INV-2026-007,,,,,,01-13-2026 09:30:00,,,
+01-11-2026,Sample Contractor LLC,-3200.00,Sent,Mercury Checking ••0042,SAMPLE CONTRACTOR LLC,,March work,,,,,01-11-2026 16:45:20,,,
+01-10-2026,Sample Office Supply,-75.00,Failed,Mercury Checking ••0042,SAMPLE OFFICE SUPPLY,,,,,,,01-10-2026 11:00:00,,,

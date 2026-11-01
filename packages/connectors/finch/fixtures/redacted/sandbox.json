@@ -1,0 +1,25 @@
+{
+  "_note": "Redacted Finch sandbox shapes (provider gusto). Money is {amount: cents, currency}.",
+  "payments": [
+    { "id": "pay_0a", "pay_date": "2026-09-15", "debit_date": "2026-09-13", "pay_period": { "start_date": "2026-09-01", "end_date": "2026-09-15" },
+      "company_debit": { "amount": 1402500, "currency": "usd" }, "gross_pay": { "amount": 1200000, "currency": "usd" }, "net_pay": { "amount": 912000, "currency": "usd" },
+      "employer_taxes": { "amount": 92500, "currency": "usd" }, "employee_taxes": { "amount": 288000, "currency": "usd" }, "individual_ids": ["ind_a", "ind_b"] },
+    { "id": "pay_0b", "pay_date": "2026-09-30", "pay_period": { "start_date": "2026-09-16", "end_date": "2026-09-30" },
+      "company_debit": { "amount": 1402500, "currency": "usd" }, "gross_pay": { "amount": 1200000, "currency": "usd" }, "net_pay": { "amount": 912000, "currency": "usd" },
+      "employer_taxes": { "amount": 92500, "currency": "usd" }, "employee_taxes": { "amount": 288000, "currency": "usd" }, "individual_ids": ["ind_a", "ind_b"] },
+    { "id": "pay_old", "pay_date": "2025-03-14", "gross_pay": { "amount": 800000, "currency": "usd" }, "net_pay": { "amount": 610000, "currency": "usd" },
+      "employer_taxes": { "amount": 61200, "currency": "usd" }, "employee_taxes": null, "company_debit": null, "individual_ids": ["ind_a"] },
+    { "id": "pay_next", "pay_date": "2026-10-15", "gross_pay": { "amount": 1200000, "currency": "usd" }, "net_pay": { "amount": 912000, "currency": "usd" },
+      "employer_taxes": { "amount": 92500, "currency": "usd" }, "individual_ids": ["ind_a", "ind_b"] },
+    { "id": "pay_bad", "pay_date": "2026-08-31", "gross_pay": null, "net_pay": { "amount": 1, "currency": "usd" } }
+  ],
+  "statements": {
+    "pay_0a": [
+      { "individual_id": "ind_a", "type": "regular_payroll", "gross_pay": { "amount": 700000, "currency": "usd" }, "net_pay": { "amount": 532000, "currency": "usd" },
+        "employer_contributions": [ { "name": "401k match", "amount": 21000, "type": "401k" } ] },
+      { "individual_id": "ind_b", "type": "regular_payroll", "gross_pay": { "amount": 500000, "currency": "usd" }, "net_pay": { "amount": 380000, "currency": "usd" },
+        "employer_contributions": [ { "name": "Medical", "amount": 45000, "type": "medical" } ] }
+    ]
+  },
+  "directory": { "paging": { "count": 2, "offset": 0 }, "individuals": [ { "id": "ind_a", "first_name": "Ada", "last_name": "Example" }, { "id": "ind_b", "first_name": "Ben", "last_name": "Sample" } ] }
+}

@@ -1,0 +1,886 @@
+{
+ "_note": "synthesized from Lemon Squeezy API docs (docs.lemonsqueezy.com/api); re-record from a test-mode store when keys are available",
+ "stores": {
+  "meta": {
+   "page": {
+    "currentPage": 1,
+    "from": 1,
+    "lastPage": 1,
+    "perPage": 100,
+    "to": 2,
+    "total": 2
+   }
+  },
+  "jsonapi": {
+   "version": "1.0"
+  },
+  "links": {
+   "first": "https://api.lemonsqueezy.com/v1/stores?page[number]=1&page[size]=100",
+   "last": "https://api.lemonsqueezy.com/v1/stores?page[number]=1&page[size]=100"
+  },
+  "data": [
+   {
+    "type": "stores",
+    "id": "1",
+    "attributes": {
+     "name": "Synthetic Store",
+     "slug": "synthetic-store",
+     "domain": "store.example.com",
+     "url": "https://store.example.com",
+     "avatar_url": null,
+     "plan": "fresh",
+     "country": "US",
+     "country_nicename": "United States",
+     "currency": "USD",
+     "total_sales": 3,
+     "total_revenue": 5000,
+     "thirty_day_sales": 1,
+     "thirty_day_revenue": 1000,
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-09-01T00:00:00.000000Z"
+    },
+    "links": {
+     "self": "https://api.lemonsqueezy.com/v1/stores/1"
+    }
+   },
+   {
+    "type": "stores",
+    "id": "2",
+    "attributes": {
+     "name": "Second Store",
+     "slug": "second-store",
+     "domain": "store.example.com",
+     "url": "https://store.example.com",
+     "avatar_url": null,
+     "plan": "fresh",
+     "country": "US",
+     "country_nicename": "United States",
+     "currency": "EUR",
+     "total_sales": 3,
+     "total_revenue": 5000,
+     "thirty_day_sales": 1,
+     "thirty_day_revenue": 1000,
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-09-01T00:00:00.000000Z"
+    },
+    "links": {
+     "self": "https://api.lemonsqueezy.com/v1/stores/2"
+    }
+   }
+  ]
+ },
+ "orders": {
+  "1": {
+   "meta": {
+    "page": {
+     "currentPage": 1,
+     "from": 1,
+     "lastPage": 2,
+     "perPage": 3,
+     "to": 3,
+     "total": 3
+    }
+   },
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "links": {
+    "first": "https://api.lemonsqueezy.com/v1/orders?page[number]=1&page[size]=3",
+    "last": "https://api.lemonsqueezy.com/v1/orders?page[number]=2&page[size]=3",
+    "next": "https://api.lemonsqueezy.com/v1/orders?page[number]=2&page[size]=3"
+   },
+   "data": [
+    {
+     "type": "orders",
+     "id": "103",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 1103,
+      "identifier": "a1b2c3-103",
+      "order_number": 103,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "USD",
+      "currency_rate": "1.0000",
+      "subtotal": 1000,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 100,
+      "total": 1100,
+      "subtotal_usd": 1000,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 100,
+      "total_usd": 1100,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "partial_refund",
+      "status_formatted": "Partial refund",
+      "refunded": true,
+      "refunded_at": "2026-09-12T08:00:00.000000Z",
+      "refunded_amount": 550,
+      "refunded_amount_usd": 550,
+      "first_order_item": {
+       "id": 5103,
+       "order_id": 103,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-09-10T10:00:00.000000Z",
+      "updated_at": "2026-09-12T08:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/103"
+     }
+    },
+    {
+     "type": "orders",
+     "id": "102",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 1102,
+      "identifier": "a1b2c3-102",
+      "order_number": 102,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "USD",
+      "currency_rate": "1.0000",
+      "subtotal": 2000,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 400,
+      "total": 2400,
+      "subtotal_usd": 2000,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 400,
+      "total_usd": 2400,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "refunded",
+      "status_formatted": "Refunded",
+      "refunded": true,
+      "refunded_at": "2026-09-06T08:00:00.000000Z",
+      "refunded_amount": 2400,
+      "refunded_amount_usd": 2400,
+      "first_order_item": {
+       "id": 5102,
+       "order_id": 102,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-09-05T10:00:00.000000Z",
+      "updated_at": "2026-09-06T08:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/102"
+     }
+    },
+    {
+     "type": "orders",
+     "id": "101",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 1101,
+      "identifier": "a1b2c3-101",
+      "order_number": 101,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "USD",
+      "currency_rate": "1.0000",
+      "subtotal": 1000,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 199,
+      "total": 1199,
+      "subtotal_usd": 1000,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 199,
+      "total_usd": 1199,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "paid",
+      "status_formatted": "Paid",
+      "refunded": false,
+      "refunded_at": null,
+      "refunded_amount": 0,
+      "refunded_amount_usd": 0,
+      "first_order_item": {
+       "id": 5101,
+       "order_id": 101,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-09-02T10:00:00.000000Z",
+      "updated_at": "2026-09-01T10:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/101"
+     }
+    }
+   ]
+  },
+  "2": {
+   "meta": {
+    "page": {
+     "currentPage": 2,
+     "from": 1,
+     "lastPage": 2,
+     "perPage": 3,
+     "to": 3,
+     "total": 3
+    }
+   },
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "links": {
+    "first": "https://api.lemonsqueezy.com/v1/orders?page[number]=1&page[size]=3",
+    "last": "https://api.lemonsqueezy.com/v1/orders?page[number]=2&page[size]=3"
+   },
+   "data": [
+    {
+     "type": "orders",
+     "id": "106",
+     "attributes": {
+      "store_id": 2,
+      "customer_id": 1106,
+      "identifier": "a1b2c3-106",
+      "order_number": 106,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "EUR",
+      "currency_rate": "1.0800",
+      "subtotal": 833,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 167,
+      "total": 1000,
+      "subtotal_usd": 900,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 180,
+      "total_usd": 1080,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": true,
+      "status": "paid",
+      "status_formatted": "Paid",
+      "refunded": false,
+      "refunded_at": null,
+      "refunded_amount": 0,
+      "refunded_amount_usd": 0,
+      "first_order_item": {
+       "id": 5106,
+       "order_id": 106,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-08-20T10:00:00.000000Z",
+      "updated_at": "2026-09-01T10:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/106"
+     }
+    },
+    {
+     "type": "orders",
+     "id": "105",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 1105,
+      "identifier": "a1b2c3-105",
+      "order_number": 105,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "USD",
+      "currency_rate": "1.0000",
+      "subtotal": 1000,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 0,
+      "total": 1000,
+      "subtotal_usd": 1000,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 0,
+      "total_usd": 1000,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "failed",
+      "status_formatted": "Failed",
+      "refunded": false,
+      "refunded_at": null,
+      "refunded_amount": 0,
+      "refunded_amount_usd": 0,
+      "first_order_item": {
+       "id": 5105,
+       "order_id": 105,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-08-15T10:00:00.000000Z",
+      "updated_at": "2026-09-01T10:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/105"
+     }
+    },
+    {
+     "type": "orders",
+     "id": "104",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 1104,
+      "identifier": "a1b2c3-104",
+      "order_number": 104,
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "currency": "USD",
+      "currency_rate": "1.0000",
+      "subtotal": 1000,
+      "setup_fee": 0,
+      "discount_total": 0,
+      "tax": 0,
+      "total": 1000,
+      "subtotal_usd": 1000,
+      "setup_fee_usd": 0,
+      "discount_total_usd": 0,
+      "tax_usd": 0,
+      "total_usd": 1000,
+      "tax_name": "VAT",
+      "tax_rate": "0.00",
+      "tax_inclusive": false,
+      "status": "pending",
+      "status_formatted": "Pending",
+      "refunded": false,
+      "refunded_at": null,
+      "refunded_amount": 0,
+      "refunded_amount_usd": 0,
+      "first_order_item": {
+       "id": 5104,
+       "order_id": 104,
+       "product_id": 7,
+       "variant_id": 8,
+       "product_name": "Pro",
+       "variant_name": "Monthly",
+       "price": 1000,
+       "test_mode": true
+      },
+      "urls": {
+       "receipt": "https://app.example.com/receipt"
+      },
+      "test_mode": true,
+      "created_at": "2026-08-10T10:00:00.000000Z",
+      "updated_at": "2026-09-01T10:00:00.000000Z"
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/orders/104"
+     }
+    }
+   ]
+  }
+ },
+ "subscriptions": {
+  "1": {
+   "meta": {
+    "page": {
+     "currentPage": 1,
+     "from": 1,
+     "lastPage": 2,
+     "perPage": 3,
+     "to": 3,
+     "total": 3
+    }
+   },
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "links": {
+    "first": "https://api.lemonsqueezy.com/v1/subscriptions?page[number]=1&page[size]=3",
+    "last": "https://api.lemonsqueezy.com/v1/subscriptions?page[number]=2&page[size]=3",
+    "next": "https://api.lemonsqueezy.com/v1/subscriptions?page[number]=2&page[size]=3"
+   },
+   "data": [
+    {
+     "type": "subscriptions",
+     "id": "1",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2001,
+      "order_id": 101,
+      "order_item_id": 301,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "active",
+      "status_formatted": "Active",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": false,
+      "trial_ends_at": null,
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 9,
+       "subscription_id": 1,
+       "price_id": 11,
+       "quantity": 2,
+       "is_usage_based": false,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-10-01T00:00:00.000000Z",
+      "ends_at": null,
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/1"
+     }
+    },
+    {
+     "type": "subscriptions",
+     "id": "2",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2002,
+      "order_id": 102,
+      "order_item_id": 302,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "cancelled",
+      "status_formatted": "Cancelled",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": true,
+      "trial_ends_at": null,
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 9,
+       "subscription_id": 1,
+       "price_id": 12,
+       "quantity": 1,
+       "is_usage_based": false,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-12-01T00:00:00.000000Z",
+      "ends_at": "2026-12-01T00:00:00.000000Z",
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/2"
+     }
+    },
+    {
+     "type": "subscriptions",
+     "id": "3",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2003,
+      "order_id": 103,
+      "order_item_id": 303,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "expired",
+      "status_formatted": "Expired",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": true,
+      "trial_ends_at": null,
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 9,
+       "subscription_id": 1,
+       "price_id": 11,
+       "quantity": 1,
+       "is_usage_based": false,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-08-01T00:00:00.000000Z",
+      "ends_at": "2026-08-01T00:00:00.000000Z",
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/3"
+     }
+    }
+   ]
+  },
+  "2": {
+   "meta": {
+    "page": {
+     "currentPage": 2,
+     "from": 1,
+     "lastPage": 2,
+     "perPage": 3,
+     "to": 3,
+     "total": 3
+    }
+   },
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "links": {
+    "first": "https://api.lemonsqueezy.com/v1/subscriptions?page[number]=1&page[size]=3",
+    "last": "https://api.lemonsqueezy.com/v1/subscriptions?page[number]=2&page[size]=3"
+   },
+   "data": [
+    {
+     "type": "subscriptions",
+     "id": "4",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2004,
+      "order_id": 104,
+      "order_item_id": 304,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "on_trial",
+      "status_formatted": "On Trial",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": false,
+      "trial_ends_at": "2026-10-20T00:00:00.000000Z",
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 404,
+       "subscription_id": 4,
+       "price_id": 11,
+       "quantity": 1,
+       "is_usage_based": false,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-10-01T00:00:00.000000Z",
+      "ends_at": null,
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/4"
+     }
+    },
+    {
+     "type": "subscriptions",
+     "id": "5",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2005,
+      "order_id": 105,
+      "order_item_id": 305,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "past_due",
+      "status_formatted": "Past due",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": false,
+      "trial_ends_at": null,
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 9,
+       "subscription_id": 1,
+       "price_id": 13,
+       "quantity": 25,
+       "is_usage_based": false,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-10-01T00:00:00.000000Z",
+      "ends_at": null,
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/5"
+     }
+    },
+    {
+     "type": "subscriptions",
+     "id": "6",
+     "attributes": {
+      "store_id": 1,
+      "customer_id": 2006,
+      "order_id": 106,
+      "order_item_id": 306,
+      "product_id": 7,
+      "variant_id": 8,
+      "product_name": "Pro",
+      "variant_name": "Monthly",
+      "user_name": "Test Buyer",
+      "user_email": "buyer@example.com",
+      "status": "active",
+      "status_formatted": "Active",
+      "card_brand": "visa",
+      "card_last_four": "4242",
+      "payment_processor": "stripe",
+      "pause": null,
+      "cancelled": false,
+      "trial_ends_at": null,
+      "billing_anchor": 1,
+      "first_subscription_item": {
+       "id": 9,
+       "subscription_id": 1,
+       "price_id": 14,
+       "quantity": 40,
+       "is_usage_based": true,
+       "created_at": "2026-01-01T00:00:00.000000Z",
+       "updated_at": "2026-01-01T00:00:00.000000Z"
+      },
+      "urls": {
+       "update_payment_method": "https://store.example.com/upd",
+       "customer_portal": "https://store.example.com/portal"
+      },
+      "renews_at": "2026-10-01T00:00:00.000000Z",
+      "ends_at": null,
+      "created_at": "2026-01-01T00:00:00.000000Z",
+      "updated_at": "2026-09-01T00:00:00.000000Z",
+      "test_mode": true
+     },
+     "links": {
+      "self": "https://api.lemonsqueezy.com/v1/subscriptions/6"
+     }
+    }
+   ]
+  }
+ },
+ "prices": {
+  "11": {
+   "data": {
+    "type": "prices",
+    "id": "11",
+    "attributes": {
+     "variant_id": 8,
+     "category": "subscription",
+     "scheme": "standard",
+     "usage_aggregation": null,
+     "unit_price": 1500,
+     "unit_price_decimal": null,
+     "setup_fee_enabled": false,
+     "setup_fee": null,
+     "package_size": 1,
+     "tiers": null,
+     "renewal_interval_unit": "month",
+     "renewal_interval_quantity": 1,
+     "trial_interval_unit": null,
+     "trial_interval_quantity": null,
+     "min_price": null,
+     "suggested_price": null,
+     "tax_code": "saas",
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-01-01T00:00:00.000000Z"
+    }
+   }
+  },
+  "12": {
+   "data": {
+    "type": "prices",
+    "id": "12",
+    "attributes": {
+     "variant_id": 8,
+     "category": "subscription",
+     "scheme": "standard",
+     "usage_aggregation": null,
+     "unit_price": 9999,
+     "unit_price_decimal": null,
+     "setup_fee_enabled": false,
+     "setup_fee": null,
+     "package_size": 1,
+     "tiers": null,
+     "renewal_interval_unit": "year",
+     "renewal_interval_quantity": 1,
+     "trial_interval_unit": null,
+     "trial_interval_quantity": null,
+     "min_price": null,
+     "suggested_price": null,
+     "tax_code": "saas",
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-01-01T00:00:00.000000Z"
+    }
+   }
+  },
+  "13": {
+   "data": {
+    "type": "prices",
+    "id": "13",
+    "attributes": {
+     "variant_id": 8,
+     "category": "subscription",
+     "scheme": "package",
+     "usage_aggregation": null,
+     "unit_price": 1000,
+     "unit_price_decimal": null,
+     "setup_fee_enabled": false,
+     "setup_fee": null,
+     "package_size": 10,
+     "tiers": null,
+     "renewal_interval_unit": "month",
+     "renewal_interval_quantity": 3,
+     "trial_interval_unit": null,
+     "trial_interval_quantity": null,
+     "min_price": null,
+     "suggested_price": null,
+     "tax_code": "saas",
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-01-01T00:00:00.000000Z"
+    }
+   }
+  },
+  "14": {
+   "data": {
+    "type": "prices",
+    "id": "14",
+    "attributes": {
+     "variant_id": 8,
+     "category": "subscription",
+     "scheme": "standard",
+     "usage_aggregation": "sum",
+     "unit_price": null,
+     "unit_price_decimal": "0.5",
+     "setup_fee_enabled": false,
+     "setup_fee": null,
+     "package_size": 1,
+     "tiers": null,
+     "renewal_interval_unit": "month",
+     "renewal_interval_quantity": 1,
+     "trial_interval_unit": null,
+     "trial_interval_quantity": null,
+     "min_price": null,
+     "suggested_price": null,
+     "tax_code": "saas",
+     "created_at": "2026-01-01T00:00:00.000000Z",
+     "updated_at": "2026-01-01T00:00:00.000000Z"
+    }
+   }
+  }
+ },
+ "errors": {
+  "unauthorized": {
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "errors": [
+    {
+     "detail": "Unauthenticated.",
+     "status": "401",
+     "title": "Unauthorized"
+    }
+   ]
+  },
+  "rate_limited": {
+   "jsonapi": {
+    "version": "1.0"
+   },
+   "errors": [
+    {
+     "detail": "Too Many Attempts.",
+     "status": "429",
+     "title": "Too Many Requests"
+    }
+   ]
+  }
+ }
+}

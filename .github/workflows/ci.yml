@@ -1,0 +1,73 @@
+name: ci
+# Manual and PR-only: six local builders push main many times a day, and every push would spend Actions minutes on the
+# private repo. The same checks run locally in scripts/merge-to-main.sh before every merge.
+on:
+  workflow_dispatch:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npx vitest run
+      - run: npm run build -w @agfn/web
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Fails on high/critical advisories in anything that ships (dev-only tools excluded).
+      - run: npm audit --omit=dev --audit-level=high
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Migrate a real Postgres
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: node -e "import('./packages/db/src/index.ts').then(async m=>{const h=m.connect(process.env.DATABASE_URL);await m.migrateToLatest(h.db);await h.close();console.log('ok')})"
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # Our own scan (scripts/secret-scan.ts): whole history + tree, names only, nothing to install. Non-blocking: it
+  # reports; a person decides (launch packet §9, step 1).
+  secret-scan:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/secret-scan.ts

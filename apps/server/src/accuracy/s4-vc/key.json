@@ -1,0 +1,1192 @@
+{
+ "scenario": "s4-vc",
+ "fixture_sha256": "8758dd016272bb37e5ac82ae8192b5a6f9c720b7efe00d4253eea8051ba225aa",
+ "as_of": "2026-10-12T16:00:00Z",
+ "questions": [
+  {
+   "id": "s4-vc-cash",
+   "category": "cash",
+   "question": "How much cash does Harbor Seed Fund I have?",
+   "answer": {
+    "type": "money",
+    "value": "2811800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Fund Checking's current balance on Oct 11 (the only account).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-cash-checking",
+   "category": "cash",
+   "question": "What is the Fund Checking balance?",
+   "answer": {
+    "type": "money",
+    "value": "2811800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same account.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "accounts[name=Fund Checking].balance"
+   }
+  },
+  {
+   "id": "s4-vc-overview-cash",
+   "category": "cash",
+   "question": "What cash does the overview show?",
+   "answer": {
+    "type": "money",
+    "value": "2811800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric cash.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "companies[0].cash"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn",
+   "category": "burn",
+   "question": "What is Harbor Seed Fund I's average monthly gross burn?",
+   "answer": {
+    "type": "money",
+    "value": "47110.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Monthly average of 2026-07-01..2026-09-30. The fund's own expenses: the quarterly management fee, Carta, Cooley and wire fees. Capital calls, distributions to LPs, investments and the Pinecrest exit are partners' capital and the fund's assets, not spending or sales.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-net-burn",
+   "category": "burn",
+   "question": "What is Harbor Seed Fund I's average monthly net burn?",
+   "answer": {
+    "type": "money",
+    "value": "47110.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "No revenue: the $1.2M exit is the return of an investment, not sales, so net burn = gross burn.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-runway",
+   "category": "runway",
+   "question": "How many months of runway does Harbor Seed Fund I have?",
+   "answer": {
+    "type": "number",
+    "value": 59.7
+   },
+   "tolerance": {
+    "abs": 0.05
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Cash ÷ average monthly net burn of Jul-Sep, to one decimal.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "runway",
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-overview-burn",
+   "category": "burn",
+   "question": "What net burn does the overview show?",
+   "answer": {
+    "type": "money",
+    "value": "47110.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric net_burn.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "companies[0].net_burn_3mo"
+   }
+  },
+  {
+   "id": "s4-vc-overview-runway",
+   "category": "runway",
+   "question": "What runway does the overview show?",
+   "answer": {
+    "type": "number",
+    "value": 59.7
+   },
+   "tolerance": {
+    "abs": 0.05
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Same as get_metric runway.",
+   "check": {
+    "tool": "get_overview",
+    "args": {
+     "company": "Harbor Seed Fund I"
+    },
+    "path": "companies[0].runway_months"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-04",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-04?",
+   "answer": {
+    "type": "money",
+    "value": "126310.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Q2 management fee, Carta, wire fees (fee and Tidewell).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-04-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-05",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-05?",
+   "answer": {
+    "type": "money",
+    "value": "19280.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Carta, Cooley, the Corvid wire fee.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-05-01",
+     "to": "2026-05-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-06",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-06?",
+   "answer": {
+    "type": "money",
+    "value": "1280.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Carta and the Pinecrest wire fee; the $400,000 investment is not spending.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-06-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-07",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-07?",
+   "answer": {
+    "type": "money",
+    "value": "126310.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Q3 management fee, Carta, two wire fees; the $1M Brightwave investment is not spending.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-08",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "13650.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Carta and Cooley; the $1.2M Pinecrest exit is not revenue.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-gross-burn-2026-09",
+   "category": "burn",
+   "question": "What were the fund's expenses in 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "1370.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Carta and four wire fees (Quillmark and three LP distributions).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-revenue-q3",
+   "category": "revenue",
+   "question": "What was the fund's revenue in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "None: the Pinecrest acquisition proceeds return an investment (other assets), they are not sales.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-revenue-aug",
+   "category": "revenue",
+   "question": "Revenue in August?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The $1.2M exit is not revenue.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-net-burn-q2",
+   "category": "burn",
+   "question": "Average monthly net burn over Q2 (Apr-Jun)?",
+   "answer": {
+    "type": "money",
+    "value": "48956.67",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Q2 total ÷ 3.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-06-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s4-vc-pnl-q3-net",
+   "category": "reports",
+   "question": "Net income for Q3 on the cash basis?",
+   "answer": {
+    "type": "money",
+    "value": "-141330.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Expenses only, no income: −(Q3 expenses).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s4-vc-pnl-ytd-net",
+   "category": "reports",
+   "question": "Net income Apr-Sep (cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "-288200.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Six months of expenses, no income.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s4-vc-mgmt-fee-ytd",
+   "category": "expenses",
+   "question": "How much management fee has the fund paid Apr-Sep?",
+   "answer": {
+    "type": "money",
+    "value": "250000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Two quarterly payments of $125,000 (2% a year of $25M).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "counterparty:\"Harbor Seed Management LLC\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-wire-fees-q3",
+   "category": "fees",
+   "question": "What did wire fees cost in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "180.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "$30 on each outgoing wire: the Q3 fee, Brightwave, Quillmark and the three LP distributions.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "\"wire fee\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-wire-fees-sep-count",
+   "category": "fees",
+   "question": "How many wire fees were charged in September?",
+   "answer": {
+    "type": "count",
+    "value": 4
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Quillmark + three LP distributions.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "\"wire fee\"",
+     "measures": [
+      "count"
+     ]
+    },
+    "path": "totals[0].count"
+   }
+  },
+  {
+   "id": "s4-vc-carta-ytd",
+   "category": "expenses",
+   "question": "What has Carta cost Apr-Sep?",
+   "answer": {
+    "type": "money",
+    "value": "7500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "$1,250 a month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "counterparty:Carta",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-legal-ytd",
+   "category": "expenses",
+   "question": "What has the fund paid Cooley Apr-Sep?",
+   "answer": {
+    "type": "money",
+    "value": "30400.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "May and August.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "counterparty:\"Cooley LLP\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-called-ytd",
+   "category": "capital",
+   "question": "How much capital did the LPs pay in Apr-Sep?",
+   "answer": {
+    "type": "money",
+    "value": "4000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Two calls of $2M (Apr 15, Jul 15), each wired by the three LPs pro rata.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "in \"capital call\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-called-q3",
+   "category": "capital",
+   "question": "How much capital was called in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "2000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The Jul 15 call.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "in \"capital call\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-distributed",
+   "category": "capital",
+   "question": "How much has the fund distributed to its LPs?",
+   "answer": {
+    "type": "money",
+    "value": "1000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Sep 15: $1M pro rata.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out \"lp distribution\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-granite-paid-in",
+   "category": "capital",
+   "question": "How much has Granite Pension Fund paid in?",
+   "answer": {
+    "type": "money",
+    "value": "2000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of both calls.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "in counterparty:\"Granite Pension Fund\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-granite-received",
+   "category": "capital",
+   "question": "How much has Granite Pension Fund received back?",
+   "answer": {
+    "type": "money",
+    "value": "500000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of the Sep 15 distribution (the wire fee is the fund's, under Mercury).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Granite Pension Fund\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-alder-paid-in",
+   "category": "capital",
+   "question": "How much has Alder Family Office paid in?",
+   "answer": {
+    "type": "money",
+    "value": "1200000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of both calls.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "in counterparty:\"Alder Family Office\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-alder-received",
+   "category": "capital",
+   "question": "How much has Alder Family Office received back?",
+   "answer": {
+    "type": "money",
+    "value": "300000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of the Sep 15 distribution (the wire fee is the fund's, under Mercury).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Alder Family Office\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-juniper-paid-in",
+   "category": "capital",
+   "question": "How much has Juniper Endowment paid in?",
+   "answer": {
+    "type": "money",
+    "value": "800000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of both calls.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "in counterparty:\"Juniper Endowment\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-juniper-received",
+   "category": "capital",
+   "question": "How much has Juniper Endowment received back?",
+   "answer": {
+    "type": "money",
+    "value": "200000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its share of the Sep 15 distribution (the wire fee is the fund's, under Mercury).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Juniper Endowment\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-bs-paid-in-capital",
+   "category": "reports",
+   "question": "Paid-in capital on the balance sheet at Sep 30?",
+   "answer": {
+    "type": "money",
+    "value": "3000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Calls minus the distribution to LPs, Apr-Sep (the balance before April is opening balances).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "balance_sheet",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~Paid-in].amount"
+   }
+  },
+  {
+   "id": "s4-vc-invested-ytd",
+   "category": "investments",
+   "question": "How much has the fund invested Apr-Sep?",
+   "answer": {
+    "type": "money",
+    "value": "2950000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Five wires: Tidewell, Corvid, Pinecrest, Brightwave, Quillmark (wire fees are expenses, not cost).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out investment",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-invested-count",
+   "category": "investments",
+   "question": "How many investments did the fund make Apr-Sep?",
+   "answer": {
+    "type": "count",
+    "value": 5
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire each.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out investment",
+     "measures": [
+      "count"
+     ]
+    },
+    "path": "totals[0].count"
+   }
+  },
+  {
+   "id": "s4-vc-invested-q3",
+   "category": "investments",
+   "question": "How much was invested in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "1300000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Brightwave (Jul 22) and Quillmark (Sep 9).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "out investment",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-invested-tidewell",
+   "category": "investments",
+   "question": "How much did the fund put into Tidewell Health?",
+   "answer": {
+    "type": "money",
+    "value": "500000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire on 2026-04-20.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Tidewell Health\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-invested-corvid",
+   "category": "investments",
+   "question": "How much did the fund put into Corvid Robotics?",
+   "answer": {
+    "type": "money",
+    "value": "750000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire on 2026-05-12.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Corvid Robotics\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-invested-pinecrest",
+   "category": "investments",
+   "question": "How much did the fund put into Pinecrest AI?",
+   "answer": {
+    "type": "money",
+    "value": "400000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire on 2026-06-18.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Pinecrest AI\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-invested-brightwave",
+   "category": "investments",
+   "question": "How much did the fund put into Brightwave Energy?",
+   "answer": {
+    "type": "money",
+    "value": "1000000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire on 2026-07-22.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Brightwave Energy\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-invested-quillmark",
+   "category": "investments",
+   "question": "How much did the fund put into Quillmark?",
+   "answer": {
+    "type": "money",
+    "value": "300000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One wire on 2026-09-09.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "out counterparty:\"Quillmark\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s4-vc-exit-proceeds",
+   "category": "investments",
+   "question": "What did the fund receive when Pinecrest AI was acquired?",
+   "answer": {
+    "type": "money",
+    "value": "1200000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "From the buyer, Northwind Software, on Aug 27 ($400,000 cost back, $800,000 gain).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Harbor Seed Fund I",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "in \"acquisition proceeds\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s4-vc-bs-other-assets",
+   "category": "reports",
+   "question": "Other assets on the balance sheet at Sep 30?",
+   "answer": {
+    "type": "money",
+    "value": "1750000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Investments at cost less the exit proceeds, since all of it is categorized as other assets. Changes when portfolio tracking posts the exit as cost back + gain.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "balance_sheet",
+     "company": "Harbor Seed Fund I",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~Other assets].amount"
+   }
+  }
+ ]
+}

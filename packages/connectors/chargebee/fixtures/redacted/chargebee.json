@@ -1,0 +1,748 @@
+{
+ "pages": {
+  "": {
+   "list": [
+    {
+     "subscription": {
+      "id": "sub_monthly",
+      "customer_id": "cust_monthly",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225601,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_monthly-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 4900,
+        "amount": 4900,
+        "object": "subscription_item"
+       },
+       {
+        "item_price_id": "seat-USD",
+        "item_type": "addon",
+        "quantity": 2,
+        "unit_price": 500,
+        "amount": 1000
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_monthly",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_annual",
+      "customer_id": "cust_annual",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "year",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225602,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_annual-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 120000,
+        "amount": 120000,
+        "object": "subscription_item"
+       }
+      ],
+      "discounts": [
+       {
+        "id": "disc_a",
+        "object": "discount",
+        "duration_type": "forever",
+        "included_in_mrr": false,
+        "apply_on": "invoice_amount",
+        "created_at": 1767225600,
+        "type": "percentage",
+        "percentage": 10
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_annual",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_quarter",
+      "customer_id": "cust_quarter",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 3,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225603,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_quarter-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 30000,
+        "amount": 30000,
+        "object": "subscription_item"
+       }
+      ],
+      "discounts": [
+       {
+        "id": "disc_b",
+        "object": "discount",
+        "duration_type": "forever",
+        "included_in_mrr": false,
+        "apply_on": "invoice_amount",
+        "created_at": 1767225600,
+        "type": "fixed_amount",
+        "amount": 3000,
+        "currency_code": "USD"
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_quarter",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_itempct",
+      "customer_id": "cust_itempct",
+      "currency_code": "EUR",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225604,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_itempct-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 2000,
+        "amount": 2000,
+        "object": "subscription_item"
+       },
+       {
+        "item_price_id": "seat-EUR",
+        "item_type": "addon",
+        "quantity": 3,
+        "unit_price": 500,
+        "amount": 1500
+       }
+      ],
+      "discounts": [
+       {
+        "id": "disc_c",
+        "object": "discount",
+        "duration_type": "forever",
+        "included_in_mrr": false,
+        "apply_on": "specific_item_price",
+        "created_at": 1767225600,
+        "type": "percentage",
+        "percentage": 20,
+        "item_price_id": "seat-EUR"
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_itempct",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_coupon",
+      "customer_id": "cust_coupon",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225605,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_coupon-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 9900,
+        "amount": 9900,
+        "object": "subscription_item"
+       }
+      ],
+      "coupons": [
+       {
+        "coupon_id": "LAUNCH25",
+        "applied_count": 3
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_coupon",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_oldcoupon",
+      "customer_id": "cust_oldcoupon",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225606,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_oldcoupon-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 5000,
+        "amount": 5000,
+        "object": "subscription_item"
+       }
+      ],
+      "coupons": [
+       {
+        "coupon_id": "OLD10",
+        "apply_till": 1700000000,
+        "applied_count": 6
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_oldcoupon",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_onetime",
+      "customer_id": "cust_onetime",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225607,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_onetime-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 3000,
+        "amount": 3000,
+        "object": "subscription_item"
+       }
+      ],
+      "discounts": [
+       {
+        "id": "disc_d",
+        "object": "discount",
+        "duration_type": "one_time",
+        "included_in_mrr": false,
+        "apply_on": "invoice_amount",
+        "created_at": 1767225600,
+        "type": "percentage",
+        "percentage": 50
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_onetime",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_trial",
+      "customer_id": "cust_trial",
+      "currency_code": "USD",
+      "status": "in_trial",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225608,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_trial-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 4900,
+        "amount": 4900,
+        "object": "subscription_item"
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_trial",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_cancelled",
+      "customer_id": "cust_cancelled",
+      "currency_code": "USD",
+      "status": "cancelled",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225609,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_cancelled-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 2500,
+        "amount": 2500,
+        "object": "subscription_item"
+       }
+      ],
+      "cancelled_at": 1772409600
+     },
+     "customer": {
+      "id": "cust_cancelled",
+      "object": "customer"
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_pastdue",
+      "customer_id": "cust_pastdue",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225610,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 1,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_pastdue-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 1999,
+        "amount": 1999,
+        "object": "subscription_item"
+       }
+      ]
+     },
+     "customer": {
+      "id": "cust_pastdue",
+      "object": "customer"
+     }
+    }
+   ],
+   "next_offset": "page-2"
+  },
+  "page-2": {
+   "list": [
+    {
+     "subscription": {
+      "id": "sub_weekly",
+      "customer_id": "cust_weekly",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "week",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225611,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_weekly-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 1000,
+        "amount": 1000,
+        "object": "subscription_item"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_charge",
+      "customer_id": "cust_charge",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225612,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_charge-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 1500,
+        "amount": 1500,
+        "object": "subscription_item"
+       },
+       {
+        "item_price_id": "setup-USD",
+        "item_type": "charge",
+        "quantity": 1,
+        "unit_price": 5000,
+        "amount": 5000
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_criteria",
+      "customer_id": "cust_criteria",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225613,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_criteria-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 9000,
+        "amount": 9000,
+        "object": "subscription_item"
+       }
+      ],
+      "coupons": [
+       {
+        "coupon_id": "CRIT",
+        "applied_count": 1
+       }
+      ],
+      "mrr": 7777
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_transferred",
+      "customer_id": "cust_transferred",
+      "currency_code": "USD",
+      "status": "transferred",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225614,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_transferred-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 4000,
+        "amount": 4000,
+        "object": "subscription_item"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_deleted",
+      "customer_id": "cust_deleted",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": true,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225615,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_deleted-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 1000,
+        "amount": 1000,
+        "object": "subscription_item"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_offerqty",
+      "customer_id": "cust_offerqty",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225616,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_offerqty-plan",
+        "item_type": "plan",
+        "quantity": 5,
+        "unit_price": 1000,
+        "amount": 5000,
+        "object": "subscription_item"
+       }
+      ],
+      "discounts": [
+       {
+        "id": "disc_e",
+        "object": "discount",
+        "duration_type": "forever",
+        "included_in_mrr": false,
+        "apply_on": "specific_item_price",
+        "created_at": 1767225600,
+        "type": "offer_quantity",
+        "quantity": 1,
+        "item_price_id": "sub_offerqty-plan"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_nonrenewing",
+      "customer_id": "cust_nonrenewing",
+      "currency_code": "USD",
+      "status": "non_renewing",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225617,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_nonrenewing-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 3300,
+        "amount": 3300,
+        "object": "subscription_item"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_multifreq",
+      "customer_id": "cust_multifreq",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "month",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225618,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_multifreq-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price": 1000,
+        "amount": 1000,
+        "object": "subscription_item"
+       },
+       {
+        "item_price_id": "support-USD-yearly",
+        "item_type": "addon",
+        "quantity": 1,
+        "unit_price": 2400,
+        "amount": 2400,
+        "billing_period": 1,
+        "billing_period_unit": "year"
+       }
+      ]
+     }
+    },
+    {
+     "subscription": {
+      "id": "sub_decimal",
+      "customer_id": "cust_decimal",
+      "currency_code": "USD",
+      "status": "active",
+      "billing_period": 1,
+      "billing_period_unit": "year",
+      "deleted": false,
+      "created_at": 1767225600,
+      "started_at": 1767225600,
+      "activated_at": 1767225600,
+      "updated_at": 1767225619,
+      "current_term_end": 1769817600,
+      "due_invoices_count": 0,
+      "object": "subscription",
+      "subscription_items": [
+       {
+        "item_price_id": "sub_decimal-plan",
+        "item_type": "plan",
+        "quantity": 1,
+        "unit_price_in_decimal": "999.99",
+        "amount_in_decimal": "999.99"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "coupons": {
+  "LAUNCH25": {
+   "coupon": {
+    "id": "LAUNCH25",
+    "object": "coupon",
+    "discount_type": "percentage",
+    "discount_percentage": 25.0,
+    "duration_type": "forever",
+    "apply_on": "invoice_amount",
+    "status": "active"
+   }
+  },
+  "OLD10": {
+   "coupon": {
+    "id": "OLD10",
+    "object": "coupon",
+    "discount_type": "percentage",
+    "discount_percentage": 10.0,
+    "duration_type": "limited_period",
+    "apply_on": "invoice_amount",
+    "status": "active"
+   }
+  },
+  "CRIT": {
+   "coupon": {
+    "id": "CRIT",
+    "object": "coupon",
+    "discount_type": "percentage",
+    "discount_percentage": 15.0,
+    "duration_type": "forever",
+    "apply_on": "each_specified_item",
+    "item_constraints": [
+     {
+      "item_type": "plan",
+      "constraint": "criteria"
+     }
+    ],
+    "status": "active"
+   }
+  }
+ },
+ "errors": {
+  "unauthorized": {
+   "message": "Sorry, authentication failed. Invalid api key",
+   "api_error_code": "api_authentication_failed",
+   "error_code": "api_authentication_invalid_key",
+   "http_status_code": 401,
+   "type": "invalid_request"
+  }
+ }
+}

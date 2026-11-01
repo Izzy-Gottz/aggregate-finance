@@ -1,0 +1,1314 @@
+{
+ "scenario": "s3-operator",
+ "fixture_sha256": "bf972960e5e27fe9f656f5bc314842316e99a2c9c29ed1bbb08a43da86c4f611",
+ "as_of": "2026-10-12T16:00:00Z",
+ "questions": [
+  {
+   "id": "s3-operator-ns-cash",
+   "category": "cash",
+   "question": "How much cash does Northstar Labs have (USD)?",
+   "answer": {
+    "type": "money",
+    "value": "131845.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Northstar Checking. Its Amex is paid by Brightline (owed between the companies), not from this account.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Northstar Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-bl-cash",
+   "category": "cash",
+   "question": "How much cash does Brightline Studio have (USD)?",
+   "answer": {
+    "type": "money",
+    "value": "106160.06",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Brightline Checking, including the $20,000 Northstar sent on Jul 15.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Brightline Studio"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-cash",
+   "category": "cash",
+   "question": "How much cash does Kestrel GmbH have (USD)?",
+   "answer": {
+    "type": "money",
+    "value": "64621.07",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The German account's last statement balance (EUR 58348.60), converted at the as-of day's rate (1.1075).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Kestrel GmbH"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-all-cash",
+   "category": "cash",
+   "question": "Cash across all three companies (USD)?",
+   "answer": {
+    "type": "money",
+    "value": "302626.13",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The three companies added up (Personal is not a company).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "all"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-ke-balance-eur",
+   "category": "cash",
+   "question": "What does the Kestrel bank account hold, in euros?",
+   "answer": {
+    "type": "money",
+    "value": "58348.60",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Each CSV row once: the two exports overlap in June and July and must not double.",
+   "check": {
+    "tool": "list_accounts",
+    "args": {
+     "company": "Kestrel GmbH"
+    },
+    "path": "accounts[0].balance"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-ns-card",
+   "category": "cards",
+   "question": "What is owed on the Northstar Amex?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Paid in full every month (by Brightline).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "card_balances",
+     "company": "Northstar Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-per-cash",
+   "category": "cash",
+   "question": "How much cash is in the Personal space (Dana's own account)?",
+   "answer": {
+    "type": "money",
+    "value": "39450.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Dana Checking.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Personal"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-gross-burn",
+   "category": "burn",
+   "question": "Average monthly gross burn, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "16402.99",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Rent, AWS, Dana's salary, Amex purchases at swipe, and in August the $6,000 paid to Brightline (an invoice between own companies counts as spending here).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northstar Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-ns-net-burn",
+   "category": "burn",
+   "question": "Average monthly net burn, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "1402.99",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, monthly average of Jul-Sep.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Northstar Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-revenue-q3",
+   "category": "revenue",
+   "question": "Cash revenue in Q3, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "45000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Globex, monthly.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northstar Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-gross-2026-07",
+   "category": "burn",
+   "question": "Gross burn in 2026-07, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "14355.99",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northstar Labs",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-gross-2026-08",
+   "category": "burn",
+   "question": "Gross burn in 2026-08, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "20402.99",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northstar Labs",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-gross-2026-09",
+   "category": "burn",
+   "question": "Gross burn in 2026-09, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "14449.99",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northstar Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-gross-burn",
+   "category": "burn",
+   "question": "Average monthly gross burn, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "5000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Lease and Upwork. Paying Northstar's Amex is money owed between the companies, not Brightline's spending.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Brightline Studio"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-net-burn",
+   "category": "burn",
+   "question": "Average monthly net burn, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "-6000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, monthly average of Jul-Sep.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Brightline Studio"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-revenue-q3",
+   "category": "revenue",
+   "question": "Cash revenue in Q3, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "33000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Initech monthly, plus INV-B-100 paid by Northstar in August.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Brightline Studio",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-gross-2026-07",
+   "category": "burn",
+   "question": "Gross burn in 2026-07, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "5000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Brightline Studio",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-gross-2026-08",
+   "category": "burn",
+   "question": "Gross burn in 2026-08, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "5000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Brightline Studio",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-gross-2026-09",
+   "category": "burn",
+   "question": "Gross burn in 2026-09, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "5000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Brightline Studio",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-gross-burn",
+   "category": "burn",
+   "question": "Average monthly gross burn, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "2147.14",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Rent, Hetzner and bank fees in EUR, each day converted at that day's rate.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Kestrel GmbH"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-net-burn",
+   "category": "burn",
+   "question": "Average monthly net burn, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "-6139.11",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, monthly average of Jul-Sep.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Kestrel GmbH"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-revenue-q3",
+   "category": "revenue",
+   "question": "Cash revenue in Q3, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "24858.75",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Siemens monthly in EUR, each converted at its day's rate.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Kestrel GmbH",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-gross-2026-07",
+   "category": "burn",
+   "question": "Gross burn in 2026-07, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "2144.41",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Kestrel GmbH",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-gross-2026-08",
+   "category": "burn",
+   "question": "Gross burn in 2026-08, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "2134.83",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Kestrel GmbH",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-gross-2026-09",
+   "category": "burn",
+   "question": "Gross burn in 2026-09, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "2162.17",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Kestrel GmbH",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-all-gross-burn",
+   "category": "burn",
+   "question": "Average monthly gross burn, all?",
+   "answer": {
+    "type": "money",
+    "value": "23550.13",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The companies added up: the $6,000 invoice between Northstar and Brightline is in both gross burn and revenue (Known limits).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "all"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-all-net-burn",
+   "category": "burn",
+   "question": "Average monthly net burn, all?",
+   "answer": {
+    "type": "money",
+    "value": "-10736.12",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Gross burn minus revenue, monthly average of Jul-Sep.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "all"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-all-revenue-q3",
+   "category": "revenue",
+   "question": "Cash revenue in Q3, all?",
+   "answer": {
+    "type": "money",
+    "value": "102858.75",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Includes the $6,000 Brightline invoiced Northstar (counted in both companies).",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "all",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-all-gross-2026-07",
+   "category": "burn",
+   "question": "Gross burn in 2026-07, all?",
+   "answer": {
+    "type": "money",
+    "value": "21500.40",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "all",
+     "from": "2026-07-01",
+     "to": "2026-07-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-all-gross-2026-08",
+   "category": "burn",
+   "question": "Gross burn in 2026-08, all?",
+   "answer": {
+    "type": "money",
+    "value": "27537.82",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "all",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-all-gross-2026-09",
+   "category": "burn",
+   "question": "Gross burn in 2026-09, all?",
+   "answer": {
+    "type": "money",
+    "value": "21612.16",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "That month's total.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "all",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-intercompany",
+   "category": "intercompany",
+   "question": "What do Northstar and Brightline owe each other, from Northstar's side?",
+   "answer": {
+    "type": "money",
+    "value": "16160.06",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Due from − due to: Brightline owes Northstar the $20,000 sent on Jul 15; Northstar owes Brightline every Amex bill Brightline paid for it.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "Northstar Labs"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-bl-intercompany",
+   "category": "intercompany",
+   "question": "What is Brightline Studio's intercompany balance with Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "-16160.06",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The mirror image.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "Brightline Studio"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-all-intercompany",
+   "category": "intercompany",
+   "question": "Intercompany balance across the group?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Nets to zero across the companies.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "all"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-intercompany",
+   "category": "intercompany",
+   "question": "Does Kestrel owe or lend to the others?",
+   "answer": {
+    "type": "money",
+    "value": "0.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "No money moved between Kestrel and the others.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "Kestrel GmbH"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-per-wages-q3",
+   "category": "income",
+   "question": "Salary received in the Personal space in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "22500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Pay from Northstar: income, not money owed between Northstar and Dana (she rejected that suggestion).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].sections[*].rows[account~wages].amount",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-per-spend-q3",
+   "category": "spending",
+   "question": "Spending in the Personal space in Q3 (monthly average)?",
+   "answer": {
+    "type": "money",
+    "value": "2932.50",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Rent and groceries.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Personal"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-salary-sep",
+   "category": "payroll",
+   "question": "What did Northstar pay Dana Park (her salary) in September?",
+   "answer": {
+    "type": "money",
+    "value": "7500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One salary payment a month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Northstar Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "Dana Park",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-ns-revenue-2026-09",
+   "category": "revenue",
+   "question": "Cash revenue in September, Northstar Labs?",
+   "answer": {
+    "type": "money",
+    "value": "15000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One customer payment.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northstar Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ns-pnl-q3",
+   "category": "reports",
+   "question": "Net income for Q3, Northstar Labs (cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "-4208.97",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Revenue minus spending, Jul-Sep (in USD; Kestrel day by day at each day's rate).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Northstar Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s3-operator-bl-revenue-2026-09",
+   "category": "revenue",
+   "question": "Cash revenue in September, Brightline Studio?",
+   "answer": {
+    "type": "money",
+    "value": "9000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One customer payment.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Brightline Studio",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-bl-pnl-q3",
+   "category": "reports",
+   "question": "Net income for Q3, Brightline Studio (cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "18000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Revenue minus spending, Jul-Sep (in USD; Kestrel day by day at each day's rate).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Brightline Studio",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s3-operator-ke-revenue-2026-09",
+   "category": "revenue",
+   "question": "Cash revenue in September, Kestrel GmbH?",
+   "answer": {
+    "type": "money",
+    "value": "8340.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One customer payment.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Kestrel GmbH",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s3-operator-ke-pnl-q3",
+   "category": "reports",
+   "question": "Net income for Q3, Kestrel GmbH (cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "18417.34",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Revenue minus spending, Jul-Sep (in USD; Kestrel day by day at each day's rate).",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Kestrel GmbH",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  },
+  {
+   "id": "s3-operator-ke-rows",
+   "category": "statements",
+   "question": "How many transactions does Kestrel have Apr-Sep?",
+   "answer": {
+    "type": "count",
+    "value": 24
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Each CSV row once: 4 a month for 6 months; the June and July rows are in both exports.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Kestrel GmbH",
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "query": "",
+     "measures": [
+      "count"
+     ]
+    },
+    "path": "totals[0].count",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-ke-hetzner-q3-eur",
+   "category": "statements",
+   "question": "What did Kestrel pay Hetzner in Q3, in euros?",
+   "answer": {
+    "type": "money",
+    "value": "401.70",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "In the account's currency (EUR), three monthly payments.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Kestrel GmbH",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "Hetzner",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-ke-fees-sep-eur",
+   "category": "fees",
+   "question": "Kestrel's bank fees in September, in euros?",
+   "answer": {
+    "type": "money",
+    "value": "9.50",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Kontofuehrung (account fee), EUR 9.50 a month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Kestrel GmbH",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "Kontofuehrung",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-ns-amex-spend-q3",
+   "category": "cards",
+   "question": "What was charged to the Northstar Amex in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "1964.97",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Figma, Adobe and Delta each month (the payments in are card payments).",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Northstar Labs",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "out account:Amex",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   },
+   "app": true
+  },
+  {
+   "id": "s3-operator-bl-upwork-q3",
+   "category": "spending",
+   "question": "What did Brightline pay Upwork in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "9000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "$3,000 a month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Brightline Studio",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "counterparty:Upwork",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-per-rent-q3",
+   "category": "spending",
+   "question": "Rent paid from the Personal space in Q3?",
+   "answer": {
+    "type": "money",
+    "value": "7800.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "$2,600 a month.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "query": "counterparty:\"Elm Street Apartments\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-per-groceries-sep",
+   "category": "spending",
+   "question": "Groceries in the Personal space in September?",
+   "answer": {
+    "type": "money",
+    "value": "337.50",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "One Trader Joe's trip.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Personal",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "query": "counterparty:\"Trader Joes\"",
+     "measures": [
+      "sum"
+     ]
+    },
+    "path": "totals[0].sum",
+    "abs": true
+   }
+  },
+  {
+   "id": "s3-operator-per-net-q3",
+   "category": "income",
+   "question": "How much did the Personal space save in Q3 (income minus spending, cash basis)?",
+   "answer": {
+    "type": "money",
+    "value": "13702.50",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Salary minus rent and groceries.",
+   "check": {
+    "tool": "get_reports",
+    "args": {
+     "kind": "profit_and_loss",
+     "company": "Personal",
+     "from": "2026-07-01",
+     "to": "2026-09-30",
+     "basis": "cash"
+    },
+    "path": "reports[0].total"
+   }
+  }
+ ]
+}

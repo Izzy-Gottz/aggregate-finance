@@ -1,0 +1,21 @@
+node_modules
+dist/
+dist-mock/
+*.tsbuildinfo
+coverage/
+.env
+.env.*
+!.env.example
+data/
+*.sqlite
+*.sqlite-*
+*.db
+# raw provider payloads from real accounts never get committed; only redacted fixtures under fixtures/redacted/
+fixtures/raw/
+.DS_Store
+.worktrees/
+
+# Reviewer access links and codes (agfn reviewer-link create); never committed.
+.reviewer-links
+# Launch-day champions list for agfn prelaunch-wipe --keep-email (docs/launch/launch-day.md step 5).
+.launch-keep-emails

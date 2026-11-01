@@ -1,0 +1,27 @@
+{
+  "_note": "Shaped after developer.bill.com v3 (login; listbills; listinvoices; listpayments; search-op-with-lists; common-api-error-codes; api-rate-limits), read 2026-10-11. Login has no organizationName. Lists: {results, nextPage, prevPage, count}. Ids, names and amounts synthetic.",
+  "login": { "sessionId": "sess-doc", "organizationId": "00801DOC", "userId": "006DOCUSER", "trusted": true },
+  "session": { "organizationId": "00801DOC", "organizationName": "Example Org", "userId": "006DOCUSER", "mfaStatus": "TRUSTED" },
+  "vendors": [{ "id": "00901DOC1", "name": "Example Printing" }],
+  "customers": [{ "id": "0cu01DOC1", "name": "Example Clinic" }],
+  "billsPage1": { "results": [
+    { "id": "00n01DOC1", "vendorId": "00901DOC1", "vendorName": "Example Printing", "invoice": { "invoiceNumber": "P-901", "invoiceDate": "2026-09-02" }, "dueDate": "2026-10-02", "amount": 1250.0, "dueAmount": 0, "paidAmount": 1250.0, "paymentStatus": "PAID", "approvalStatus": "APPROVED", "archived": false, "recordStatus": "ACTIVE", "createdTime": "2026-09-02T10:00:00.000+00:00", "updatedTime": "2026-09-20T10:00:00.000+00:00" }
+  ], "nextPage": "PAGE_BILLS_2", "count": 2, "totalDueAmount": 400.0 },
+  "billsPage2": { "results": [
+    { "id": "00n01DOC2", "vendorId": "00901DOC1", "vendorName": "Example Printing", "invoice": { "invoiceNumber": "P-902", "invoiceDate": "2026-09-20" }, "dueDate": "2026-10-20", "amount": 400.0, "dueAmount": 400.0, "paidAmount": 0, "paymentStatus": "UNPAID", "approvalStatus": "APPROVED", "archived": false, "recordStatus": "ACTIVE", "createdTime": "2026-09-20T10:00:00.000+00:00", "updatedTime": "2026-09-21T10:00:00.000+00:00" }
+  ], "prevPage": "PAGE_BILLS_1", "count": 2, "totalDueAmount": 400.0 },
+  "invoices": { "results": [
+    { "id": "00e01DOC1", "customerId": "0cu01DOC1", "invoiceNumber": "INV-77", "invoiceDate": "2026-09-05", "dueDate": "2026-10-05", "totalAmount": 900.0, "dueAmount": 300.0, "status": "PARTIAL_PAYMENT", "archived": false, "updatedTime": "2026-09-25T10:00:00.000+00:00" }
+  ], "count": 1, "totalDueAmount": 300.0 },
+  "payments": { "results": [
+    { "id": "stp01DOC1", "vendorId": "00901DOC1", "billId": "00n01DOC1", "billPayments": [{ "billId": "00n01DOC1", "amount": 1250.0 }], "amount": 1250.0, "processDate": "2026-09-19", "status": "PAID", "singleStatus": "PAID", "updatedTime": "2026-09-20T10:00:00.000+00:00" }
+  ], "count": 1, "totalAmount": 1250.0 },
+  "errors": {
+    "sessionInvalid": [{ "timestamp": "2026-10-09T12:00:00.000+00:00", "code": "BDC_1109", "message": "Session is invalid.  Please log in.", "severity": "ERROR", "category": "DOWNSTREAM" }],
+    "badLogin": [{ "timestamp": "2026-10-09T12:00:00.000+00:00", "code": "BDC_1101", "message": "Wrong username or password", "severity": "ERROR", "category": "DOWNSTREAM" }],
+    "untrusted": [{ "timestamp": "2026-10-09T12:00:00.000+00:00", "code": "BDC_1361", "message": "Untrusted session", "severity": "ERROR", "category": "DOWNSTREAM" }],
+    "permission": [{ "timestamp": "2026-10-09T12:00:00.000+00:00", "code": "BDC_1145", "message": "Current user or organization does not have valid permissions", "severity": "ERROR", "category": "DOWNSTREAM" }],
+    "hourly": [{ "timestamp": "2026-10-09T12:20:00.000+00:00", "code": "BDC_1144", "message": "Max number of allowed requests per hour reached: 20000", "severity": "ERROR", "category": "DOWNSTREAM" }],
+    "concurrent": [{ "timestamp": "2026-10-09T12:00:00.000+00:00", "code": "BDC_1322", "message": "Max number of concurrent requests per organization reached", "severity": "ERROR", "category": "DOWNSTREAM" }]
+  }
+}

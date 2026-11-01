@@ -1,0 +1,32 @@
+name: Something's wrong
+description: A bug, a wrong number, or something that doesn't work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please don't paste real account numbers, balances or names. Made-up or redacted examples are perfect.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where?
+      options: [Hosted (app.aggregate.finance), Self-hosted, Not sure]
+    validations:
+      required: true
+  - type: input
+    id: connector
+    attributes:
+      label: Connector or AI involved
+      placeholder: e.g. Stripe, Plaid, Claude, Cursor
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Redact anything private first.
+      render: text

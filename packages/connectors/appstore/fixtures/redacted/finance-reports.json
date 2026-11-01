@@ -1,0 +1,53 @@
+{
+ "_note": "synthesized from App Store Connect API docs (financeReports, Financial report fields); re-record from a real report when keys are available",
+ "reports": {
+  "2026-07": "Start Date\tEnd Date\tUPC\tISRC/ISBN\tVendor Identifier\tQuantity\tPartner Share\tExtended Partner Share\tPartner Share Currency\tSale or Return\tApple Identifier\tArtist/Show/Developer/Author\tTitle\tLabel/Studio/Network/Developer/Publisher\tGrid\tProduct Type Identifier\tISAN/Other Identifier\tCountry Of Sale\tPre-order Flag\tPromo Code\tCustomer Price\tCustomer Currency\n06/28/2026\t08/01/2026\t\t\tpro_monthly\t10\t0.70\t7.00\tUSD\tS\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tUS\t\t\t0.99\tUSD\n06/28/2026\t08/01/2026\t\t\tpro_yearly\t3\t0.70\t2.10\tUSD\tS\t1000002\tSynthetic Dev LLC\tPro Yearly\t\t\tIAY\t\tUS\t\t\t0.99\tUSD\n06/28/2026\t08/01/2026\t\t\tpro_monthly\t-1\t0.70\t-0.70\tUSD\tR\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tUS\t\t\t0.99\tUSD\n06/28/2026\t08/01/2026\t\t\tapp\t4\t0.70\t2.80\tUSD\tS\t1000003\tSynthetic Dev LLC\tSynthetic App\t\t\t1F\t\tMX\t\t\t0.99\tUSD\nTotal_Rows\t4\nTotal_Amount\t11.20\nTotal_Units\t16\n\nStart Date\tEnd Date\tUPC\tISRC/ISBN\tVendor Identifier\tQuantity\tPartner Share\tExtended Partner Share\tPartner Share Currency\tSale or Return\tApple Identifier\tArtist/Show/Developer/Author\tTitle\tLabel/Studio/Network/Developer/Publisher\tGrid\tProduct Type Identifier\tISAN/Other Identifier\tCountry of Sale\tPre-order Flag\tPromo Code\tCustomer Price\tCustomer Currency\n06/28/2026\t08/01/2026\t\t\tpro_monthly\t2\t1.05\t2.10\tCAD\tS\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tCA\t\t\t1.39\tCAD\n06/28/2026\t08/01/2026\t\t\tpro_monthly\t-1\t1.05\t-1.05\tCAD\tR\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tCA\t\t\t1.39\tCAD\nTotal_Rows\t2\nTotal_Amount\t1.05\nTotal_Units\t1\n",
+  "2026-09": "Start Date\tEnd Date\tUPC\tISRC/ISBN\tVendor Identifier\tQuantity\tPartner Share\tExtended Partner Share\tPartner Share Currency\tSale or Return\tApple Identifier\tArtist/Show/Developer/Author\tTitle\tLabel/Studio/Network/Developer/Publisher\tGrid\tProduct Type Identifier\tISAN/Other Identifier\tCountry Of Sale\tPre-order Flag\tPromo Code\tCustomer Price\tCustomer Currency\n08/30/2026\t10/03/2026\t\t\tpro_monthly\t5\t0.85\t4.25\tUSD\tS\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tUS\t\t\t0.99\tUSD\n08/30/2026\t10/03/2026\t\t\tpro_monthly\t1\t12.00\t12.00\tJPY\tS\t1000001\tSynthetic Dev LLC\tPro Monthly\t\t\tIAY\t\tJP\t\t\t160\tJPY\nTotal_Rows\t2\nTotal_Amount\t4.25\nTotal_Units\t5\n"
+ },
+ "errors": {
+  "unauthorized": {
+   "errors": [
+    {
+     "id": "err-1",
+     "status": "401",
+     "code": "NOT_AUTHORIZED",
+     "title": "Authentication credentials are missing or invalid.",
+     "detail": "Provide a properly configured and signed bearer token, and make sure that it has not expired."
+    }
+   ]
+  },
+  "forbidden": {
+   "errors": [
+    {
+     "id": "err-2",
+     "status": "403",
+     "code": "FORBIDDEN_ERROR",
+     "title": "This request is forbidden for security reasons",
+     "detail": "The API key in use does not allow this request"
+    }
+   ]
+  },
+  "not_found": {
+   "errors": [
+    {
+     "id": "err-3",
+     "status": "404",
+     "code": "NOT_FOUND",
+     "title": "The specified resource does not exist",
+     "detail": "There were no sales for the date specified."
+    }
+   ]
+  },
+  "rate_limited": {
+   "errors": [
+    {
+     "id": "err-4",
+     "status": "429",
+     "code": "RATE_LIMIT_EXCEEDED",
+     "title": "The request rate limit has been reached.",
+     "detail": "We've received too many requests for this API. Please wait and try again or slow down your request rate."
+    }
+   ]
+  }
+ }
+}

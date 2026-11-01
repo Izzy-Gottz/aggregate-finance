@@ -1,0 +1,50 @@
+{
+  "_note": "synthesized from Ramp API docs (docs.ramp.com openapi/developer-api.json v1); re-record from sandbox when keys are available",
+  "token": { "access_token": "ramp_business_tok_testtoken", "token_type": "Bearer", "expires_in": 864000, "scope": "transactions:read business:read cards:read bills:read reimbursements:read" },
+  "business": { "id": "biz_1", "business_name_legal": "Example Labs Inc.", "business_name_on_card": "EXAMPLE LABS" },
+  "balance": {
+    "card_balance_excluding_pending": 3120.45,
+    "card_balance_excluding_pending_amount": { "amount": 312045, "currency_code": "USD", "minor_unit_conversion_rate": 100 },
+    "card_balance_including_pending": 3220.45,
+    "card_balance_including_pending_amount": { "amount": 322045, "currency_code": "USD", "minor_unit_conversion_rate": 100 },
+    "card_limit": 50000,
+    "card_limit_amount": { "amount": 5000000, "currency_code": "USD", "minor_unit_conversion_rate": 100 },
+    "next_billing_date": "2026-11-01",
+    "prev_billing_date": "2026-10-01"
+  },
+  "transactions": {
+    "": {
+      "data": [
+        { "id": "rtx_purchase", "entity_amount": { "value": 12345, "currency": "USD" }, "amount": 123.45, "currency_code": "USD", "state": "CLEARED", "user_transaction_time": "2026-10-01T18:30:00Z", "settlement_date": "2026-10-03T00:00:00Z", "merchant_name": "Figma", "merchant_descriptor": "FIGMA.COM SAN FRANCISCO", "merchant_category_code": "5734", "sk_category_name": "Software", "memo": "Design seats", "card_id": "card_r1", "card_holder": { "user_id": "user_1", "department_name": "Design" } },
+        { "id": "rtx_pending", "entity_amount": { "value": 10000, "currency": "USD" }, "amount": 100, "currency_code": "USD", "state": "PENDING", "user_transaction_time": "2026-09-25T09:00:00Z", "settlement_date": null, "merchant_name": "Delta", "merchant_descriptor": "DELTA AIR", "sk_category_name": "Airlines", "memo": null, "card_id": "card_r2", "card_holder": { "user_id": "user_2" } }
+      ],
+      "page": { "next": "https://api.ramp.com/developer/v1/transactions?page_size=2&order_by_date_asc=true&start=rtx_pending" }
+    },
+    "rtx_pending": {
+      "data": [
+        { "id": "rtx_refund", "entity_amount": { "value": -2000, "currency": "USD" }, "amount": -20, "currency_code": "USD", "state": "CLEARED", "user_transaction_time": "2026-10-04T10:00:00Z", "settlement_date": "2026-10-05T00:00:00Z", "merchant_name": "Figma", "merchant_descriptor": "FIGMA.COM REFUND", "sk_category_name": "Software", "memo": null, "card_id": "card_r1", "card_holder": { "user_id": "user_1" } },
+        { "id": "rtx_declined", "entity_amount": { "value": 99900, "currency": "USD" }, "amount": 999, "currency_code": "USD", "state": "DECLINED", "user_transaction_time": "2026-10-05T10:00:00Z", "settlement_date": null, "merchant_name": "Big Purchase", "merchant_descriptor": "BIG PURCHASE", "sk_category_name": null, "memo": null, "card_id": "card_r1", "card_holder": null }
+      ],
+      "page": { "next": null }
+    }
+  },
+  "reimbursements": {
+    "": {
+      "data": [
+        { "id": "rmb_1", "entity_amount": { "value": 4550, "currency": "USD", "minor_unit_conversion_rate": 100 }, "amount": 45.5, "currency": "USD", "state": "REIMBURSED", "type": "OUT_OF_POCKET", "direction": "BUSINESS_TO_USER", "created_at": "2026-10-02T12:00:00Z", "transaction_date": "2026-09-30", "user_id": "user_3", "merchant": "Office Depot", "memo": "Printer paper" },
+        { "id": "rmb_2", "entity_amount": { "value": 6700, "currency": "USD", "minor_unit_conversion_rate": 100 }, "amount": 67, "currency": "USD", "state": "PENDING", "type": "MILEAGE", "direction": "BUSINESS_TO_USER", "created_at": "2026-10-06T12:00:00Z", "transaction_date": "2026-10-05", "user_id": "user_4", "merchant": null, "memo": "Client visit" },
+        { "id": "rmb_3", "entity_amount": { "value": 1000, "currency": "USD", "minor_unit_conversion_rate": 100 }, "amount": 10, "currency": "USD", "state": "REJECTED", "type": "OUT_OF_POCKET", "direction": "BUSINESS_TO_USER", "created_at": "2026-10-06T12:00:00Z", "transaction_date": "2026-10-05", "user_id": "user_4", "merchant": "Cafe", "memo": null }
+      ],
+      "page": { "next": null }
+    }
+  },
+  "bills": {
+    "": {
+      "data": [
+        { "id": "bill_open", "amount": { "amount": 250000, "currency_code": "USD", "minor_unit_conversion_rate": 100 }, "invoice_number": "INV-2041", "issued_at": "2026-09-28T00:00:00Z", "due_at": "2026-10-28T00:00:00Z", "created_at": "2026-09-29T08:00:00Z", "paid_at": null, "status": "OPEN", "approval_status": "APPROVED", "status_summary": "PAYMENT_SCHEDULED", "vendor": { "id": "ven_1", "name": "Legal Partners LLP" }, "line_items": [ { "memo": "September retainer", "amount": { "amount": 250000, "currency_code": "USD", "minor_unit_conversion_rate": 100 } } ] },
+        { "id": "bill_paid", "amount": { "amount": 99900, "currency_code": "USD", "minor_unit_conversion_rate": 100 }, "invoice_number": "A-77", "issued_at": "2026-09-01T00:00:00Z", "due_at": "2026-09-15T00:00:00Z", "created_at": "2026-09-02T08:00:00Z", "paid_at": "2026-09-14T00:00:00Z", "status": "PAID", "approval_status": "APPROVED", "status_summary": "PAYMENT_COMPLETED", "vendor": { "id": "ven_2", "name": "Cloud Hosting Co" }, "line_items": [] }
+      ],
+      "page": { "next": null }
+    }
+  }
+}

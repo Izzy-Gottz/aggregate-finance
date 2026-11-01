@@ -1,0 +1,209 @@
+Bill no.,Vendor,Bill date,Due date,Amount,Description
+PPC-1001,Pier Packaging Co,2024-10-07,2024-10-21,755.94,"Cups, lids and sleeves"
+BBS-2001,Bayside Bakery Supply,2024-10-09,2024-10-23,264.61,Pastries and bread
+PPC-1002,Pier Packaging Co,2024-10-14,2024-10-28,593.50,"Cups, lids and sleeves"
+BBS-2002,Bayside Bakery Supply,2024-10-16,2024-10-30,241.63,Pastries and bread
+PPC-1003,Pier Packaging Co,2024-10-21,2024-11-04,743.80,"Cups, lids and sleeves"
+BBS-2003,Bayside Bakery Supply,2024-10-23,2024-11-06,568.63,Pastries and bread
+PPC-1004,Pier Packaging Co,2024-10-28,2024-11-11,680.84,"Cups, lids and sleeves"
+BBS-2004,Bayside Bakery Supply,2024-10-30,2024-11-13,479.35,Pastries and bread
+PPC-1005,Pier Packaging Co,2024-11-04,2024-11-18,901.82,"Cups, lids and sleeves"
+BBS-2005,Bayside Bakery Supply,2024-11-06,2024-11-20,468.28,Pastries and bread
+PPC-1006,Pier Packaging Co,2024-11-11,2024-11-25,652.19,"Cups, lids and sleeves"
+BBS-2006,Bayside Bakery Supply,2024-11-13,2024-11-27,559.16,Pastries and bread
+PPC-1007,Pier Packaging Co,2024-11-18,2024-12-02,657.90,"Cups, lids and sleeves"
+BBS-2007,Bayside Bakery Supply,2024-11-20,2024-12-04,442.95,Pastries and bread
+PPC-1008,Pier Packaging Co,2024-11-25,2024-12-09,792.59,"Cups, lids and sleeves"
+BBS-2008,Bayside Bakery Supply,2024-11-27,2024-12-11,277.75,Pastries and bread
+PPC-1009,Pier Packaging Co,2024-12-02,2024-12-16,780.14,"Cups, lids and sleeves"
+BBS-2009,Bayside Bakery Supply,2024-12-04,2024-12-18,410.56,Pastries and bread
+PPC-1010,Pier Packaging Co,2024-12-09,2024-12-23,466.70,"Cups, lids and sleeves"
+BBS-2010,Bayside Bakery Supply,2024-12-11,2024-12-25,334.75,Pastries and bread
+PPC-1011,Pier Packaging Co,2024-12-16,2024-12-30,845.28,"Cups, lids and sleeves"
+BBS-2011,Bayside Bakery Supply,2024-12-18,2025-01-01,314.86,Pastries and bread
+PPC-1012,Pier Packaging Co,2024-12-23,2025-01-06,605.06,"Cups, lids and sleeves"
+BBS-2012,Bayside Bakery Supply,2024-12-25,2025-01-08,387.73,Pastries and bread
+PPC-1013,Pier Packaging Co,2024-12-30,2025-01-13,479.64,"Cups, lids and sleeves"
+BBS-2013,Bayside Bakery Supply,2025-01-01,2025-01-15,483.53,Pastries and bread
+PPC-1014,Pier Packaging Co,2025-01-06,2025-01-20,391.80,"Cups, lids and sleeves"
+BBS-2014,Bayside Bakery Supply,2025-01-08,2025-01-22,606.80,Pastries and bread
+PPC-1015,Pier Packaging Co,2025-01-13,2025-01-27,482.57,"Cups, lids and sleeves"
+BBS-2015,Bayside Bakery Supply,2025-01-15,2025-01-29,422.96,Pastries and bread
+PPC-1016,Pier Packaging Co,2025-01-20,2025-02-03,771.63,"Cups, lids and sleeves"
+BBS-2016,Bayside Bakery Supply,2025-01-22,2025-02-05,483.95,Pastries and bread
+PPC-1017,Pier Packaging Co,2025-01-27,2025-02-10,758.44,"Cups, lids and sleeves"
+BBS-2017,Bayside Bakery Supply,2025-01-29,2025-02-12,451.24,Pastries and bread
+PPC-1018,Pier Packaging Co,2025-02-03,2025-02-17,536.36,"Cups, lids and sleeves"
+BBS-2018,Bayside Bakery Supply,2025-02-05,2025-02-19,313.43,Pastries and bread
+PPC-1019,Pier Packaging Co,2025-02-10,2025-02-24,441.48,"Cups, lids and sleeves"
+BBS-2019,Bayside Bakery Supply,2025-02-12,2025-02-26,526.09,Pastries and bread
+PPC-1020,Pier Packaging Co,2025-02-17,2025-03-03,742.33,"Cups, lids and sleeves"
+BBS-2020,Bayside Bakery Supply,2025-02-19,2025-03-05,444.57,Pastries and bread
+PPC-1021,Pier Packaging Co,2025-02-24,2025-03-10,883.46,"Cups, lids and sleeves"
+BBS-2021,Bayside Bakery Supply,2025-02-26,2025-03-12,558.88,Pastries and bread
+PPC-1022,Pier Packaging Co,2025-03-03,2025-03-17,797.21,"Cups, lids and sleeves"
+BBS-2022,Bayside Bakery Supply,2025-03-05,2025-03-19,517.11,Pastries and bread
+PPC-1023,Pier Packaging Co,2025-03-10,2025-03-24,670.93,"Cups, lids and sleeves"
+BBS-2023,Bayside Bakery Supply,2025-03-12,2025-03-26,491.68,Pastries and bread
+PPC-1024,Pier Packaging Co,2025-03-17,2025-03-31,665.57,"Cups, lids and sleeves"
+BBS-2024,Bayside Bakery Supply,2025-03-19,2025-04-02,345.77,Pastries and bread
+PPC-1025,Pier Packaging Co,2025-03-24,2025-04-07,716.88,"Cups, lids and sleeves"
+BBS-2025,Bayside Bakery Supply,2025-03-26,2025-04-09,478.18,Pastries and bread
+PPC-1026,Pier Packaging Co,2025-03-31,2025-04-14,397.82,"Cups, lids and sleeves"
+BBS-2026,Bayside Bakery Supply,2025-04-02,2025-04-16,416.96,Pastries and bread
+PPC-1027,Pier Packaging Co,2025-04-07,2025-04-21,553.40,"Cups, lids and sleeves"
+BBS-2027,Bayside Bakery Supply,2025-04-09,2025-04-23,247.07,Pastries and bread
+PPC-1028,Pier Packaging Co,2025-04-14,2025-04-28,495.53,"Cups, lids and sleeves"
+BBS-2028,Bayside Bakery Supply,2025-04-16,2025-04-30,524.69,Pastries and bread
+PPC-1029,Pier Packaging Co,2025-04-21,2025-05-05,385.02,"Cups, lids and sleeves"
+BBS-2029,Bayside Bakery Supply,2025-04-23,2025-05-07,431.49,Pastries and bread
+PPC-1030,Pier Packaging Co,2025-04-28,2025-05-12,898.01,"Cups, lids and sleeves"
+BBS-2030,Bayside Bakery Supply,2025-04-30,2025-05-14,306.36,Pastries and bread
+PPC-1031,Pier Packaging Co,2025-05-05,2025-05-19,622.88,"Cups, lids and sleeves"
+BBS-2031,Bayside Bakery Supply,2025-05-07,2025-05-21,416.00,Pastries and bread
+PPC-1032,Pier Packaging Co,2025-05-12,2025-05-26,758.06,"Cups, lids and sleeves"
+BBS-2032,Bayside Bakery Supply,2025-05-14,2025-05-28,258.49,Pastries and bread
+PPC-1033,Pier Packaging Co,2025-05-19,2025-06-02,403.40,"Cups, lids and sleeves"
+BBS-2033,Bayside Bakery Supply,2025-05-21,2025-06-04,366.82,Pastries and bread
+PPC-1034,Pier Packaging Co,2025-05-26,2025-06-09,658.02,"Cups, lids and sleeves"
+BBS-2034,Bayside Bakery Supply,2025-05-28,2025-06-11,594.79,Pastries and bread
+PPC-1035,Pier Packaging Co,2025-06-02,2025-06-16,725.46,"Cups, lids and sleeves"
+BBS-2035,Bayside Bakery Supply,2025-06-04,2025-06-18,255.88,Pastries and bread
+PPC-1036,Pier Packaging Co,2025-06-09,2025-06-23,878.82,"Cups, lids and sleeves"
+BBS-2036,Bayside Bakery Supply,2025-06-11,2025-06-25,389.75,Pastries and bread
+PPC-1037,Pier Packaging Co,2025-06-16,2025-06-30,709.10,"Cups, lids and sleeves"
+BBS-2037,Bayside Bakery Supply,2025-06-18,2025-07-02,381.45,Pastries and bread
+PPC-1038,Pier Packaging Co,2025-06-23,2025-07-07,766.67,"Cups, lids and sleeves"
+BBS-2038,Bayside Bakery Supply,2025-06-25,2025-07-09,459.85,Pastries and bread
+PPC-1039,Pier Packaging Co,2025-06-30,2025-07-14,723.01,"Cups, lids and sleeves"
+BBS-2039,Bayside Bakery Supply,2025-07-02,2025-07-16,285.17,Pastries and bread
+PPC-1040,Pier Packaging Co,2025-07-07,2025-07-21,791.32,"Cups, lids and sleeves"
+BBS-2040,Bayside Bakery Supply,2025-07-09,2025-07-23,404.58,Pastries and bread
+PPC-1041,Pier Packaging Co,2025-07-14,2025-07-28,556.78,"Cups, lids and sleeves"
+BBS-2041,Bayside Bakery Supply,2025-07-16,2025-07-30,503.19,Pastries and bread
+PPC-1042,Pier Packaging Co,2025-07-21,2025-08-04,918.99,"Cups, lids and sleeves"
+BBS-2042,Bayside Bakery Supply,2025-07-23,2025-08-06,514.59,Pastries and bread
+PPC-1043,Pier Packaging Co,2025-07-28,2025-08-11,668.33,"Cups, lids and sleeves"
+BBS-2043,Bayside Bakery Supply,2025-07-30,2025-08-13,246.81,Pastries and bread
+PPC-1044,Pier Packaging Co,2025-08-04,2025-08-18,908.74,"Cups, lids and sleeves"
+BBS-2044,Bayside Bakery Supply,2025-08-06,2025-08-20,364.71,Pastries and bread
+PPC-1045,Pier Packaging Co,2025-08-11,2025-08-25,715.98,"Cups, lids and sleeves"
+BBS-2045,Bayside Bakery Supply,2025-08-13,2025-08-27,594.36,Pastries and bread
+PPC-1046,Pier Packaging Co,2025-08-18,2025-09-01,530.53,"Cups, lids and sleeves"
+BBS-2046,Bayside Bakery Supply,2025-08-20,2025-09-03,517.58,Pastries and bread
+PPC-1047,Pier Packaging Co,2025-08-25,2025-09-08,732.83,"Cups, lids and sleeves"
+BBS-2047,Bayside Bakery Supply,2025-08-27,2025-09-10,400.03,Pastries and bread
+PPC-1048,Pier Packaging Co,2025-09-01,2025-09-15,719.02,"Cups, lids and sleeves"
+BBS-2048,Bayside Bakery Supply,2025-09-03,2025-09-17,416.59,Pastries and bread
+PPC-1049,Pier Packaging Co,2025-09-08,2025-09-22,697.72,"Cups, lids and sleeves"
+BBS-2049,Bayside Bakery Supply,2025-09-10,2025-09-24,545.64,Pastries and bread
+PPC-1050,Pier Packaging Co,2025-09-15,2025-09-29,819.28,"Cups, lids and sleeves"
+BBS-2050,Bayside Bakery Supply,2025-09-17,2025-10-01,510.74,Pastries and bread
+PPC-1051,Pier Packaging Co,2025-09-22,2025-10-06,650.98,"Cups, lids and sleeves"
+BBS-2051,Bayside Bakery Supply,2025-09-24,2025-10-08,300.93,Pastries and bread
+PPC-1052,Pier Packaging Co,2025-09-29,2025-10-13,402.57,"Cups, lids and sleeves"
+BBS-2052,Bayside Bakery Supply,2025-10-01,2025-10-15,431.05,Pastries and bread
+PPC-1053,Pier Packaging Co,2025-10-06,2025-10-20,660.99,"Cups, lids and sleeves"
+BBS-2053,Bayside Bakery Supply,2025-10-08,2025-10-22,498.92,Pastries and bread
+PPC-1054,Pier Packaging Co,2025-10-13,2025-10-27,464.40,"Cups, lids and sleeves"
+BBS-2054,Bayside Bakery Supply,2025-10-15,2025-10-29,605.01,Pastries and bread
+PPC-1055,Pier Packaging Co,2025-10-20,2025-11-03,520.24,"Cups, lids and sleeves"
+BBS-2055,Bayside Bakery Supply,2025-10-22,2025-11-05,509.56,Pastries and bread
+PPC-1056,Pier Packaging Co,2025-10-27,2025-11-10,799.54,"Cups, lids and sleeves"
+BBS-2056,Bayside Bakery Supply,2025-10-29,2025-11-12,293.49,Pastries and bread
+PPC-1057,Pier Packaging Co,2025-11-03,2025-11-17,381.46,"Cups, lids and sleeves"
+BBS-2057,Bayside Bakery Supply,2025-11-05,2025-11-19,558.59,Pastries and bread
+PPC-1058,Pier Packaging Co,2025-11-10,2025-11-24,702.63,"Cups, lids and sleeves"
+BBS-2058,Bayside Bakery Supply,2025-11-12,2025-11-26,559.56,Pastries and bread
+PPC-1059,Pier Packaging Co,2025-11-17,2025-12-01,543.66,"Cups, lids and sleeves"
+BBS-2059,Bayside Bakery Supply,2025-11-19,2025-12-03,520.02,Pastries and bread
+PPC-1060,Pier Packaging Co,2025-11-24,2025-12-08,617.64,"Cups, lids and sleeves"
+BBS-2060,Bayside Bakery Supply,2025-11-26,2025-12-10,451.89,Pastries and bread
+PPC-1061,Pier Packaging Co,2025-12-01,2025-12-15,851.10,"Cups, lids and sleeves"
+BBS-2061,Bayside Bakery Supply,2025-12-03,2025-12-17,445.10,Pastries and bread
+PPC-1062,Pier Packaging Co,2025-12-08,2025-12-22,574.91,"Cups, lids and sleeves"
+BBS-2062,Bayside Bakery Supply,2025-12-10,2025-12-24,550.49,Pastries and bread
+PPC-1063,Pier Packaging Co,2025-12-15,2025-12-29,583.28,"Cups, lids and sleeves"
+BBS-2063,Bayside Bakery Supply,2025-12-17,2025-12-31,366.15,Pastries and bread
+PPC-1064,Pier Packaging Co,2025-12-22,2026-01-05,697.92,"Cups, lids and sleeves"
+BBS-2064,Bayside Bakery Supply,2025-12-24,2026-01-07,368.09,Pastries and bread
+PPC-1065,Pier Packaging Co,2025-12-29,2026-01-12,470.16,"Cups, lids and sleeves"
+BBS-2065,Bayside Bakery Supply,2025-12-31,2026-01-14,492.12,Pastries and bread
+PPC-1066,Pier Packaging Co,2026-01-05,2026-01-19,637.10,"Cups, lids and sleeves"
+BBS-2066,Bayside Bakery Supply,2026-01-07,2026-01-21,476.51,Pastries and bread
+PPC-1067,Pier Packaging Co,2026-01-12,2026-01-26,839.38,"Cups, lids and sleeves"
+BBS-2067,Bayside Bakery Supply,2026-01-14,2026-01-28,331.38,Pastries and bread
+PPC-1068,Pier Packaging Co,2026-01-19,2026-02-02,557.49,"Cups, lids and sleeves"
+BBS-2068,Bayside Bakery Supply,2026-01-21,2026-02-04,480.18,Pastries and bread
+PPC-1069,Pier Packaging Co,2026-01-26,2026-02-09,395.79,"Cups, lids and sleeves"
+BBS-2069,Bayside Bakery Supply,2026-01-28,2026-02-11,293.18,Pastries and bread
+PPC-1070,Pier Packaging Co,2026-02-02,2026-02-16,528.31,"Cups, lids and sleeves"
+BBS-2070,Bayside Bakery Supply,2026-02-04,2026-02-18,317.29,Pastries and bread
+PPC-1071,Pier Packaging Co,2026-02-09,2026-02-23,909.03,"Cups, lids and sleeves"
+BBS-2071,Bayside Bakery Supply,2026-02-11,2026-02-25,515.47,Pastries and bread
+PPC-1072,Pier Packaging Co,2026-02-16,2026-03-02,901.49,"Cups, lids and sleeves"
+BBS-2072,Bayside Bakery Supply,2026-02-18,2026-03-04,280.55,Pastries and bread
+PPC-1073,Pier Packaging Co,2026-02-23,2026-03-09,809.30,"Cups, lids and sleeves"
+BBS-2073,Bayside Bakery Supply,2026-02-25,2026-03-11,412.87,Pastries and bread
+PPC-1074,Pier Packaging Co,2026-03-02,2026-03-16,649.45,"Cups, lids and sleeves"
+BBS-2074,Bayside Bakery Supply,2026-03-04,2026-03-18,438.17,Pastries and bread
+PPC-1075,Pier Packaging Co,2026-03-09,2026-03-23,786.85,"Cups, lids and sleeves"
+BBS-2075,Bayside Bakery Supply,2026-03-11,2026-03-25,260.89,Pastries and bread
+PPC-1076,Pier Packaging Co,2026-03-16,2026-03-30,621.41,"Cups, lids and sleeves"
+BBS-2076,Bayside Bakery Supply,2026-03-18,2026-04-01,428.74,Pastries and bread
+PPC-1077,Pier Packaging Co,2026-03-23,2026-04-06,509.21,"Cups, lids and sleeves"
+BBS-2077,Bayside Bakery Supply,2026-03-25,2026-04-08,606.25,Pastries and bread
+PPC-1078,Pier Packaging Co,2026-03-30,2026-04-13,634.87,"Cups, lids and sleeves"
+BBS-2078,Bayside Bakery Supply,2026-04-01,2026-04-15,503.73,Pastries and bread
+PPC-1079,Pier Packaging Co,2026-04-06,2026-04-20,446.77,"Cups, lids and sleeves"
+BBS-2079,Bayside Bakery Supply,2026-04-08,2026-04-22,336.77,Pastries and bread
+PPC-1080,Pier Packaging Co,2026-04-13,2026-04-27,790.38,"Cups, lids and sleeves"
+BBS-2080,Bayside Bakery Supply,2026-04-15,2026-04-29,568.60,Pastries and bread
+PPC-1081,Pier Packaging Co,2026-04-20,2026-05-04,447.54,"Cups, lids and sleeves"
+BBS-2081,Bayside Bakery Supply,2026-04-22,2026-05-06,312.85,Pastries and bread
+PPC-1082,Pier Packaging Co,2026-04-27,2026-05-11,837.34,"Cups, lids and sleeves"
+BBS-2082,Bayside Bakery Supply,2026-04-29,2026-05-13,312.67,Pastries and bread
+PPC-1083,Pier Packaging Co,2026-05-04,2026-05-18,661.44,"Cups, lids and sleeves"
+BBS-2083,Bayside Bakery Supply,2026-05-06,2026-05-20,322.80,Pastries and bread
+PPC-1084,Pier Packaging Co,2026-05-11,2026-05-25,743.90,"Cups, lids and sleeves"
+BBS-2084,Bayside Bakery Supply,2026-05-13,2026-05-27,309.22,Pastries and bread
+PPC-1085,Pier Packaging Co,2026-05-18,2026-06-01,704.22,"Cups, lids and sleeves"
+BBS-2085,Bayside Bakery Supply,2026-05-20,2026-06-03,302.35,Pastries and bread
+PPC-1086,Pier Packaging Co,2026-05-25,2026-06-08,844.02,"Cups, lids and sleeves"
+BBS-2086,Bayside Bakery Supply,2026-05-27,2026-06-10,383.60,Pastries and bread
+PPC-1087,Pier Packaging Co,2026-06-01,2026-06-15,504.94,"Cups, lids and sleeves"
+BBS-2087,Bayside Bakery Supply,2026-06-03,2026-06-17,452.87,Pastries and bread
+PPC-1088,Pier Packaging Co,2026-06-08,2026-06-22,846.43,"Cups, lids and sleeves"
+BBS-2088,Bayside Bakery Supply,2026-06-10,2026-06-24,241.54,Pastries and bread
+PPC-1089,Pier Packaging Co,2026-06-15,2026-06-29,415.97,"Cups, lids and sleeves"
+BBS-2089,Bayside Bakery Supply,2026-06-17,2026-07-01,606.63,Pastries and bread
+PPC-1090,Pier Packaging Co,2026-06-22,2026-07-06,664.14,"Cups, lids and sleeves"
+BBS-2090,Bayside Bakery Supply,2026-06-24,2026-07-08,386.59,Pastries and bread
+PPC-1091,Pier Packaging Co,2026-06-29,2026-07-13,556.73,"Cups, lids and sleeves"
+BBS-2091,Bayside Bakery Supply,2026-07-01,2026-07-15,303.18,Pastries and bread
+PPC-1092,Pier Packaging Co,2026-07-06,2026-07-20,451.52,"Cups, lids and sleeves"
+BBS-2092,Bayside Bakery Supply,2026-07-08,2026-07-22,480.27,Pastries and bread
+PPC-1093,Pier Packaging Co,2026-07-13,2026-07-27,855.67,"Cups, lids and sleeves"
+BBS-2093,Bayside Bakery Supply,2026-07-15,2026-07-29,483.43,Pastries and bread
+PPC-1094,Pier Packaging Co,2026-07-20,2026-08-03,643.53,"Cups, lids and sleeves"
+BBS-2094,Bayside Bakery Supply,2026-07-22,2026-08-05,444.84,Pastries and bread
+PPC-1095,Pier Packaging Co,2026-07-27,2026-08-10,611.78,"Cups, lids and sleeves"
+BBS-2095,Bayside Bakery Supply,2026-07-29,2026-08-12,329.67,Pastries and bread
+PPC-1096,Pier Packaging Co,2026-08-03,2026-08-17,435.74,"Cups, lids and sleeves"
+BBS-2096,Bayside Bakery Supply,2026-08-05,2026-08-19,441.25,Pastries and bread
+PPC-1097,Pier Packaging Co,2026-08-10,2026-08-24,837.67,"Cups, lids and sleeves"
+BBS-2097,Bayside Bakery Supply,2026-08-12,2026-08-26,543.25,Pastries and bread
+PPC-1098,Pier Packaging Co,2026-08-17,2026-08-31,583.49,"Cups, lids and sleeves"
+BBS-2098,Bayside Bakery Supply,2026-08-19,2026-09-02,258.28,Pastries and bread
+PPC-1099,Pier Packaging Co,2026-08-24,2026-09-07,603.59,"Cups, lids and sleeves"
+BBS-2099,Bayside Bakery Supply,2026-08-26,2026-09-09,580.87,Pastries and bread
+PPC-1100,Pier Packaging Co,2026-08-31,2026-09-14,771.24,"Cups, lids and sleeves"
+BBS-2100,Bayside Bakery Supply,2026-09-02,2026-09-16,504.01,Pastries and bread
+PPC-1101,Pier Packaging Co,2026-09-07,2026-09-21,434.56,"Cups, lids and sleeves"
+BBS-2101,Bayside Bakery Supply,2026-09-09,2026-09-23,351.19,Pastries and bread
+PPC-1102,Pier Packaging Co,2026-09-14,2026-09-28,900.90,"Cups, lids and sleeves"
+BBS-2102,Bayside Bakery Supply,2026-09-16,2026-09-30,334.28,Pastries and bread
+PPC-1103,Pier Packaging Co,2026-09-21,2026-10-05,822.72,"Cups, lids and sleeves"
+BBS-2103,Bayside Bakery Supply,2026-09-23,2026-10-07,528.24,Pastries and bread
+PPC-1104,Pier Packaging Co,2026-09-28,2026-10-12,620.79,"Cups, lids and sleeves"
+BBS-2104,Bayside Bakery Supply,2026-09-30,2026-10-14,261.95,Pastries and bread

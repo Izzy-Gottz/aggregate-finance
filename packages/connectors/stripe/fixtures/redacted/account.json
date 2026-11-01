@@ -1,0 +1,942 @@
+{
+ "_note": "synthesized from Stripe API docs (API version 2026-08-26.dahlia object shapes); re-record from sandbox when keys are available",
+ "account": {
+  "id": "acct_test_1",
+  "object": "account",
+  "business_profile": {
+   "name": "Example Co",
+   "url": "https://example.com"
+  },
+  "charges_enabled": true,
+  "country": "US",
+  "default_currency": "usd",
+  "email": "owner@example.com",
+  "payouts_enabled": true,
+  "settings": {
+   "dashboard": {
+    "display_name": "Example Co",
+    "timezone": "Etc/UTC"
+   }
+  },
+  "type": "standard"
+ },
+ "balance": {
+  "object": "balance",
+  "available": [
+   {
+    "amount": 150000,
+    "currency": "usd",
+    "source_types": {
+     "card": 150000
+    }
+   },
+   {
+    "amount": 3850,
+    "currency": "eur",
+    "source_types": {
+     "card": 3850
+    }
+   }
+  ],
+  "pending": [
+   {
+    "amount": 25000,
+    "currency": "usd",
+    "source_types": {
+     "card": 25000
+    }
+   },
+   {
+    "amount": 0,
+    "currency": "eur",
+    "source_types": {
+     "card": 0
+    }
+   }
+  ],
+  "connect_reserved": [
+   {
+    "amount": 1000,
+    "currency": "usd"
+   }
+  ],
+  "livemode": false
+ },
+ "txn_pages": {
+  "": {
+   "object": "list",
+   "url": "/v1/balance_transactions",
+   "has_more": true,
+   "data": [
+    {
+     "id": "txn_test_fee1",
+     "object": "balance_transaction",
+     "amount": -500,
+     "available_on": 1791453600,
+     "created": 1791280800,
+     "currency": "usd",
+     "description": "Billing (2026-09-01 - 2026-09-30): Usage fees",
+     "exchange_rate": null,
+     "fee": 0,
+     "fee_details": [],
+     "net": -500,
+     "reporting_category": "fee",
+     "source": null,
+     "status": "available",
+     "type": "stripe_fee"
+    },
+    {
+     "id": "txn_test_payout1",
+     "object": "balance_transaction",
+     "amount": -4830,
+     "available_on": 1791331200,
+     "created": 1791158400,
+     "currency": "usd",
+     "description": "STRIPE PAYOUT",
+     "exchange_rate": null,
+     "fee": 0,
+     "fee_details": [],
+     "net": -4830,
+     "reporting_category": "payout",
+     "source": {
+      "id": "po_test_1",
+      "object": "payout",
+      "amount": 4830,
+      "currency": "usd",
+      "arrival_date": 1791244800,
+      "status": "paid",
+      "automatic": true,
+      "trace_id": { "status": "supported", "value": "TRACE0001" }
+     },
+     "status": "available",
+     "type": "payout"
+    },
+    {
+     "id": "txn_test_dispute1",
+     "object": "balance_transaction",
+     "amount": -2500,
+     "available_on": 1791194400,
+     "created": 1791021600,
+     "currency": "usd",
+     "description": "Chargeback withdrawal for ch_test_2",
+     "exchange_rate": null,
+     "fee": 1500,
+     "fee_details": [
+      {
+       "amount": 1500,
+       "application": null,
+       "currency": "usd",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": -4000,
+     "reporting_category": "dispute",
+     "source": {
+      "id": "dp_test_1",
+      "object": "dispute",
+      "amount": 2500,
+      "charge": "ch_test_2",
+      "currency": "usd",
+      "reason": "fraudulent",
+      "status": "needs_response"
+     },
+     "status": "available",
+     "type": "adjustment"
+    }
+   ]
+  },
+  "txn_test_dispute1": {
+   "object": "list",
+   "url": "/v1/balance_transactions",
+   "has_more": false,
+   "data": [
+    {
+     "id": "txn_test_eur1",
+     "object": "balance_transaction",
+     "amount": 4000,
+     "available_on": 1791108000,
+     "created": 1790935200,
+     "currency": "eur",
+     "description": "Starter plan",
+     "exchange_rate": null,
+     "fee": 150,
+     "fee_details": [
+      {
+       "amount": 150,
+       "application": null,
+       "currency": "eur",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": 3850,
+     "reporting_category": "charge",
+     "source": {
+      "id": "ch_test_eur",
+      "object": "charge",
+      "amount": 4000,
+      "currency": "eur",
+      "customer": "cus_test_2",
+      "paid": true,
+      "refunded": false
+     },
+     "status": "available",
+     "type": "charge"
+    },
+    {
+     "id": "txn_test_refund1",
+     "object": "balance_transaction",
+     "amount": -5000,
+     "available_on": 1791107900,
+     "created": 1790935100,
+     "currency": "usd",
+     "description": "REFUND FOR CHARGE (Pro plan)",
+     "exchange_rate": null,
+     "fee": -150,
+     "fee_details": [
+      {
+       "amount": -150,
+       "application": null,
+       "currency": "usd",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": -4850,
+     "reporting_category": "refund",
+     "source": {
+      "id": "re_test_1",
+      "object": "refund",
+      "amount": 5000,
+      "charge": "ch_test_1",
+      "currency": "usd",
+      "status": "succeeded"
+     },
+     "status": "available",
+     "type": "refund"
+    },
+    {
+     "id": "txn_test_charge1",
+     "object": "balance_transaction",
+     "amount": 10000,
+     "available_on": 1791021600,
+     "created": 1790848800,
+     "currency": "usd",
+     "description": "Pro plan",
+     "exchange_rate": null,
+     "fee": 320,
+     "fee_details": [
+      {
+       "amount": 320,
+       "application": null,
+       "currency": "usd",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": 9680,
+     "reporting_category": "charge",
+     "source": {
+      "id": "ch_test_1",
+      "object": "charge",
+      "amount": 10000,
+      "currency": "usd",
+      "customer": "cus_test_1",
+      "description": "Pro plan",
+      "paid": true,
+      "refunded": false
+     },
+     "status": "available",
+     "type": "charge"
+    }
+   ]
+  }
+ },
+ "payouts": {
+  "object": "list",
+  "url": "/v1/payouts",
+  "has_more": false,
+  "data": [
+   {
+    "id": "po_test_1",
+    "object": "payout",
+    "amount": 4830,
+    "arrival_date": 1791244800,
+    "automatic": true,
+    "balance_transaction": "txn_test_payout1",
+    "created": 1791158400,
+    "currency": "usd",
+    "description": "STRIPE PAYOUT",
+    "destination": "ba_test_1",
+    "failure_balance_transaction": null,
+    "failure_code": null,
+    "livemode": false,
+    "method": "standard",
+    "source_type": "card",
+    "statement_descriptor": null,
+    "status": "paid",
+    "trace_id": {
+     "status": "supported",
+     "value": "TRACE-TEST-0001"
+    },
+    "type": "bank_account"
+   }
+  ]
+ },
+ "payout_txns": {
+  "po_test_1": {
+   "object": "list",
+   "url": "/v1/balance_transactions",
+   "has_more": false,
+   "data": [
+    {
+     "id": "txn_test_payout1",
+     "object": "balance_transaction",
+     "amount": -4830,
+     "available_on": 1791331200,
+     "created": 1791158400,
+     "currency": "usd",
+     "description": "STRIPE PAYOUT",
+     "exchange_rate": null,
+     "fee": 0,
+     "fee_details": [],
+     "net": -4830,
+     "reporting_category": "payout",
+     "source": {
+      "id": "po_test_1",
+      "object": "payout",
+      "amount": 4830,
+      "currency": "usd",
+      "arrival_date": 1791244800,
+      "status": "paid",
+      "automatic": true,
+      "trace_id": { "status": "supported", "value": "TRACE0001" }
+     },
+     "status": "available",
+     "type": "payout"
+    },
+    {
+     "id": "txn_test_refund1",
+     "object": "balance_transaction",
+     "amount": -5000,
+     "available_on": 1791107900,
+     "created": 1790935100,
+     "currency": "usd",
+     "description": "REFUND FOR CHARGE (Pro plan)",
+     "exchange_rate": null,
+     "fee": -150,
+     "fee_details": [
+      {
+       "amount": -150,
+       "application": null,
+       "currency": "usd",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": -4850,
+     "reporting_category": "refund",
+     "source": {
+      "id": "re_test_1",
+      "object": "refund",
+      "amount": 5000,
+      "charge": "ch_test_1",
+      "currency": "usd",
+      "status": "succeeded"
+     },
+     "status": "available",
+     "type": "refund"
+    },
+    {
+     "id": "txn_test_charge1",
+     "object": "balance_transaction",
+     "amount": 10000,
+     "available_on": 1791021600,
+     "created": 1790848800,
+     "currency": "usd",
+     "description": "Pro plan",
+     "exchange_rate": null,
+     "fee": 320,
+     "fee_details": [
+      {
+       "amount": 320,
+       "application": null,
+       "currency": "usd",
+       "description": "Stripe processing fees",
+       "type": "stripe_fee"
+      }
+     ],
+     "net": 9680,
+     "reporting_category": "charge",
+     "source": {
+      "id": "ch_test_1",
+      "object": "charge",
+      "amount": 10000,
+      "currency": "usd",
+      "customer": "cus_test_1",
+      "description": "Pro plan",
+      "paid": true,
+      "refunded": false
+     },
+     "status": "available",
+     "type": "charge"
+    }
+   ]
+  }
+ },
+ "invoices": {
+  "object": "list",
+  "url": "/v1/invoices",
+  "has_more": false,
+  "data": [
+   {
+    "id": "in_test_partial",
+    "object": "invoice",
+    "number": "EX-0002",
+    "customer": "cus_test_2",
+    "customer_name": "Example Customer Two",
+    "customer_email": "ap@example.com",
+    "currency": "usd",
+    "status": "open",
+    "created": 1791021600,
+    "due_date": 1793491200,
+    "status_transitions": {
+     "finalized_at": 1791021700,
+     "paid_at": null,
+     "marked_uncollectible_at": null,
+     "voided_at": null
+    },
+    "total": 33000,
+    "subtotal": 30000,
+    "amount_due": 33000,
+    "amount_paid": 10000,
+    "amount_remaining": 23000,
+    "total_taxes": [
+     {
+      "amount": 3000,
+      "tax_behavior": "exclusive",
+      "taxability_reason": "standard_rated",
+      "taxable_amount": 30000,
+      "type": "tax_rate_details"
+     }
+    ],
+    "lines": {
+     "object": "list",
+     "url": "/v1/invoices/in_test_partial/lines",
+     "has_more": true,
+     "data": [
+      {
+       "id": "il_test_p1",
+       "object": "line_item",
+       "amount": 20000,
+       "currency": "usd",
+       "description": "Seats",
+       "discount_amounts": [],
+       "discountable": true,
+       "discounts": [],
+       "invoice": "in_test_partial",
+       "livemode": false,
+       "metadata": {},
+       "parent": null,
+       "period": {
+        "start": 1790848800,
+        "end": 1793491200
+       },
+       "pricing": {
+        "type": "price_details",
+        "price_details": {
+         "price": "price_test_seat",
+         "product": "prod_test_pro"
+        },
+        "unit_amount_decimal": "10000"
+       },
+       "quantity": 2,
+       "quantity_decimal": "2",
+       "subtotal": 20000,
+       "taxes": []
+      }
+     ]
+    }
+   },
+   {
+    "id": "in_test_paid",
+    "object": "invoice",
+    "number": "EX-0001",
+    "customer": "cus_test_1",
+    "customer_name": "Example Customer One",
+    "customer_email": "billing@example.com",
+    "currency": "usd",
+    "status": "paid",
+    "created": 1789430400,
+    "due_date": null,
+    "status_transitions": {
+     "finalized_at": 1789430400,
+     "paid_at": 1789430500,
+     "marked_uncollectible_at": null,
+     "voided_at": null
+    },
+    "total": 10000,
+    "subtotal": 10000,
+    "amount_due": 10000,
+    "amount_paid": 10000,
+    "amount_remaining": 0,
+    "total_taxes": [],
+    "lines": {
+     "object": "list",
+     "url": "/v1/invoices/in_test_paid/lines",
+     "has_more": false,
+     "data": [
+      {
+       "id": "il_test_1",
+       "object": "line_item",
+       "amount": 10000,
+       "currency": "usd",
+       "description": "Pro plan",
+       "discount_amounts": [],
+       "discountable": true,
+       "discounts": [],
+       "invoice": "in_test_paid",
+       "livemode": false,
+       "metadata": {},
+       "parent": null,
+       "period": {
+        "start": 1790848800,
+        "end": 1793491200
+       },
+       "pricing": {
+        "type": "price_details",
+        "price_details": {
+         "price": "price_test_pro",
+         "product": "prod_test_pro"
+        },
+        "unit_amount_decimal": "10000"
+       },
+       "quantity": 1,
+       "quantity_decimal": "1",
+       "subtotal": 10000,
+       "taxes": []
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "invoice_lines": {
+  "in_test_partial": {
+   "object": "list",
+   "url": "/v1/invoices/in_test_partial/lines",
+   "has_more": false,
+   "data": [
+    {
+     "id": "il_test_p2",
+     "object": "line_item",
+     "amount": 10000,
+     "currency": "usd",
+     "description": "Setup",
+     "discount_amounts": [],
+     "discountable": true,
+     "discounts": [],
+     "invoice": "in_test_partial",
+     "livemode": false,
+     "metadata": {},
+     "parent": null,
+     "period": {
+      "start": 1790848800,
+      "end": 1793491200
+     },
+     "pricing": {
+      "type": "price_details",
+      "price_details": {
+       "price": "price_test_setup",
+       "product": "prod_test_pro"
+      },
+      "unit_amount_decimal": "10000"
+     },
+     "quantity": 1,
+     "quantity_decimal": "1",
+     "subtotal": 10000,
+     "taxes": []
+    }
+   ]
+  }
+ },
+ "open_invoices": {
+  "object": "list",
+  "url": "/v1/invoices",
+  "has_more": false,
+  "data": [
+   {
+    "id": "in_test_partial",
+    "object": "invoice",
+    "number": "EX-0002",
+    "customer": "cus_test_2",
+    "customer_name": "Example Customer Two",
+    "customer_email": "ap@example.com",
+    "currency": "usd",
+    "status": "open",
+    "created": 1791021600,
+    "due_date": 1793491200,
+    "status_transitions": {
+     "finalized_at": 1791021700,
+     "paid_at": null,
+     "marked_uncollectible_at": null,
+     "voided_at": null
+    },
+    "total": 33000,
+    "subtotal": 30000,
+    "amount_due": 33000,
+    "amount_paid": 10000,
+    "amount_remaining": 23000,
+    "total_taxes": [
+     {
+      "amount": 3000,
+      "tax_behavior": "exclusive",
+      "taxability_reason": "standard_rated",
+      "taxable_amount": 30000,
+      "type": "tax_rate_details"
+     }
+    ],
+    "lines": {
+     "object": "list",
+     "url": "/v1/invoices/in_test_partial/lines",
+     "has_more": true,
+     "data": [
+      {
+       "id": "il_test_p1",
+       "object": "line_item",
+       "amount": 20000,
+       "currency": "usd",
+       "description": "Seats",
+       "discount_amounts": [],
+       "discountable": true,
+       "discounts": [],
+       "invoice": "in_test_partial",
+       "livemode": false,
+       "metadata": {},
+       "parent": null,
+       "period": {
+        "start": 1790848800,
+        "end": 1793491200
+       },
+       "pricing": {
+        "type": "price_details",
+        "price_details": {
+         "price": "price_test_seat",
+         "product": "prod_test_pro"
+        },
+        "unit_amount_decimal": "10000"
+       },
+       "quantity": 2,
+       "quantity_decimal": "2",
+       "subtotal": 20000,
+       "taxes": []
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "invoice_partial_paid_later": {
+  "id": "in_test_partial",
+  "object": "invoice",
+  "number": "EX-0002",
+  "customer": "cus_test_2",
+  "customer_name": "Example Customer Two",
+  "customer_email": "ap@example.com",
+  "currency": "usd",
+  "status": "paid",
+  "created": 1791021600,
+  "due_date": 1793491200,
+  "status_transitions": {
+   "finalized_at": 1791021700,
+   "paid_at": 1791547000,
+   "marked_uncollectible_at": null,
+   "voided_at": null
+  },
+  "total": 33000,
+  "subtotal": 30000,
+  "amount_due": 33000,
+  "amount_paid": 33000,
+  "amount_remaining": 0,
+  "total_taxes": [
+   {
+    "amount": 3000,
+    "tax_behavior": "exclusive",
+    "taxability_reason": "standard_rated",
+    "taxable_amount": 30000,
+    "type": "tax_rate_details"
+   }
+  ],
+  "lines": {
+   "object": "list",
+   "url": "/v1/invoices/in_test_partial/lines",
+   "has_more": true,
+   "data": [
+    {
+     "id": "il_test_p1",
+     "object": "line_item",
+     "amount": 20000,
+     "currency": "usd",
+     "description": "Seats",
+     "discount_amounts": [],
+     "discountable": true,
+     "discounts": [],
+     "invoice": "in_test_partial",
+     "livemode": false,
+     "metadata": {},
+     "parent": null,
+     "period": {
+      "start": 1790848800,
+      "end": 1793491200
+     },
+     "pricing": {
+      "type": "price_details",
+      "price_details": {
+       "price": "price_test_seat",
+       "product": "prod_test_pro"
+      },
+      "unit_amount_decimal": "10000"
+     },
+     "quantity": 2,
+     "quantity_decimal": "2",
+     "subtotal": 20000,
+     "taxes": []
+    }
+   ]
+  }
+ },
+ "subscriptions": {
+  "object": "list",
+  "url": "/v1/subscriptions",
+  "has_more": false,
+  "data": [
+   {
+    "id": "sub_test_monthly",
+    "object": "subscription",
+    "billing_mode": {
+     "type": "flexible"
+    },
+    "cancel_at": null,
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "collection_method": "charge_automatically",
+    "created": 1767225600,
+    "currency": "usd",
+    "customer": "cus_test_1",
+    "discounts": [],
+    "ended_at": null,
+    "items": {
+     "object": "list",
+     "url": "/v1/subscription_items?subscription=sub_test_monthly",
+     "has_more": false,
+     "data": [
+      {
+       "id": "si_test_m1",
+       "object": "subscription_item",
+       "created": 1767225600,
+       "current_period_start": 1790899200,
+       "current_period_end": 1793491200,
+       "discounts": [],
+       "price": {
+        "id": "price_test_pro",
+        "object": "price",
+        "active": true,
+        "billing_scheme": "per_unit",
+        "currency": "usd",
+        "livemode": false,
+        "product": "prod_test_pro",
+        "recurring": {
+         "interval": "month",
+         "interval_count": 1,
+         "meter": null,
+         "usage_type": "licensed"
+        },
+        "type": "recurring",
+        "unit_amount": 4900,
+        "unit_amount_decimal": "4900"
+       },
+       "subscription": "sub_test_monthly",
+       "quantity": 1
+      },
+      {
+       "id": "si_test_m2",
+       "object": "subscription_item",
+       "created": 1767225600,
+       "current_period_start": 1790899200,
+       "current_period_end": 1793491200,
+       "discounts": [],
+       "price": {
+        "id": "price_test_api_usage",
+        "object": "price",
+        "active": true,
+        "billing_scheme": "per_unit",
+        "currency": "usd",
+        "livemode": false,
+        "product": "prod_test_api_usage",
+        "recurring": {
+         "interval": "month",
+         "interval_count": 1,
+         "meter": "mtr_test_1",
+         "usage_type": "metered"
+        },
+        "type": "recurring",
+        "unit_amount": 2,
+        "unit_amount_decimal": "2"
+       },
+       "subscription": "sub_test_monthly"
+      }
+     ]
+    },
+    "livemode": false,
+    "start_date": 1767225600,
+    "status": "active",
+    "trial_end": null,
+    "trial_start": null
+   },
+   {
+    "id": "sub_test_yearly",
+    "object": "subscription",
+    "billing_mode": {
+     "type": "flexible"
+    },
+    "cancel_at": null,
+    "cancel_at_period_end": false,
+    "canceled_at": null,
+    "collection_method": "charge_automatically",
+    "created": 1748736000,
+    "currency": "usd",
+    "customer": "cus_test_2",
+    "discounts": [
+     {
+      "id": "di_test_1",
+      "object": "discount",
+      "customer": "cus_test_2",
+      "end": null,
+      "invoice": null,
+      "invoice_item": null,
+      "promotion_code": null,
+      "source": {
+       "type": "coupon",
+       "coupon": "coup_test_20"
+      },
+      "start": 1748736000,
+      "subscription": "sub_test_yearly",
+      "subscription_item": null
+     }
+    ],
+    "ended_at": null,
+    "items": {
+     "object": "list",
+     "url": "/v1/subscription_items?subscription=sub_test_yearly",
+     "has_more": false,
+     "data": [
+      {
+       "id": "si_test_y1",
+       "object": "subscription_item",
+       "created": 1767225600,
+       "current_period_start": 1796169600,
+       "current_period_end": 1798761600,
+       "discounts": [],
+       "price": {
+        "id": "price_test_annual",
+        "object": "price",
+        "active": true,
+        "billing_scheme": "per_unit",
+        "currency": "usd",
+        "livemode": false,
+        "product": "prod_test_annual",
+        "recurring": {
+         "interval": "year",
+         "interval_count": 1,
+         "meter": null,
+         "usage_type": "licensed"
+        },
+        "type": "recurring",
+        "unit_amount": 120000,
+        "unit_amount_decimal": "120000"
+       },
+       "subscription": "sub_test_yearly",
+       "quantity": 2
+      }
+     ]
+    },
+    "livemode": false,
+    "start_date": 1748736000,
+    "status": "active",
+    "trial_end": null,
+    "trial_start": null
+   },
+   {
+    "id": "sub_test_canceled",
+    "object": "subscription",
+    "billing_mode": {
+     "type": "flexible"
+    },
+    "cancel_at": null,
+    "cancel_at_period_end": false,
+    "canceled_at": 1785542400,
+    "collection_method": "charge_automatically",
+    "created": 1767225600,
+    "currency": "usd",
+    "customer": "cus_test_3",
+    "discounts": [],
+    "ended_at": 1788220800,
+    "items": {
+     "object": "list",
+     "url": "/v1/subscription_items?subscription=sub_test_canceled",
+     "has_more": false,
+     "data": [
+      {
+       "id": "si_test_c1",
+       "object": "subscription_item",
+       "created": 1767225600,
+       "current_period_start": 1785628800,
+       "current_period_end": 1788220800,
+       "discounts": [],
+       "price": {
+        "id": "price_test_basic",
+        "object": "price",
+        "active": true,
+        "billing_scheme": "per_unit",
+        "currency": "usd",
+        "livemode": false,
+        "product": "prod_test_basic",
+        "recurring": {
+         "interval": "month",
+         "interval_count": 1,
+         "meter": null,
+         "usage_type": "licensed"
+        },
+        "type": "recurring",
+        "unit_amount": 2900,
+        "unit_amount_decimal": "2900"
+       },
+       "subscription": "sub_test_canceled",
+       "quantity": 1
+      }
+     ]
+    },
+    "livemode": false,
+    "start_date": 1767225600,
+    "status": "canceled",
+    "trial_end": null,
+    "trial_start": null
+   }
+  ]
+ },
+ "coupons": {
+  "coup_test_20": {
+   "id": "coup_test_20",
+   "object": "coupon",
+   "amount_off": null,
+   "currency": null,
+   "duration": "forever",
+   "duration_in_months": null,
+   "livemode": false,
+   "name": "20% off annual",
+   "percent_off": 20.0,
+   "valid": true
+  }
+ }
+}

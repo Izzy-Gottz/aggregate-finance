@@ -1,0 +1,28 @@
+# Shopify app config for the hosted Aggregate app (Dev Dashboard app "Aggregate").
+# Deploy with: npx @shopify/cli app deploy   (the client ID is public; the secret is never here)
+client_id = "6c383b924db0af4d314629ce3dcc66eb"
+name = "Aggregate"
+application_url = "https://app.aggregate.finance/api/connectors/shopify/install"
+embedded = true
+
+[access_scopes]
+scopes = "read_shopify_payments_payouts,read_shopify_payments_accounts"
+# Shopify-managed install: Shopify grants these scopes at install; the embedded page gets the store's token by token
+# exchange (apps/server/src/shopify-embedded.ts). No OAuth redirect.
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [ "https://app.aggregate.finance/api/connectors/shopify/callback" ]
+
+[webhooks]
+api_version = "2026-10"
+
+  # Mandatory privacy webhooks, all HMAC-verified at one endpoint (see docs/compliance/provider-apps.md).
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+  uri = "https://app.aggregate.finance/api/webhooks/shopify"
+
+  # Uninstall: the connection stops and any waiting install token is dropped.
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "https://app.aggregate.finance/api/webhooks/shopify"

@@ -1,0 +1,2101 @@
+{
+ "scenario": "s1-individual",
+ "now": "2026-10-12T16:00:00Z",
+ "timeZone": "UTC",
+ "company": null,
+ "person": "Sam Lee",
+ "openingBalances": {
+  "chk": 800000,
+  "sav": 2500000
+ },
+ "connections": [
+  {
+   "id": "chase",
+   "key": "plaid",
+   "name": "Chase",
+   "entity": "Personal",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "chk",
+     "connectionId": "$conn",
+     "name": "Chase Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "1101",
+     "businessHint": "personal",
+     "institution": "Chase"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "sav",
+     "connectionId": "$conn",
+     "name": "Chase Savings",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "1102",
+     "businessHint": "personal",
+     "institution": "Chase"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "sapphire",
+     "connectionId": "$conn",
+     "name": "Sapphire Preferred",
+     "accountType": "credit_card",
+     "currency": "USD",
+     "mask": "4401",
+     "businessHint": "personal",
+     "institution": "Chase",
+     "liability": {
+      "kind": "credit",
+      "apr": "24.99",
+      "minimumPayment": {
+       "minor": 4000,
+       "currency": "USD"
+      },
+      "nextPaymentDueDate": "2026-10-20",
+      "lastStatementBalance": {
+       "minor": 9510,
+       "currency": "USD"
+      },
+      "lastStatementDate": "2026-09-28"
+     }
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "freedom",
+     "connectionId": "$conn",
+     "name": "Freedom Unlimited",
+     "accountType": "credit_card",
+     "currency": "USD",
+     "mask": "4402",
+     "businessHint": "personal",
+     "institution": "Chase"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-04_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-04_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-06",
+     "amount": {
+      "minor": -14237,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-04-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-04-28",
+     "amount": {
+      "minor": 312,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-04_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-04-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-04_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-04-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-04_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-04-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-04_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-04-09",
+     "amount": {
+      "minor": -2380,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-04_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-04-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": -38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": 38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": -4604,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": 4604,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-05_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-05_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-06",
+     "amount": {
+      "minor": -14548,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-05-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-05-28",
+     "amount": {
+      "minor": 321,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-05_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-05-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-05_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-05-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-05_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-05-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-05_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-05-09",
+     "amount": {
+      "minor": -2485,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-05_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-05-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-20",
+     "amount": {
+      "minor": -38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-05-20",
+     "amount": {
+      "minor": 38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-20",
+     "amount": {
+      "minor": -4709,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-05-20",
+     "amount": {
+      "minor": 4709,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-06_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-06_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-06",
+     "amount": {
+      "minor": -14859,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-06-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-06-28",
+     "amount": {
+      "minor": 330,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-06_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-06-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-06_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-06-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-06_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-06-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-06_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-06-09",
+     "amount": {
+      "minor": -2590,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-06_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-06-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-20",
+     "amount": {
+      "minor": -38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-06-20",
+     "amount": {
+      "minor": 38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-20",
+     "amount": {
+      "minor": -4814,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-06-20",
+     "amount": {
+      "minor": 4814,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-07_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-07_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-06",
+     "amount": {
+      "minor": -15170,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-07-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-07-28",
+     "amount": {
+      "minor": 339,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-07_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-07-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-07_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-07-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-07_3_delt",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-07-03",
+     "amount": {
+      "minor": -38900,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES",
+     "categoryHint": "TRAVEL_FLIGHTS"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-07_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-07-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-07_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-07-09",
+     "amount": {
+      "minor": -2695,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-07_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-07-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": -77655,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": 77655,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": -4919,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": 4919,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-08_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-08_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-06",
+     "amount": {
+      "minor": -15481,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-08-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-08-28",
+     "amount": {
+      "minor": 348,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-08_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-08-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-08_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-08-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-08_8_amaz",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-08-08",
+     "amount": {
+      "minor": -12999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon",
+     "rawText": "AMAZON"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-08_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-08-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-08_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-08-09",
+     "amount": {
+      "minor": -2800,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-08_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-08-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "amazon_refund",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-08-14",
+     "amount": {
+      "minor": 12999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon",
+     "rawText": "AMAZON MKTPLACE REFUND"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": -38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": 38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": -5024,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": 5024,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-09_01",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "salary_2026-09_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": 425000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acme Corp Payroll",
+     "rawText": "ACME CORP PAYROLL DIRECT DEP",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -240000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Maple Apartments",
+     "rawText": "MAPLE APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "power_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-06",
+     "amount": {
+      "minor": -15792,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "City Power and Light",
+     "rawText": "CITY POWER AND LIGHT",
+     "categoryHint": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_out_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-16",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Savings",
+     "rawText": "TRANSFER TO SAVINGS",
+     "linkRefs": {
+      "transfer": "sv_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "save_in_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-09-16",
+     "amount": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Checking",
+     "rawText": "TRANSFER FROM CHECKING",
+     "linkRefs": {
+      "transfer": "sv_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "interest_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "date": "2026-09-28",
+     "amount": {
+      "minor": 357,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Interest Payment",
+     "rawText": "INTEREST PAYMENT",
+     "categoryHint": "INCOME_INTEREST_EARNED"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_out_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-10",
+     "amount": {
+      "minor": -45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Toyota Financial Services",
+     "rawText": "TOYOTA FINANCIAL SERVICES",
+     "linkRefs": {
+      "transfer": "ty_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-09_5_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": -18640,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_2026-09_12_whol",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-09-12",
+     "amount": {
+      "minor": -20115,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-09_3_netf",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-09-03",
+     "amount": {
+      "minor": -1549,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Netflix",
+     "rawText": "NETFLIX",
+     "categoryHint": "ENTERTAINMENT_TV_AND_MOVIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-09_9_uber",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-09-09",
+     "amount": {
+      "minor": -2905,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER",
+     "categoryHint": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_2026-09_11_star",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-09-11",
+     "amount": {
+      "minor": -675,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Starbucks",
+     "rawText": "STARBUCKS",
+     "categoryHint": "FOOD_AND_DRINK_COFFEE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_out_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": -38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Sapphire",
+     "rawText": "CHASE CARD PAYMENT SAPPHIRE",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_pay_in_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": 38755,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "sapphire_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_out_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": -5129,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Chase Card Payment Freedom",
+     "rawText": "CHASE CARD PAYMENT FREEDOM",
+     "linkRefs": {
+      "card_payment": "freedom_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pay_in_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": 5129,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "freedom_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "sapphire_late",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "date": "2026-09-25",
+     "amount": {
+      "minor": -9510,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Whole Foods Market",
+     "rawText": "WHOLE FOODS MARKET",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "freedom_pending",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "date": "2026-09-30",
+     "amount": {
+      "minor": -6420,
+      "currency": "USD"
+     },
+     "status": "pending",
+     "counterparty": "Shell",
+     "rawText": "SHELL",
+     "categoryHint": "TRANSPORTATION_GAS"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 3499284,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "sav_now",
+     "connectionId": "$conn",
+     "accountExternalId": "sav",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 2802007,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "sapphire_now",
+     "connectionId": "$conn",
+     "accountExternalId": "sapphire",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": -9510,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "freedom_now",
+     "connectionId": "$conn",
+     "accountExternalId": "freedom",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": -6420,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fidelity",
+   "key": "plaid",
+   "name": "Fidelity",
+   "entity": "Personal",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "brk",
+     "connectionId": "$conn",
+     "name": "Fidelity Brokerage",
+     "accountType": "investment",
+     "currency": "USD",
+     "mask": "7781",
+     "businessHint": "personal",
+     "institution": "Fidelity"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "brk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "brk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 5231044,
+      "currency": "USD"
+     },
+     "holdings": [
+      {
+       "securityExternalId": "sec_VTI",
+       "ticker": "VTI",
+       "name": "Vanguard Total Stock Market ETF",
+       "quantity": "120",
+       "value": {
+        "minor": 3348000,
+        "currency": "USD"
+       },
+       "costBasis": {
+        "minor": 2800000,
+        "currency": "USD"
+       }
+      },
+      {
+       "securityExternalId": "sec_AAPL",
+       "ticker": "AAPL",
+       "name": "Apple Inc.",
+       "quantity": "40",
+       "value": {
+        "minor": 913044,
+        "currency": "USD"
+       },
+       "costBasis": {
+        "minor": 650000,
+        "currency": "USD"
+       }
+      },
+      {
+       "securityExternalId": "sec_SPAXX",
+       "ticker": "SPAXX",
+       "name": "Fidelity Government Money Market",
+       "quantity": "9700",
+       "value": {
+        "minor": 970000,
+        "currency": "USD"
+       },
+       "costBasis": {
+        "minor": 970000,
+        "currency": "USD"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "coinbase",
+   "key": "plaid",
+   "name": "Coinbase",
+   "entity": "Personal",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "cb",
+     "connectionId": "$conn",
+     "name": "Coinbase",
+     "accountType": "crypto",
+     "currency": "USD",
+     "mask": "0001",
+     "businessHint": "personal",
+     "institution": "Coinbase"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "cb_now",
+     "connectionId": "$conn",
+     "accountExternalId": "cb",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 2226500,
+      "currency": "USD"
+     },
+     "holdings": [
+      {
+       "securityExternalId": "coin_BTC",
+       "ticker": "BTC",
+       "name": "Bitcoin",
+       "quantity": "0.25",
+       "value": {
+        "minor": 1565000,
+        "currency": "USD"
+       },
+       "costBasis": {
+        "minor": 900000,
+        "currency": "USD"
+       }
+      },
+      {
+       "securityExternalId": "coin_ETH",
+       "ticker": "ETH",
+       "name": "Ethereum",
+       "quantity": "2.1",
+       "value": {
+        "minor": 661500,
+        "currency": "USD"
+       },
+       "costBasis": {
+        "minor": 520000,
+        "currency": "USD"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "toyota",
+   "key": "plaid",
+   "name": "Toyota Financial",
+   "entity": "Personal",
+   "events": [
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-04-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-05-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-06-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-07-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-08-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "toyota_in_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "date": "2026-09-10",
+     "amount": {
+      "minor": 45000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "transfer": "ty_2026-09"
+     }
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "loan",
+     "connectionId": "$conn",
+     "name": "Toyota Auto Loan",
+     "accountType": "loan",
+     "currency": "USD",
+     "mask": "9310",
+     "businessHint": "personal",
+     "institution": "Toyota Financial Services",
+     "liability": {
+      "kind": "other",
+      "apr": "6.9",
+      "minimumPayment": {
+       "minor": 45000,
+       "currency": "USD"
+      },
+      "nextPaymentDueDate": "2026-10-10",
+      "originationPrincipal": {
+       "minor": 2400000,
+       "currency": "USD"
+      },
+      "maturityDate": "2029-03-10"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "loan_now",
+     "connectionId": "$conn",
+     "accountExternalId": "loan",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": -1845000,
+      "currency": "USD"
+     }
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "do": "confirm_all_matches"
+  },
+  {
+   "do": "answer_money",
+   "externalId": "amazon_refund",
+   "kind": "refund",
+   "ifAsked": true
+  }
+ ]
+}

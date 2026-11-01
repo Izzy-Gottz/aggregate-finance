@@ -1,0 +1,2488 @@
+{
+ "scenario": "s2-founder",
+ "now": "2026-10-12T16:00:00Z",
+ "timeZone": "UTC",
+ "company": "Lumen Labs",
+ "openingBalances": {
+  "chk": 18000000,
+  "card": 0,
+  "stripe_bal": 0
+ },
+ "connections": [
+  {
+   "id": "bank",
+   "key": "plaid",
+   "name": "Mercury",
+   "entity": "Lumen Labs",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "chk",
+     "connectionId": "$conn",
+     "name": "Mercury Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "institution": "Mercury",
+     "mask": "4410"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "card",
+     "connectionId": "$conn",
+     "name": "Mercury Card",
+     "accountType": "credit_card",
+     "currency": "USD",
+     "institution": "Mercury",
+     "mask": "7710"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-04_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260415"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-04_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260415"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-04_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260428"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-04_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260428"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-25",
+     "amount": {
+      "minor": -79210,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-04-22",
+     "amount": {
+      "minor": 877021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202604"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-05_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260515"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-05_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260515"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-05_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260528"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-05_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260528"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-25",
+     "amount": {
+      "minor": -80325,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-22",
+     "amount": {
+      "minor": 877021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202605"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-06_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260615"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-06_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260615"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-06_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260628"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-06_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260628"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-25",
+     "amount": {
+      "minor": -81440,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-22",
+     "amount": {
+      "minor": 877021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202606"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-07_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260715"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-07_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260715"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-07_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260728"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-07_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260728"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-25",
+     "amount": {
+      "minor": -82555,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-22",
+     "amount": {
+      "minor": 877021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202607"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-08_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260815"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-08_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260815"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-08_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260828"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-08_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260828"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-25",
+     "amount": {
+      "minor": -83670,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-22",
+     "amount": {
+      "minor": 627021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202608"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -650000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-03",
+     "amount": {
+      "minor": -123456,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-09_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260915"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-09_15",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260915"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_net_2026-09_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-28",
+     "amount": {
+      "minor": -915000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Net",
+     "rawText": "GUSTO NET 20260928"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "gusto_tax_2026-09_28",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-28",
+     "amount": {
+      "minor": -285000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Gusto Tax",
+     "rawText": "GUSTO TAX 20260928"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_out_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-25",
+     "amount": {
+      "minor": -84785,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Mercury Card Payment",
+     "rawText": "MERCURY CARD PAYMENT",
+     "linkRefs": {
+      "card_payment": "cp_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "stripe_dep_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-22",
+     "amount": {
+      "minor": 877021,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER ST-202609"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dep_inv1001",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-06-28",
+     "amount": {
+      "minor": 1200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northwind Traders",
+     "rawText": "NORTHWIND TRADERS ACH INV-1001"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "dep_inv1002",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": 300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH INV-1002 PART"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "safe_wire",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-10",
+     "amount": {
+      "minor": 25000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Acorn Ventures",
+     "rawText": "WIRE IN ACORN VENTURES SAFE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "founder_loan",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-05-02",
+     "amount": {
+      "minor": 2000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Jordan Rivera",
+     "rawText": "ONLINE TRANSFER FROM J RIVERA"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 31979405,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "card_now",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 0,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-04_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-04-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-04_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-04-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-04_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-04-11",
+     "amount": {
+      "minor": -61240,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-04_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-04-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-04-25",
+     "amount": {
+      "minor": 79210,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-05_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-05-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-05_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-05-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-05_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-05-11",
+     "amount": {
+      "minor": -62355,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-05_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-05-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-05-25",
+     "amount": {
+      "minor": 80325,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-06_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-06-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-06_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-06-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-06_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-06-11",
+     "amount": {
+      "minor": -63470,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-06_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-06-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-06-25",
+     "amount": {
+      "minor": 81440,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-07_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-07-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-07_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-07-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-07_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-07-11",
+     "amount": {
+      "minor": -64585,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-07_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-07-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-07-25",
+     "amount": {
+      "minor": 82555,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-08_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-08-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-08_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-08-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-08_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-08-11",
+     "amount": {
+      "minor": -65700,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-08_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-08-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-08-25",
+     "amount": {
+      "minor": 83670,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-09_5",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": -4500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-09_7",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-09-07",
+     "amount": {
+      "minor": -9600,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Notion",
+     "rawText": "NOTION"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-09_11",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-09-11",
+     "amount": {
+      "minor": -66815,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "card_2026-09_19",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-09-19",
+     "amount": {
+      "minor": -3870,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Uber",
+     "rawText": "UBER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "cardpay_in_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "card",
+     "date": "2026-09-25",
+     "amount": {
+      "minor": 84785,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Thank You",
+     "rawText": "PAYMENT THANK YOU",
+     "linkRefs": {
+      "card_payment": "cp_2026-09"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stripe",
+   "key": "stripe",
+   "name": "Stripe",
+   "entity": "Lumen Labs",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "stripe_bal",
+     "connectionId": "$conn",
+     "name": "Stripe balance",
+     "accountType": "processor_balance",
+     "currency": "USD",
+     "institution": "Stripe"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-04_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-04-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-04",
+     "arrivalDate": "2026-04-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-05_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-05-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-05",
+     "arrivalDate": "2026-05-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-06_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-06-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-06",
+     "arrivalDate": "2026-06-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-07_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-07-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-07",
+     "arrivalDate": "2026-07-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-08_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "re_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-16T10:00:00Z",
+     "kind": "refund",
+     "gross": {
+      "minor": -250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -250000,
+      "currency": "USD"
+     },
+     "customer": "Initech",
+     "sourceExternalId": "ch_2026-08_9"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -627021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -627021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-08",
+     "arrivalDate": "2026-08-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_3",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 3510,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 116490,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_6",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-06T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1437,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 47063,
+      "currency": "USD"
+     },
+     "customer": "Dunder Mifflin"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_9",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-09T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 250000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 7280,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 242720,
+      "currency": "USD"
+     },
+     "customer": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_12",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-12T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2205,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 72795,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_15",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-15T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 310000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 9020,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 300980,
+      "currency": "USD"
+     },
+     "customer": "Stark Industries"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_18",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-18T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 99900,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 2927,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 96973,
+      "currency": "USD"
+     },
+     "customer": "Wayne Enterprises"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-20T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -877021,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_2026-09",
+     "arrivalDate": "2026-09-22"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_24",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-24T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 64000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1886,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 62114,
+      "currency": "USD"
+     },
+     "customer": "Acme Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_2026-09_27",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-27T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 22500,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 683,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 21817,
+      "currency": "USD"
+     },
+     "customer": "Umbrella"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "stripe_bal_now",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 83931,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "subscription.upsert",
+     "externalId": "sub_acme",
+     "connectionId": "$conn",
+     "customer": "Acme Corp",
+     "status": "active",
+     "mrr": {
+      "minor": 120000,
+      "currency": "USD"
+     },
+     "interval": "month",
+     "intervalCount": 1,
+     "startedAt": "2026-01-03T00:00:00Z"
+    },
+    {
+     "type": "subscription.upsert",
+     "externalId": "sub_umbrella",
+     "connectionId": "$conn",
+     "customer": "Umbrella",
+     "status": "active",
+     "mrr": {
+      "minor": 75000,
+      "currency": "USD"
+     },
+     "interval": "month",
+     "intervalCount": 1,
+     "startedAt": "2026-02-12T00:00:00Z"
+    },
+    {
+     "type": "subscription.upsert",
+     "externalId": "sub_wayne",
+     "connectionId": "$conn",
+     "customer": "Wayne Enterprises",
+     "status": "active",
+     "mrr": {
+      "minor": 8325,
+      "currency": "USD"
+     },
+     "interval": "year",
+     "intervalCount": 1,
+     "startedAt": "2026-03-18T00:00:00Z"
+    },
+    {
+     "type": "subscription.upsert",
+     "externalId": "sub_dunder",
+     "connectionId": "$conn",
+     "customer": "Dunder Mifflin",
+     "status": "canceled",
+     "mrr": {
+      "minor": 48500,
+      "currency": "USD"
+     },
+     "interval": "month",
+     "intervalCount": 1,
+     "startedAt": "2026-02-06T00:00:00Z",
+     "canceledAt": "2026-08-31T00:00:00Z",
+     "endedAt": "2026-08-31T00:00:00Z"
+    }
+   ]
+  },
+  {
+   "id": "qbo",
+   "key": "quickbooks",
+   "name": "QuickBooks",
+   "entity": "Lumen Labs",
+   "events": [
+    {
+     "type": "invoice.upsert",
+     "externalId": "inv1001",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "INV-1001",
+     "counterparty": "Northwind Traders",
+     "issueDate": "2026-06-01",
+     "dueDate": "2026-07-01",
+     "total": {
+      "minor": 1200000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 1200000,
+      "currency": "USD"
+     },
+     "status": "paid"
+    },
+    {
+     "type": "invoice.upsert",
+     "externalId": "inv1002",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "INV-1002",
+     "counterparty": "Initech",
+     "issueDate": "2026-08-01",
+     "dueDate": "2026-08-31",
+     "total": {
+      "minor": 800000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 300000,
+      "currency": "USD"
+     },
+     "status": "partially_paid"
+    },
+    {
+     "type": "invoice.upsert",
+     "externalId": "inv1003",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "INV-1003",
+     "counterparty": "Globex",
+     "issueDate": "2026-09-15",
+     "dueDate": "2026-10-15",
+     "total": {
+      "minor": 450000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "status": "open"
+    },
+    {
+     "type": "invoice.upsert",
+     "externalId": "inv1004",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "INV-1004",
+     "counterparty": "Hooli",
+     "issueDate": "2026-07-10",
+     "dueDate": "2026-08-09",
+     "total": {
+      "minor": 220000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "status": "open"
+    },
+    {
+     "type": "invoice.upsert",
+     "externalId": "bill77",
+     "connectionId": "$conn",
+     "direction": "payable",
+     "number": "B-77",
+     "counterparty": "Harbor Packaging",
+     "issueDate": "2026-10-01",
+     "dueDate": "2026-10-20",
+     "total": {
+      "minor": 180000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "status": "open"
+    },
+    {
+     "type": "payment.applied",
+     "externalId": "pay1001",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "date": "2026-06-28",
+     "amount": {
+      "minor": 1200000,
+      "currency": "USD"
+     },
+     "counterparty": "Northwind Traders",
+     "applications": [
+      {
+       "invoiceExternalId": "inv1001",
+       "amount": {
+        "minor": 1200000,
+        "currency": "USD"
+       }
+      }
+     ],
+     "reference": "INV-1001"
+    },
+    {
+     "type": "payment.applied",
+     "externalId": "pay1002",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": 300000,
+      "currency": "USD"
+     },
+     "counterparty": "Initech",
+     "applications": [
+      {
+       "invoiceExternalId": "inv1002",
+       "amount": {
+        "minor": 300000,
+        "currency": "USD"
+       }
+      }
+     ],
+     "reference": "INV-1002"
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "do": "record_equity_event",
+   "args": {
+    "company": "Lumen Labs",
+    "kind": "issuance",
+    "date": "2025-11-01",
+    "stakeholder": "Jordan Rivera",
+    "shares": 8000000,
+    "share_class": "Common",
+    "idempotency_key": "s2-eq-0001"
+   }
+  },
+  {
+   "do": "record_equity_event",
+   "args": {
+    "company": "Lumen Labs",
+    "kind": "option_grant",
+    "date": "2026-06-01",
+    "stakeholder": "First engineer",
+    "shares": 400000,
+    "vesting": {
+     "start": "2026-06-01",
+     "months": 48,
+     "cliff_months": 12
+    },
+    "idempotency_key": "s2-eq-0002"
+   }
+  },
+  {
+   "do": "record_equity_event",
+   "args": {
+    "company": "Lumen Labs",
+    "kind": "safe",
+    "date": "2026-09-10",
+    "stakeholder": "Acorn Ventures",
+    "amount": {
+     "amount": "250000.00",
+     "currency": "USD"
+    },
+    "valuation_cap": {
+     "amount": "10000000.00",
+     "currency": "USD"
+    },
+    "idempotency_key": "s2-eq-0003"
+   }
+  },
+  {
+   "do": "confirm_all_matches"
+  },
+  {
+   "do": "answer_money",
+   "externalId": "founder_loan",
+   "kind": "owner_loan"
+  }
+ ]
+}

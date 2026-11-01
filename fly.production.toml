@@ -1,0 +1,133 @@
+# Hosted Aggregate on Fly.io: app on Fly, Postgres on Neon, files and backups on Cloudflare R2, email through Resend.
+# Deploy with: fly deploy -c fly.production.toml
+# (fly.toml is the simpler self-host config: SQLite on a Fly volume.)
+#
+# PREP ONLY. Nothing here creates accounts or resources; Yisrael creates the Fly app, the Neon project, the R2
+# buckets and the Resend domain, then sets the secrets below.
+#
+# Secrets (fly secrets set NAME=value … ; never in this file or in git):
+#   AUTH_SECRET                      signs sessions (npm run keygen)
+#   AGFN_MASTER_KEY                  encrypts provider tokens and backups (npm run keygen). Keep a copy OFF Fly too:
+#                                    without it, backups cannot be restored. (Or AGFN_MASTER_KEY_COMMAND, see docs.)
+#   DATABASE_URL                     Neon: postgres://…@…neon.tech/aggregate?sslmode=require (the pooled host is fine:
+#                                    PgBouncer session mode; see docs/security/rls.md about transaction mode)
+#   SMTP_URL                         smtps://resend:<RESEND_API_KEY>@smtp.resend.com:465
+#   RESEND_WEBHOOK_SECRET            whsec_… (email-in webhook signing secret)
+#   RESEND_API_KEY                   re_… with access to received emails (email-in)
+#   FILES_S3_ACCESS_KEY_ID / FILES_S3_SECRET_ACCESS_KEY      R2 token for the files bucket
+#   BACKUP_S3_ACCESS_KEY_ID / BACKUP_S3_SECRET_ACCESS_KEY    a SEPARATE R2 token for the backups bucket
+#   PLAID_CLIENT_ID / PLAID_SECRET   Plaid production keys (PLAID_ENV below)
+#   ALERT_WEBHOOK_URL                optional: Slack/Discord/ntfy for operator alerts
+#   ALERT_TELEGRAM_BOT_TOKEN         optional, with ALERT_TELEGRAM_CHAT_ID: operator alerts to Telegram
+#   (plus any connector keys from .env.example you enable: STRIPE_*, QUICKBOOKS_*, XERO_*, …)
+
+app = "aggregate-finance"
+primary_region = "iad"       # Ashburn, next to Neon us-east-1
+kill_signal = "SIGTERM"      # main.ts closes the server and stops the worker cleanly
+kill_timeout = "30s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Migrations run once here, before any new machine starts (Aggregate migrations, the auth library's tables,
+  # row-level security policies). If it fails, the deploy stops and the current version keeps serving. Machines run
+  # the same steps at boot as well, but by then there is nothing to do, so several machines never race on DDL.
+  release_command = "node apps/server/src/release.ts"
+  # Blue-green: the new machine starts and must pass /healthz (which stays 503 until the ready gate has warmed it) before
+  # traffic moves and the old machine gets SIGTERM; it then drains in-flight requests (up to 15 s, under kill_timeout).
+  # "rolling" on one machine stopped the old one first, so every deploy was a short outage (2026-10-13).
+  strategy = "bluegreen"
+
+[env]
+  # V8 heap cap at ~75% of RAM: the default (~half) aborted 512 MB boots with exit 134 (2026-10-13).
+  NODE_OPTIONS = "--max-old-space-size=3072"
+  NODE_ENV = "production"
+  PORT = "8787"
+  BASE_URL = "https://app.aggregate.finance"
+  # One process serves web AND runs the worker (sync, notices, usage, retention, backups), so at least one machine
+  # must always run: see min_machines_running. Split later with AGFN_ROLE=web / worker process groups.
+  AGFN_ROLE = "all"
+  # Not used for data (Postgres + R2), only scratch space.
+  DATA_DIR = "/tmp/agfn"
+  MAIL_FROM = "Aggregate <no-reply@aggregate.finance>"
+  INBOUND_EMAIL_DOMAIN = "in.aggregate.finance"
+  FILES_S3_BUCKET = "aggregate-files"
+  FILES_S3_ENDPOINT = "https://<account-id>.r2.cloudflarestorage.com"
+  FILES_S3_REGION = "auto"
+  BACKUP_S3_BUCKET = "aggregate-backups"
+  BACKUP_S3_ENDPOINT = "https://<account-id>.r2.cloudflarestorage.com"
+  BACKUP_S3_REGION = "auto"
+  # Early access: at most 25 Plaid bank connections per workspace (unset = no cap, e.g. self-hosted).
+  AGFN_PLAID_MAX_ITEMS_PER_WORKSPACE = "25"
+  # The hosted service: hides "needs your own app" setup guides (every connector is configured here).
+  AGFN_HOSTED = "1"
+  # /healthz waits (max 45 s) until stored results are loaded, so a new machine takes no traffic while cold.
+  AGFN_READY_GATE = "1"
+  # Refuse to boot without SMTP_URL, so sign-in links never fall back to the server log in production.
+  AGFN_REQUIRE_SMTP = "1"
+  # Plaid keys (secrets) are always Aggregate's COMPANY Plaid team, never a personal team (Yisrael, 2026-10-11).
+  # sandbox until that team's production application is approved; hosted then hides Plaid connect from real users
+  # (fake test banks would confuse them). Switch keys and this line together, at approval only.
+  # Switched to production on 2026-10-12 (Yisrael's yes; docs/launch/plaid-production-switch.md). Never back to
+  # sandbox once real Items exist: to pause new bank links use AGFN_HIDE_CONNECTORS=plaid.
+  PLAID_ENV = "production"
+  QUICKBOOKS_ENV = "production"
+  # Not secret. Sent on every link token, so each Item gets the webhook and OAuth banks (Chase) can return.
+  PLAID_WEBHOOK_URL = "https://app.aggregate.finance/api/webhooks/plaid"
+  PLAID_LINK_REDIRECT_URI = "https://app.aggregate.finance/connect/plaid/oauth"
+  DB_POOL_MAX = "10"
+  # Prometheus text (/healthz busy counter) for Fly's scrape below; not a public port.
+  AGFN_METRICS_PORT = "9091"
+  # Sign-in emails per client IP per 15 min (default 20): a shared office or conference IP on HN day. Each address
+  # is still capped at 5 per 15 min, which guards the Resend quota.
+  AGFN_SIGNIN_IP_LIMIT = "60"
+  # Row-level security (docs/security/rls.md): on. The staging smoke passed on Neon with it on (13/13).
+  AGFN_PG_RLS = "1"
+  # Requests run as this role (NOBYPASSRLS; created and granted at boot). Neon's login role has BYPASSRLS, so without
+  # it the policies would not apply.
+  AGFN_PG_RLS_ROLE = "agfn_app"
+  # Reviewer access links for the Claude/OpenAI directory reviews (apps/server/src/reviewer.ts). The Claude review is
+  # OPEN (submitted 2026-10-11; reviewer link valid until 2027-01-09) and runs on staging today. On (2026-10-13 rehearsal): Claude, OpenAI,
+  # Meta Muse and Stripe reviews are open, and without it the reviewer links 404 mid-review. Off again after review
+  # (docs/compliance/mcp-directory.md, Launch packet §4 and §9).
+  AGFN_REVIEWER_LINKS = "1"
+  # The public demo (/demo/mcp, no sign-in) runs on this app (Yisrael, 2026-10-12: no separate demo app), held to
+  # these per-machine caps so it can't crowd out real users (docs/launch/load-runbook.md); then 429 "busy".
+  AGFN_PUBLIC_DEMO = "1"
+  AGFN_PUBLIC_DEMO_MAX_INFLIGHT = "4"
+  AGFN_PUBLIC_DEMO_PER_MIN = "1200"
+  # Finch hidden until production Finch keys exist (same as fly.prelaunch.toml).
+  AGFN_HIDE_CONNECTORS = "finch"
+  # OpenAI app submission domain check: set with `fly secrets set AGFN_OPENAI_APPS_CHALLENGE=<token from the portal>`
+  # (served at /.well-known/openai-apps-challenge; unset = 404). Launch packet §5.
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  # Launch sizing (docs/launch/load-runbook.md, Yisrael 2026-10-12): `fly scale count 3` = 1 always on + 2 that start
+  # when the running one passes the soft limit and suspend when idle. The worker lives in this process and runs on
+  # whichever machine is up, so min 1 keeps it running.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 25
+    hard_limit = 60
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    path = "/healthz"      # answers only when the database answers
+    timeout = "5s"
+
+[metrics]
+  port = 9091
+  path = "/metrics"
+
+[[vm]]
+  # Dedicated CPU: a shared CPU is throttled under sustained load and falls over (load runbook).
+  size = "performance-2x"
+  memory = "4gb"

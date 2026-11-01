@@ -1,0 +1,16 @@
+# Self-host on your own machine: make .env as the README shows (`npm run -s keygen > .env`, or the openssl line), then `docker compose up -d`.
+# The master key comes from .env (outside the /data volume) so a copy of the data volume can't decrypt your bank tokens.
+services:
+  agfn:
+    build: .
+    image: agfn:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - agfn-data:/data
+volumes:
+  agfn-data:

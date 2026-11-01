@@ -1,0 +1,886 @@
+{
+ "_note": "synthesized from Paddle Billing API docs (developer.paddle.com/api-reference); re-record from sandbox when keys are available",
+ "transactions": {
+  "": {
+   "data": [
+    {
+     "id": "txn_01aa1",
+     "status": "completed",
+     "customer_id": "ctm_01cust1",
+     "subscription_id": "sub_01one",
+     "invoice_number": "INV-1",
+     "currency_code": "USD",
+     "origin": "subscription_recurring",
+     "billed_at": "2026-09-01T10:00:00Z",
+     "created_at": "2026-09-01T10:00:00Z",
+     "updated_at": "2026-09-01T10:00:00Z",
+     "details": {
+      "totals": {
+       "subtotal": "10000",
+       "discount": "0",
+       "tax": "1900",
+       "total": "11900",
+       "credit": "0",
+       "balance": "0",
+       "grand_total": "11900",
+       "fee": "550",
+       "earnings": "9450",
+       "currency_code": "USD"
+      },
+      "payout_totals": {
+       "subtotal": "10000",
+       "discount": "0",
+       "tax": "1900",
+       "total": "11900",
+       "credit": "0",
+       "balance": "0",
+       "grand_total": "11900",
+       "fee": "550",
+       "earnings": "9450",
+       "currency_code": "USD"
+      }
+     }
+    },
+    {
+     "id": "txn_01aa2",
+     "status": "completed",
+     "customer_id": "ctm_01cust2",
+     "subscription_id": "sub_01one",
+     "invoice_number": "INV-2",
+     "currency_code": "EUR",
+     "origin": "subscription_recurring",
+     "billed_at": "2026-09-02T10:00:00Z",
+     "created_at": "2026-09-02T10:00:00Z",
+     "updated_at": "2026-09-02T10:00:00Z",
+     "details": {
+      "totals": {
+       "subtotal": "4500",
+       "discount": "0",
+       "tax": "855",
+       "total": "5355",
+       "credit": "0",
+       "balance": "0",
+       "grand_total": "5355",
+       "fee": "290",
+       "earnings": "4210",
+       "currency_code": "EUR"
+      },
+      "payout_totals": {
+       "subtotal": "4600",
+       "discount": "0",
+       "tax": "874",
+       "total": "5474",
+       "credit": "0",
+       "balance": "0",
+       "grand_total": "5474",
+       "fee": "279",
+       "earnings": "4321",
+       "currency_code": "USD",
+       "exchange_rate": "1.0222",
+       "fee_rate": "0.05"
+      }
+     }
+    },
+    {
+     "id": "txn_01aa3",
+     "status": "paid",
+     "customer_id": "ctm_01cust3",
+     "subscription_id": "sub_01one",
+     "invoice_number": "INV-3",
+     "currency_code": "USD",
+     "origin": "subscription_recurring",
+     "billed_at": "2026-09-03T10:00:00Z",
+     "created_at": "2026-09-03T10:00:00Z",
+     "updated_at": "2026-09-03T10:00:00Z",
+     "details": {
+      "totals": {
+       "subtotal": "2000",
+       "discount": "0",
+       "tax": "0",
+       "total": "2000",
+       "credit": "0",
+       "balance": "0",
+       "grand_total": "2000",
+       "fee": "150",
+       "earnings": "1850",
+       "currency_code": "USD"
+      },
+      "payout_totals": null
+     }
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 30,
+     "next": "https://sandbox-api.paddle.com/transactions?after=txn_01aa3",
+     "has_more": true,
+     "estimated_total": -1
+    }
+   }
+  },
+  "txn_01aa3": {
+   "data": [
+    {
+     "id": "txn_01aa4",
+     "status": "completed",
+     "customer_id": "ctm_01cust4",
+     "subscription_id": null,
+     "invoice_number": "INV-4",
+     "currency_code": "USD",
+     "origin": "subscription_recurring",
+     "billed_at": "2026-09-04T10:00:00Z",
+     "created_at": "2026-09-04T10:00:00Z",
+     "updated_at": "2026-09-04T10:00:00Z",
+     "details": {
+      "totals": {
+       "subtotal": "5000",
+       "discount": "0",
+       "tax": "0",
+       "total": "5000",
+       "credit": "1000",
+       "balance": "0",
+       "grand_total": "4000",
+       "fee": "250",
+       "earnings": "3750",
+       "currency_code": "USD"
+      },
+      "payout_totals": {
+       "subtotal": "5000",
+       "discount": "0",
+       "tax": "0",
+       "total": "5000",
+       "credit": "1000",
+       "balance": "0",
+       "grand_total": "4000",
+       "fee": "250",
+       "earnings": "3750",
+       "currency_code": "USD"
+      }
+     }
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 30,
+     "next": "https://sandbox-api.paddle.com/transactions?after=txn_01aa4",
+     "has_more": false,
+     "estimated_total": -1
+    }
+   }
+  },
+  "incremental": {
+   "data": [
+    {
+     "id": "txn_01aa4",
+     "status": "completed",
+     "customer_id": "ctm_01cust4",
+     "subscription_id": null,
+     "invoice_number": "INV-4",
+     "currency_code": "USD",
+     "origin": "subscription_recurring",
+     "billed_at": "2026-09-04T10:00:00Z",
+     "created_at": "2026-09-04T10:00:00Z",
+     "updated_at": "2026-09-20T10:00:00Z",
+     "details": {
+      "totals": {
+       "subtotal": "5000",
+       "discount": "0",
+       "tax": "0",
+       "total": "5000",
+       "credit": "1000",
+       "balance": "0",
+       "grand_total": "4000",
+       "fee": "250",
+       "earnings": "3750",
+       "currency_code": "USD"
+      },
+      "payout_totals": {
+       "subtotal": "5000",
+       "discount": "0",
+       "tax": "0",
+       "total": "5000",
+       "credit": "1000",
+       "balance": "0",
+       "grand_total": "4000",
+       "fee": "250",
+       "earnings": "3750",
+       "currency_code": "USD"
+      }
+     }
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 30,
+     "next": "https://sandbox-api.paddle.com/transactions?after=txn_01aa4",
+     "has_more": false,
+     "estimated_total": -1
+    }
+   }
+  }
+ },
+ "adjustments": {
+  "": {
+   "data": [
+    {
+     "id": "adj_01bb1",
+     "action": "refund",
+     "type": "full",
+     "transaction_id": "txn_01aa1",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust1",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "approved",
+     "totals": {
+      "subtotal": "10000",
+      "tax": "1900",
+      "total": "11900",
+      "fee": "550",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "9450",
+      "currency_code": "USD"
+     },
+     "payout_totals": {
+      "subtotal": "10000",
+      "tax": "1900",
+      "total": "11900",
+      "fee": "550",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "9450",
+      "currency_code": "USD"
+     },
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-10T09:30:00Z"
+    },
+    {
+     "id": "adj_01bb2",
+     "action": "chargeback",
+     "type": "full",
+     "transaction_id": "txn_01aa2",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust2",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "approved",
+     "totals": {
+      "subtotal": "4600",
+      "tax": "874",
+      "total": "5474",
+      "fee": "279",
+      "retained_fee": "0",
+      "chargeback_fee": "1500",
+      "earnings": "4321",
+      "currency_code": "USD"
+     },
+     "payout_totals": {
+      "subtotal": "4600",
+      "tax": "874",
+      "total": "5474",
+      "fee": "279",
+      "retained_fee": "0",
+      "chargeback_fee": "1500",
+      "earnings": "4321",
+      "currency_code": "USD"
+     },
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-10T09:30:00Z"
+    },
+    {
+     "id": "adj_01bb3",
+     "action": "refund",
+     "type": "full",
+     "transaction_id": "txn_01aa4",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust4",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "pending_approval",
+     "totals": {
+      "subtotal": "5000",
+      "tax": "0",
+      "total": "5000",
+      "fee": "250",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "3750",
+      "currency_code": "USD"
+     },
+     "payout_totals": null,
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-10T09:30:00Z"
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 50,
+     "next": "https://sandbox-api.paddle.com/adjustments?after=adj_01bb3",
+     "has_more": true,
+     "estimated_total": -1
+    }
+   }
+  },
+  "adj_01bb3": {
+   "data": [
+    {
+     "id": "adj_01bb4",
+     "action": "credit",
+     "type": "full",
+     "transaction_id": "txn_01aa4",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust4",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "approved",
+     "totals": {
+      "subtotal": "500",
+      "tax": "0",
+      "total": "500",
+      "fee": "0",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "500",
+      "currency_code": "USD"
+     },
+     "payout_totals": {
+      "subtotal": "500",
+      "tax": "0",
+      "total": "500",
+      "fee": "0",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "500",
+      "currency_code": "USD"
+     },
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-10T09:30:00Z"
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 50,
+     "next": "https://sandbox-api.paddle.com/adjustments?after=adj_01bb4",
+     "has_more": false,
+     "estimated_total": -1
+    }
+   }
+  },
+  "adj_01bb2": {
+   "data": [
+    {
+     "id": "adj_01bb3",
+     "action": "refund",
+     "type": "full",
+     "transaction_id": "txn_01aa4",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust4",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "approved",
+     "totals": {
+      "subtotal": "5000",
+      "tax": "0",
+      "total": "5000",
+      "fee": "250",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "3750",
+      "currency_code": "USD"
+     },
+     "payout_totals": {
+      "subtotal": "5000",
+      "tax": "0",
+      "total": "5000",
+      "fee": "250",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "3750",
+      "currency_code": "USD"
+     },
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-21T09:00:00Z"
+    },
+    {
+     "id": "adj_01bb4",
+     "action": "credit",
+     "type": "full",
+     "transaction_id": "txn_01aa4",
+     "subscription_id": "sub_01one",
+     "customer_id": "ctm_01cust4",
+     "reason": "synthetic",
+     "currency_code": "USD",
+     "status": "approved",
+     "totals": {
+      "subtotal": "500",
+      "tax": "0",
+      "total": "500",
+      "fee": "0",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "500",
+      "currency_code": "USD"
+     },
+     "payout_totals": {
+      "subtotal": "500",
+      "tax": "0",
+      "total": "500",
+      "fee": "0",
+      "retained_fee": "0",
+      "chargeback_fee": "0",
+      "earnings": "500",
+      "currency_code": "USD"
+     },
+     "created_at": "2026-09-10T09:00:00Z",
+     "updated_at": "2026-09-10T09:30:00Z"
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 50,
+     "next": "https://sandbox-api.paddle.com/adjustments?after=adj_01bb4",
+     "has_more": false,
+     "estimated_total": -1
+    }
+   }
+  }
+ },
+ "subscriptions": {
+  "": {
+   "data": [
+    {
+     "id": "sub_01one",
+     "status": "active",
+     "customer_id": "ctm_01cust1",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": "2026-10-01T00:00:00Z",
+     "paused_at": null,
+     "canceled_at": null,
+     "current_billing_period": {
+      "starts_at": "2026-09-01T00:00:00Z",
+      "ends_at": "2026-10-01T00:00:00Z"
+     },
+     "billing_cycle": {
+      "interval": "month",
+      "frequency": 1
+     },
+     "scheduled_change": null,
+     "discount": {
+      "id": "dsc_01pct",
+      "starts_at": "2026-01-01T00:00:00Z",
+      "ends_at": null
+     },
+     "items": [
+      {
+       "status": "active",
+       "quantity": 2,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_01seat",
+        "product_id": "pro_01seat",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "1000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "month",
+         "frequency": 1
+        }
+       }
+      },
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_01addon",
+        "product_id": "pro_01addon",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "12000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "year",
+         "frequency": 1
+        }
+       }
+      },
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": false,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_01setup",
+        "product_id": "pro_01setup",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "5000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "month",
+         "frequency": 1
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "sub_02yearly",
+     "status": "active",
+     "customer_id": "ctm_01cust2",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": "2026-10-01T00:00:00Z",
+     "paused_at": null,
+     "canceled_at": null,
+     "current_billing_period": {
+      "starts_at": "2026-09-01T00:00:00Z",
+      "ends_at": "2026-10-01T00:00:00Z"
+     },
+     "billing_cycle": {
+      "interval": "year",
+      "frequency": 1
+     },
+     "scheduled_change": {
+      "action": "cancel",
+      "effective_at": "2027-01-01T00:00:00Z"
+     },
+     "discount": null,
+     "items": [
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_02year",
+        "product_id": "pro_02year",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "9999",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "year",
+         "frequency": 1
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "sub_03gone",
+     "status": "canceled",
+     "customer_id": "ctm_01cust3",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": null,
+     "paused_at": null,
+     "canceled_at": "2026-08-15T00:00:00Z",
+     "current_billing_period": null,
+     "billing_cycle": {
+      "interval": "month",
+      "frequency": 1
+     },
+     "scheduled_change": null,
+     "discount": null,
+     "items": [
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_01seat",
+        "product_id": "pro_01seat",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "1000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "month",
+         "frequency": 1
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 200,
+     "next": "https://sandbox-api.paddle.com/subscriptions?after=sub_03gone",
+     "has_more": true,
+     "estimated_total": -1
+    }
+   }
+  },
+  "sub_03gone": {
+   "data": [
+    {
+     "id": "sub_04trial",
+     "status": "trialing",
+     "customer_id": "ctm_01cust4",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": "2026-10-01T00:00:00Z",
+     "paused_at": null,
+     "canceled_at": null,
+     "current_billing_period": {
+      "starts_at": "2026-09-01T00:00:00Z",
+      "ends_at": "2026-10-01T00:00:00Z"
+     },
+     "billing_cycle": {
+      "interval": "month",
+      "frequency": 1
+     },
+     "scheduled_change": null,
+     "discount": null,
+     "items": [
+      {
+       "status": "trialing",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_01seat",
+        "product_id": "pro_01seat",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "1000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "month",
+         "frequency": 1
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "sub_05weekly",
+     "status": "past_due",
+     "customer_id": "ctm_01cust5",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": "2026-10-01T00:00:00Z",
+     "paused_at": null,
+     "canceled_at": null,
+     "current_billing_period": {
+      "starts_at": "2026-09-01T00:00:00Z",
+      "ends_at": "2026-10-01T00:00:00Z"
+     },
+     "billing_cycle": {
+      "interval": "week",
+      "frequency": 2
+     },
+     "scheduled_change": null,
+     "discount": {
+      "id": "dsc_02flat",
+      "starts_at": "2026-01-01T00:00:00Z",
+      "ends_at": "2027-01-01T00:00:00Z"
+     },
+     "items": [
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_05wk",
+        "product_id": "pro_05wk",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "1000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "week",
+         "frequency": 2
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "sub_06expired_disc",
+     "status": "active",
+     "customer_id": "ctm_01cust6",
+     "address_id": "add_01x",
+     "business_id": null,
+     "currency_code": "USD",
+     "collection_mode": "automatic",
+     "created_at": "2026-01-01T00:00:00Z",
+     "updated_at": "2026-09-01T00:00:00Z",
+     "started_at": "2026-01-01T00:00:00Z",
+     "first_billed_at": "2026-01-01T00:00:00Z",
+     "next_billed_at": "2026-10-01T00:00:00Z",
+     "paused_at": null,
+     "canceled_at": null,
+     "current_billing_period": {
+      "starts_at": "2026-09-01T00:00:00Z",
+      "ends_at": "2026-10-01T00:00:00Z"
+     },
+     "billing_cycle": {
+      "interval": "month",
+      "frequency": 3
+     },
+     "scheduled_change": null,
+     "discount": {
+      "id": "dsc_01pct",
+      "starts_at": "2026-01-01T00:00:00Z",
+      "ends_at": "2026-06-01T00:00:00Z"
+     },
+     "items": [
+      {
+       "status": "active",
+       "quantity": 1,
+       "recurring": true,
+       "created_at": "2026-01-01T00:00:00Z",
+       "updated_at": "2026-01-01T00:00:00Z",
+       "price": {
+        "id": "pri_06q",
+        "product_id": "pro_06q",
+        "description": "synthetic",
+        "unit_price": {
+         "amount": "3000",
+         "currency_code": "USD"
+        },
+        "billing_cycle": {
+         "interval": "month",
+         "frequency": 3
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "meta": {
+    "request_id": "req_fixture",
+    "pagination": {
+     "per_page": 200,
+     "next": "https://sandbox-api.paddle.com/subscriptions?after=sub_06expired_disc",
+     "has_more": false,
+     "estimated_total": -1
+    }
+   }
+  }
+ },
+ "discounts": {
+  "dsc_01pct": {
+   "data": {
+    "id": "dsc_01pct",
+    "status": "active",
+    "description": "10 percent",
+    "type": "percentage",
+    "amount": "10",
+    "currency_code": null,
+    "recur": true,
+    "maximum_recurring_intervals": null,
+    "expires_at": null
+   }
+  },
+  "dsc_02flat": {
+   "data": {
+    "id": "dsc_02flat",
+    "status": "active",
+    "description": "1 off",
+    "type": "flat",
+    "amount": "100",
+    "currency_code": "USD",
+    "recur": true,
+    "maximum_recurring_intervals": null,
+    "expires_at": null
+   }
+  }
+ },
+ "errors": {
+  "unauthorized": {
+   "error": {
+    "type": "request_error",
+    "code": "authentication_malformed",
+    "detail": "Authentication header included, but incorrectly formatted.",
+    "documentation_url": "https://developer.paddle.com/v1/errors/shared/authentication_malformed"
+   },
+   "meta": {
+    "request_id": "req_fixture"
+   }
+  },
+  "forbidden": {
+   "error": {
+    "type": "request_error",
+    "code": "forbidden",
+    "detail": "You are not permitted to perform this request.",
+    "documentation_url": "https://developer.paddle.com/v1/errors/shared/forbidden"
+   },
+   "meta": {
+    "request_id": "req_fixture"
+   }
+  },
+  "rate_limited": {
+   "error": {
+    "type": "request_error",
+    "code": "too_many_requests",
+    "detail": "IP rate limit exceeded.",
+    "documentation_url": "https://developer.paddle.com/v1/errors/shared/too_many_requests"
+   },
+   "meta": {
+    "request_id": "req_fixture"
+   }
+  }
+ }
+}

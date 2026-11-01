@@ -1,0 +1,23 @@
+name: Connect something new
+description: Ask for a bank, payment app, accounting tool or payroll provider we don't support yet.
+labels: [connector]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: What should Aggregate connect to?
+      placeholder: e.g. Gusto, NetSuite, Coinbase
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you ask your AI once it's connected?
+      description: This helps us decide what data matters most.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - label: I can test with a real account
+        - label: I'd like to build it

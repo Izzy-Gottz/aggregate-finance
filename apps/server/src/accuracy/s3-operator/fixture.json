@@ -1,0 +1,2792 @@
+{
+ "scenario": "s3-operator",
+ "now": "2026-10-12T16:00:00Z",
+ "timeZone": "UTC",
+ "company": "Northstar Labs",
+ "companies": [
+  {
+   "name": "Brightline Studio",
+   "currency": "USD"
+  },
+  {
+   "name": "Kestrel GmbH",
+   "currency": "EUR"
+  }
+ ],
+ "rates": [
+  {
+   "date": "2026-04-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-04-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0720"
+  },
+  {
+   "date": "2026-05-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-05-31",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0835"
+  },
+  {
+   "date": "2026-06-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-06-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0910"
+  },
+  {
+   "date": "2026-07-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-07-31",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1040"
+  },
+  {
+   "date": "2026-08-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-08-31",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.0985"
+  },
+  {
+   "date": "2026-09-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-13",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-14",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-15",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-16",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-17",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-18",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-19",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-20",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-21",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-22",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-23",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-24",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-25",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-26",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-27",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-28",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-29",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-09-30",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1120"
+  },
+  {
+   "date": "2026-10-01",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-02",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-03",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-04",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-05",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-06",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-07",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-08",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-09",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-10",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-11",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  },
+  {
+   "date": "2026-10-12",
+   "from": "EUR",
+   "to": "USD",
+   "rate": "1.1075"
+  }
+ ],
+ "openingBalances": {
+  "ns_chk": 15000000,
+  "bl_chk": 6000000,
+  "per_chk": 1200000,
+  "kestrel_eur": 2500000
+ },
+ "connections": [
+  {
+   "id": "chase",
+   "key": "plaid",
+   "name": "Chase",
+   "entity": null,
+   "assign": {
+    "ns_chk": "Northstar Labs",
+    "ns_amex": "Northstar Labs",
+    "bl_chk": "Brightline Studio",
+    "per_chk": "Personal"
+   },
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "ns_chk",
+     "connectionId": "$conn",
+     "name": "Northstar Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "2001",
+     "institution": "Chase"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "ns_amex",
+     "connectionId": "$conn",
+     "name": "Northstar Amex",
+     "accountType": "credit_card",
+     "currency": "USD",
+     "mask": "3005",
+     "institution": "Chase"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "bl_chk",
+     "connectionId": "$conn",
+     "name": "Brightline Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "2002",
+     "institution": "Chase"
+    },
+    {
+     "type": "account.upsert",
+     "externalId": "per_chk",
+     "connectionId": "$conn",
+     "name": "Dana Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "mask": "2003",
+     "institution": "Chase"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-04-04",
+     "amount": {
+      "minor": -210000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-04-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-04-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-04_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-04-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-04_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-04-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-04_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-04-12",
+     "amount": {
+      "minor": -48000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-04-22",
+     "amount": {
+      "minor": -61499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-04-22",
+     "amount": {
+      "minor": 61499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-04"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-04-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-04-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-04-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-04",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-04-09",
+     "amount": {
+      "minor": -31250,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-05-04",
+     "amount": {
+      "minor": -213700,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-05-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-05-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-05-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-05_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-05-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-05_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-05-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-05_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-05-12",
+     "amount": {
+      "minor": -49000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-05-22",
+     "amount": {
+      "minor": -62499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-05-22",
+     "amount": {
+      "minor": 62499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-05"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-05-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-05-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-05-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-05",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-05-09",
+     "amount": {
+      "minor": -31750,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-06-04",
+     "amount": {
+      "minor": -217400,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-06-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-06-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-06-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-06_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-06-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-06_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-06-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-06_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-06-12",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-06-22",
+     "amount": {
+      "minor": -63499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-06-22",
+     "amount": {
+      "minor": 63499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-06"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-06-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-06-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-06-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-06",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-06-09",
+     "amount": {
+      "minor": -32250,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-07-04",
+     "amount": {
+      "minor": -221100,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-07_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-07-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-07_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-07-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-07_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-07-12",
+     "amount": {
+      "minor": -51000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-07-22",
+     "amount": {
+      "minor": -64499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-07-22",
+     "amount": {
+      "minor": 64499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-07"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-07-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-07-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-07-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-07",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-07-09",
+     "amount": {
+      "minor": -32750,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-08-04",
+     "amount": {
+      "minor": -224800,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-08_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-08-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-08_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-08-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-08_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-08-12",
+     "amount": {
+      "minor": -52000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-08-22",
+     "amount": {
+      "minor": -65499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-08-22",
+     "amount": {
+      "minor": 65499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-08"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-08-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-08-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-08",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-08-09",
+     "amount": {
+      "minor": -33250,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_rent_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -400000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Harbor Office Rent",
+     "rawText": "HARBOR OFFICE RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_aws_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-09-04",
+     "amount": {
+      "minor": -228500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_salary_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": -750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Dana Park Salary",
+     "rawText": "NORTHSTAR LABS PAYROLL DANA PARK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_salary_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-09-15",
+     "amount": {
+      "minor": 750000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS PAYROLL",
+     "categoryHint": "INCOME_WAGES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_globex_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": 1500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Globex Corp",
+     "rawText": "GLOBEX CORP ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-09_5",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-09-05",
+     "amount": {
+      "minor": -7500,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-09_8",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-09-08",
+     "amount": {
+      "minor": -5999,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Adobe",
+     "rawText": "ADOBE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amex_2026-09_12",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-09-12",
+     "amount": {
+      "minor": -53000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Delta Air Lines",
+     "rawText": "DELTA AIR LINES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_amexpay_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-09-22",
+     "amount": {
+      "minor": -66499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amex Payment",
+     "rawText": "AMEX EPAYMENT ACH PMT",
+     "linkRefs": {
+      "card_payment": "amex_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_amexpay_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "date": "2026-09-22",
+     "amount": {
+      "minor": 66499,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Payment Received",
+     "rawText": "PAYMENT RECEIVED",
+     "linkRefs": {
+      "card_payment": "amex_2026-09"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_rent_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Studio Lease",
+     "rawText": "STUDIO LEASE"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_upwork_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-09-10",
+     "amount": {
+      "minor": -300000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Upwork",
+     "rawText": "UPWORK"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_initech_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-09-18",
+     "amount": {
+      "minor": 900000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Initech",
+     "rawText": "INITECH ACH"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_rent_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -260000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Elm Street Apartments",
+     "rawText": "ELM STREET APARTMENTS",
+     "categoryHint": "RENT_AND_UTILITIES_RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "per_groc_2026-09",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "date": "2026-09-09",
+     "amount": {
+      "minor": -33750,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Trader Joes",
+     "rawText": "TRADER JOES",
+     "categoryHint": "FOOD_AND_DRINK_GROCERIES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_ic_out",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": -2000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer to Brightline Studio",
+     "rawText": "TRANSFER TO BRIGHTLINE STUDIO",
+     "linkRefs": {
+      "transfer": "ic_0715"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_ic_in",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-07-15",
+     "amount": {
+      "minor": 2000000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Transfer from Northstar Labs",
+     "rawText": "TRANSFER FROM NORTHSTAR LABS",
+     "linkRefs": {
+      "transfer": "ic_0715"
+     }
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "ns_pays_bl",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": -600000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Brightline Studio",
+     "rawText": "BRIGHTLINE STUDIO INV-B-100"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "bl_paid_by_ns",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": 600000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northstar Labs",
+     "rawText": "NORTHSTAR LABS INV-B-100"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "ns_chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 13184500,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "bl_chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "bl_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 10616006,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "per_chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "per_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 3945000,
+      "currency": "USD"
+     }
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "ns_amex_now",
+     "connectionId": "$conn",
+     "accountExternalId": "ns_amex",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 0,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "qbo",
+   "key": "quickbooks",
+   "name": "QuickBooks",
+   "entity": "Brightline Studio",
+   "events": [
+    {
+     "type": "invoice.upsert",
+     "externalId": "invB100",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "INV-B-100",
+     "counterparty": "Northstar Labs",
+     "issueDate": "2026-08-01",
+     "dueDate": "2026-08-31",
+     "total": {
+      "minor": 600000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 600000,
+      "currency": "USD"
+     },
+     "status": "paid"
+    },
+    {
+     "type": "payment.applied",
+     "externalId": "payB100",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": 600000,
+      "currency": "USD"
+     },
+     "counterparty": "Northstar Labs",
+     "applications": [
+      {
+       "invoiceExternalId": "invB100",
+       "amount": {
+        "minor": 600000,
+        "currency": "USD"
+       }
+      }
+     ],
+     "reference": "INV-B-100"
+    }
+   ]
+  }
+ ],
+ "uploads": [
+  {
+   "entity": "Kestrel GmbH",
+   "name": "kestrel-apr-jul.csv",
+   "csv": "Date,Description,Amount,Balance\n2026-04-01,Miete Buero Berlin,-1800.00,23200.00\n2026-04-03,Hetzner Online GmbH,-129.90,23070.10\n2026-04-25,Siemens AG,7500.00,30570.10\n2026-04-28,Kontofuehrung,-9.50,30560.60\n2026-05-01,Miete Buero Berlin,-1800.00,28760.60\n2026-05-03,Hetzner Online GmbH,-130.90,28629.70\n2026-05-25,Siemens AG,7500.00,36129.70\n2026-05-28,Kontofuehrung,-9.50,36120.20\n2026-06-01,Miete Buero Berlin,-1800.00,34320.20\n2026-06-03,Hetzner Online GmbH,-131.90,34188.30\n2026-06-25,Siemens AG,7500.00,41688.30\n2026-06-28,Kontofuehrung,-9.50,41678.80\n2026-07-01,Miete Buero Berlin,-1800.00,39878.80\n2026-07-03,Hetzner Online GmbH,-132.90,39745.90\n2026-07-25,Siemens AG,7500.00,47245.90\n2026-07-28,Kontofuehrung,-9.50,47236.40\n"
+  },
+  {
+   "entity": "Kestrel GmbH",
+   "name": "kestrel-jun-sep.csv",
+   "csv": "Date,Description,Amount,Balance\n2026-06-01,Miete Buero Berlin,-1800.00,34320.20\n2026-06-03,Hetzner Online GmbH,-131.90,34188.30\n2026-06-25,Siemens AG,7500.00,41688.30\n2026-06-28,Kontofuehrung,-9.50,41678.80\n2026-07-01,Miete Buero Berlin,-1800.00,39878.80\n2026-07-03,Hetzner Online GmbH,-132.90,39745.90\n2026-07-25,Siemens AG,7500.00,47245.90\n2026-07-28,Kontofuehrung,-9.50,47236.40\n2026-08-01,Miete Buero Berlin,-1800.00,45436.40\n2026-08-03,Hetzner Online GmbH,-133.90,45302.50\n2026-08-25,Siemens AG,7500.00,52802.50\n2026-08-28,Kontofuehrung,-9.50,52793.00\n2026-09-01,Miete Buero Berlin,-1800.00,50993.00\n2026-09-03,Hetzner Online GmbH,-134.90,50858.10\n2026-09-25,Siemens AG,7500.00,58358.10\n2026-09-28,Kontofuehrung,-9.50,58348.60\n"
+  }
+ ],
+ "actions": [
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Northstar Labs",
+    "match": {
+     "counterparty": "Globex Corp"
+    },
+    "set": {
+     "kind": "revenue",
+     "category": "revenue"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s3-rule-globex"
+   }
+  },
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Brightline Studio",
+    "match": {
+     "counterparty": "Initech"
+    },
+    "set": {
+     "kind": "revenue",
+     "category": "revenue"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s3-rule-initech"
+   }
+  },
+  {
+   "do": "create_rule",
+   "args": {
+    "company": "Kestrel GmbH",
+    "match": {
+     "counterparty": "Siemens AG"
+    },
+    "set": {
+     "kind": "revenue",
+     "category": "revenue"
+    },
+    "apply_to_existing": true,
+    "idempotency_key": "s3-rule-siemens"
+   }
+  },
+  {
+   "do": "reject_matches",
+   "externalIds": [
+    "per_salary_2026-04",
+    "per_salary_2026-05",
+    "per_salary_2026-06",
+    "per_salary_2026-07",
+    "per_salary_2026-08",
+    "per_salary_2026-09"
+   ]
+  },
+  {
+   "do": "confirm_all_matches"
+  }
+ ]
+}

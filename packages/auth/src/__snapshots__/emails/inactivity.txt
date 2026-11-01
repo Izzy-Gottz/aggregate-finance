@@ -1,0 +1,10 @@
+Subject: Your Aggregate workspace hasn’t been used in 90 days
+
+Your workspace hasn’t been used in 90 days
+
+Bank connections are still syncing. If you don’t need them any more, you can disconnect them or delete the workspace.
+
+Open Preferences: https://app.aggregate.finance/#/preferences
+
+—
+This is a service notice about your account.

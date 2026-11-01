@@ -1,0 +1,19 @@
+{
+  "_note": "Shapes from Rippling REST v2 docs/SDK (@rippling/rippling-sdk). Not verified against a live company. Decimal strings.",
+  "runs": [
+    { "id": "run_c", "run_state": "DRAFT", "run_type": "REGULAR", "check_date": "2026-10-15", "pay_period": { "start_date": "2026-10-01", "end_date": "2026-10-15" } },
+    { "id": "run_b", "run_state": "APPROVED", "run_type": "REGULAR", "check_date": "2026-10-10", "debit_date": "2026-10-08", "pay_period": { "start_date": "2026-09-26", "end_date": "2026-10-09" } },
+    { "id": "run_a", "run_state": "PAID", "run_type": "REGULAR", "check_date": "2026-09-26", "paid_at": "2026-09-26T12:00:00Z", "pay_period": { "start_date": "2026-09-12", "end_date": "2026-09-25" } },
+    { "id": "run_old", "run_state": "PAID", "run_type": "REGULAR", "check_date": "2024-06-01" }
+  ],
+  "records": {
+    "run_a": [
+      { "worker_id": "wrk_1", "currency": "USD", "gross_pay": "6000.00", "net_pay": "4400.50", "summary": { "employer_taxes": "459.00", "employee_taxes": "1300.00", "employer_contributions": "300.00" } },
+      { "worker_id": "wrk_2", "currency": "USD", "gross_pay": "4000.00", "net_pay": "3010.25", "summary": { "employer_taxes": "306.00", "employee_taxes": "800.00", "employer_contributions": "150.00" } },
+      { "worker_id": "wrk_3", "currency": "GBP", "gross_pay": "3500.00", "net_pay": "2700.00", "summary": { "employer_taxes": "380.10", "employee_taxes": "620.00", "employer_contributions": "105.00" } }
+    ],
+    "run_b": [
+      { "worker_id": "wrk_1", "currency": "USD", "gross_pay": "6000.00", "net_pay": "4400.50", "summary": { "employer_taxes": "459.00", "employee_taxes": "1300.00" } }
+    ]
+  }
+}

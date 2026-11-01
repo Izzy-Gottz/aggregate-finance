@@ -1,0 +1,6 @@
+﻿Buchungstag;Valuta;Empfänger/Zahlungspflichtiger;Verwendungszweck;Währung;Umsatz;Soll/Haben
+02.01.2026;02.01.2026;Beispiel GmbH;Rechnung 2026-001;EUR;1.234,56;H
+05.01.2026;05.01.2026;Stadtwerke Musterstadt;Abschlag Strom Januar;EUR;89,90;S
+07.01.2026;07.01.2026;Muster Versicherung AG;Beitrag 01/2026;EUR;1.020,00;S
+09.01.2026;09.01.2026;Kunde Beispiel KG;"Rechnung 2026-002; Teilzahlung";EUR;500,00;H
+12.01.2026;12.01.2026;Musterbank;Kontoführungsgebühr;EUR;7,50;S

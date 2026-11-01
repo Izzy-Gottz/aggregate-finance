@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+<OFX>
+  <SIGNONMSGSRSV1>
+    <SONRS>
+      <STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>
+      <DTSERVER>20260201080000.000[+1:CET]</DTSERVER>
+      <LANGUAGE>ENG</LANGUAGE>
+      <FI><ORG>Beispiel Sparbank</ORG><FID>77</FID></FI>
+    </SONRS>
+  </SIGNONMSGSRSV1>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <TRNUID>0</TRNUID>
+      <STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>
+      <STMTRS>
+        <CURDEF>EUR</CURDEF>
+        <BANKACCTFROM>
+          <BANKID>SAMPLEBK</BANKID>
+          <ACCTID>XXXX7788</ACCTID>
+          <ACCTTYPE>SAVINGS</ACCTTYPE>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20260101</DTSTART>
+          <DTEND>20260131</DTEND>
+          <STMTTRN>
+            <TRNTYPE>DEP</TRNTYPE>
+            <DTPOSTED>20260105</DTPOSTED>
+            <TRNAMT>1000.00</TRNAMT>
+            <FITID>S-0105-D</FITID>
+            <PAYEE><NAME>Muster &amp; Partner</NAME><CITY>Musterstadt</CITY></PAYEE>
+            <MEMO><![CDATA[Einzahlung <bar>]]></MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>XFER</TRNTYPE>
+            <DTPOSTED>20260115</DTPOSTED>
+            <TRNAMT>-250,00</TRNAMT>
+            <FITID>S-0115-X</FITID>
+            <NAME>Transfer to checking</NAME>
+            <MEMO>Monthly sweep</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>INT</TRNTYPE>
+            <DTPOSTED>20260131000000.000[+1:CET]</DTPOSTED>
+            <TRNAMT>12.34</TRNAMT>
+            <FITID>S-0131-INT</FITID>
+            <NAME>Interest</NAME>
+          </STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL>
+          <BALAMT>5762.34</BALAMT>
+          <DTASOF>20260131235959.000[+1:CET]</DTASOF>
+        </LEDGERBAL>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>

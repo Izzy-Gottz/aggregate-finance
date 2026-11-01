@@ -1,0 +1,79 @@
+/* Aggregate design tokens (MASTER §2 Look, §12 design system). Instinct-warm: off-white page, near-black ink, grey
+   secondary, hairline rules, Newsreader headings, Geist text. Colour only carries meaning (red = broken/overdue,
+   amber = soon/stale). Nothing outside src/ui invents styles. */
+
+@font-face {
+  font-family: 'Geist';
+  src: url('../fonts/geist.woff2') format('woff2-variations'), url('../fonts/geist.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('../fonts/newsreader.woff2') format('woff2-variations'), url('../fonts/newsreader.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+
+  /* type scale */
+  --fs-wordmark: 22px;
+  --fs-title: 32px;
+  --fs-section: 22px;
+  --fs-big: 40px;
+  --fs-body: 15px;
+  --fs-sub: 14px;
+  --fs-meta: 13px;
+
+  /* 4px grid */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 56px;
+  --gutter: 40px;
+  --column: 680px;
+  --nav-w: 232px;
+  --drawer-w: 520px;
+  --row-h: 56px;
+  --r-btn: 6px;
+  --r-tile: 7px;
+  --r-drawer: 12px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --t: 150ms;
+
+  /* light */
+  --page: #FAF9F7;
+  --surface: #FFFFFF;
+  --ink: #1F1B1C;
+  --grey: #6B6766;
+  --faint: #A8A4A0;
+  --rule: #E7E4E0;
+  /* Edges that identify a control (field, segmented control) and link underlines: 3:1 on page and surface (WCAG 1.4.11). */
+  --edge: #8E8A86;
+  --hover: #F2F0EC;
+  --tile: #EFEDE9;
+  --btn: #1F1B1C;
+  --btn-ink: #FFFFFF;
+  --red: #B3261E;
+  --amber: #8A5A00;
+  --scrim: rgba(31, 27, 28, .18);
+  --float: 0 16px 48px rgba(31, 27, 28, .12), 0 1px 2px rgba(31, 27, 28, .06);
+  color-scheme: light;
+}
+
+/* Light is the default everywhere; dark only when someone picks it in Preferences (or "System" on a dark device). */
+:root[data-theme='dark'] {
+  --page: #121110; --surface: #1A1918; --ink: #EDEBE8; --grey: #9C9895; --faint: #6A6662; --rule: #2A2826; --edge: #74706C;
+  --hover: #201F1D; --tile: #252321; --btn: #EDEBE8; --btn-ink: #121110; --red: #F2786D; --amber: #E3B04F;
+  --scrim: rgba(0, 0, 0, .5); --float: 0 16px 48px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .06);
+  color-scheme: dark;
+}
+
+@media (max-width: 720px) {
+  :root { --gutter: 16px; --fs-title: 28px; --fs-big: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --t: 0ms; }
+}

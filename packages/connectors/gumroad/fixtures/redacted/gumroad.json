@@ -1,0 +1,41 @@
+{
+  "_note": "synthesized from Gumroad's API docs (gumroad.com/api) and Purchase#as_json in github.com/antiwork/gumroad; re-record from a real seller account when one is available",
+  "user": { "success": true, "user": { "user_id": "S1ll3r", "name": "Synthetic Seller", "email": "seller@example.com" } },
+  "sales": {
+    "1": {
+      "success": true,
+      "next_page_key": "20261005-k2",
+      "sales": [
+        { "id": "sale-1", "created_at": "2026-10-05T10:00:00Z", "product_name": "Icon pack", "price": 1000, "gumroad_fee": 120, "currency": "usd", "amount_refundable_in_currency": "10", "refunded": false, "partially_refunded": false, "chargedback": false, "purchaser_id": "buyer-1", "email": "buyer1@example.com" },
+        { "id": "sale-2", "created_at": "2026-10-04T10:00:00Z", "product_name": "Course", "price": 2000, "gumroad_fee": 290, "currency": "usd", "amount_refundable_in_currency": "0", "refunded": true, "partially_refunded": false, "chargedback": false, "purchaser_id": "buyer-2", "affiliate": { "email": "aff@example.com", "amount": "$2.50" } },
+        { "id": "sale-3", "created_at": "2026-10-03T10:00:00Z", "product_name": "Template", "price": 5000, "gumroad_fee": 550, "currency": "usd", "amount_refundable_in_currency": "30", "refunded": false, "partially_refunded": true, "chargedback": false, "purchaser_id": "buyer-3" }
+      ]
+    },
+    "20261005-k2": {
+      "success": true,
+      "sales": [
+        { "id": "sale-4", "created_at": "2026-10-02T10:00:00Z", "product_name": "Ebook", "price": 1200, "gumroad_fee": 150, "currency": "eur", "amount_refundable_in_currency": "5,5", "refunded": false, "partially_refunded": true, "chargedback": false, "purchaser_id": "buyer-4" },
+        { "id": "sale-5", "created_at": "2026-10-01T10:00:00Z", "product_name": "Preset", "price": 1500, "gumroad_fee": 175, "currency": "usd", "amount_refundable_in_currency": "15", "refunded": false, "partially_refunded": false, "chargedback": true, "disputed": true, "dispute_won": false, "purchaser_id": "buyer-5" },
+        { "id": "sale-6", "created_at": "2026-09-30T10:00:00Z", "product_name": "Free sample", "price": 0, "gumroad_fee": 0, "currency": "usd", "amount_refundable_in_currency": "0", "refunded": false, "partially_refunded": false, "chargedback": false }
+      ]
+    }
+  },
+  "payouts": {
+    "1": {
+      "success": true,
+      "next_page_key": "20260915-p2",
+      "payouts": [
+        { "id": "po-1", "amount": "150.00", "currency": "USD", "status": "completed", "created_at": "2026-10-02T00:00:00Z", "processed_at": "2026-10-03T09:00:00Z", "payment_processor": "stripe" },
+        { "id": "po-2", "amount": "40.00", "currency": "USD", "status": "failed", "created_at": "2026-09-25T00:00:00Z", "processed_at": null, "payment_processor": "stripe" }
+      ]
+    },
+    "20260915-p2": {
+      "success": true,
+      "payouts": [
+        { "id": "po-3", "amount": "89.99", "currency": "EUR", "status": "completed", "created_at": "2026-09-15T00:00:00Z", "processed_at": "2026-09-16T00:00:00Z", "payment_processor": "stripe" },
+        { "id": "po-4", "amount": "275.50", "currency": "USD", "status": "pending", "created_at": "2026-09-10T00:00:00Z", "processed_at": null, "payment_processor": "paypal" }
+      ]
+    }
+  },
+  "errors": { "unauthorized": { "success": false, "message": "The access token is invalid." } }
+}

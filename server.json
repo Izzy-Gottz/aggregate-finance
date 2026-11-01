@@ -1,0 +1,67 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "finance.aggregate/aggregate",
+  "title": "Aggregate",
+  "description": "Every company's money in one ledger: cash, runway, invoices, payroll. Records money, never moves it.",
+  "version": "0.1.1",
+  "websiteUrl": "https://aggregate.finance",
+  "repository": {
+    "url": "https://github.com/Izzy-Gottz/aggregate-finance",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://app.aggregate.finance/icon-512.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
+    },
+    {
+      "src": "https://app.aggregate.finance/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "aggregate-finance",
+      "version": "0.1.1",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        },
+        {
+          "type": "named",
+          "name": "--url",
+          "value": "https://app.aggregate.finance/mcp",
+          "description": "The hosted Aggregate server. Self-hosting? Run npx aggregate-finance mcp --print-config --url https://your-host/mcp for your own config."
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "AGFN_KEY",
+          "description": "An Aggregate key (agfn_live_…): Connect your AI → Connect another AI → Create a key. Clients that support remote servers can use the remote URL with OAuth instead and need no key.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://app.aggregate.finance/mcp"
+    }
+  ]
+}

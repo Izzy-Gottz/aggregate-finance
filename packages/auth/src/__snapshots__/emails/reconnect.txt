@@ -1,0 +1,12 @@
+Subject: Chase needs you to sign in again
+
+Chase needs you to sign in again
+
+Chase stopped updating and needs you to sign in again.
+
+Your other numbers are still current; this one is paused until you reconnect.
+
+Reconnect: https://app.aggregate.finance/#/?d=connection:conn_sample
+
+—
+You get this because you manage this workspace.

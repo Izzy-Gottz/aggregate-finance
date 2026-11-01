@@ -1,0 +1,14 @@
+Subject: Dana Reyes invited you to Northwind Labs on Aggregate
+
+Dana Reyes invited you to Northwind Labs
+
+Aggregate keeps a company’s money in one place, ready for any AI. It only reads; it can’t move money.
+
+Join Northwind Labs: https://app.aggregate.finance/api/auth/magic-link/verify?token=SAMPLE
+
+The link works once and expires in 10 minutes. If it expires, sign in at https://app.aggregate.finance with this email address.
+
+If you weren’t expecting this, ignore this email.
+
+—
+Dana Reyes entered this email address in Aggregate.

@@ -1,0 +1,39 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.aggregate.finance"
+        }
+      ],
+      "destination": "https://aggregate.finance/$1",
+      "permanent": true
+    },
+    {
+      "source": "/security",
+      "destination": "https://app.aggregate.finance/security",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    }
+  ]
+}

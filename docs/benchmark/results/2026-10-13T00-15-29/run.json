@@ -1,0 +1,33 @@
+{
+  "runId": "2026-10-13T00-15-29",
+  "freezeHash": "d750b699506972f0fad290f593cb3b0f1bd1d218a5776fccb24de8e2888549b4",
+  "pilot": false,
+  "arms": [
+    "A"
+  ],
+  "runs": 1,
+  "sandbox": {
+    "image": "agfn-bench-python:1",
+    "digest": "sha256:c38bf3131b820a5d2766894ceadcde1cf4a7e755f5bdc7fbcfc8dd600146108a",
+    "python": "3.12.7",
+    "pandas": "2.2.3"
+  },
+  "questions": [
+    "balances-05",
+    "sales-05",
+    "sales-12",
+    "fees-05",
+    "payouts-05",
+    "transfers-05",
+    "expenses-05",
+    "bills-05",
+    "subscriptions-05",
+    "card-05"
+  ],
+  "models": [
+    "Claude Haiku 5.5"
+  ],
+  "startedAt": "2026-10-13T00:15:30.577Z",
+  "finishedAt": "2026-10-13T00:17:06.525Z",
+  "spentUsd": 0.02
+}

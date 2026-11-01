@@ -1,0 +1,334 @@
+{
+  "_note": "Synthetic Coinbase v2 responses in the documented shapes (docs.cdp.coinbase.com/coinbase-app/track-apis, read 2026-10-14). Amounts are hand-picked so totals check by hand. The Apple Pay buy pair (tx-6a/6b) has the shape seen live on 2026-10-14: payment in, then the same amount to crypto.",
+  "accounts": {
+    "": {
+      "pagination": {
+        "next_uri": "/v2/accounts?limit=100&starting_after=acct-btc",
+        "next_starting_after": "acct-btc"
+      },
+      "data": [
+        {
+          "id": "acct-usd",
+          "name": "Cash (USD)",
+          "primary": false,
+          "type": "fiat",
+          "currency": {
+            "code": "USD",
+            "name": "US Dollar",
+            "type": "fiat",
+            "exponent": 2
+          },
+          "balance": {
+            "amount": "630.00",
+            "currency": "USD"
+          }
+        },
+        {
+          "id": "acct-btc",
+          "name": "BTC Wallet",
+          "primary": true,
+          "type": "wallet",
+          "currency": {
+            "code": "BTC",
+            "name": "Bitcoin",
+            "type": "crypto",
+            "exponent": 8
+          },
+          "balance": {
+            "amount": "0.01530000",
+            "currency": "BTC"
+          }
+        }
+      ]
+    },
+    "acct-btc": {
+      "pagination": {
+        "next_uri": null
+      },
+      "data": [
+        {
+          "id": "acct-eth",
+          "name": "ETH Wallet",
+          "primary": false,
+          "type": "wallet",
+          "currency": {
+            "code": "ETH",
+            "name": "Ethereum",
+            "type": "crypto",
+            "exponent": 8
+          },
+          "balance": {
+            "amount": "0.50000000",
+            "currency": "ETH"
+          }
+        },
+        {
+          "id": "acct-doge",
+          "name": "DOGE Wallet",
+          "primary": false,
+          "type": "wallet",
+          "currency": {
+            "code": "DOGE",
+            "name": "Dogecoin",
+            "type": "crypto",
+            "exponent": 8
+          },
+          "balance": {
+            "amount": "0.00000000",
+            "currency": "DOGE"
+          }
+        },
+        {
+          "id": "acct-usdc",
+          "name": "USDC Wallet",
+          "primary": false,
+          "type": "wallet",
+          "currency": {
+            "code": "USDC",
+            "name": "USDC",
+            "type": "crypto",
+            "exponent": 6
+          },
+          "balance": {
+            "amount": "25.000000",
+            "currency": "USDC"
+          }
+        }
+      ]
+    }
+  },
+  "rates": {
+    "data": {
+      "currency": "USD",
+      "rates": {
+        "BTC": "0.000016",
+        "ETH": "0.0004",
+        "USDC": "1.0",
+        "DOGE": "8.0",
+        "USD": "1.0"
+      }
+    }
+  },
+  "transactions": {
+    "": {
+      "pagination": {
+        "next_uri": "/v2/accounts/acct-usd/transactions?limit=100&order=desc&starting_after=tx-3",
+        "next_starting_after": "tx-3"
+      },
+      "data": [
+        {
+          "id": "tx-5",
+          "type": "fiat_withdrawal",
+          "status": "pending",
+          "amount": {
+            "amount": "-100.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "-100.00",
+            "currency": "USD"
+          },
+          "description": null,
+          "created_at": "2026-10-10T15:00:00Z"
+        },
+        {
+          "id": "tx-6b",
+          "type": "buy",
+          "status": "completed",
+          "amount": {
+            "amount": "-100.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "-100.00",
+            "currency": "USD"
+          },
+          "buy": {
+            "fee": {
+              "amount": "3.84",
+              "currency": "USD"
+            },
+            "id": "buy-redacted",
+            "payment_method_name": "Apple Pay",
+            "subtotal": {
+              "amount": "96.16",
+              "currency": "USD"
+            },
+            "total": {
+              "amount": "100.00",
+              "currency": "USD"
+            }
+          },
+          "created_at": "2026-10-09T14:00:07Z"
+        },
+        {
+          "id": "tx-6a",
+          "type": "buy",
+          "status": "completed",
+          "amount": {
+            "amount": "100.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "100.00",
+            "currency": "USD"
+          },
+          "buy": {
+            "fee": {
+              "amount": "3.84",
+              "currency": "USD"
+            },
+            "id": "buy-redacted",
+            "payment_method_name": "Apple Pay",
+            "subtotal": {
+              "amount": "96.16",
+              "currency": "USD"
+            },
+            "total": {
+              "amount": "100.00",
+              "currency": "USD"
+            }
+          },
+          "created_at": "2026-10-09T14:00:00Z"
+        },
+        {
+          "id": "tx-4",
+          "type": "sell",
+          "status": "completed",
+          "amount": {
+            "amount": "120.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "120.00",
+            "currency": "USD"
+          },
+          "description": null,
+          "created_at": "2026-10-08T14:00:00Z"
+        },
+        {
+          "id": "tx-3",
+          "type": "buy",
+          "status": "completed",
+          "amount": {
+            "amount": "-500.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "-500.00",
+            "currency": "USD"
+          },
+          "description": null,
+          "created_at": "2026-10-05T13:00:00Z"
+        }
+      ]
+    },
+    "tx-3": {
+      "pagination": {
+        "next_uri": null
+      },
+      "data": [
+        {
+          "id": "tx-2",
+          "type": "fiat_deposit",
+          "status": "completed",
+          "amount": {
+            "amount": "1000.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "1000.00",
+            "currency": "USD"
+          },
+          "description": null,
+          "created_at": "2026-10-03T12:00:00Z"
+        },
+        {
+          "id": "tx-1",
+          "type": "fiat_deposit",
+          "status": "canceled",
+          "amount": {
+            "amount": "250.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "250.00",
+            "currency": "USD"
+          },
+          "description": null,
+          "created_at": "2026-10-02T12:00:00Z"
+        },
+        {
+          "id": "tx-0",
+          "type": "interest",
+          "status": "completed",
+          "amount": {
+            "amount": "10.00",
+            "currency": "USD"
+          },
+          "native_amount": {
+            "amount": "10.00",
+            "currency": "USD"
+          },
+          "description": "USD rewards",
+          "created_at": "2026-09-28T12:00:00Z"
+        }
+      ]
+    }
+  },
+  "token": {
+    "access_token": "at_test_new",
+    "refresh_token": "rt_test_new",
+    "expires_in": 3600,
+    "scope": "wallet:accounts:read wallet:transactions:read offline_access",
+    "token_type": "bearer"
+  },
+  "refreshed": {
+    "access_token": "at_test_2",
+    "refresh_token": "rt_test_2",
+    "expires_in": 3600,
+    "token_type": "bearer"
+  },
+  "permissions": {
+    "view": {
+      "can_view": true,
+      "can_trade": false,
+      "can_transfer": false,
+      "portfolio_uuid": "pf-redacted",
+      "portfolio_type": "DEFAULT"
+    },
+    "trade": {
+      "can_view": true,
+      "can_trade": true,
+      "can_transfer": false,
+      "portfolio_uuid": "pf-redacted",
+      "portfolio_type": "DEFAULT"
+    }
+  },
+  "errors": {
+    "revoked": {
+      "errors": [
+        {
+          "id": "revoked_token",
+          "message": "The access token was revoked"
+        }
+      ]
+    },
+    "scope": {
+      "errors": [
+        {
+          "id": "invalid_scope",
+          "message": "Invalid scope"
+        }
+      ]
+    },
+    "rate": {
+      "errors": [
+        {
+          "id": "rate_limit_exceeded",
+          "message": "Too many requests"
+        }
+      ]
+    }
+  }
+}

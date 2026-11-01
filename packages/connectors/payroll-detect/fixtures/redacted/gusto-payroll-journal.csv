@@ -1,0 +1,7 @@
+Payroll Journal,,,,,,,,
+Employee,Employee type,Pay period start,Pay period end,Check date,Gross pay,Employee taxes,Employer taxes,Employer benefits,Reimbursements,Net pay
+"Doe, Jane",Salary,09/16/2026,09/30/2026,10/03/2026,"5,000.00",1105.25,412.50,250.00,0.00,"3,894.75"
+Smith Alex,Hourly,09/16/2026,09/30/2026,10/03/2026,"3,200.00",640.10,265.60,250.00,45.00,"2,604.90"
+Contractor Pat,1099 contractor,09/16/2026,09/30/2026,10/03/2026,"1,500.00",0.00,0.00,0.00,0.00,"1,500.00"
+"Doe, Jane",Salary,10/01/2026,10/15/2026,10/17/2026,"5,000.00",1105.25,412.50,250.00,0.00,"3,894.75"
+Totals,,,,,"14,700.00",2850.60,1090.60,750.00,45.00,"11,894.40"

@@ -1,0 +1,76 @@
+{
+  "_note": "Redacted, hand-trimmed QuickBooks Online sandbox shapes (minorversion 75). Names and ids are synthetic.",
+  "Account": [
+    { "Id": "1", "Name": "Services", "FullyQualifiedName": "Services", "Classification": "Revenue", "AccountType": "Income", "AccountSubType": "ServiceFeeIncome", "Active": true, "CurrencyRef": { "value": "USD" } },
+    { "Id": "7", "Name": "Software", "FullyQualifiedName": "Software & Subscriptions", "Classification": "Expense", "AccountType": "Expense", "AcctNum": "6100", "Active": true, "CurrencyRef": { "value": "USD" } },
+    { "Id": "8", "Name": "Rent", "FullyQualifiedName": "Rent or Lease", "Classification": "Expense", "AccountType": "Expense", "Active": true, "CurrencyRef": { "value": "USD" } },
+    { "Id": "35", "Name": "Checking", "FullyQualifiedName": "Checking", "Classification": "Asset", "AccountType": "Bank", "Active": true, "CurrencyRef": { "value": "USD" } }
+  ],
+  "Invoice": [
+    { "Id": "130", "DocNumber": "1037", "TxnDate": "2026-08-01", "DueDate": "2026-08-31", "TotalAmt": 1080.0, "Balance": 0, "CurrencyRef": { "value": "USD" }, "CustomerRef": { "value": "58", "name": "Example Studio LLC" },
+      "TxnTaxDetail": { "TotalTax": 80.0 },
+      "Line": [
+        { "Id": "1", "LineNum": 1, "Description": "Design retainer, August", "Amount": 1000.0, "DetailType": "SalesItemLineDetail", "SalesItemLineDetail": { "ItemRef": { "value": "1", "name": "Services" }, "Qty": 1, "ItemAccountRef": { "value": "1", "name": "Services" } } },
+        { "Amount": 1000.0, "DetailType": "SubTotalLineDetail", "SubTotalLineDetail": {} }
+      ],
+      "MetaData": { "LastUpdatedTime": "2026-09-05T10:00:00-07:00" } },
+    { "Id": "131", "DocNumber": "1038", "TxnDate": "2026-09-01", "DueDate": "2026-09-30", "TotalAmt": 2500.0, "Balance": 1500.0, "CurrencyRef": { "value": "USD" }, "CustomerRef": { "value": "58", "name": "Example Studio LLC" },
+      "Line": [ { "Id": "1", "Amount": 2500.0, "Description": "Build sprint", "DetailType": "SalesItemLineDetail", "SalesItemLineDetail": { "ItemRef": { "value": "1", "name": "Services" }, "Qty": 10 } } ],
+      "MetaData": { "LastUpdatedTime": "2026-09-20T10:00:00-07:00" } },
+    { "Id": "132", "DocNumber": "1039", "TxnDate": "2026-09-15", "DueDate": "2026-10-15", "TotalAmt": 400.0, "Balance": 400.0, "CurrencyRef": { "value": "EUR" }, "CustomerRef": { "value": "61", "name": "Beispiel GmbH" },
+      "Line": [
+        { "Id": "1", "Amount": 450.0, "Description": "Workshop", "DetailType": "SalesItemLineDetail", "SalesItemLineDetail": { "Qty": 1 } },
+        { "Id": "2", "Amount": 50.0, "DetailType": "DiscountLineDetail", "DiscountLineDetail": { "PercentBased": false } }
+      ],
+      "MetaData": { "LastUpdatedTime": "2026-09-15T10:00:00-07:00" } },
+    { "Id": "133", "DocNumber": "1040", "TxnDate": "2026-09-20", "TotalAmt": 0, "Balance": 0, "PrivateNote": "Voided", "CustomerRef": { "value": "58", "name": "Example Studio LLC" }, "Line": [],
+      "MetaData": { "LastUpdatedTime": "2026-09-21T10:00:00-07:00" } }
+  ],
+  "CreditMemo": [
+    { "Id": "140", "DocNumber": "CM-7", "TxnDate": "2026-08-20", "TotalAmt": 150.0, "RemainingCredit": 50.0, "CustomerRef": { "value": "58", "name": "Example Studio LLC" }, "CurrencyRef": { "value": "USD" } }
+  ],
+  "Payment": [
+    { "Id": "150", "TxnDate": "2026-09-10", "TotalAmt": 1930.0, "UnappliedAmt": 0, "PaymentRefNum": "WIRE-8812", "CustomerRef": { "value": "58", "name": "Example Studio LLC" }, "CurrencyRef": { "value": "USD" },
+      "PaymentMethodRef": { "value": "3", "name": "Wire" },
+      "Line": [
+        { "Amount": 1080.0, "LinkedTxn": [ { "TxnId": "130", "TxnType": "Invoice" } ] },
+        { "Amount": 950.0, "LinkedTxn": [ { "TxnId": "131", "TxnType": "Invoice" } ] },
+        { "Amount": 100.0, "LinkedTxn": [ { "TxnId": "140", "TxnType": "CreditMemo" } ] }
+      ] },
+    { "Id": "151", "TxnDate": "2026-09-25", "TotalAmt": 300.0, "UnappliedAmt": 250.0, "CustomerRef": { "value": "58", "name": "Example Studio LLC" }, "CurrencyRef": { "value": "USD" },
+      "Line": [ { "Amount": 50.0, "LinkedTxn": [ { "TxnId": "131", "TxnType": "Invoice" } ] } ] }
+  ],
+  "Bill": [
+    { "Id": "160", "DocNumber": "AWS-0926", "TxnDate": "2026-09-26", "DueDate": "2026-10-10", "TotalAmt": 812.4, "Balance": 812.4, "VendorRef": { "value": "70", "name": "Example Cloud Inc" }, "CurrencyRef": { "value": "USD" },
+      "Line": [ { "Id": "1", "Amount": 812.4, "Description": "Compute", "DetailType": "AccountBasedExpenseLineDetail", "AccountBasedExpenseLineDetail": { "AccountRef": { "value": "7", "name": "Software & Subscriptions" } } } ] },
+    { "Id": "161", "TxnDate": "2026-09-01", "DueDate": "2026-09-05", "TotalAmt": 4000.0, "Balance": 0, "VendorRef": { "value": "71", "name": "Example Workspace" }, "CurrencyRef": { "value": "USD" },
+      "Line": [ { "Id": "1", "Amount": 4000.0, "DetailType": "AccountBasedExpenseLineDetail", "AccountBasedExpenseLineDetail": { "AccountRef": { "value": "8", "name": "Rent or Lease" } } } ] }
+  ],
+  "VendorCredit": [],
+  "BillPayment": [
+    { "Id": "170", "TxnDate": "2026-09-04", "TotalAmt": 4000.0, "PayType": "Check", "DocNumber": "1201", "VendorRef": { "value": "71", "name": "Example Workspace" }, "CurrencyRef": { "value": "USD" },
+      "Line": [ { "Amount": 4000.0, "LinkedTxn": [ { "TxnId": "161", "TxnType": "Bill" } ] } ] }
+  ],
+  "CDC": {
+    "CDCResponse": [ { "QueryResponse": [
+      { "Invoice": [ { "Id": "129", "status": "Deleted", "MetaData": { "LastUpdatedTime": "2026-10-08T09:00:00-07:00" } }, { "Id": "131", "TxnDate": "2026-09-01" } ] },
+      { "Payment": [ { "Id": "149", "status": "Deleted", "MetaData": { "LastUpdatedTime": "2026-10-08T09:30:00-07:00" } } ] }
+    ] } ]
+  },
+  "ProfitAndLoss": {
+    "Header": { "ReportName": "ProfitAndLoss", "StartPeriod": "2026-09-01", "EndPeriod": "2026-09-30", "Currency": "USD", "ReportBasis": "Accrual" },
+    "Columns": { "Column": [ { "ColTitle": "", "ColType": "Account" }, { "ColTitle": "Total", "ColType": "Money" } ] },
+    "Rows": { "Row": [
+      { "type": "Section", "group": "Income", "Header": { "ColData": [ { "value": "Income" }, { "value": "" } ] },
+        "Rows": { "Row": [ { "type": "Data", "ColData": [ { "value": "Services", "id": "1" }, { "value": "3500.00" } ] } ] },
+        "Summary": { "ColData": [ { "value": "Total Income" }, { "value": "3500.00" } ] } },
+      { "type": "Section", "group": "Expenses", "Header": { "ColData": [ { "value": "Expenses" }, { "value": "" } ] },
+        "Rows": { "Row": [
+          { "type": "Data", "ColData": [ { "value": "Rent or Lease", "id": "8" }, { "value": "4000.00" } ] },
+          { "type": "Data", "ColData": [ { "value": "Software & Subscriptions", "id": "7" }, { "value": "812.40" } ] }
+        ] },
+        "Summary": { "ColData": [ { "value": "Total Expenses" }, { "value": "4812.40" } ] } },
+      { "type": "Section", "group": "NetIncome", "Summary": { "ColData": [ { "value": "Net Income" }, { "value": "-1312.40" } ] } }
+    ] }
+  }
+}

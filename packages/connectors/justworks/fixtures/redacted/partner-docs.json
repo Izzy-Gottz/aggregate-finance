@@ -1,0 +1,114 @@
+{
+  "_note": "Shapes from public-api.justworks.com/v1/docs (partner API, read 2026-10-11): lists answer { items, next_cursor }, errors { code, error, reason }, member names sit in a name object. Not yet verified against a live sandbox. Money in cents.",
+  "payrolls": [
+    {
+      "id": "pr_01",
+      "debit_date": "2026-09-13",
+      "pay_date": "2026-09-15",
+      "payment_method": "direct_deposit",
+      "company_debit": 1890000,
+      "currency": "USD",
+      "gross_pay": 1500000,
+      "net_pay": 1110000,
+      "employee_taxes": 315000,
+      "employer_taxes": 118500
+    },
+    {
+      "id": "pr_02",
+      "debit_date": "2026-09-28",
+      "pay_date": "2026-09-30",
+      "payment_method": "direct_deposit",
+      "company_debit": 1890000,
+      "currency": "USD",
+      "gross_pay": 1500000,
+      "net_pay": 1110000,
+      "employee_taxes": 315000,
+      "employer_taxes": 118500
+    },
+    {
+      "id": "pr_03",
+      "debit_date": "2026-10-13",
+      "pay_date": "2026-10-15",
+      "payment_method": "direct_deposit",
+      "company_debit": 1890000,
+      "currency": "USD",
+      "gross_pay": 1500000,
+      "net_pay": 1110000,
+      "employee_taxes": 315000,
+      "employer_taxes": 118500
+    }
+  ],
+  "paystubs": {
+    "pr_01": [
+      {
+        "paystub_id": "ps_1",
+        "member_id": "mem_a",
+        "pay_period_start": "2026-09-01",
+        "pay_period_end": "2026-09-15",
+        "pay_date": "2026-09-15",
+        "gross_pay": 900000,
+        "net_pay": 660000,
+        "pay_group": "semimonthly"
+      },
+      {
+        "paystub_id": "ps_2",
+        "member_id": "mem_b",
+        "pay_period_start": "2026-09-01",
+        "pay_period_end": "2026-09-15",
+        "pay_date": "2026-09-15",
+        "gross_pay": 600000,
+        "net_pay": 450000,
+        "pay_group": "semimonthly"
+      }
+    ]
+  },
+  "members": [
+    {
+      "id": "mem_a",
+      "name": {
+        "given_name": "Ada",
+        "family_name": "Example",
+        "preferred_name": null,
+        "full_preferred_name": "Ada Example"
+      }
+    },
+    {
+      "id": "mem_b",
+      "name": {
+        "given_name": "Benjamin",
+        "family_name": "Sample",
+        "preferred_name": "Ben",
+        "full_preferred_name": "Ben Sample"
+      }
+    },
+    {
+      "id": "mem_c",
+      "name": {
+        "given_name": "Cy",
+        "family_name": "Test"
+      }
+    }
+  ],
+  "company": {
+    "id": "co_9",
+    "display_name": "Example Co",
+    "legal_name": "Example Company LLC"
+  },
+  "errors": {
+    "forbidden": {
+      "code": 403,
+      "error": "Forbidden",
+      "reason": "Token is missing required scope company.basic:read"
+    },
+    "unauthorized": {
+      "code": 401,
+      "error": "Unauthorized",
+      "reason": "Access token has expired"
+    },
+    "rateLimited": {
+      "code": 429,
+      "error": "Too Many Requests",
+      "reason": "Rate limit exceeded"
+    }
+  }
+}

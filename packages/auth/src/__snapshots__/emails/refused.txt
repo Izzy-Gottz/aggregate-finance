@@ -1,0 +1,12 @@
+Subject: Claude asked for something it can’t see
+
+Claude asked for something it can’t see
+
+Claude tried to record payment and was refused, because its access doesn’t include that.
+
+Nothing changed. To allow it, edit what it can see.
+
+Edit Claude’s access: https://app.aggregate.finance/#/?d=ai:grant_sample
+
+—
+Turn these off in Preferences.

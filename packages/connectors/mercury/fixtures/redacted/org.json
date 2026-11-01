@@ -1,0 +1,38 @@
+{
+  "_note": "synthesized from Mercury API docs (docs.mercury.com reference: getaccounts, listaccounttransactions, listcredit, gettreasury); re-record from sandbox when keys are available",
+  "accounts": {
+    "accounts": [
+      { "id": "acc_checking", "accountNumber": "0000001234", "routingNumber": "000000000", "name": "Mercury Checking ••1234", "nickname": "Operating", "status": "active", "type": "mercury", "kind": "checking", "availableBalance": 125000.5, "currentBalance": 125100.5, "createdAt": "2024-01-02T10:00:00Z", "legalBusinessName": "Example Labs Inc.", "dashboardLink": "https://app.mercury.com/accounts/acc_checking", "canReceiveTransactions": true, "canSendRealTimePayments": false },
+      { "id": "acc_savings", "accountNumber": "0000005678", "routingNumber": "000000000", "name": "Mercury Savings ••5678", "nickname": null, "status": "active", "type": "mercury", "kind": "savings", "availableBalance": 50000, "currentBalance": 50000, "createdAt": "2024-01-02T10:00:00Z", "legalBusinessName": "Example Labs Inc.", "dashboardLink": "https://app.mercury.com/accounts/acc_savings", "canReceiveTransactions": true, "canSendRealTimePayments": false },
+      { "id": "acc_external", "accountNumber": "0000009999", "routingNumber": "000000000", "name": "Linked bank", "nickname": null, "status": "active", "type": "external", "kind": "externalChecking", "availableBalance": 0, "currentBalance": 0, "createdAt": "2024-01-02T10:00:00Z", "legalBusinessName": "Example Labs Inc.", "dashboardLink": "https://app.mercury.com/", "canReceiveTransactions": false, "canSendRealTimePayments": false }
+    ],
+    "page": { "nextPage": null, "previousPage": null }
+  },
+  "credit": { "accounts": [ { "id": "cred_io", "status": "active", "createdAt": "2024-02-01T00:00:00Z", "availableBalance": -1234.56, "currentBalance": -1234.56 } ] },
+  "treasury": { "accounts": [ { "id": "tre_1", "status": "active", "createdAt": "2024-03-01T00:00:00Z", "availableBalance": 300000, "currentBalance": 300123.45, "netReturns": [] } ], "page": { "nextPage": null } },
+  "transactions": {
+    "acc_checking": {
+      "0": { "total": 3, "transactions": [
+        { "id": "txn_card", "accountId": "acc_checking", "amount": -45.67, "status": "sent", "kind": "debitCardTransaction", "createdAt": "2026-10-01T15:00:00Z", "postedAt": "2026-10-02T09:00:00Z", "estimatedDeliveryDate": "2026-10-02T09:00:00Z", "counterpartyId": "cp_coffee", "counterpartyName": "BLUE BOTTLE COFFEE", "counterpartyNickname": "Blue Bottle", "bankDescription": "BLUE BOTTLE COFFEE OAKLAND CA", "note": null, "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_card", "cardId": "card_debit_1", "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] },
+        { "id": "txn_wire_in", "accountId": "acc_checking", "amount": 10000, "status": "sent", "kind": "incomingDomesticWire", "createdAt": "2026-10-03T12:00:00Z", "postedAt": "2026-10-03T12:00:00Z", "estimatedDeliveryDate": "2026-10-03T12:00:00Z", "counterpartyId": "cp_customer", "counterpartyName": "Customer Co", "counterpartyNickname": null, "bankDescription": "WIRE IN CUSTOMER CO REF INV-1001", "note": "Invoice 1001", "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_wire_in", "cardId": null, "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] }
+      ] },
+      "2": { "total": 3, "transactions": [
+        { "id": "txn_xfer_out", "accountId": "acc_checking", "amount": -2500, "status": "sent", "kind": "internalTransfer", "createdAt": "2026-10-04T08:00:00Z", "postedAt": "2026-10-04T08:00:00Z", "estimatedDeliveryDate": "2026-10-04T08:00:00Z", "counterpartyId": "acc_savings", "counterpartyName": "Mercury Savings ••5678", "counterpartyNickname": null, "bankDescription": "Transfer to Savings", "note": null, "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_xfer_out", "cardId": null, "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] }
+      ] }
+    },
+    "acc_savings": {
+      "0": { "total": 2, "transactions": [
+        { "id": "txn_xfer_in", "accountId": "acc_savings", "amount": 2500, "status": "sent", "kind": "internalTransfer", "createdAt": "2026-10-04T08:00:00Z", "postedAt": "2026-10-04T08:00:00Z", "estimatedDeliveryDate": "2026-10-04T08:00:00Z", "counterpartyId": "acc_checking", "counterpartyName": "Mercury Checking ••1234", "counterpartyNickname": null, "bankDescription": "Transfer from Checking", "note": null, "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_xfer_in", "cardId": null, "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] },
+        { "id": "txn_pending", "accountId": "acc_savings", "amount": -100.5, "status": "pending", "kind": "externalTransfer", "createdAt": "2026-09-20T08:00:00Z", "postedAt": null, "estimatedDeliveryDate": "2026-10-12T08:00:00Z", "counterpartyId": "cp_vendor", "counterpartyName": "Vendor LLC", "counterpartyNickname": null, "bankDescription": null, "note": "September services", "externalMemo": "INV 77", "dashboardLink": "https://app.mercury.com/transactions/txn_pending", "cardId": null, "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] }
+      ] },
+      "2": { "total": 0, "transactions": [] }
+    },
+    "cred_io": {
+      "0": { "total": 2, "transactions": [
+        { "id": "txn_cc", "accountId": "cred_io", "amount": -19.99, "status": "sent", "kind": "creditCardTransaction", "createdAt": "2026-10-05T18:00:00Z", "postedAt": "2026-10-06T00:00:00Z", "estimatedDeliveryDate": "2026-10-06T00:00:00Z", "counterpartyId": "cp_saas", "counterpartyName": "SAAS TOOL", "counterpartyNickname": null, "bankDescription": "SAAS TOOL SUBSCRIPTION", "note": null, "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_cc", "cardId": "card_io_1", "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [], "creditAccountPeriodId": "period_1" },
+        { "id": "txn_failed", "accountId": "cred_io", "amount": -300, "status": "failed", "kind": "creditCardTransaction", "createdAt": "2026-10-06T18:00:00Z", "postedAt": null, "estimatedDeliveryDate": "2026-10-06T18:00:00Z", "failedAt": "2026-10-06T18:01:00Z", "reasonForFailure": "declined", "counterpartyId": "cp_air", "counterpartyName": "AIRLINE", "counterpartyNickname": null, "bankDescription": "AIRLINE TICKET", "note": null, "externalMemo": null, "dashboardLink": "https://app.mercury.com/transactions/txn_failed", "cardId": "card_io_1", "compliantWithReceiptPolicy": true, "hasGeneratedReceipt": false, "glAllocations": [], "attachments": [], "relatedTransactions": [] }
+      ] },
+      "2": { "total": 0, "transactions": [] }
+    }
+  }
+}

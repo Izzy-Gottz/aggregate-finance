@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aggregate</title>
+<meta name="description" content="Aggregate. Something remarkable is coming.">
+<meta name="theme-color" content="#F4F1EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F0E0D" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Aggregate">
+<meta property="og:description" content="Something remarkable is coming.">
+<meta property="og:image" content="https://aggregate.finance/og.png">
+<meta property="og:url" content="https://aggregate.finance">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F4F1EB;
+    --ink: #141312;
+    --muted: #8A847A;
+    --rule: #DDD6CA;
+    --accent: #141312;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0F0E0D;
+      --ink: #E9E2D4;
+      --muted: #7C766C;
+      --rule: #2A2724;
+      --accent: #C8B38A;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 100svh;
+  }
+  main {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0;
+    padding: 64px 24px 24px;
+    text-align: center;
+  }
+  .mark {
+    width: clamp(132px, 22vw, 188px);
+    height: auto;
+    overflow: visible;
+  }
+  .mark .s { fill: none; stroke: var(--accent); stroke-width: .8; }
+  .wordmark {
+    margin-top: 44px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: .62em;
+    margin-right: -.62em; /* optically recenter tracked caps */
+    text-transform: uppercase;
+  }
+  .rule {
+    width: 40px;
+    height: 1px;
+    background: var(--rule);
+    margin: 36px auto;
+  }
+  h1 {
+    font-size: clamp(30px, 4.6vw, 46px);
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: -.005em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  p.sub {
+    margin-top: 18px;
+    font-size: clamp(17px, 1.9vw, 19px);
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 30ch;
+  }
+  footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 28px clamp(16px, 4vw, 40px);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+    @media (prefers-reduced-motion: no-preference) {
+    /* Lines fall from a single point, center first, then outward. */
+    .mark .s { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s cubic-bezier(.65,0,.25,1) forwards; }
+    .mark .s:nth-child(2), .mark .s:nth-child(3) { animation-delay: .18s; }
+    .mark .s:nth-child(4), .mark .s:nth-child(5) { animation-delay: .36s; }
+    .fade { opacity: 0; transform: translateY(6px); animation: rise 1.4s cubic-bezier(.2,.7,.2,1) forwards; }
+    .wordmark.fade { animation-delay: 1.7s; }
+    .rule.fade { animation-delay: 2s; }
+    h1.fade { animation-delay: 2.15s; }
+    .sub.fade { animation-delay: 2.35s; }
+    footer.fade { animation-delay: 2.6s; }
+  }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes fade { to { opacity: 1; } }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 100 100" role="img" aria-label="Aggregate">
+    <path class="s" pathLength="1" d="M50 12V88"/>
+    <path class="s" pathLength="1" d="M50 12 33 88"/>
+    <path class="s" pathLength="1" d="M50 12 67 88"/>
+    <path class="s" pathLength="1" d="M50 12 16 88"/>
+    <path class="s" pathLength="1" d="M50 12 84 88"/>
+  </svg>
+  <div class="wordmark fade">Aggregate</div>
+  <div class="rule fade"></div>
+  <h1 class="fade">Something remarkable is coming.</h1>
+  <p class="sub fade">Every account your company holds, brought together as one.</p>
+</main>
+<footer class="fade">
+  <span>aggregate.finance</span>
+  <span>MMXXVI</span>
+</footer>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3e463fae81f1435db679d8f821861cbd"}'></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+Subject: Your Aggregate sign-in link (expires in 10 minutes)
+
+Sign in to Aggregate
+
+This link signs you in. It works once and expires in 10 minutes.
+
+Sign in: https://app.aggregate.finance/api/auth/magic-link/verify?token=SAMPLE
+
+Aggregate never asks for your password, by email or anywhere else.
+
+If you didn’t ask for this, ignore this email. No one can sign in without the link.
+
+—
+You get this because someone entered this email address to sign in.

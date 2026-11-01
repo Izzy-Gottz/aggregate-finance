@@ -1,0 +1,4 @@
+Account Number,Transaction Description,Transaction Date,Transaction Type,Transaction Amount,Balance
+0042,Deposit from SAMPLE EMPLOYER,01/14/26,Credit,2100.00,5100.00
+0042,Withdrawal to SAMPLE LANDLORD,01/10/26,Debit,1500.00,3000.00
+0042,Monthly Interest Paid,01/01/26,Credit,1.25,4500.00

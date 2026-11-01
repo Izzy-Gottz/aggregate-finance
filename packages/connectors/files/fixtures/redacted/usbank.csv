@@ -1,0 +1,4 @@
+"Date","Transaction","Name","Memo","Amount"
+"2026-01-14","DEBIT","SAMPLE RESTAURANT","Download from usbank.com. SAMPLE RESTAURANT","-64.30"
+"2026-01-12","CREDIT","ELECTRONIC DEPOSIT SAMPLE CLIENT","Download from usbank.com. ELECTRONIC DEPOSIT","2400.00"
+"2026-01-09","DEBIT","SAMPLE INSURANCE CO","Download from usbank.com. SAMPLE INSURANCE CO","-130.00"

@@ -1,0 +1,1372 @@
+{
+  "benchmark": "Finance Agent Benchmark v1",
+  "company": "Harbor Coffee (synthetic)",
+  "data": {
+    "profile": "harbor",
+    "seed": "aggregate-bench-v1",
+    "start": "2024-10-01",
+    "glass": "2024-10-01",
+    "asOf": "2026-09-30",
+    "clock": "2026-09-30T22:00:00.000Z"
+  },
+  "questions": [
+    {
+      "id": "balances-01",
+      "category": "balances",
+      "question": "What was Harbor Coffee's checking account balance at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 466578.62
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the provider balance on that day."
+    },
+    {
+      "id": "balances-02",
+      "category": "balances",
+      "question": "What was Harbor Coffee's savings account balance at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 44700
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the provider balance on that day."
+    },
+    {
+      "id": "balances-03",
+      "category": "balances",
+      "question": "What was Harbor Coffee's cash drawer balance at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 957.87
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the provider balance on that day."
+    },
+    {
+      "id": "balances-04",
+      "category": "balances",
+      "question": "What was Harbor Coffee's balance held at Stripe at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 2108.66
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the provider balance on that day."
+    },
+    {
+      "id": "balances-05",
+      "category": "balances",
+      "question": "What was Harbor Coffee's balance held at Shopify at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 332.53
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the provider balance on that day."
+    },
+    {
+      "id": "balances-06",
+      "category": "balances",
+      "question": "How much did Harbor Coffee owe on its business card at the end of the day on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 249.79
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Card balance owed, as a positive amount."
+    },
+    {
+      "id": "balances-07",
+      "category": "balances",
+      "question": "What was the checking account balance on 2025-12-31?",
+      "answer": {
+        "type": "money",
+        "value": 293872.26
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Month-end balance."
+    },
+    {
+      "id": "balances-08",
+      "category": "balances",
+      "question": "What was the checking account balance on 2026-06-30?",
+      "answer": {
+        "type": "money",
+        "value": 404960.99
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Month-end balance."
+    },
+    {
+      "id": "balances-09",
+      "category": "balances",
+      "question": "What was the checking account balance on 2025-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 248255.65
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Month-end balance."
+    },
+    {
+      "id": "balances-10",
+      "category": "balances",
+      "question": "What was the savings account balance on 2025-03-31?",
+      "answer": {
+        "type": "money",
+        "value": 43000
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Month-end balance."
+    },
+    {
+      "id": "balances-11",
+      "category": "balances",
+      "question": "What was Harbor Coffee's total cash on 2026-09-30: checking, savings, the cash drawer, and money held at Stripe and Shopify?",
+      "answer": {
+        "type": "money",
+        "value": 514677.68
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Sum of the five balances; the card is a liability and not included."
+    },
+    {
+      "id": "balances-12",
+      "category": "balances",
+      "question": "How much did Harbor Coffee owe on its business card on 2026-08-31?",
+      "answer": {
+        "type": "money",
+        "value": 249.79
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Month-end card balance, as a positive amount."
+    },
+    {
+      "id": "sales-01",
+      "category": "sales",
+      "question": "What were Harbor Coffee's total gross sales in the fiscal year October 2025 through September 2026? Count in-store card sales (Stripe), Bean Club subscriptions (Stripe), online orders (Shopify) and cash sales, before processor fees.",
+      "answer": {
+        "type": "money",
+        "value": 905656.74
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Gross charges plus counted cash sales. Transfers, payouts and mobile check deposits are not counted."
+    },
+    {
+      "id": "sales-02",
+      "category": "sales",
+      "question": "What were total gross sales in the fiscal year October 2024 through September 2025, counted the same way (in-store card sales (Stripe), Bean Club subscriptions (Stripe), online orders (Shopify) and cash sales, before fees)?",
+      "answer": {
+        "type": "money",
+        "value": 885814.1
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Same definition as sales-01."
+    },
+    {
+      "id": "sales-03",
+      "category": "sales",
+      "question": "By what percentage did total gross sales grow from the fiscal year October 2024 through September 2025 to the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "percent",
+        "value": 2.24
+      },
+      "tolerance": {
+        "abs": 0.1
+      },
+      "as_of": "2026-09-30",
+      "notes": "Percent, e.g. 12.34 for 12.34%. Same sales definition."
+    },
+    {
+      "id": "sales-04",
+      "category": "sales",
+      "question": "How much did in-store card sales through Stripe bring in (gross) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 745848.17
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Stripe charges for in-store sales, not Bean Club."
+    },
+    {
+      "id": "sales-05",
+      "category": "sales",
+      "question": "How much did Bean Club subscriptions bring in (gross charges) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 19496
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Stripe subscription charges."
+    },
+    {
+      "id": "sales-06",
+      "category": "sales",
+      "question": "How much did online orders through Shopify bring in (gross) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 77254.66
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Shopify order totals."
+    },
+    {
+      "id": "sales-07",
+      "category": "sales",
+      "question": "How much were cash sales in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 63057.91
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Cash counted into the drawer at close."
+    },
+    {
+      "id": "sales-08",
+      "category": "sales",
+      "question": "What were total gross sales in July 2026 (in-store card sales (Stripe), Bean Club subscriptions (Stripe), online orders (Shopify) and cash sales)?",
+      "answer": {
+        "type": "money",
+        "value": 73391.97
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Same definition as sales-01."
+    },
+    {
+      "id": "sales-09",
+      "category": "sales",
+      "question": "What were total gross sales in August 2026 (in-store card sales (Stripe), Bean Club subscriptions (Stripe), online orders (Shopify) and cash sales)?",
+      "answer": {
+        "type": "money",
+        "value": 81009.24
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Same definition as sales-01."
+    },
+    {
+      "id": "sales-10",
+      "category": "sales",
+      "question": "What were total gross sales in September 2026 (in-store card sales (Stripe), Bean Club subscriptions (Stripe), online orders (Shopify) and cash sales)?",
+      "answer": {
+        "type": "money",
+        "value": 74703.61
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Same definition as sales-01."
+    },
+    {
+      "id": "sales-11",
+      "category": "sales",
+      "question": "Which month in the fiscal year October 2025 through September 2026 had the highest total gross sales?",
+      "answer": {
+        "type": "text",
+        "value": "August 2026"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "Month and year, e.g. \"July 2026\"."
+    },
+    {
+      "id": "sales-12",
+      "category": "sales",
+      "question": "By what percentage did total gross sales in July–September 2026 change compared with July–September 2025?",
+      "answer": {
+        "type": "percent",
+        "value": 0.79
+      },
+      "tolerance": {
+        "abs": 0.1
+      },
+      "as_of": "2026-09-30",
+      "notes": "Percent. Same sales definition."
+    },
+    {
+      "id": "sales-13",
+      "category": "sales",
+      "question": "What were average daily in-store card sales (Stripe, gross, Bean Club excluded) in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2028.43
+      },
+      "tolerance": {
+        "abs": 0.5
+      },
+      "as_of": "2026-09-30",
+      "notes": "September total ÷ 30 days."
+    },
+    {
+      "id": "sales-14",
+      "category": "sales",
+      "question": "How much did Shopify online orders bring in (gross) in August 2026?",
+      "answer": {
+        "type": "money",
+        "value": 6885.55
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "sales-15",
+      "category": "sales",
+      "question": "How much were cash sales in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 5404.99
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "sales-16",
+      "category": "sales",
+      "question": "How much did Bean Club charges total (gross) in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 1920
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-01",
+      "category": "fees",
+      "question": "How much did Stripe keep in fees in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 27955.53
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "In-store and Bean Club charges."
+    },
+    {
+      "id": "fees-02",
+      "category": "fees",
+      "question": "How much did Shopify keep in fees in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2766.89
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-03",
+      "category": "fees",
+      "question": "What were total payment processing fees (Stripe and Shopify) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 30722.42
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-04",
+      "category": "fees",
+      "question": "How much were Stripe fees in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2293.16
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-05",
+      "category": "fees",
+      "question": "What were Stripe and Shopify fees as a percentage of the gross sales that went through them in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "percent",
+        "value": 3.65
+      },
+      "tolerance": {
+        "abs": 0.05
+      },
+      "as_of": "2026-09-30",
+      "notes": "Percent; cash sales excluded from the base."
+    },
+    {
+      "id": "fees-06",
+      "category": "fees",
+      "question": "How much were Shopify fees in August 2026?",
+      "answer": {
+        "type": "money",
+        "value": 246.49
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-07",
+      "category": "fees",
+      "question": "How much did Stripe keep in fees on Bean Club charges in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 711.94
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "fees-08",
+      "category": "fees",
+      "question": "What were total payment processing fees (Stripe and Shopify) in the fiscal year October 2024 through September 2025?",
+      "answer": {
+        "type": "money",
+        "value": 29976.45
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "payouts-01",
+      "category": "payouts",
+      "question": "How many payouts did Stripe send to the bank in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 365
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "payouts-02",
+      "category": "payouts",
+      "question": "How much did Stripe pay out to the bank in total in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 737131.63
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Net of fees."
+    },
+    {
+      "id": "payouts-03",
+      "category": "payouts",
+      "question": "How many payouts did Shopify send to the bank in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 52
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "Shopify pays out weekly."
+    },
+    {
+      "id": "payouts-04",
+      "category": "payouts",
+      "question": "How much did Shopify pay out to the bank in total in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 74497.55
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "payouts-05",
+      "category": "payouts",
+      "question": "What was the largest single Stripe payout in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 3590.22
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "payouts-06",
+      "category": "payouts",
+      "question": "On what date did the largest Stripe payout of the fiscal year October 2025 through September 2026 arrive?",
+      "answer": {
+        "type": "date",
+        "value": "2026-08-02"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "YYYY-MM-DD."
+    },
+    {
+      "id": "payouts-07",
+      "category": "payouts",
+      "question": "How much was the Shopify payout that arrived on 2026-09-07?",
+      "answer": {
+        "type": "money",
+        "value": 1469.71
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "payouts-08",
+      "category": "payouts",
+      "question": "How much money was sitting in Stripe, not yet paid out, at the end of 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 2108.66
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "That day’s charges, paid out the next day."
+    },
+    {
+      "id": "payouts-09",
+      "category": "payouts",
+      "question": "The Stripe payout that reached the bank on 2026-09-15 covered how many charges?",
+      "answer": {
+        "type": "count",
+        "value": 5
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "In-store sales for the day count as one charge each day; Bean Club charges count one each."
+    },
+    {
+      "id": "payouts-10",
+      "category": "payouts",
+      "question": "How much did Stripe deposit into checking in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 60224.47
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Bank deposits from Stripe."
+    },
+    {
+      "id": "transfers-01",
+      "category": "transfers",
+      "question": "How much money moved from savings to checking in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 12200
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Transfers between Harbor’s own accounts; none carries a shared reference."
+    },
+    {
+      "id": "transfers-02",
+      "category": "transfers",
+      "question": "How much money moved from checking to savings in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 14600
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "transfers-03",
+      "category": "transfers",
+      "question": "By how much did the savings balance change over the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2400
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Negative if it went down."
+    },
+    {
+      "id": "transfers-04",
+      "category": "transfers",
+      "question": "How many transfers between Harbor's checking and savings accounts happened in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 13
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "Each transfer counted once (it shows in both accounts)."
+    },
+    {
+      "id": "transfers-05",
+      "category": "transfers",
+      "question": "On what date did $15,000.00 move from savings into checking?",
+      "answer": {
+        "type": "date",
+        "value": "2025-02-28"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "A transfer, not income."
+    },
+    {
+      "id": "transfers-06",
+      "category": "transfers",
+      "question": "How much cash was taken from the drawer and deposited at the bank in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 62858.63
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Weekly branch deposits."
+    },
+    {
+      "id": "transfers-07",
+      "category": "transfers",
+      "question": "How many cash deposits were made at the bank in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 52
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "transfers-08",
+      "category": "transfers",
+      "question": "How much came in through mobile check deposits in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 6561.28
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Catering orders paid by check; they carry no name in the bank."
+    },
+    {
+      "id": "transfers-09",
+      "category": "transfers",
+      "question": "How many mobile check deposits were there in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 13
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "transfers-10",
+      "category": "transfers",
+      "question": "In September 2026, how much money came into checking that was NOT a Stripe or Shopify payout and NOT a transfer from Harbor's own accounts (savings or the cash drawer)?",
+      "answer": {
+        "type": "money",
+        "value": 557.64
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "What is left is outside money (here: mobile check deposits)."
+    },
+    {
+      "id": "expenses-01",
+      "category": "expenses",
+      "question": "How much rent did Harbor Coffee pay in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 81600
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-02",
+      "category": "expenses",
+      "question": "What is Harbor Coffee's monthly rent?",
+      "answer": {
+        "type": "money",
+        "value": 6800
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-03",
+      "category": "expenses",
+      "question": "How much left checking for payroll (ADP) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 403054.06
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Wages plus employer taxes, as debited."
+    },
+    {
+      "id": "expenses-04",
+      "category": "expenses",
+      "question": "What was total gross payroll in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 374411.59
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "From the payroll runs."
+    },
+    {
+      "id": "expenses-05",
+      "category": "expenses",
+      "question": "How much were employer payroll taxes in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 28642.47
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-06",
+      "category": "expenses",
+      "question": "How much net pay did employees receive in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 307017.51
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-07",
+      "category": "expenses",
+      "question": "How many payroll runs were there in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 26
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-08",
+      "category": "expenses",
+      "question": "What was the average gross payroll per run in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 14400.45
+      },
+      "tolerance": {
+        "abs": 0.5
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-09",
+      "category": "expenses",
+      "question": "How much was paid to Roastworks Coffee in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 69541.91
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Coffee beans."
+    },
+    {
+      "id": "expenses-10",
+      "category": "expenses",
+      "question": "How much was paid to Valley Dairy in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 38920.25
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-11",
+      "category": "expenses",
+      "question": "How much were utilities (City Power & Water) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 8214.22
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-12",
+      "category": "expenses",
+      "question": "What were average monthly utilities in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 684.52
+      },
+      "tolerance": {
+        "abs": 0.5
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-13",
+      "category": "expenses",
+      "question": "How much did Harbor Coffee spend on software in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2997.48
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "All software is on the business card."
+    },
+    {
+      "id": "expenses-14",
+      "category": "expenses",
+      "question": "How much did Harbor Coffee spend on software in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 249.79
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "expenses-15",
+      "category": "expenses",
+      "question": "What was the largest single payment out of checking in September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 15544.86
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "One bank row."
+    },
+    {
+      "id": "expenses-16",
+      "category": "expenses",
+      "question": "How much was paid to suppliers (Roastworks Coffee, Valley Dairy, Pier Packaging Co and Bayside Bakery Supply) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 164460.36
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Bank payments."
+    },
+    {
+      "id": "bills-01",
+      "category": "bills",
+      "question": "How many supplier bills were issued to Harbor Coffee in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 105
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-02",
+      "category": "bills",
+      "question": "What was the total of supplier bills issued in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 56061.08
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-03",
+      "category": "bills",
+      "question": "How much did Pier Packaging Co bill in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 33684.63
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-04",
+      "category": "bills",
+      "question": "How much did Bayside Bakery Supply bill in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 22376.45
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-05",
+      "category": "bills",
+      "question": "As of 2026-09-30, how many supplier bills were not fully paid?",
+      "answer": {
+        "type": "count",
+        "value": 29
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "Paid means bank payments toward the bill add up to its total."
+    },
+    {
+      "id": "bills-06",
+      "category": "bills",
+      "question": "As of 2026-09-30, how much did Harbor Coffee still owe on supplier bills in total?",
+      "answer": {
+        "type": "money",
+        "value": 1423.18
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Bill totals less the bank payments made toward them (including small shortfalls)."
+    },
+    {
+      "id": "bills-07",
+      "category": "bills",
+      "question": "In the fiscal year October 2025 through September 2026, how many bills were paid a little less than their total (short by under a dollar)?",
+      "answer": {
+        "type": "count",
+        "value": 13
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-08",
+      "category": "bills",
+      "question": "What was the total of those shortfalls (bills paid slightly less than billed) in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 6.38
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-09",
+      "category": "bills",
+      "question": "In the fiscal year October 2025 through September 2026, how many bills were paid in two separate payments?",
+      "answer": {
+        "type": "count",
+        "value": 13
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "bills-10",
+      "category": "bills",
+      "question": "What is the number of the most recently issued supplier bill?",
+      "answer": {
+        "type": "text",
+        "value": "BBS-2104"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "e.g. \"BBS-2101\"."
+    },
+    {
+      "id": "subscriptions-01",
+      "category": "subscriptions",
+      "question": "What was Harbor Coffee's Bean Club MRR (monthly recurring revenue) on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 1866
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Active subscriptions at their current plan."
+    },
+    {
+      "id": "subscriptions-02",
+      "category": "subscriptions",
+      "question": "What was the Bean Club's annual run rate (ARR) on 2026-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 22392
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "MRR × 12."
+    },
+    {
+      "id": "subscriptions-03",
+      "category": "subscriptions",
+      "question": "How many active Bean Club members were there on 2026-09-30?",
+      "answer": {
+        "type": "count",
+        "value": 48
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "subscriptions-04",
+      "category": "subscriptions",
+      "question": "How many Bean Club members cancelled during the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 12
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "subscriptions-05",
+      "category": "subscriptions",
+      "question": "How many people joined the Bean Club during the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 31
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "subscriptions-06",
+      "category": "subscriptions",
+      "question": "How much MRR did Bean Club upgrades add in September 2026 (expansion MRR)?",
+      "answer": {
+        "type": "money",
+        "value": 22
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Increase in monthly value from members moving to a bigger plan."
+    },
+    {
+      "id": "subscriptions-07",
+      "category": "subscriptions",
+      "question": "How much MRR was lost to cancellations in August 2026 (churned MRR)?",
+      "answer": {
+        "type": "money",
+        "value": 54
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "The monthly value of members who left."
+    },
+    {
+      "id": "subscriptions-08",
+      "category": "subscriptions",
+      "question": "What was net new MRR in September 2026 (new + expansion − churned)?",
+      "answer": {
+        "type": "money",
+        "value": 54
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Bean Club has no downgrades or reactivations."
+    },
+    {
+      "id": "subscriptions-09",
+      "category": "subscriptions",
+      "question": "What was Bean Club MRR on 2025-09-30?",
+      "answer": {
+        "type": "money",
+        "value": 1238
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "subscriptions-10",
+      "category": "subscriptions",
+      "question": "By what percentage did Bean Club MRR grow from 2025-09-30 to 2026-09-30?",
+      "answer": {
+        "type": "percent",
+        "value": 50.73
+      },
+      "tolerance": {
+        "abs": 0.1
+      },
+      "as_of": "2026-09-30",
+      "notes": "Percent."
+    },
+    {
+      "id": "card-01",
+      "category": "card",
+      "question": "What is the APR on Harbor Coffee's business card?",
+      "answer": {
+        "type": "percent",
+        "value": 24.49
+      },
+      "tolerance": {
+        "abs": 0.001
+      },
+      "as_of": "2026-09-30",
+      "notes": "Percent."
+    },
+    {
+      "id": "card-02",
+      "category": "card",
+      "question": "When is the next business card payment due?",
+      "answer": {
+        "type": "date",
+        "value": "2026-10-25"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "YYYY-MM-DD."
+    },
+    {
+      "id": "card-03",
+      "category": "card",
+      "question": "What was the balance on the last business card statement?",
+      "answer": {
+        "type": "money",
+        "value": 249.79
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "card-04",
+      "category": "card",
+      "question": "What is the minimum payment due on the business card?",
+      "answer": {
+        "type": "money",
+        "value": 35
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": ""
+    },
+    {
+      "id": "card-05",
+      "category": "card",
+      "question": "What date was the last business card statement?",
+      "answer": {
+        "type": "date",
+        "value": "2026-08-31"
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": "YYYY-MM-DD."
+    },
+    {
+      "id": "card-06",
+      "category": "card",
+      "question": "How much was paid toward the business card from checking in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2997.48
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Monthly statement payments."
+    },
+    {
+      "id": "card-07",
+      "category": "card",
+      "question": "How much was charged on the business card in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "money",
+        "value": 2997.48
+      },
+      "tolerance": {
+        "abs": 0.01
+      },
+      "as_of": "2026-09-30",
+      "notes": "Purchases only, not payments."
+    },
+    {
+      "id": "card-08",
+      "category": "card",
+      "question": "How many different vendors charged the business card in the fiscal year October 2025 through September 2026?",
+      "answer": {
+        "type": "count",
+        "value": 5
+      },
+      "tolerance": {},
+      "as_of": "2026-09-30",
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "_note": "Redacted, trimmed Xero Demo Company shapes. Ids and names are synthetic.",
+  "connections": [ { "id": "c0ffee00-0000-4000-8000-00000000000a", "tenantId": "aaaaaaaa-0000-4000-8000-00000000000a", "tenantType": "ORGANISATION", "tenantName": "Demo Company (UK)" } ],
+  "Organisations": [ { "Name": "Demo Company (UK)", "BaseCurrency": "GBP" } ],
+  "Accounts": [
+    { "AccountID": "acc-200", "Code": "200", "Name": "Sales", "Type": "REVENUE", "Class": "REVENUE", "Status": "ACTIVE" },
+    { "AccountID": "acc-310", "Code": "310", "Name": "Cost of Goods Sold", "Type": "DIRECTCOSTS", "Class": "EXPENSE", "Status": "ACTIVE" },
+    { "AccountID": "acc-469", "Code": "469", "Name": "Rent", "Type": "OVERHEADS", "Class": "EXPENSE", "Status": "ACTIVE" },
+    { "AccountID": "acc-485", "Code": "485", "Name": "Subscriptions", "Type": "OVERHEADS", "Class": "EXPENSE", "Status": "ACTIVE" },
+    { "AccountID": "acc-090", "Code": "090", "Name": "Business Bank Account", "Type": "BANK", "Class": "ASSET", "Status": "ACTIVE", "CurrencyCode": "GBP" },
+    { "AccountID": "acc-old", "Code": "999", "Name": "Old Expenses", "Type": "EXPENSE", "Class": "EXPENSE", "Status": "ARCHIVED" }
+  ],
+  "Invoices": [
+    { "InvoiceID": "inv-a", "InvoiceNumber": "INV-0101", "Type": "ACCREC", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-08-03T00:00:00", "DueDateString": "2026-09-02T00:00:00",
+      "Status": "AUTHORISED", "LineAmountTypes": "Exclusive", "SubTotal": 1000.0, "TotalTax": 200.0, "Total": 1200.0, "AmountDue": 700.0, "AmountPaid": 500.0, "AmountCredited": 0.0, "CurrencyCode": "GBP",
+      "LineItems": [ { "Description": "Consulting", "Quantity": 4.0, "UnitAmount": 250.0, "LineAmount": 1000.0, "TaxAmount": 200.0, "AccountCode": "200" } ], "UpdatedDateUTC": "/Date(1788000000000+0000)/" },
+    { "InvoiceID": "inv-b", "InvoiceNumber": "INV-0102", "Type": "ACCREC", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-09-01T00:00:00", "DueDateString": "2026-10-01T00:00:00",
+      "Status": "AUTHORISED", "SubTotal": 500.0, "TotalTax": 100.0, "Total": 600.0, "AmountDue": 0.0, "AmountPaid": 480.0, "AmountCredited": 120.0, "CurrencyCode": "GBP",
+      "LineItems": [ { "Description": "Workshop", "Quantity": 1.0, "LineAmount": 500.0, "TaxAmount": 100.0, "AccountCode": "200" } ], "UpdatedDateUTC": "/Date(1788100000000+0000)/" },
+    { "InvoiceID": "inv-c", "InvoiceNumber": "INV-0103", "Type": "ACCREC", "Contact": { "Name": "Example Partners LLC" }, "DateString": "2026-09-10T00:00:00", "DueDateString": "2026-10-10T00:00:00",
+      "Status": "AUTHORISED", "SubTotal": 2000.0, "TotalTax": 0.0, "Total": 2000.0, "AmountDue": 1500.0, "AmountPaid": 500.0, "AmountCredited": 0.0, "CurrencyCode": "USD",
+      "LineItems": [ { "Description": "Licence", "Quantity": 1.0, "LineAmount": 2000.0, "AccountCode": "200" } ], "UpdatedDateUTC": "/Date(1788200000000+0000)/" },
+    { "InvoiceID": "inv-d", "InvoiceNumber": "INV-0104", "Type": "ACCREC", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-09-12T00:00:00", "Status": "DRAFT", "Total": 90.0, "AmountPaid": 0, "CurrencyCode": "GBP", "LineItems": [] },
+    { "InvoiceID": "inv-e", "InvoiceNumber": "INV-0099", "Type": "ACCREC", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-07-01T00:00:00", "Status": "VOIDED", "Total": 300.0, "AmountPaid": 0, "CurrencyCode": "GBP", "LineItems": [] },
+    { "InvoiceID": "bill-a", "InvoiceNumber": "RENT-OCT", "Type": "ACCPAY", "Contact": { "Name": "Example Landlord" }, "DateString": "2026-09-25T00:00:00", "DueDateString": "2026-10-01T00:00:00",
+      "Status": "AUTHORISED", "SubTotal": 2000.0, "TotalTax": 400.0, "Total": 2400.0, "AmountDue": 2400.0, "AmountPaid": 0, "CurrencyCode": "GBP",
+      "LineItems": [ { "Description": "October rent", "Quantity": 1.0, "LineAmount": 2000.0, "TaxAmount": 400.0, "AccountCode": "469" } ] },
+    { "InvoiceID": "bill-b", "InvoiceNumber": "SaaS-77", "Type": "ACCPAY", "Contact": { "Name": "Example Software" }, "DateString": "2026-09-01T00:00:00", "DueDateString": "2026-09-15T00:00:00",
+      "Status": "PAID", "SubTotal": 49.0, "TotalTax": 0, "Total": 49.0, "AmountDue": 0, "AmountPaid": 49.0, "CurrencyCode": "GBP",
+      "LineItems": [ { "Description": "Seats", "Quantity": 1.0, "LineAmount": 49.0, "AccountCode": "485" } ] }
+  ],
+  "CreditNotes": [
+    { "CreditNoteID": "cn-1", "CreditNoteNumber": "CN-0007", "Type": "ACCRECCREDIT", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-09-05T00:00:00", "Status": "PAID",
+      "SubTotal": 100.0, "TotalTax": 20.0, "Total": 120.0, "RemainingCredit": 0.0, "CurrencyCode": "GBP",
+      "Allocations": [ { "Amount": 120.0, "Date": "/Date(1788566400000+0000)/", "Invoice": { "InvoiceID": "inv-b", "InvoiceNumber": "INV-0102" } } ] },
+    { "CreditNoteID": "cn-2", "CreditNoteNumber": "CN-0008", "Type": "ACCRECCREDIT", "Contact": { "Name": "Example Retail Ltd" }, "DateString": "2026-09-20T00:00:00", "Status": "AUTHORISED",
+      "Total": 60.0, "RemainingCredit": 60.0, "CurrencyCode": "GBP", "Allocations": [] }
+  ],
+  "Payments": [
+    { "PaymentID": "pay-1", "Date": "/Date(1787184000000+0000)/", "Amount": 500.0, "Reference": "BACS 4471", "PaymentType": "ACCRECPAYMENT", "Status": "AUTHORISED", "BatchPaymentID": "batch-9",
+      "Invoice": { "InvoiceID": "inv-a", "InvoiceNumber": "INV-0101", "CurrencyCode": "GBP", "Contact": { "Name": "Example Retail Ltd" } } },
+    { "PaymentID": "pay-2", "Date": "/Date(1788912000000+0000)/", "Amount": 480.0, "PaymentType": "ACCRECPAYMENT", "Status": "AUTHORISED",
+      "Invoice": { "InvoiceID": "inv-b", "InvoiceNumber": "INV-0102", "CurrencyCode": "GBP", "Contact": { "Name": "Example Retail Ltd" } } },
+    { "PaymentID": "pay-3", "Date": "/Date(1789000000000+0000)/", "Amount": 49.0, "PaymentType": "ACCPAYPAYMENT", "Status": "AUTHORISED",
+      "Invoice": { "InvoiceID": "bill-b", "CurrencyCode": "GBP", "Contact": { "Name": "Example Software" } } },
+    { "PaymentID": "pay-x", "Date": "/Date(1789000000000+0000)/", "Amount": 75.0, "PaymentType": "ACCRECPAYMENT", "Status": "DELETED",
+      "Invoice": { "InvoiceID": "inv-a", "CurrencyCode": "GBP", "Contact": { "Name": "Example Retail Ltd" } } }
+  ],
+  "Overpayments": [
+    { "OverpaymentID": "op-1", "Type": "RECEIVE-OVERPAYMENT", "Contact": { "Name": "Example Partners LLC" }, "DateString": "2026-09-30T00:00:00", "Status": "AUTHORISED",
+      "Total": 800.0, "RemainingCredit": 300.0, "CurrencyCode": "USD",
+      "Allocations": [ { "Amount": 500.0, "Invoice": { "InvoiceID": "inv-c" } } ] }
+  ],
+  "Prepayments": [],
+  "ProfitAndLoss": {
+    "Reports": [ { "ReportID": "ProfitAndLoss", "ReportName": "Profit and Loss", "Rows": [
+      { "RowType": "Header", "Cells": [ { "Value": "" }, { "Value": "30 Sep 2026" } ] },
+      { "RowType": "Section", "Title": "Income", "Rows": [
+        { "RowType": "Row", "Cells": [ { "Value": "Sales", "Attributes": [ { "Value": "acc-200", "Id": "account" } ] }, { "Value": "3400.00" } ] },
+        { "RowType": "SummaryRow", "Cells": [ { "Value": "Total Income" }, { "Value": "3400.00" } ] } ] },
+      { "RowType": "Section", "Title": "Less Operating Expenses", "Rows": [
+        { "RowType": "Row", "Cells": [ { "Value": "Rent", "Attributes": [ { "Value": "acc-469", "Id": "account" } ] }, { "Value": "2000.00" } ] },
+        { "RowType": "Row", "Cells": [ { "Value": "Subscriptions", "Attributes": [ { "Value": "acc-485", "Id": "account" } ] }, { "Value": "49.00" } ] },
+        { "RowType": "SummaryRow", "Cells": [ { "Value": "Total Operating Expenses" }, { "Value": "2049.00" } ] } ] },
+      { "RowType": "Section", "Title": "", "Rows": [ { "RowType": "Row", "Cells": [ { "Value": "Net Profit" }, { "Value": "1351.00" } ] } ] }
+    ] } ]
+  }
+}

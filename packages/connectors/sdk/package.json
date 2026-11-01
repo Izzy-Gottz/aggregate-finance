@@ -1,0 +1,19 @@
+{
+  "name": "@agfn/connector-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts",
+    "./db": "./src/db.ts"
+  },
+  "dependencies": {
+    "@agfn/contracts": "0.0.0",
+    "kysely": "^0.29.6"
+  },
+  "devDependencies": {
+    "@agfn/db": "0.0.0"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "as_of": "2026-09-30",
+  "note": "Anthropic's Claude models only: Claude Haiku 5.5 (decided 2026-10-12). Prices: USD per million tokens from platform.claude.com/docs/en/about-claude/pricing on 2026-10-12 (5-minute cache writes). Data settings live in docs/benchmark/events.ts (BENCHMARK).",
+  "repeat_subset": [
+    "balances-05",
+    "sales-05",
+    "sales-12",
+    "fees-05",
+    "payouts-05",
+    "transfers-05",
+    "expenses-05",
+    "bills-05",
+    "subscriptions-05",
+    "card-05"
+  ],
+  "models": [
+    {
+      "label": "Claude Haiku 5.5",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "price": {
+        "input": 0.1,
+        "cachedInput": 0.01,
+        "cacheWrite": 0.125,
+        "output": 0.5
+      }
+    }
+  ],
+  "sandbox": {
+    "image": "agfn-bench-python:1",
+    "digest": "sha256:c38bf3131b820a5d2766894ceadcde1cf4a7e755f5bdc7fbcfc8dd600146108a",
+    "python": "3.12.7",
+    "pandas": "2.2.3",
+    "numpy": "2.1.3",
+    "base": "python:3.12.7-slim-bookworm"
+  }
+}
