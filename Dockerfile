@@ -1,13 +1,13 @@
 # One image for self-host and hosted (MASTER.md §10). Node runs TypeScript directly; the web app is prebuilt here.
 # The runtime stage gets production dependencies and runtime sources only (no tests, fixtures, docs or build tools).
 
-FROM node:22-bookworm-slim AS manifests
+FROM node:26-bookworm-slim AS manifests
 WORKDIR /app
 COPY packages ./packages-src
 # Only package manifests, so dependency layers stay cached until a manifest changes.
 RUN find packages-src -name package.json -not -path '*/node_modules/*' | while read f; do d=$(dirname "$f" | sed 's#^packages-src#packages#'); mkdir -p "$d"; cp "$f" "$d/"; done && rm -rf packages-src
 
-FROM node:22-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/server/package.json apps/server/
@@ -15,7 +15,7 @@ COPY apps/web/package.json apps/web/
 COPY --from=manifests /app/packages ./packages
 RUN npm ci --no-audit --no-fund
 
-FROM node:22-bookworm-slim AS prod-deps
+FROM node:26-bookworm-slim AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/server/package.json apps/server/
@@ -42,7 +42,7 @@ RUN mkdir /out \
 
 # Plain Alpine plus the node binary (same Alpine release as the node image): no npm, yarn or corepack in the shipped
 # image. Every dependency is pure JavaScript (SQLite is node:sqlite), so musl is fine.
-FROM node:22-alpine3.24 AS node
+FROM node:26-alpine3.24 AS node
 FROM alpine:3.24 AS runtime
 RUN apk add --no-cache libstdc++ libgcc && addgroup -g 1000 node && adduser -u 1000 -G node -s /bin/sh -D node
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
