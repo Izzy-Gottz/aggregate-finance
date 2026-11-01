@@ -53,9 +53,12 @@ WORKDIR /app
 COPY --from=prod-deps /app /app
 COPY --from=build /out/packages ./packages
 COPY --from=build /out/apps ./apps
-# /privacy, /terms, /docs/connect-your-ai and /docs/guides/* are rendered from these at boot.
+# /privacy, /terms, /docs/<name> (every PUBLIC_DOCS file in apps/server/src/legal.ts) and /docs/guides/* are rendered
+# from these at boot. A doc missing here renders as "Not published yet" (scripts/dockerfile.test.ts checks the list).
 COPY docs/legal ./docs/legal
 COPY docs/connect-your-ai.md ./docs/connect-your-ai.md
+COPY docs/recipes.md ./docs/recipes.md
+COPY docs/connectors.md ./docs/connectors.md
 COPY docs/guides ./docs/guides
 RUN mkdir -p /data && chown -R node:node /data && chmod 700 /data
 USER node

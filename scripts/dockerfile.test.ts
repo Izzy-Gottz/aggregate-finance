@@ -9,3 +9,9 @@ it('the production dependency stage strips native addons and refuses any that re
   expect(stage).toContain("-path '*/node_modules/@napi-rs'")
   expect(stage).toMatch(/-name '\*\.node' -type f \| grep \.; then .*exit 1; fi/)
 })
+
+it('the image carries every public doc the server renders (a missing one shows "Not published yet")', async () => {
+  const docker = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8')
+  const { PUBLIC_DOCS } = await import('../apps/server/src/legal.ts')
+  for (const { file } of Object.values(PUBLIC_DOCS)) expect(docker, file).toContain(`COPY docs/${file} ./docs/${file}`)
+})

@@ -230,7 +230,7 @@ export function renderLegal(md: string, fonts: LegalFonts = {}): LegalPage {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} · Aggregate</title><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="robots" content="${draft ? 'noindex' : 'index'}">${shareMeta(`${title} · Aggregate`, summary(meta, body))}<style>${style(fonts)}</style></head>
 <body><main>
-<div class="top"><a href="/">Aggregate</a><nav><a href="/docs/connect-your-ai">Connect your AI</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
+<div class="top"><a href="/">Aggregate</a><nav><a href="/docs/connectors">Connectors</a><a href="/docs/connect-your-ai">Connect your AI</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
 ${draft ? '<div class="draft" role="note"><strong>Draft — not yet in effect.</strong> This page is being reviewed and may change.</div>' : ''}
 ${meta.updated ? `<div class="updated">Last updated ${esc(meta.updated)}</div>` : ''}
 ${renderMarkdown(body)}
@@ -254,6 +254,7 @@ export function loadLegalPages(dir: URL = new URL('../../../docs/legal/', import
 export const PUBLIC_DOCS = {
   'connect-your-ai': { file: 'connect-your-ai.md', title: 'Connect your AI to Aggregate' },
   recipes: { file: 'recipes.md', title: 'Prompt recipes' },
+  connectors: { file: 'connectors.md', title: 'What Aggregate connects' },
 } as const
 
 /** The page of a doc beside the public docs (docs/<name>.md) if this server serves it, otherwise null. */

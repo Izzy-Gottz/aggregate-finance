@@ -92,6 +92,8 @@ describe('guides', () => {
       expect(xml).toContain('<loc>https://money.example.com/privacy</loc>')
       expect(xml).toContain('<loc>https://money.example.com/docs/connect-your-ai</loc>')
       expect(xml).toContain('<loc>https://money.example.com/docs/recipes</loc>')
+      expect(xml).toContain('<loc>https://money.example.com/docs/connectors</loc>')
+      expect((await app.request('/docs/connectors')).status).toBe(200)
       const recipes = await app.request('/docs/recipes')
       expect(recipes.status).toBe(200)
       expect(await recipes.text()).toContain('<a href="/docs/connect-your-ai">')

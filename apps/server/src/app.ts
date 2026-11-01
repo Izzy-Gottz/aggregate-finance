@@ -1776,7 +1776,7 @@ export function createApp(s: Services): Hono<Env> {
   })
   // Search engines get the public pages of the hosted service; a self-hosted server lists nothing.
   if (config.hosted) {
-    const pages = ['/', '/privacy', '/terms', '/security', '/support', '/docs/connect-your-ai', '/docs/recipes', '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
+    const pages = ['/', '/privacy', '/terms', '/security', '/support', '/docs/connectors', '/docs/connect-your-ai', '/docs/recipes', '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((p) => `  <url><loc>${config.baseUrl}${p}</loc></url>`).join('\n')}\n</urlset>\n`
     app.get('/sitemap.xml', (c) => c.body(sitemap, 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }))
   }

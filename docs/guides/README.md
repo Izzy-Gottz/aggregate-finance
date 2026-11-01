@@ -3,6 +3,8 @@
 Step-by-step pages for connecting one source to one assistant, and plain comparisons with other ways to give an AI your
 financial data. Every page says what's live today and when it was last checked.
 
+Start with [what Aggregate connects](../connectors.md): every connection, what it brings in, and whether it's live on the hosted app.
+
 ## Connect your AI
 
 - [Claude](connect-claude.md): desktop, web, iPhone and Android
