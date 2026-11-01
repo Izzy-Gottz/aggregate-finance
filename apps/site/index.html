@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aggregate</title>
-<meta name="description" content="Aggregate. Something remarkable is coming.">
+<meta name="description" content="Ask your AI about your finances.">
 <meta name="theme-color" content="#F4F1EB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F0E0D" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Aggregate">
-<meta property="og:description" content="Something remarkable is coming.">
+<meta property="og:description" content="Ask your AI about your finances.">
 <meta property="og:image" content="https://aggregate.finance/og.png">
 <meta property="og:url" content="https://aggregate.finance">
 <meta name="twitter:card" content="summary_large_image">
@@ -21,7 +21,7 @@
   :root {
     --paper: #F4F1EB;
     --ink: #141312;
-    --muted: #8A847A;
+    --muted: #716C64;
     --rule: #DDD6CA;
     --accent: #141312;
   }
@@ -29,7 +29,7 @@
     :root {
       --paper: #0F0E0D;
       --ink: #E9E2D4;
-      --muted: #7C766C;
+      --muted: #807A6F;
       --rule: #2A2724;
       --accent: #C8B38A;
     }
@@ -43,7 +43,7 @@
     font-weight: 300;
     -webkit-font-smoothing: antialiased;
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto 1fr auto;
     min-height: 100svh;
   }
   main {
@@ -51,7 +51,7 @@
     place-items: center;
     align-content: center;
     gap: 0;
-    padding: 64px 24px 24px;
+    padding: 24px 24px 24px;
     text-align: center;
   }
   .mark {
@@ -67,6 +67,17 @@
     letter-spacing: .62em;
     margin-right: -.62em; /* optically recenter tracked caps */
     text-transform: uppercase;
+  }
+  /* Unofficial beta: one small, quiet pill under the wordmark */
+  .beta {
+    margin-top: 16px;
+    padding: 4px 11px 3px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
   .rule {
     width: 40px;
@@ -87,8 +98,109 @@
     font-size: clamp(17px, 1.9vw, 19px);
     color: var(--muted);
     line-height: 1.5;
-    max-width: 30ch;
+    max-width: 52ch;
   }
+  p.sub span { display: block; text-wrap: balance; }
+  .cta {
+    margin-top: 36px;
+    display: inline-block;
+    padding: 13px 30px 12px;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    transition: background .3s ease, color .3s ease;
+  }
+  .cta:hover, .cta:focus-visible { background: var(--ink); color: var(--paper); }
+  a.demo { display: block; margin-top: 16px; font-size: 15px; color: var(--muted); text-underline-offset: 3px; text-decoration-color: var(--rule); }
+  a.demo:hover, a.demo:focus-visible { color: var(--ink); }
+  header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 32px;
+    padding: 28px clamp(16px, 4vw, 40px) 0;
+  }
+  header a {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+    transition: color .3s ease, border-color .3s ease;
+  }
+  header a:hover, header a:focus-visible { color: var(--ink); border-color: var(--rule); }
+  /* Keyboard focus: one visible ring on every link; hit areas of at least 44px without changing the look */
+  a:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+  header a, a.demo, .works .more { position: relative; }
+  header a::after, a.demo::after, .works .more::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%);
+  }
+  /* The one-minute clip under "See the demo" */
+  .clip { margin: 48px 0 0; width: 100%; max-width: 720px; }
+  .clip video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--rule); border-radius: 10px; background: #0F0E0D; }
+  .clip figcaption { margin-top: 12px; font-size: 14px; color: var(--muted); letter-spacing: normal; text-transform: none; }
+  /* Who it's for: one quiet row per audience */
+  .who { margin-top: 72px; width: 100%; max-width: 660px; }
+  .who dl { margin: 22px 0 0; text-align: left; }
+  .who .row { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid var(--rule); }
+  .who .row:last-child { border-bottom: 1px solid var(--rule); }
+  .who dt { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); padding-top: 5px; }
+  .who dd { margin: 0; font-size: 18px; line-height: 1.45; text-wrap: pretty; }
+  @media (max-width: 520px) {
+    .who .row { grid-template-columns: 1fr; gap: 4px; }
+    .who dt { padding-top: 0; }
+  }
+  .who-label { font-size: 12px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+  /* Works with: right under the hero buttons. Logos come from one list (WORKS_WITH below); only entries with live: true render. */
+  .works { margin-top: 56px; }
+  .works[hidden] { display: none; }
+  .works .label {
+    font-size: 12px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+  }
+  .works ul {
+    list-style: none; padding: 0; margin: 20px auto 0;
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 40px 44px;
+    max-width: 520px;
+  }
+  @media (max-width: 520px) { .works ul { gap: 40px; } } /* still Square's 40px clear space */
+  .works li { display: flex; align-items: center; }
+  /* Each brand's own artwork, untouched (no brand at launch allows recoloring); light/dark files swap with the theme. */
+  .works img { display: block; }
+  .works img.dark { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .works img.light { display: none; }
+    :root:not([data-theme="light"]) .works img.dark { display: block; }
+  }
+  /* Brands whose logos need written approval appear as their name. */
+  .works .name { font-size: 21px; color: var(--ink); opacity: .78; }
+  .works .more { display: inline-block; margin-top: 20px; font-size: 16px; color: var(--muted); text-underline-offset: 3px; text-decoration-color: var(--rule); }
+  .works .more:hover { color: var(--ink); }
+  .pricing { margin-top: 72px; scroll-margin-top: 40px; }
+  .faq { margin-top: 72px; width: 100%; max-width: 660px; text-align: left; }
+  .faq .label { text-align: center; font-size: 12px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+  .faq dl { margin: 22px 0 0; }
+  .faq .row { padding: 16px 0; border-top: 1px solid var(--rule); }
+  .faq .row:last-child { border-bottom: 1px solid var(--rule); }
+  .faq dt { font-size: 19px; line-height: 1.4; }
+  .faq dd { margin: 6px 0 0; font-size: 16px; line-height: 1.55; color: var(--muted); text-wrap: pretty; }
+  .pricing .label {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pricing .price { text-wrap: balance; margin-top: 14px; font-size: clamp(19px, 2.1vw, 22px); line-height: 1.45; }
+  .pricing .note { margin-top: 8px; font-size: 17px; color: var(--muted); line-height: 1.5; }
+  .pricing .note a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--rule); white-space: nowrap; }
+  .pricing .note a:hover { color: var(--ink); }
   footer {
     display: flex;
     justify-content: space-between;
@@ -108,10 +220,16 @@
     .mark .s:nth-child(4), .mark .s:nth-child(5) { animation-delay: .36s; }
     .fade { opacity: 0; transform: translateY(6px); animation: rise 1.4s cubic-bezier(.2,.7,.2,1) forwards; }
     .wordmark.fade { animation-delay: 1.7s; }
+    .beta.fade { animation-delay: 1.85s; }
     .rule.fade { animation-delay: 2s; }
     h1.fade { animation-delay: 2.15s; }
     .sub.fade { animation-delay: 2.35s; }
-    footer.fade { animation-delay: 2.6s; }
+    .cta.fade { animation-delay: 2.45s; }
+    .demo.fade { animation-delay: 2.45s; }
+    .who.fade { animation-delay: 2.5s; }
+    .works.fade { animation-delay: 2.55s; }
+    .pricing.fade { animation-delay: 2.55s; }
+    footer.fade, header.fade { animation-delay: 2.6s; }
   }
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes fade { to { opacity: 1; } }
@@ -119,6 +237,7 @@
 </style>
 </head>
 <body>
+<header class="fade"><a href="#pricing">Pricing</a><a href="https://app.aggregate.finance">Sign in</a></header>
 <main>
   <svg class="mark" viewBox="0 0 100 100" role="img" aria-label="Aggregate">
     <path class="s" pathLength="1" d="M50 12V88"/>
@@ -128,14 +247,101 @@
     <path class="s" pathLength="1" d="M50 12 84 88"/>
   </svg>
   <div class="wordmark fade">Aggregate</div>
+  <div class="beta fade">Beta</div>
   <div class="rule fade"></div>
-  <h1 class="fade">Something remarkable is coming.</h1>
-  <p class="sub fade">Every account your company holds, brought together as one.</p>
+  <h1 class="fade">Ask your AI about your finances.</h1>
+  <p class="sub fade"><span>Every account, company and holding, in one link for your AI.</span> <span>It can never move money.</span></p>
+  <a class="cta fade" href="https://app.aggregate.finance">Get started</a>
+  <a class="demo fade" href="https://app.aggregate.finance/demo">See the demo</a>
+  <section class="works fade" id="works" aria-label="Works with" hidden>
+    <div class="label">Works with</div>
+    <ul></ul>
+    <a class="more" href="https://github.com/Izzy-Gottz/aggregate-finance#what-it-connects">and more</a>
+  </section>
+  <figure class="clip fade">
+    <video controls muted playsinline preload="none" poster="/demo-poster.jpg" aria-label="One-minute demo: adding connections in Aggregate, then asking Claude about runway and profit and loss">
+      <source src="/clips/demo.mp4" type="video/mp4">
+    </video>
+    <figcaption>One minute: connect your accounts, then ask. Made-up companies.</figcaption>
+  </figure>
+  <section class="who fade" aria-label="Who it’s for">
+    <div class="who-label">Who it’s for</div>
+    <dl>
+      <div class="row"><dt>Founders</dt><dd>Several companies side by side, and what each one owes you</dd></div>
+      <div class="row"><dt>Businesses</dt><dd>Banks, cards, payments, invoices, bills and payroll in one ledger</dd></div>
+      <div class="row"><dt>Investors</dt><dd>Your holdings, and the stakes you hold in companies</dd></div>
+      <div class="row"><dt>Individuals</dt><dd>Just your own accounts, cards and cash, in a private space</dd></div>
+    </dl>
+  </section>
+  <section class="faq fade" aria-label="Questions">
+    <div class="label">Questions</div>
+    <dl>
+      <div class="row"><dt>Does Aggregate see my bank password?</dt><dd>No. You sign in to your bank through Plaid, and to each app on its own page. Aggregate gets a token, encrypted with a key kept outside the database, and only ever uses it to read.</dd></div>
+      <div class="row"><dt>Does my data train AI models?</dt><dd>No. Aggregate never uses your data to train models and doesn’t let anyone else. What your AI reads is covered by your AI provider’s own policy.</dd></div>
+      <div class="row"><dt>Can it move money?</dt><dd>Never. There’s no tool and no connection that can pay, transfer, pay a bill or send anything.</dd></div>
+    </dl>
+  </section>
+  <section id="pricing" class="pricing fade">
+    <div class="label">Pricing</div>
+    <p class="price">Aggregate is free while we’re in beta.</p>
+    <p class="note">We may introduce paid plans later, and we’ll let you know before anything changes.</p>
+    <p class="note">Open source on GitHub, and free to self-host. <a href="https://github.com/Izzy-Gottz/aggregate-finance">See the code</a></p>
+  </section>
 </main>
 <footer class="fade">
   <span>aggregate.finance</span>
   <span>MMXXVI</span>
 </footer>
+<script>
+  // One list for the "Works with" strip; order here is display order. Flip `live` to true once a connector is live
+  // in production. Each brand's rules (and why some are text) are in apps/site/logos/README.md.
+  //   light / dark: the brand's official files for light and dark backgrounds, shown untouched
+  //   no files:     shown as the brand's name in text (logo needs written approval first)
+  const WORKS_WITH = [
+    { name: 'QuickBooks', live: false, light: '/logos/quickbooks-on-light.png', ratio: 3.908, dark: '/logos/quickbooks-on-dark.png', height: 26 },
+    { name: 'Square',     live: true,  light: '/logos/square-badge-white.png', ratio: 3.516,  dark: '/logos/square-badge-black.png', height: 34 },
+    { name: 'Stripe',     live: true,  light: '/logos/stripe-slate.svg', ratio: 2.384,        dark: '/logos/stripe-white.svg',      height: 30 },
+    { name: 'Shopify',    live: true,  light: '/logos/shopify-black.svg', ratio: 3.507,       dark: '/logos/shopify-white.svg',     height: 28 },
+    { name: 'Ramp',       live: false, light: '/logos/ramp-black.svg', ratio: 3.5,          dark: '/logos/ramp-white.svg',        height: 20 },
+    { name: 'Brex',       live: false, light: '/logos/brex-ink.svg', ratio: 3.785,            dark: '/logos/brex-white.svg',        height: 18 },
+    { name: 'PayPal',     live: false, light: '/logos/paypal-black.png', ratio: 2.976,        dark: '/logos/paypal-white.png',      height: 24 },
+    { name: 'Plaid',      live: true },
+    { name: 'Xero',       live: false },
+    { name: 'Wefunder',   live: true,  light: '/logos/wefunder-blue.svg', ratio: 3.667,       dark: '/logos/wefunder-blue.svg',     height: 22 },
+    { name: 'Mercury',    live: false },
+    { name: 'Wise',       live: false },
+    { name: 'Finch',      live: false },
+    { name: 'Rippling',   live: false },
+    { name: 'BILL',       live: true },
+    { name: 'Deel',       live: true,  light: '/logos/deel-black.svg', ratio: 1.825,        dark: '/logos/deel-white.svg',        height: 48 },
+    { name: 'Claude',     live: false },
+    { name: 'ChatGPT',    live: false },
+  ]
+  ;(function () {
+    const live = WORKS_WITH.filter((b) => b.live)
+    if (!live.length) return
+    const box = document.getElementById('works')
+    const ul = box.querySelector('ul')
+    for (const b of live) {
+      const li = document.createElement('li')
+      if (b.light) {
+        for (const mode of ['light', 'dark']) {
+          const img = new Image()
+          img.src = b[mode]; img.alt = b.name; img.height = b.height
+          img.width = Math.round(b.height * b.ratio); img.className = mode
+          li.append(img)
+        }
+      } else {
+        const t = document.createElement('span')
+        t.className = 'name'
+        t.textContent = b.name
+        li.append(t)
+      }
+      ul.append(li)
+    }
+    box.hidden = false
+  })()
+</script>
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3e463fae81f1435db679d8f821861cbd"}'></script>
 </body>
 </html>

@@ -115,6 +115,10 @@ function withBegin<C extends Connector>(c: C, begin: (state: string) => ConnectB
 
 const pasted = (label: string, helpUrl: string, fields: ConnectField[]): ConnectBegin => ({ kind: 'api_key', label, helpUrl, placeholder: '', fields })
 const environments = (sandboxFirst: boolean): ConnectField => ({ name: 'environment', label: 'Environment', options: sandboxFirst ? ['sandbox', 'production'] : ['production', 'sandbox'] })
+/** Deel's token form: hosted offers only production (a real user picking sandbox would get an empty account), unless
+ *  the operator runs Deel's sandbox (DEEL_ENV=sandbox, staging). Self-hosters keep both. */
+const deelEnvironment = (env: Env): ConnectField =>
+  env.AGFN_HOSTED === '1' && env.DEEL_ENV !== 'sandbox' ? { name: 'environment', label: 'Environment', options: ['production'] } : environments(env.DEEL_ENV === 'sandbox')
 
 export { FINCH_PRODUCTS } from '@agfn/connector-finch'
 
@@ -314,7 +318,7 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
     return withBegin(c, (state) =>
       c.authorizationUrl && env.AGFN_DEEL_TOKEN_ONLY !== '1'
         ? { kind: 'oauth', url: c.authorizationUrl(state) }
-        : pasted('Deel organization token', 'https://developer.deel.com/docs/api-tokens-1', [{ name: 'token', label: 'Organization token', secret: true }, environments(env.DEEL_ENV === 'sandbox')]),
+        : pasted('Deel organization token', 'https://developer.deel.com/docs/api-tokens-1', [{ name: 'token', label: 'Organization token', secret: true }, deelEnvironment(env)]),
     )
   })
   // BILL: with Aggregate's app-partner key (BILL_DEV_KEY: production, or sandbox when BILL_ENV=sandbox and there's no

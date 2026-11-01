@@ -1,18 +1,19 @@
+# Security updates only (they ignore open-pull-requests-limit). This public repo is a snapshot of the source repo, so
+# routine bumps are taken there and ship with the next snapshot; version-update PRs here would never be merged.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
-    groups:
-      minor-and-patch:
-        update-types: [minor, patch]
+    open-pull-requests-limit: 0
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 0
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 0

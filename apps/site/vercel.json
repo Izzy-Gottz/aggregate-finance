@@ -12,6 +12,11 @@
       "permanent": true
     },
     {
+      "source": "/pricing",
+      "destination": "/#pricing",
+      "permanent": false
+    },
+    {
       "source": "/security",
       "destination": "https://app.aggregate.finance/security",
       "permanent": false

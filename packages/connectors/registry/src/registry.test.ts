@@ -217,6 +217,10 @@ describe('connector registry', () => {
     // Aggregate's Deel app set but one-click held back (AGFN_DEEL_TOKEN_ONLY=1): still the pasted token.
     expect((await fields('deel', { DEEL_CLIENT_ID: 'd', DEEL_CLIENT_SECRET: 'ds', AGFN_DEEL_TOKEN_ONLY: '1' })).map((f) => f.name)).toEqual(['token', 'environment'])
     expect(await begin({ DEEL_CLIENT_ID: 'd', DEEL_CLIENT_SECRET: 'ds' }, 'deel')).toMatchObject({ kind: 'oauth' })
+    // Hosted: only production (no sandbox for real users), unless the operator runs Deel's sandbox (staging).
+    expect((await fields('deel', { AGFN_HOSTED: '1' })).at(-1)!.options).toEqual(['production'])
+    expect((await fields('deel', { AGFN_HOSTED: '1', DEEL_ENV: 'sandbox' })).at(-1)!.options).toEqual(['sandbox', 'production'])
+    expect((await fields('deel')).at(-1)!.options).toEqual(['production', 'sandbox'])
     expect((await fields('billcom')).map((f) => f.name)).toEqual(['devKey', 'organizationId', 'username', 'password', 'environment'])
     expect((await fields('rippling')).map((f) => f.name)).toEqual(['apiToken'])
     expect((await fields('billcom', { BILL_ENV: 'sandbox' })).at(-1)!.options![0]).toBe('sandbox')
