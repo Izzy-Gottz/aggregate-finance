@@ -94,6 +94,8 @@ export interface EntitySummary {
   cashCaveat?: { state: 'unknown' | 'stale'; reason: string }
   /** Personal shows "private" on the overview; the amount appears only inside its drawer. */
   hidden: boolean
+  /** Market value of its holdings per currency (the company page's Holdings total); absent when it has none. Never cash. */
+  investments?: Money[]
 }
 
 export type ConnectionStatus = 'ok' | 'syncing' | 'needs_reauth' | 'error' | 'paused'

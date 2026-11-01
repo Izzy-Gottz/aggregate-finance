@@ -1,4 +1,5 @@
 import { makeSharePort } from './share.ts'
+import { errorForLog } from './log-safe.ts'
 import type { Kysely } from 'kysely'
 import { LedgerEngine, KyselyLedgerStore, KyselyDirectory, DbScope, CachedRateSource, FrankfurterRateSource } from '@agfn/core'
 import { createAgfnMcp, DbRateLimiter, peopleFromAuth, ToolError, type AgfnMcpHandle, type LiveBalancePort } from '@agfn/mcp'
@@ -182,7 +183,7 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
         const ws = memberships[0]
         return ws ? { workspaceId: ws.id, personId: person.id } : null
       },
-      onError: (err) => console.error('[agfn] mcp error', err),
+      onError: (err) => console.error('[agfn] mcp error', JSON.stringify(errorForLog(err))),
     },
   )
   // The fill waits this long for the warm before it says it's ready; a slow warm carries on behind it.

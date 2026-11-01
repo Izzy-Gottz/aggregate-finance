@@ -75,14 +75,18 @@ export function WorkspacePage() {
               const empty = !e.cash && !ws.connections.some((c) => c.entityNames.includes(e.name))
               const shown = e.hidden ? 'private' : e.cash ? fmt(e.cash) : !empty && e.cashCaveat?.state === 'unknown' ? 'unknown' : 'no data yet'
               const updating = isUpdating(ws, e.name)
+              // Investments (holdings at market value): a quiet second figure under cash, never part of it.
+              const inv = !e.hidden && e.investments?.length ? `Investments ${e.investments.map((m) => fmt(m)).join(' · ')}` : null
               // Personal: the owner sees it, nobody else does (they get "private"). Say so, quietly.
               const line = [updating ? 'updating…' : null, e.kind === 'personal' && !e.hidden ? (isPublicDemo(app) ? 'made-up, like the rest' : 'only you see this') : null, !e.hidden && e.cashCaveat && !empty ? e.cashCaveat.reason : null].filter(Boolean).join(' · ')
               return html`<${Row}
                 name=${e.name}
                 line=${line || undefined}
-                right=${html`<span class=${'value' + (e.hidden || !e.cash ? ' grey' : '')}>${shown}</span>`}
+                right=${inv
+                  ? html`<span class="values"><span class=${'value' + (!e.cash ? ' grey' : '')}>${shown}</span><span class="value-sub">${inv}</span></span>`
+                  : html`<span class=${'value' + (e.hidden || !e.cash ? ' grey' : '')}>${shown}</span>`}
                 onClick=${() => app.open({ kind: 'company', id: e.id })}
-                label=${`${e.name}, ${shown}${updating ? ', updating' : ''}. Open details`}
+                label=${`${e.name}, ${shown}${inv ? `, ${inv}` : ''}${updating ? ', updating' : ''}. Open details`}
               />`
             })}
           </${Rows}>`}

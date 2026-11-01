@@ -1,4 +1,5 @@
 import { Hono, type Context } from 'hono'
+import { errorForLog } from './log-safe.ts'
 import { CompanyDeleteError, deleteEmptyCompany, isWorkspaceOwner } from './delete-company.ts'
 import { liveCode, REF_COOKIE, refFromCookie } from './creator-links.ts'
 import { freeGrants, freeLabel } from './free-grants.ts'
@@ -31,7 +32,7 @@ import { settingsRoutes } from './routes/settings.ts'
 import { DEMO_HEADER, DEMO_REFRESH_HEADER, DEMO_REFRESH_TOKEN, demoCached, demoCacheKey, demoGate, demoRefreshed, demoRemember, PUBLIC_DEMO_SESSION } from './public-demo-web.ts'
 import { publicBadgeRoutes, publicShareRoutes, shareRoutes } from './routes/share.ts'
 import { inboundAddresses, inboundRoutes, inboundWebhookRoutes } from './routes/inbound.ts'
-import { financeRoutes } from './routes/finance.ts'
+import { financeRoutes, holdingsOf } from './routes/finance.ts'
 import { mcpTiming } from './mcp-timing.ts'
 import { equityRoutes } from './routes/equity.ts'
 import { investmentRoutes } from './routes/investments.ts'
@@ -140,7 +141,7 @@ export function createApp(s: Services): Hono<Env> {
     }
     // The pool stayed full past the checkout timeout (logged where it happened): busy, not broken.
     if (err instanceof PoolBusyError) return c.json({ error: 'busy', message: err.message }, 503, { 'retry-after': '5' })
-    console.error('[agfn] unhandled error', err)
+    console.error('[agfn] unhandled error', JSON.stringify(errorForLog(err)))
     return c.json({ message: 'Something went wrong on our side. Try again in a moment.' }, 500)
   })
 
@@ -806,7 +807,10 @@ export function createApp(s: Services): Hono<Env> {
       entities.map(async (e) => {
         const canSee = await s.permissions.can(actorOf(c), 'view', e.id, 'balances')
         const m = canSee ? await cashOf(s, ws, e.id) : null
-        return { id: e.id, kind: e.kind, name: e.name, currency: currency.get(e.id) ?? 'USD', cash: m?.cash ?? null, ...(m?.caveat ? { cashCaveat: m.caveat } : {}), hidden: await personalHidden(db, ws, e, p.personId) }
+        // Market value of its holdings, the company page's Holdings total (get_holdings's source): a quiet line under
+        // cash, never added to it. Absent when there are none.
+        const inv = canSee ? await investmentsOf(s, ws, e.id) : []
+        return { id: e.id, kind: e.kind, name: e.name, currency: currency.get(e.id) ?? 'USD', cash: m?.cash ?? null, ...(m?.caveat ? { cashCaveat: m.caveat } : {}), ...(inv.length ? { investments: inv } : {}), hidden: await personalHidden(db, ws, e, p.personId) }
       }),
     )
     const connections = await connectionSummaries(s, ws)
@@ -1914,6 +1918,14 @@ async function cashOf(s: Services, workspaceId: string, entityId: string): Promi
   // unknown: no honest total (value null); stale: a total that leans on old balances. Either way, say why.
   const caveat = a.state === 'unknown' || a.state === 'stale' ? { state: a.state, reason: a.unknownReason ?? (a.state === 'unknown' ? 'Not enough data for a total.' : 'Some balances are out of date.') } : undefined
   return { cash: a.state === 'unknown' ? null : cash, ...(caveat ? { caveat } : {}) }
+}
+
+/** The holdings' value per currency (never added across currencies), as the company page totals them. */
+async function investmentsOf(s: Services, workspaceId: string, entityId: string): Promise<Array<{ minor: number; currency: string }>> {
+  const r = financeFor(s).reader
+  if (!r.holdings) return []
+  const rows = await r.holdings({ workspaceId, entityIds: [entityId] }).catch(() => null)
+  return holdingsOf(rows).holdingsTotal.filter((x) => x.minor !== 0)
 }
 
 async function connectionSummaries(s: Services, workspaceId: string) {

@@ -905,6 +905,63 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       expect(good.map((c) => c.status)).toEqual(['ok'])
     })
 
+    // Mon 2026-10-19 … Mon 2026-10-26: a provider balance every day.
+    const daily = (acc: Awaited<ReturnType<Kit['account']>>, from: number, moves: Record<string, number>) => {
+      let bal = from
+      return ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26'].map((d) => snapshot(acc, d, (bal += moves[d] ?? 0)))
+    }
+    const balanceChecks = async () => (await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity')
+
+    it("a bank that moves its balance a day after the row's date is posting lag, not a mismatch", async () => {
+      k.setNow('2026-10-28T12:00:00.000Z')
+      const bank = await k.account({ entityId: acme })
+      // The row says the 20th; the balance moved on the 21st. Another on Fri the 23rd shows on Mon the 26th.
+      await k.engine.postBatch(k.ws, [...daily(bank, 1_000_000, { '2026-10-21': -6_000, '2026-10-26': -2_500 }), txn(bank, '2026-10-20', -6_000), txn(bank, '2026-10-23', -2_500)])
+      expect((await balanceChecks()).map((c) => c.status)).toEqual(['ok'])
+    })
+
+    it('a difference still open after two business days fails once per account, with what moved and what was posted', async () => {
+      k.setNow('2026-10-28T12:00:00.000Z')
+      const bank = await k.account({ entityId: acme })
+      // $100 left on the 20th with no row; on the 22nd another $40 with no row; a $25 row that the bank never moved.
+      await k.engine.postBatch(k.ws, [...daily(bank, 1_000_000, { '2026-10-20': -10_000, '2026-10-22': -4_000 }), txn(bank, '2026-10-21', -2_500)])
+      const checks = await balanceChecks()
+      expect(checks).toHaveLength(1)
+      expect(checks[0]).toMatchObject({ status: 'fail', subjectId: bank.id })
+      expect(checks[0]!.differenceMinor).not.toBe(0)
+      const health = await k.engine.dataHealth(k.ws, [acme])
+      expect(health.line).toContain("1 balance doesn't match")
+    })
+
+    it("a lag that never catches up is a real difference, not posting lag", async () => {
+      k.setNow('2026-10-28T12:00:00.000Z')
+      const bank = await k.account({ entityId: acme })
+      // The row is dated the 20th, but the bank never moves: still open on the 26th.
+      await k.engine.postBatch(k.ws, [...daily(bank, 1_000_000, {}), txn(bank, '2026-10-20', -6_000)])
+      expect(await balanceChecks()).toEqual([expect.objectContaining({ status: 'fail', expectedMinor: 0, actualMinor: -6_000, differenceMinor: 6_000 })])
+    })
+
+    it('a row that posts later than the window clears once the balance catches up', async () => {
+      k.setNow('2026-10-28T12:00:00.000Z')
+      const bank = await k.account({ entityId: acme })
+      // The row is dated Tue the 20th; the bank moves on Mon the 26th, four business days later.
+      await k.engine.postBatch(k.ws, [...daily(bank, 1_000_000, { '2026-10-26': -6_000 }), txn(bank, '2026-10-20', -6_000)])
+      expect((await balanceChecks()).map((c) => c.status)).toEqual(['ok'])
+    })
+
+    it('a gap that opened within the last two business days is a warning, not a mismatch yet', async () => {
+      k.setNow('2026-10-27T12:00:00.000Z')
+      const bank = await k.account({ entityId: acme })
+      await k.engine.postBatch(k.ws, [...daily(bank, 1_000_000, { '2026-10-26': -3_000 })])
+      expect((await balanceChecks()).map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['warn', -3_000, 0]])
+    })
+
+    it('a brokerage balance (market value) is never checked against posted rows', async () => {
+      const brokerage = await k.account({ entityId: acme, type: 'investment', includeInCash: false })
+      await k.engine.postBatch(k.ws, [snapshot(brokerage, '2026-09-30', 872_522), snapshot(brokerage, '2026-10-05', 880_100), txn(brokerage, '2026-10-01', 3)])
+      expect(await balanceChecks()).toEqual([])
+    })
+
     it('liability balances are negative (owed) and match card rows', async () => {
       const card = await k.account({ entityId: acme, type: 'credit_card' })
       await k.engine.postBatch(k.ws, [txn(card, '2026-09-10', -20_000), snapshot(card, '2026-09-30', -45_000)])

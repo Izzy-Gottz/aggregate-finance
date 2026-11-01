@@ -94,6 +94,8 @@ button.row:hover, a.row:hover { background: var(--hover); }
 .dbody .row .line { white-space: normal; overflow-wrap: break-word; }
 .row .right { display: flex; align-items: center; gap: var(--s2); color: var(--ink); white-space: nowrap; }
 .row .value { font-variant-numeric: tabular-nums; }
+.row .values { display: flex; flex-direction: column; align-items: flex-end; }
+.row .value-sub { font-size: var(--fs-meta); line-height: 18px; color: var(--grey); font-variant-numeric: tabular-nums; }
 .row .chev { color: var(--grey); width: 16px; height: 16px; flex: none; }
 .row .pill, .meta .pill { font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: var(--tile); color: var(--grey); }
 

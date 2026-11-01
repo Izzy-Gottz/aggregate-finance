@@ -98,7 +98,7 @@ export function demoState(now: number = Date.now(), opts: { signedIn?: boolean; 
         { id: 'e_acme', kind: 'company', name: 'Acme', currency: 'USD', cash: usd(284_410), hidden: false },
         { id: 'e_nex', kind: 'company', name: 'Bluebird Studio', currency: 'USD', cash: usd(96_200), hidden: false },
         { id: 'e_cla', kind: 'company', name: 'Harbor Coffee', currency: 'USD', cash: usd(32_270), hidden: false },
-        { id: 'e_personal', kind: 'personal', name: 'Personal', currency: 'USD', cash: usd(18_904), hidden: false },
+        { id: 'e_personal', kind: 'personal', name: 'Personal', currency: 'USD', cash: usd(18_904), hidden: false, investments: [usd(20_406.5)] },
       ]
 
   const connections: ConnectionSummary[] = opts.empty

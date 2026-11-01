@@ -121,12 +121,35 @@ async function trialBalance(rc: ReadContext, entities: EntityInfo[]): Promise<Ch
   return out
 }
 
-/** Provider balance at T1 − T0 = sum of what we posted between them; latest provider balance = ledger balance. */
+/** Banks often move the balance a business day or two before or after the date on the row (pending, posting lag). */
+export const POSTING_LAG_BUSINESS_DAYS = 2
+
+/** Weekdays after `a` up to and including `b` (0 when b ≤ a). */
+export function businessDaysBetween(a: IsoDate, b: IsoDate): number {
+  let n = 0
+  for (let d = a; d < b; ) {
+    d = addDays(d, 1)
+    const wd = new Date(`${d}T00:00:00Z`).getUTCDay()
+    if (wd !== 0 && wd !== 6) n++
+  }
+  return n
+}
+
+/**
+ * Provider balance = ledger balance, allowing for posting lag. On each day with a provider balance, the gap is that
+ * balance minus the ledger's. A gap that opens and closes again within POSTING_LAG_BUSINESS_DAYS is a bank posting a
+ * row on another day than its date, not a problem. A gap that's still open after that fails, one item per account
+ * (the latest), with what the provider moved and what was posted since the gap opened. One still inside the window is
+ * a warning: it may yet settle.
+ */
 async function balanceIdentity(rc: ReadContext, entities: EntityInfo[], asOf: IsoDate): Promise<CheckResult[]> {
   const out: CheckResult[] = []
   const ids = new Set(entities.map((e) => e.id))
-  // Points or crypto with no ISO code are never posted, so there are no rows to check its balance against.
-  const accounts = (await rc.directory.listSourceAccounts(rc.ws)).filter((a) => a.entityId && ids.has(a.entityId) && !a.duplicateOf && a.currency !== NOT_MONEY)
+  // Points or crypto with no ISO code are never posted, so there are no rows to check its balance against. A brokerage
+  // balance includes the market value of its holdings, which no posted row explains: holdings carry their own values.
+  const accounts = (await rc.directory.listSourceAccounts(rc.ws)).filter(
+    (a) => a.entityId && ids.has(a.entityId) && !a.duplicateOf && a.currency !== NOT_MONEY && a.accountType !== 'investment',
+  )
   for (const acc of accounts) {
     const snaps = latestPerDay(
       (await snapshotsOf(rc, acc.id)).filter((r) => r.date <= asOf),
@@ -151,33 +174,65 @@ async function balanceIdentity(rc: ReadContext, entities: EntityInfo[], asOf: Is
         .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)),
     )
     const balanceAt = (snap: SourceRecord): number => byDay(snap.date) + (snap.event.type === 'balance.snapshot' ? byInstant(snap.event.at) : 0)
-    let problems = 0
-    for (let i = 1; i < snaps.length; i++) {
-      const s0 = snaps[i - 1] as SourceRecord
-      const s1 = snaps[i] as SourceRecord
+    const gap = (snap: SourceRecord): number => snapCurrent(snap).minor - balanceAt(snap)
+    const moved = (s0: SourceRecord, s1: SourceRecord, status: 'fail' | 'warn'): CheckResult => {
       const expected = snapCurrent(s1).minor - snapCurrent(s0).minor
       const actual = balanceAt(s1) - balanceAt(s0)
-      if (expected !== actual) {
-        problems++
-        // The newest day is often still settling (a balance read before the day's rows arrive).
-        const settling = i === snaps.length - 1 && daysBetween(s1.date, asOf) <= 1
-        out.push({
-          name: 'balance_identity',
-          status: settling ? 'warn' : 'fail',
-          entityId: acc.entityId,
-          subjectId: acc.id,
-          expectedMinor: expected,
-          actualMinor: actual,
-          differenceMinor: expected - actual,
-          currency: cur,
-          message: `${acc.name}: provider balance moved ${formatMoney(expected, cur)} between ${s0.date} and ${s1.date}, posted rows add up to ${formatMoney(actual, cur)}`,
-        })
+      return {
+        name: 'balance_identity',
+        status,
+        entityId: acc.entityId,
+        subjectId: acc.id,
+        expectedMinor: expected,
+        actualMinor: actual,
+        differenceMinor: expected - actual,
+        currency: cur,
+        message: `${acc.name}: provider balance moved ${formatMoney(expected, cur)} between ${s0.date} and ${s1.date}, posted rows add up to ${formatMoney(actual, cur)}`,
+      }
+    }
+    // The settled gap, and where the current departure from it started (the last snapshot before it opened).
+    let base = gap(snaps[0] as SourceRecord)
+    let openedAfter: SourceRecord | null = null
+    let opened: IsoDate | null = null
+    let problem: CheckResult | null = null
+    for (let i = 1; i < snaps.length; i++) {
+      const s = snaps[i] as SourceRecord
+      const g = gap(s)
+      if (g === 0 || g === base) {
+        // An exact match with the provider settles the account, whatever happened before (a row that posted late).
+        if (g === 0) {
+          base = 0
+          problem = null
+        }
+        openedAfter = opened = null
+        continue
+      }
+      if (!openedAfter) {
+        openedAfter = snaps[i - 1] as SourceRecord
+        opened = s.date
+      }
+      if (businessDaysBetween(opened as IsoDate, s.date) > POSTING_LAG_BUSINESS_DAYS) {
+        // Still open past the window: a real difference. Keep the latest, and take this gap as the new settled one so
+        // the same difference isn't reported again on every later day.
+        problem = moved(openedAfter, s, 'fail')
+        base = g
+        openedAfter = opened = null
       }
     }
     const last = snaps[snaps.length - 1] as SourceRecord
-    const diff = snapCurrent(last).minor - balanceAt(last)
-    if (diff !== 0 && problems === 0) {
-      const settling = daysBetween(last.date, asOf) <= 1
+    if (openedAfter && opened) {
+      const settling = businessDaysBetween(opened, asOf) <= POSTING_LAG_BUSINESS_DAYS
+      // A failed difference is the more useful item; a newer gap that may still settle is only shown if nothing failed.
+      if (!settling) problem = moved(openedAfter, last, 'fail')
+      else if (!problem) problem = moved(openedAfter, last, 'warn')
+    }
+    if (problem) {
+      out.push(problem)
+      continue
+    }
+    const diff = gap(last)
+    if (diff !== 0) {
+      const settling = businessDaysBetween(last.date, asOf) <= 1
       out.push({
         name: 'balance_identity',
         status: settling ? 'warn' : 'fail',
@@ -189,7 +244,7 @@ async function balanceIdentity(rc: ReadContext, entities: EntityInfo[], asOf: Is
         currency: cur,
         message: `${acc.name}: provider says ${formatMoney(snapCurrent(last).minor, cur)}, the ledger says ${formatMoney(balanceAt(last), cur)} on ${last.date}`,
       })
-    } else if (problems === 0) {
+    } else {
       out.push(ok('balance_identity', acc.entityId, `${acc.name}: matches the provider balance`, acc.id))
     }
   }
