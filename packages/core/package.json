@@ -11,6 +11,6 @@
     "@agfn/contracts": "0.0.0",
     "@agfn/db": "0.0.0",
     "@agfn/recurring": "0.0.0",
-    "kysely": "^0.29.6"
+    "kysely": "^0.29.7"
   }
 }

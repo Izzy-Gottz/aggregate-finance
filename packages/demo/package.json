@@ -13,7 +13,7 @@
     "@agfn/db": "*",
     "@agfn/security": "*",
     "@agfn/sync": "*",
-    "kysely": "^0.29.6",
+    "kysely": "^0.29.7",
     "@agfn/core": "*",
     "@agfn/equity": "*"
   }

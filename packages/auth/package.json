@@ -8,11 +8,11 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@better-auth/cimd": "^1.7.7",
+    "@better-auth/cimd": "^1.7.14",
     "@better-auth/oauth-provider": "^1.7.7",
-    "@better-auth/passkey": "^1.7.7",
+    "@better-auth/passkey": "^1.7.14",
     "better-auth": "^1.7.7",
-    "jose": "^6.2.12",
-    "kysely": "^0.29.6"
+    "jose": "^6.2.14",
+    "kysely": "^0.29.7"
   }
 }

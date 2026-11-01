@@ -24,7 +24,7 @@
     "smoke": "node scripts/smoke.ts"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite": "^0.5.13",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2",
     "vitest": "^4.1.12"
