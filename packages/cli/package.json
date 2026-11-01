@@ -17,7 +17,7 @@
     "@agfn/mcp": "*",
     "@agfn/security": "*",
     "@agfn/server": "*",
-    "kysely": "^0.29.6",
+    "kysely": "^0.29.7",
     "@agfn/demo": "*",
     "@agfn/core": "*"
   }

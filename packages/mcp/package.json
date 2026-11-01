@@ -13,10 +13,10 @@
     "@agfn/contracts": "*",
     "@agfn/db": "*",
     "@agfn/recurring": "0.0.0",
-    "@modelcontextprotocol/client": "^2.3.1",
-    "@modelcontextprotocol/server": "^2.3.1",
-    "kysely": "^0.29.6",
-    "zod": "^4.6.5"
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "kysely": "^0.29.7",
+    "zod": "^4.6.7"
   },
   "bin": {
     "agfn-mcp": "./src/cli.ts"
