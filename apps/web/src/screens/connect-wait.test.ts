@@ -269,3 +269,63 @@ describe('Reconnect and duplicate nits (43, staging v149)', () => {
     await waitFor(() => expect(company).toBe(api.s.entities.find((e) => e.name === 'Harbor Coffee')!.id))
   })
 })
+
+describe('A passkey check that times out or is cancelled (43, live 11-01)', () => {
+  const recheckFails = (api: MockApi) => {
+    let fails = 1
+    const base = api.startConnect.bind(api)
+    const calls = { n: 0 }
+    api.startConnect = ((...a: Parameters<typeof api.startConnect>) => (calls.n++, fails-- > 0 ? Promise.reject(new HttpError(403, 'That needs a quick check that it’s you.', 'recheck', { fallback: 'email' })) : base(...a))) as typeof api.startConnect
+    return calls
+  }
+
+  it('someone with a passkey gets "Try again" and "Use email instead", never "Add passkey"; Try again asks again', async () => {
+    const api = new MockApi()
+    expect(api.s.prefs.signIn.passkeys.length).toBe(1)
+    api.s.prefs.signIn.noRecheck = false
+    let registers = 0
+    api.preparePasskey = async () => (registers++, async () => true)
+    const calls = recheckFails(api)
+    oneCompany(api)
+    location.hash = '#/?d=connect:mercury'
+    render(html`<${Root} api=${api} />`)
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue to Mercury' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('That check expired. Confirm it’s you again.')
+    expect(screen.getByRole('button', { name: 'Use email instead' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Add passkey' })).toBeNull()
+    expect(registers).toBe(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await waitFor(() => expect(calls.n).toBe(2))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull())
+  })
+
+  it('someone with no passkey still gets "Add passkey"', async () => {
+    const api = new MockApi()
+    api.s.prefs.signIn.passkeys = []
+    api.s.prefs.signIn.noRecheck = false
+    oneCompany(api)
+    location.hash = '#/?d=connect:mercury'
+    render(html`<${Root} api=${api} />`)
+    expect(await screen.findByRole('button', { name: 'Add passkey' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  })
+
+  it('"already registered" from the browser (InvalidStateError) switches to confirming with that passkey', async () => {
+    const api = new MockApi()
+    api.s.prefs.signIn.passkeys = []
+    api.s.prefs.signIn.noRecheck = false
+    api.preparePasskey = async () => async () => {
+      throw Object.assign(new Error('The authenticator was previously registered.'), { name: 'InvalidStateError' })
+    }
+    oneCompany(api)
+    location.hash = '#/?d=connect:mercury'
+    render(html`<${Root} api=${api} />`)
+    const add = await screen.findByRole('button', { name: 'Add passkey' })
+    await waitFor(() => expect((add as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(add)
+    expect((await screen.findByRole('alert')).textContent).toBe('You already have a passkey on this device. Confirm it’s you with it.')
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Use email instead' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Add passkey' })).toBeNull()
+  })
+})

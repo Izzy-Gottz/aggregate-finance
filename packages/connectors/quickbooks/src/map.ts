@@ -735,6 +735,15 @@ export function mapProfitAndLoss(
   const header = isRecord(report.Header) ? report.Header : {}
   const cur = normalizeCurrency(str(header.Currency), ctx.homeCurrency)
   const rows: ReportSnapshot['rows'] = []
+  // The amount is the last Money column. A period with no activity comes back with the Account column alone, and its
+  // summary rows then carry only their labels ("Total Income"): no amounts, so no rows and no totals.
+  const columns = isRecord(report.Columns) && Array.isArray(report.Columns.Column) ? report.Columns.Column.filter(isRecord) : undefined
+  const at = columns ? columns.map((c) => str(c.ColType)).lastIndexOf('Money') : -2
+  const amountOf = (cols: unknown[]): string | undefined => {
+    const i = at === -2 ? cols.length - 1 : at
+    const c = i > 0 ? cols[i] : undefined
+    return isRecord(c) ? str(c.value) : undefined
+  }
   const walk = (node: unknown, section: string, depth: number): void => {
     const list = isRecord(node) && Array.isArray(node.Row) ? node.Row.filter(isRecord) : []
     for (const r of list) {
@@ -747,7 +756,7 @@ export function mapProfitAndLoss(
   }
   const pushCols = (cols: unknown[], section: string, depth: number): void => {
     const name = isRecord(cols[0]) ? str(cols[0].value) : undefined
-    const value = isRecord(cols[cols.length - 1]) ? str(cols[cols.length - 1] && (cols[cols.length - 1] as QboObject).value) : undefined
+    const value = amountOf(cols)
     if (!name || value === undefined || value === '') return
     const row: ReportSnapshot['rows'][number] = { account: name, amount: money(value, cur), section, depth }
     const id = isRecord(cols[0]) ? str(cols[0].id) : undefined
@@ -760,8 +769,7 @@ export function mapProfitAndLoss(
   for (const r of isRecord(report.Rows) && Array.isArray(report.Rows.Row) ? report.Rows.Row.filter(isRecord) : []) {
     const g = str(r.group)
     const cols = isRecord(r.Summary) && Array.isArray(r.Summary.ColData) ? r.Summary.ColData : []
-    const last = cols[cols.length - 1]
-    const v = isRecord(last) ? str(last.value) : undefined
+    const v = amountOf(cols)
     if (g && v !== undefined && v !== '') sums[g] = money(v, cur)
   }
   const totals: NonNullable<ReportSnapshot['totals']> | undefined = sums.NetIncome

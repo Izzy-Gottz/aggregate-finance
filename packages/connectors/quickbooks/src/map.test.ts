@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CreditNoteUpsert, InvoiceUpsert, PaymentApplied } from '@agfn/contracts'
-import { accountIndex, itemIndex, lineRole, mapBill, mapCashEntity, mapInvoiceEvents, mapJournalEntry, type MapContext } from './map.ts'
+import { accountIndex, itemIndex, lineRole, mapBill, mapCashEntity, mapInvoiceEvents, mapJournalEntry, mapProfitAndLoss, type MapContext } from './map.ts'
 
 const usd = (minor: number) => ({ minor, currency: 'USD' })
 const accounts = accountIndex([
@@ -132,3 +132,30 @@ describe('QuickBooks journal entries and deposits', () => {
   })
 })
 
+describe('QuickBooks P&L reports', () => {
+  const period = { from: '2026-11-01', to: '2026-11-01', basis: 'accrual' as const }
+  const summary = (group: string, label: string, cols: unknown[] = []) => ({ group, type: 'Section', Summary: { ColData: [{ value: label }, ...cols] } })
+
+  it('a period with no activity (the Account column alone, labels only) is an empty snapshot, not a failed sync', () => {
+    // What the sandbox returned on 2026-11-01 for month to date.
+    const report = {
+      Header: { Currency: 'USD', StartPeriod: '2026-11-01', EndPeriod: '2026-11-01', Option: [{ Name: 'NoReportData', Value: 'true' }] },
+      Columns: { Column: [{ ColTitle: '', ColType: 'Account' }] },
+      Rows: { Row: [summary('Income', 'Total Income'), summary('GrossProfit', 'Gross Profit'), summary('Expenses', 'Total Expenses'), summary('NetOperatingIncome', 'Net Operating Income'), summary('NetIncome', 'Net Income')] },
+    }
+    const snap = mapProfitAndLoss(report, ctx, period)
+    expect(snap.rows).toEqual([])
+    expect(snap).not.toHaveProperty('totals')
+  })
+
+  it('amounts come from the Money column', () => {
+    const report = {
+      Header: { Currency: 'USD' },
+      Columns: { Column: [{ ColTitle: '', ColType: 'Account' }, { ColTitle: 'Total', ColType: 'Money' }] },
+      Rows: { Row: [summary('Income', 'Total Income', [{ value: '1250.50' }]), summary('NetIncome', 'Net Income', [{ value: '-3.2e-14' }])] },
+    }
+    const snap = mapProfitAndLoss(report, ctx, period)
+    expect(snap.rows.map((r) => [r.account, r.amount.minor])).toEqual([['Total Income', 125050], ['Net Income', 0]])
+    expect(snap.totals).toMatchObject({ netIncome: { minor: 0 }, income: { minor: 125050 } })
+  })
+})

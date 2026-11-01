@@ -20,6 +20,8 @@ describe('serveWeb', () => {
     expect((await app.request('/some/route')).status).toBe(200)
     // A stale hashed bundle 404s instead of returning index.html as JavaScript.
     expect((await app.request('/assets/main-OLDHASH.js')).status).toBe(404)
+    // Malformed percent-escapes are 404s, never a URIError (500).
+    for (const p of ['/%E0%A4%A', '/assets/%ZZ', '/docs/%']) expect((await app.request(p)).status, p).toBe(404)
 
     await writeFile(join(dir, '.mock'), 'mock')
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})

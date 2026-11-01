@@ -40,6 +40,7 @@ for (const pglite of [false, true]) {
         // Unknown codes redirect the same way, with no cookie.
         expect(await visit(srv, 'nobody')).toMatchObject({ status: 302, location: '/', cookie: undefined })
         expect(refFromCookie('a=1; agfn_ref=jane; b=2')).toBe('jane')
+        expect(refFromCookie('agfn_ref=%E0%A4%A')).toBeNull() // malformed escape: ignored, never thrown
 
         const p = await signUp(srv, 'fan@example.com', `agfn_ref=${code}`)
         await signUp(srv, 'plain@example.com')

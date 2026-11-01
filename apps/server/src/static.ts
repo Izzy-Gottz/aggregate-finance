@@ -34,7 +34,13 @@ export function serveWeb(root: string, baseUrl = ''): Handler {
   if (mock) console.error(`[agfn] ${root} is a mock (demo-only) web build. Run \`npm run build -w @agfn/web\` for the real app.`)
   return async (c) => {
     if (mock) return c.text('This server has the demo-only web build. Run `npm run build -w @agfn/web` and restart.', 503)
-    const rel = decodeURIComponent(new URL(c.req.url).pathname).replace(/^\/+/, '')
+    // A malformed percent-escape (scanners send /%E0%A4%A) is a 404, not a thrown URIError and a 500 with a stack.
+    let rel: string
+    try {
+      rel = decodeURIComponent(new URL(c.req.url).pathname).replace(/^\/+/, '')
+    } catch {
+      return c.notFound()
+    }
     let file = normalize(join(root, rel || 'index.html'))
     if (!file.startsWith(base) && file !== normalize(join(root, 'index.html'))) return c.notFound()
     let info = await stat(file).catch(() => null)

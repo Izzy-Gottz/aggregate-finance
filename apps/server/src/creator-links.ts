@@ -101,6 +101,11 @@ export const forgetAttribution = (db: Kysely<any>, personId: string) => t(db).de
 /** The code from a Cookie header, if any. */
 export function refFromCookie(header: string | null | undefined): string | null {
   const m = new RegExp(`(?:^|;\\s*)${REF_COOKIE}=([^;]+)`).exec(header ?? '')
-  const code = m ? decodeURIComponent(m[1]!).toLowerCase() : null
+  let code: string | null = null
+  try {
+    code = m ? decodeURIComponent(m[1]!).toLowerCase() : null
+  } catch {
+    return null // a malformed cookie never breaks sign-up
+  }
   return code && validCode(code) ? code : null
 }

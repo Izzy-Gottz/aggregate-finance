@@ -359,7 +359,12 @@ export class HttpApi implements AgfnApi {
   async preparePasskey(): Promise<(name: string) => Promise<boolean>> {
     const opts = await this.call('GET /api/auth/passkey/generate-register-options')
     return async (name: string) => {
-      const cred = (await navigator.credentials.create({ publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(opts) }).catch(() => null)) as PublicKeyCredential | null
+      // "Already registered" (InvalidStateError: this device holds a passkey for this account) is thrown for the caller,
+      // which then asks for that passkey; a cancel or timeout is just false.
+      const cred = (await navigator.credentials.create({ publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(opts) }).catch((e: unknown) => {
+        if ((e as { name?: string } | null)?.name === 'InvalidStateError') throw e
+        return null
+      })) as PublicKeyCredential | null
       if (!cred) return false
       await this.call('POST /api/auth/passkey/verify-registration', {}, { response: cred.toJSON(), name })
       return true

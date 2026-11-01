@@ -351,21 +351,29 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
     if (n !== undefined) app.go({ params: rest })
   }, [])
   const [needPasskey, setNeedPasskey] = useState(false)
+  // The account already has a passkey: a check that timed out, was cancelled or expired asks for that passkey again
+  // ("Try again"), never "Add passkey" (the browser refuses a second one for the same account on this device).
+  const [retry, setRetry] = useState(false)
+  const hasPasskey = useRef<boolean | null>(null)
   const [ceremony, setCeremony] = useState<((name: string) => Promise<boolean>) | null>(null)
   useEffect(() => {
     let live = true
-    // Just back from an emailed check (or confirmed with its code, even before a reload): that counts for 10 minutes,
-    // so go straight to the provider.
-    if (app.route.params.rechecked === '1' || recentlyRechecked()) return
-    app.api.preferences().then((p) => live && setNeedPasskey(!p.signIn.noRecheck && p.signIn.passkeys.length === 0), () => {})
+    app.api.preferences().then((p) => {
+      hasPasskey.current = p.signIn.passkeys.length > 0
+      // Just back from an emailed check (or confirmed with its code, even before a reload): that counts for 10 minutes,
+      // so go straight to the provider.
+      if (app.route.params.rechecked === '1' || recentlyRechecked()) return
+      // Only ever turns the step on: a reply that lands after a press must not undo what that press found.
+      if (live && !p.signIn.noRecheck && p.signIn.passkeys.length === 0) setNeedPasskey(true)
+    }, () => {})
     return () => void (live = false)
   }, [])
   useEffect(() => {
-    if (!needPasskey) return
+    if (!needPasskey || retry) return
     let live = true
     app.api.preparePasskey().then((f) => live && setCeremony(() => f), () => {})
     return () => void (live = false)
-  }, [needPasskey])
+  }, [needPasskey, retry])
   const [emailSent, setEmailSent] = useState('')
   // Xero's and Intuit's reviews ask for their wording on the connect button (CONNECT_WORDS); it stays our plain button.
   const go = CONNECT_WORDS[c.key] ?? `Continue to ${c.name}`
@@ -391,7 +399,14 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
     const f = ceremony
     if (!f) return setErr('One moment, getting the passkey ready…')
     setCeremony(null)
-    const ok = await f(passkeyName()).catch(() => false)
+    let already = false
+    const ok = await f(passkeyName()).catch((e: unknown) => ((already = (e as { name?: string } | null)?.name === 'InvalidStateError'), false))
+    // This device already holds a passkey for this account: confirm with that one instead.
+    if (already) {
+      hasPasskey.current = true
+      setRetry(true)
+      return setErr('You already have a passkey on this device. Confirm it’s you with it.')
+    }
     if (!ok) {
       setErr('The passkey wasn’t added. Try again.')
       app.api.preparePasskey().then((g) => setCeremony(() => g), () => {})
@@ -437,6 +452,7 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
       const s = await app.api.startConnect(c.key, target, back)
       // The check passed (the server let it start): leave the email step.
       setNeedPasskey(false)
+      setRetry(false)
       setEmailSent('')
       setConfirmed(false)
       setStart(s)
@@ -480,6 +496,9 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
         forgetRechecked()
         setEmailSent('')
         setConfirmed(false)
+        // Not known yet (pressed before preferences came back): ask now, so someone with a passkey never sees "Add passkey".
+        hasPasskey.current ??= await app.api.preferences().then((p) => p.signIn.passkeys.length > 0, () => false)
+        if (hasPasskey.current) setRetry(true)
         setNeedPasskey(true)
         return setErr('That check expired. Confirm it’s you again.')
       }
@@ -567,6 +586,10 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
               ${companyPicker}
               <div class="formrow"><${Button} disabled>${go}</${Button}></div>
               <p class="meta" style="margin-top:8px"><${LinkButton} onClick=${begin}>${opening ? 'Checking…' : 'I opened the link on another device'}</${LinkButton}></p>`
+          : retry
+            ? html`<p class="meta" style="margin-top:16px">Connecting accounts needs a quick check that it’s you, with your passkey or by email.</p>
+              ${companyPicker}
+              <div class="formrow"><${Button} onClick=${begin} disabled=${opening}>${opening ? 'Checking…' : 'Try again'}</${Button}>${isReviewer(app) ? null : html`<${LinkButton} onClick=${emailInstead}>Use email instead</${LinkButton}>`}</div>`
           : html`<p class="meta" style="margin-top:16px">Connecting accounts needs a quick check that it’s you. A passkey makes it one tap with Face ID, a fingerprint or your device PIN.</p>
             <div class="formrow"><${Button} onClick=${addPasskey} disabled=${!ceremony}>Add passkey</${Button}>${isReviewer(app) ? null : html`<${LinkButton} onClick=${emailInstead}>Use email instead</${LinkButton}>`}</div>`
         : limit
