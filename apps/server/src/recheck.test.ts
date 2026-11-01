@@ -56,7 +56,7 @@ describe('re-check before deleting', () => {
     const cookie = await t.signIn('has-passkey@example.com')
     await t.app.request('/api/workspaces', t.req(cookie, 'POST', { companyName: 'Acme' }))
     const person = await t.db.selectFrom('people').select(['id', 'auth_user_id']).where('email', '=', 'has-passkey@example.com').executeTakeFirstOrThrow()
-    await (t.db as any).insertInto('passkey').values({ id: newId(), userId: person.auth_user_id, publicKey: 'pk', credentialID: newId(), counter: 0, deviceType: 'singleDevice', backedUp: false, createdAt: new Date().toISOString() }).execute()
+    await (t.db as any).insertInto('passkey').values({ id: newId(), userId: person.auth_user_id, publicKey: 'pk', credentialID: newId(), counter: 0, deviceType: 'singleDevice', backedUp: 0, createdAt: new Date().toISOString() }).execute()
     await t.age()
     const refused = await t.app.request('/api/me', t.req(cookie, 'DELETE', { confirm: 'DELETE' }))
     expect(await refused.json()).toMatchObject({ error: 'recheck', method: 'passkey', fallback: 'email' })
