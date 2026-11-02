@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { sql, type Kysely } from 'kysely'
 import { connectPglite } from './pglite.ts'
 import { migrateToLatest } from './migrate.ts'
-import { bootRls, disableRls, enableRls, ensureAppRole, isHostedDb, RLS_PROTOTYPE_TABLES, rlsPool, rlsSetting, rlsStatus, syncRlsPolicies, tablesMissingRls, withBypass, withWorkspace, workspaceTables } from './rls.ts'
+import { bootRls, ownerOf, unlessDenied, disableRls, enableRls, ensureAppRole, isHostedDb, RLS_PROTOTYPE_TABLES, rlsPool, rlsSetting, rlsStatus, syncRlsPolicies, tablesMissingRls, withBypass, withWorkspace, workspaceTables } from './rls.ts'
 
 const at = '2026-10-10T00:00:00.000Z'
 const doc = (id: string, ws: string) => ({ id, workspace_id: ws, entity_id: null, storage_key: `k/${id}`, sha256: id.padEnd(64, '0'), mime_type: 'application/pdf', size_bytes: 10, original_name: null, arrived_via: 'upload', status: 'unread', extracted_json: null, record_type: null, record_id: null, created_by: null, created_at: at })
@@ -107,6 +107,55 @@ describe('Postgres row-level security (prototype)', () => {
       await h.close()
     }
   }, 60_000)
+
+  it('requests reach a table with no workspace_id only if it is listed; a new table starts closed; ownerOf is the way through', async () => {
+    const { h, db } = await setup()
+    const denied = /permission denied/
+    try {
+      for (const t of ['signin_codes', 'reviewer_links', 'recheck_links', 'reauth_events', 'shopify_pending_installs', 'operator_access', 'worker_releases']) await expect(db.selectFrom(t).selectAll().execute(), t).rejects.toThrow(denied)
+      expect((await db.selectFrom('workspaces').select('id').execute()).length).toBe(2)
+      await expect(db.deleteFrom('workspaces').execute()).rejects.toThrow(denied)
+      await expect(db.deleteFrom('people').execute()).rejects.toThrow(denied)
+      expect(await ownerOf(db).selectFrom('signin_codes').selectAll().execute()).toEqual([])
+      // A refused delete fails out loud; anything else may still fall back.
+      const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      await expect(db.deleteFrom('signin_codes').execute().catch(unlessDenied(undefined))).rejects.toThrow(denied)
+      expect(err).toHaveBeenCalled()
+      err.mockRestore()
+      await expect(Promise.reject(new Error('no such row')).catch(unlessDenied('kept'))).resolves.toBe('kept')
+
+      await withBypass('test', async () => {
+        await sql`create table future_person_level (id text primary key)`.execute(db)
+        await ensureAppRole(db)
+      })
+      await expect(db.selectFrom('future_person_level').selectAll().execute()).rejects.toThrow(denied)
+      const before = (await withBypass('test', () => sql<{ n: number }>`select count(*)::int as n from information_schema.role_table_grants where grantee = 'agfn_app'`.execute(db))).rows[0]?.n
+      await withBypass('test', () => ensureAppRole(db))
+      expect((await withBypass('test', () => sql<{ n: number }>`select count(*)::int as n from information_schema.role_table_grants where grantee = 'agfn_app'`.execute(db))).rows[0]?.n).toBe(before)
+    } finally {
+      await h.close()
+    }
+  })
+
+  it('the bypass setting works only for the role that made the policy: a new role ignores it, even with a grant', async () => {
+    const { h, db } = await setup()
+    try {
+      await withBypass('test', async () => {
+        await sql`create role some_reader nologin nosuperuser nobypassrls`.execute(db)
+        await sql`grant usage on schema public to some_reader`.execute(db)
+        await sql`grant select on documents to some_reader`.execute(db)
+      })
+      const seen = await withBypass('test', () =>
+        db.transaction().execute(async (t) => {
+          await sql`select set_config('agfn.rls_bypass', 'on', true), set_config('role', 'some_reader', true)`.execute(t)
+          return (await sql<{ n: number }>`select count(*)::int as n from documents`.execute(t)).rows[0]?.n
+        }),
+      )
+      expect(seen).toBe(0)
+    } finally {
+      await h.close()
+    }
+  })
 
   it('phase 2: a policy from before (bypass for anyone) counts as missing, so boot replaces it', async () => {
     const { h, db } = await setup()

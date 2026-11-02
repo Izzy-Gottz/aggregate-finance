@@ -13,6 +13,7 @@ import { ConnectionView, ConnectView, PlaidReturnView } from '../screens/connect
 import { EquityAddView, EquityExitView, EquityRoundView, EquityView } from '../screens/equity.ts'
 import { HealthView } from '../screens/workspace.ts'
 import { ShareView } from '../screens/share.ts'
+import { FriendInviteView } from '../screens/friend-invite.ts'
 import { DeleteMeView, DeleteWorkspaceView, InviteView, NewCompanyView, PersonView } from '../screens/preferences.ts'
 
 export function Drawers() {
@@ -45,6 +46,8 @@ export function Drawers() {
       return html`<${NewCompanyView} ...${p} />`
     case 'invite':
       return html`<${InviteView} ...${p} />`
+    case 'friend-invite':
+      return html`<${FriendInviteView} ...${p} />`
     case 'person':
       return html`<${PersonView} id=${v.id} ...${p} />`
     case 'equity':

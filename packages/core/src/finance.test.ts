@@ -53,6 +53,95 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
       expect(again.recordId).toBe(res.recordId)
     })
 
+    describe('money with no account named', () => {
+      const personal = (kind: string, minor: number, extra: Record<string, unknown> = {}) =>
+        f.writer.apply(cmd('add_entry', { kind, amountMinor: minor, currency: 'USD', date: '2026-10-02', paidBy: { type: 'entity', entityId: me }, forEntityId: me, counterparty: null, ...extra }, me), prov({ personId: owner }))
+      const cash = async (entity: string) => (await f.reader.metric('cash', { workspaceId: k.ws, entityIds: [entity] })).value
+      const asOwner = () => ({ paidBy: { type: 'owner', personId: owner } })
+
+      it('cash held on Personal raises cash and is not income', async () => {
+        const res = await personal('cash_income', 120_000)
+        expect(res.summary).toContain('added to Cash on hand, not counted as income')
+        expect(res.cashImpact).toEqual([{ entityId: me, amount: usd(120_000) }])
+        expect(await cash(me)).toEqual(usd(120_000))
+        expect(await k.bal(me, 'revenue')).toBe(0)
+        expect(await k.bal(me, 'opening_balance_equity')).toBe(-120_000)
+      })
+
+      it('income on Personal with a category stays income, and companies are unchanged', async () => {
+        const paid = await personal('cash_income', 10_000, { category: 'Revenue' })
+        expect(paid.summary).not.toContain('not counted as income')
+        expect(await k.bal(me, 'revenue')).toBe(-10_000)
+        const res = await f.writer.apply(entry('cash_income', 5_000), prov())
+        expect(res.summary).not.toContain('not counted as income')
+        expect(await k.bal(acme, 'revenue')).toBe(-5_000)
+      })
+
+      it('a Personal expense leaves cash alone and says so, and points at cash on hand once there is one', async () => {
+        const first = await personal('expense', 1_000)
+        expect(first.summary).toContain('paid personally, not taken from any account')
+        expect(first.summary).not.toContain('cash on hand')
+        await personal('cash_income', 120_000)
+        const spent = await personal('expense', 30_000)
+        expect(spent.summary).toContain('If this came out of cash on hand, record it with that account')
+        expect(spent.cashImpact).toEqual([])
+        expect(await cash(me)).toEqual(usd(120_000))
+        const accounts = (await k.engine.directory.listSourceAccounts(k.ws)).filter((a) => a.entityId === me)
+        expect(accounts.map((a) => a.name).sort()).toEqual(['Cash on hand', 'Paid personally (not connected)'])
+        const fromCash = await personal('expense', 25_000, { accountId: accounts.find((a) => a.name === 'Cash on hand')?.id })
+        expect(fromCash.summary).not.toContain('paid personally')
+        expect(await cash(me)).toEqual(usd(95_000))
+      })
+
+      it('owner money can’t go into a Personal space', async () => {
+        for (const kind of ['owner_loan', 'owner_contribution']) {
+          await expect(personal(kind, 3_000, asOwner())).rejects.toMatchObject({ code: 'invalid' })
+        }
+        expect(await cash(me)).toBeNull()
+      })
+
+      it('with a connected bank, owner money and reimbursements must name the account, and nothing posts', async () => {
+        const bank = await k.account({ entityId: acme, name: 'Checking', type: 'depository' })
+        const before = await k.engine.store.listRecords(k.ws, {})
+        await expect(f.writer.apply(entry('owner_loan', 100_000, asOwner()), prov({ personId: owner }))).rejects.toThrow('Which account did it go into?')
+        await expect(f.writer.apply(entry('owner_contribution', 50_000, asOwner()), prov({ personId: owner }))).rejects.toThrow('Which account did it go into?')
+        await expect(f.writer.apply(entry('reimbursement', 10_000), prov({ personId: owner }))).rejects.toThrow('Which account did it come from?')
+        expect(await k.engine.store.listRecords(k.ws, {})).toHaveLength(before.length)
+        const res = await f.writer.apply(entry('owner_loan', 100_000, { ...asOwner(), accountId: bank.id }), prov({ personId: owner }))
+        expect(res.cashImpact).toEqual([{ entityId: acme, amount: usd(100_000) }])
+      })
+
+      it('a refusal at submit offers Cash on hand for physical cash, and that account can then be used', async () => {
+        await k.account({ entityId: acme, name: 'Checking', type: 'depository' })
+        await expect(f.writer.precheck(entry('expense', 100))).resolves.toBeUndefined()
+        const refused = await f.writer.precheck(entry('owner_loan', 50_000, asOwner())).catch((e: Error) => e.message)
+        const id = /Cash on hand \(([^)]+)\)/.exec(String(refused))?.[1]
+        expect(id, String(refused)).toBeTruthy()
+        await expect(f.writer.precheck(entry('reimbursement', 1_000))).rejects.toThrow(`Cash on hand (${id})`)
+        await expect(f.writer.precheck(entry('owner_loan', 50_000, { ...asOwner(), accountId: id }))).resolves.toBeUndefined()
+        const res = await f.writer.apply(entry('owner_loan', 50_000, { ...asOwner(), accountId: id }), prov({ personId: owner }))
+        expect(res.cashImpact).toEqual([{ entityId: acme, amount: usd(50_000) }])
+      })
+
+      it('a company expense with no account still records, and warns of the bank row when there is a bank', async () => {
+        const before = await f.writer.apply(entry('expense', 1_000), prov())
+        expect(before.summary).not.toContain('bank')
+        await k.account({ entityId: acme, name: 'Checking', type: 'depository' })
+        const res = await f.writer.apply(entry('expense', 1_000), prov())
+        expect(res.summary).toContain('taken from Cash on hand. If this was paid from the bank, it will also arrive from the bank, so use that bank transaction instead')
+        expect(res.cashImpact).toEqual([{ entityId: acme, amount: usd(-1_000) }])
+        const owed = await f.writer.apply(entry('expense', 1_000, asOwner()), prov({ personId: owner }))
+        expect(owed.summary).not.toContain('bank')
+      })
+
+      it('with no connected bank, a company keeps using Cash on hand', async () => {
+        const res = await f.writer.apply(entry('owner_loan', 100_000, asOwner()), prov({ personId: owner }))
+        expect(res.cashImpact).toEqual([{ entityId: acme, amount: usd(100_000) }])
+        await f.writer.apply(entry('reimbursement', 10_000), prov({ personId: owner }))
+        expect(await cash(acme)).toEqual(usd(90_000))
+      })
+    })
+
     it('an expense the owner paid personally: the company owes the owner', async () => {
       const res = await f.writer.apply(entry('expense', 30_000, { paidBy: { type: 'owner', personId: owner }, category: 'Cloud and infrastructure', counterparty: 'AWS' }), prov({ personId: owner }))
       expect(res.cashImpact).toEqual([])
@@ -119,7 +208,10 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
       const bankRow = (await k.engine.store.listRecords(k.ws, { sourceAccountId: bank.id }))[0]?.id as string
       const pay = (amount: number, apps: number, bankId: string | null = bankRow) =>
         cmd('record_payment', { direction: 'receivable', amountMinor: amount, currency: 'USD', date: '2026-10-01', applications: [{ invoiceId: inv.recordId, amountMinor: apps }], unappliedMinor: amount - apps, bankTransactionId: bankId, method: null, counterparty: 'Globex' })
-      await expect(f.writer.apply(pay(60_000, 60_000, null), { ...prov() }).then(() => f.writer.apply(pay(50_000, 50_000, null), prov()))).rejects.toMatchObject({ code: 'overpayment' })
+      const inHand = await f.writer.apply(pay(10_000, 10_000, null), prov())
+      expect(inHand.summary).toContain('Cash not changed, waiting for the bank row')
+      expect(inHand.cashImpact).toEqual([])
+      await expect(f.writer.apply(pay(50_000, 50_000, null), { ...prov() }).then(() => f.writer.apply(pay(50_000, 50_000, null), prov()))).rejects.toMatchObject({ code: 'overpayment' })
     })
 
     it('an invoice note shows on its own row only, read once for the whole list', async () => {

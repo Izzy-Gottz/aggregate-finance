@@ -1,6 +1,7 @@
 // Set-asides through the real tools. The acceptance case comes from a real chat: a "Taxes" bucket held a fixed reserve
 // in one savings account as custom fields, and the AI had to tell the person to subtract it by hand. Numbers are made up.
 import { describe, expect, it } from 'vitest'
+import { withBypass } from '@agfn/db'
 import type { GrantShape } from '@agfn/contracts'
 import { connectAi, connectProvider, entities, READ_WRITE_ALL, signIn, startServer, type Server, type Session } from './scenarios/harness.ts'
 
@@ -147,7 +148,7 @@ describe('set-asides through the tools', () => {
       const ok = await s.post<{ id: string }>('/api/buckets', { entityId: E['Acme'], name: 'Taxes', idempotencyKey: 'off-bucket-0001' })
       expect(ok.status, JSON.stringify(ok.body)).toBe(201)
       const ws = (await s.get<{ workspace?: { id: string }; workspaces?: Array<{ id: string }> }>('/api/me')).body
-      await (srv.booted.services.ledger as unknown as { updateBucket(ws: string, id: string, patch: unknown): Promise<unknown> }).updateBucket((ws.workspace?.id ?? ws.workspaces?.[0]?.id) as string, ok.body.id, { setAside: { allocations: [{ accountId: id, kind: 'fixed', minor: 3_000_000 }], countsInCash: false } })
+      await withBypass('test', () => (srv.booted.services.ledger as unknown as { updateBucket(ws: string, id: string, patch: unknown): Promise<unknown> }).updateBucket((ws.workspace?.id ?? ws.workspaces?.[0]?.id) as string, ok.body.id, { setAside: { allocations: [{ accountId: id, kind: 'fixed', minor: 3_000_000 }], countsInCash: false } }))
       const stored = (await s.get<{ canSetAside?: boolean; setAside?: unknown }>(`/api/buckets/${ok.body.id}`)).body
       expect(stored.setAside).toBeUndefined()
       expect(stored.canSetAside).toBeUndefined()

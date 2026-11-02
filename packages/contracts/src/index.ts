@@ -348,6 +348,9 @@ export interface ProcessorBalanceTxn extends EventBase {
   /** Sales tax the merchant holds for the tax authority (Google Play's Tax, Tax rebill and Tax refund rows): not revenue
    *  and not an unexplained adjustment. Posted to sales tax payable. */
   salesTax?: true
+  /** Money the company still owns or owes, not income or spending: funds held in a reserve (other_assets), a processor
+   *  advance and its repayments (other_liabilities), or a topup from the bank (clearing_payouts, matched like a payout). */
+  balanceRole?: 'other_assets' | 'other_liabilities' | 'clearing_payouts'
 }
 
 export interface InvoiceUpsert extends EventBase {
@@ -746,6 +749,8 @@ export interface MetricAnswer {
    */
   state?: 'ok' | 'not_burning' | 'not_enough_history' | 'no_data' | 'unknown' | 'stale'
   unknownReason?: string
+  /** The reason includes a failing check, not only old balances. Internal: not in any tool output. */
+  checkCaveat?: boolean
   /** data_health only: the counts behind the number (so an AI can say "12 checks pass, 1 needs a look"). */
   health?: { passedChecks: number; failedChecks: number; warnings: number; pendingReview: number; staleSources: number; /** The Workspace's own line, e.g. "6 things need a look: 2 to review, 4 balances don't match". */ line?: string }
   /** What the answer could see: each account's newest balance and how far its source has synced, plus gaps. */
@@ -1518,6 +1523,8 @@ export interface RecordWriter {
    * WriteRejected exactly as apply would. Writers without it still get a dry run of every check before the ledger.
    */
   preview?(cmd: WriteCommand, provenance: Provenance): Promise<AppliedWrite>
+  /** Optional: refusals to give at submit, before a write is held. Throws WriteRejected. */
+  precheck?(cmd: WriteCommand): Promise<void>
   /** Undo a write this pipeline applied (soft: records are voided, never deleted; links unwound). */
   revert(workspaceId: WorkspaceId, recordId: Id, provenance: Provenance): Promise<void>
 }

@@ -5,6 +5,13 @@ financial data. Every page says what's live today and when it was last checked.
 
 Start with [what Aggregate connects](../connectors.md): every connection, what it brings in, and whether it's live on the hosted app.
 
+## Start here
+
+- [How to connect all your finances to AI](connect-all-your-finances-to-ai.md)
+- [Connect your bank, Stripe and QuickBooks to Claude](connect-finances-to-claude.md)
+- [Connect your bank, Stripe and QuickBooks to ChatGPT](connect-finances-to-chatgpt.md)
+- [AI CFO for startups: what works today](ai-cfo-for-startups.md)
+
 ## Connect your AI
 
 - [Claude](connect-claude.md): desktop, web, iPhone and Android
@@ -40,6 +47,9 @@ Agent and assistant apps that take a pasted MCP link:
 Every other combination works the same way: connect the source in Aggregate, then follow the assistant's steps in
 [Connect your AI to Aggregate](../connect-your-ai.md).
 
+Substack, Ko-fi, Beehiiv, Kraken, Gemini, Robinhood, Interactive Brokers, Fundrise, Gusto, ADP and Paychex come in
+[through another connection](sources-through-another-connection.md).
+
 ## Bring your data
 
 - [Moving off Pulley? Bring your cap table](import-pulley-carta.md): Pulley, Carta and Mantle (OCX) exports
@@ -51,6 +61,7 @@ Every other combination works the same way: connect the source in Aggregate, the
 
 ## Comparisons
 
+- [Best finance MCP servers: an honest comparison](best-finance-mcp-server.md)
 - [Aggregate vs. a provider's own MCP server (QuickBooks, Stripe)](aggregate-vs-provider-mcp-servers.md)
 - [Aggregate vs. ChatGPT's personal finance feature](aggregate-vs-chatgpt-finances.md)
 - [Aggregate vs. Copilot Money's MCP](aggregate-vs-copilot-money-mcp.md)

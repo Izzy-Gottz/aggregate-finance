@@ -266,6 +266,9 @@ export function composeFinance(parts: FinanceParts): { reader: FinanceReader; wr
       return unavailable('Recording entries')
     },
     // Dry run (MCP dry_run): the same routing as apply, with each slice's own rollback preview.
+    async precheck(cmd: WriteCommand): Promise<void> {
+      await coreWriter?.precheck?.(cmd)
+    },
     async preview(cmd: WriteCommand, prov: Provenance): Promise<AppliedWrite> {
       const none = () => {
         throw Object.assign(new Error('This change can only be checked, not previewed.'), { name: 'PreviewUnavailable' })
@@ -486,6 +489,7 @@ export function financeFor(s: Pick<Services, 'db' | 'ledger' | 'syncDeps'>, part
         return out
       },
       ...(writer.preview ? { preview: writer.preview.bind(writer) } : {}),
+      ...(writer.precheck ? { precheck: writer.precheck.bind(writer) } : {}),
       revert: async (ws, id, p) => {
         await writer.revert(ws, id, p)
         warmer.soon(ws, WARM_AFTER_WRITE_MS)

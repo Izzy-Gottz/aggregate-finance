@@ -466,7 +466,7 @@ function arrivalDate(r: SourceRecord): string {
 }
 
 function payoutPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex, push: Push): void {
-  const payouts = live.filter((r) => r.event.type === 'processor.balance_txn' && r.event.kind === 'payout' && idx.used(r.id) === 0)
+  const payouts = live.filter((r) => r.event.type === 'processor.balance_txn' && (r.event.kind === 'payout' || r.event.balanceRole === 'clearing_payouts') && idx.used(r.id) === 0)
   if (!payouts.length) return
   // Bank rows by company, currency and amount (in their order): each payout looks at its own few, not every row. A demo
   // fill's every payout scanning every bank row held the event loop seconds on a shared CPU (staging, 2026-10-13).
@@ -490,7 +490,7 @@ function payoutPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex, 
     for (const d of deposits) {
       const named = PROCESSOR_NAMES.some((n) => txnText(d).includes(n))
       const confidence = deposits.length === 1 ? (named ? 0.97 : 0.85) : named ? 0.8 : 0.6
-      push({ type: 'payout', fromId: p.id, toId: d.id, amount: money(-net.minor, net.currency), confidence, method: 'rule', scores: { amount: 1, name: named ? 1 : 0 }, reason: 'payout amount arrived at the bank' })
+      push({ type: 'payout', fromId: p.id, toId: d.id, amount: money(Math.abs(net.minor), net.currency), confidence, method: 'rule', scores: { amount: 1, name: named ? 1 : 0 }, reason: 'payout amount arrived at the bank' })
     }
   }
 }

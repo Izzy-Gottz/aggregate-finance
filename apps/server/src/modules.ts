@@ -5,7 +5,7 @@ import { LedgerEngine, KyselyLedgerStore, KyselyDirectory, DbScope, CachedRateSo
 import { createAgfnMcp, DbRateLimiter, peopleFromAuth, ToolError, type AgfnMcpHandle, type LiveBalancePort } from '@agfn/mcp'
 import type { FinanceReader, RecordWriter } from '@agfn/contracts'
 import { createMcpTokenVerifier } from '@agfn/auth'
-import { withBypass, type CoreTables } from '@agfn/db'
+import { ownerOf, withBypass, type CoreTables } from '@agfn/db'
 import type { BootOptions } from './boot.ts'
 import type { Services } from './services.ts'
 import { financeFor, warmerFor } from './finance.ts'
@@ -139,8 +139,8 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
       hooks: {
         // Revoking a grant also kills the OAuth consent and refresh tokens bound to it, so the AI can't silently renew.
         onGrantRevoked: async (grantId) => {
-          await (db as unknown as Kysely<Record<string, { referenceId: string }>>).deleteFrom('oauthRefreshToken').where('referenceId', '=', grantId).execute()
-          await (db as unknown as Kysely<Record<string, { referenceId: string }>>).deleteFrom('oauthConsent').where('referenceId', '=', grantId).execute()
+          await ownerOf(db as unknown as Kysely<Record<string, { referenceId: string }>>).deleteFrom('oauthRefreshToken').where('referenceId', '=', grantId).execute()
+          await ownerOf(db as unknown as Kysely<Record<string, { referenceId: string }>>).deleteFrom('oauthConsent').where('referenceId', '=', grantId).execute()
         },
         // An operator problem (an activity row not written) goes to the alert webhook, once per kind per workspace per
         // 10 minutes. A workspace's own alerts (a large cash change) are the owner's business: console only, kind and id.

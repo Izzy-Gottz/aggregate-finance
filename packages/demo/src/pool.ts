@@ -10,7 +10,7 @@
 
 import { randomBytes } from 'node:crypto'
 import type { Kysely } from 'kysely'
-import { newId, nowIso, withWorkspace, type CoreTables } from '@agfn/db'
+import { newId, nowIso, ownerOf, withWorkspace, type CoreTables } from '@agfn/db'
 import { DEMO_READY_SETTING, demoAiWrite, type SeedDemoAi } from './ai.ts'
 
 export const DEMO_POOL = 'demo_pool'
@@ -87,7 +87,7 @@ async function handOver(db: Db, ws: string, personId: string): Promise<void> {
   // Its fill (a pool refill, long done) isn't a person's: off the fill-time record, or the line's wait estimate would count
   // the minutes it sat in the pool (fill-queue.ts typicalFillMs).
   await db.deleteFrom('settings').where('workspace_id', '=', ws).where('key', 'in', [DEMO_POOL_READY, 'demo_fill_started']).execute()
-  if (reserved.length) await db.deleteFrom('people').where('id', 'in', reserved).execute()
+  if (reserved.length) await ownerOf(db).deleteFrom('people').where('id', 'in', reserved).execute()
 }
 
 /** After a hand-over: the demo AI is seeded for its new owner (as a fresh demo's last step) and the demo is ready. */

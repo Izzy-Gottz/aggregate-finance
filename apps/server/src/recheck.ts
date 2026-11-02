@@ -8,7 +8,7 @@
 
 import { createHash, randomBytes } from 'node:crypto'
 import type { Kysely } from 'kysely'
-import { newId, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
+import { ownerOf, newId, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import { recheckEmail, type Mailer } from '@agfn/auth'
 import { appendActivity } from '@agfn/mcp'
 import { CODE_TRIES, codeHash, newCode, normalizeCode, sameHash } from '@agfn/auth'
@@ -29,7 +29,7 @@ export async function sendRecheckLink(deps: { db: Kysely<CoreTables>; mailer: Ma
   // The same email carries a 6-digit code for when the link opens on another device or browser (email-codes.ts).
   const code = newCode()
   // recheck_links, reauth_events and people are person-level (no workspace_id): no row-level security, no bypass.
-  await deps.db
+  await ownerOf(deps.db)
     .insertInto('recheck_links')
     .values({ id, person_id: person.id, token_hash: hashOf(token), created_at: now.toISOString(), expires_at: new Date(now.getTime() + RECHECK_LINK_MINUTES * 60_000).toISOString(), used_at: null, code_hash: codeHash(id, code), attempts: 0 })
     .execute()
@@ -43,12 +43,12 @@ export type RecheckResult = { ok: true; personId: string } | { ok: false; reason
 /** Use a link: one time, within 10 minutes. Records the re-check and logs it in each of the person's workspaces. */
 export async function confirmRecheckLink(db: Kysely<CoreTables>, token: string, now: Date = new Date()): Promise<RecheckResult> {
   if (!TOKEN_RE.test(token)) return { ok: false, reason: 'unknown' }
-  const row = await db.selectFrom('recheck_links').selectAll().where('token_hash', '=', hashOf(token)).executeTakeFirst()
+  const row = await ownerOf(db).selectFrom('recheck_links').selectAll().where('token_hash', '=', hashOf(token)).executeTakeFirst()
   if (!row) return { ok: false as const, reason: 'unknown' as const }
   if (row.used_at) return { ok: false as const, reason: 'used' as const }
   if (row.expires_at <= now.toISOString()) return { ok: false as const, reason: 'expired' as const }
   // Claim it: a second click racing this one finds used_at set and is refused.
-  const claimed = await db.updateTable('recheck_links').set({ used_at: now.toISOString() }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
+  const claimed = await ownerOf(db).updateTable('recheck_links').set({ used_at: now.toISOString() }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
   if (Number(claimed.numUpdatedRows ?? 0) !== 1) return { ok: false as const, reason: 'used' as const }
   return recordRecheck(db, row.person_id, now)
 }
@@ -60,7 +60,7 @@ export type RecheckCodeResult = { ok: true } | { ok: false; reason: 'none' | 'wr
  * 5 tries, then that email is spent. Same effect as opening the link.
  */
 export async function confirmRecheckCode(db: Kysely<CoreTables>, personId: string, input: unknown, now: Date = new Date()): Promise<RecheckCodeResult> {
-  const row = await db
+  const row = await ownerOf(db)
     .selectFrom('recheck_links')
     .select(['id', 'code_hash', 'attempts'])
     .where('person_id', '=', personId)
@@ -74,10 +74,10 @@ export async function confirmRecheckCode(db: Kysely<CoreTables>, personId: strin
   const attempts = row.attempts + 1
   if (!code || !sameHash(codeHash(row.id, code), row.code_hash!)) {
     const spent = attempts >= CODE_TRIES
-    await db.updateTable('recheck_links').set({ attempts, ...(spent ? { used_at: now.toISOString() } : {}) }).where('id', '=', row.id).execute()
+    await ownerOf(db).updateTable('recheck_links').set({ attempts, ...(spent ? { used_at: now.toISOString() } : {}) }).where('id', '=', row.id).execute()
     return spent ? { ok: false as const, reason: 'too_many' as const } : { ok: false as const, reason: 'wrong' as const, triesLeft: CODE_TRIES - attempts }
   }
-  const claimed = await db.updateTable('recheck_links').set({ used_at: now.toISOString(), attempts }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
+  const claimed = await ownerOf(db).updateTable('recheck_links').set({ used_at: now.toISOString(), attempts }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
   if (Number(claimed.numUpdatedRows ?? 0) !== 1) return { ok: false as const, reason: 'none' as const }
   await recordRecheck(db, personId, now)
   return { ok: true as const }
@@ -85,7 +85,7 @@ export async function confirmRecheckCode(db: Kysely<CoreTables>, personId: strin
 
 /** Record the re-check (it satisfies passkey checks for 10 minutes) and log it in each of the person's workspaces. */
 async function recordRecheck(db: Kysely<CoreTables>, personId: string, now: Date): Promise<RecheckResult> {
-  await db.insertInto('reauth_events').values({ id: newId(), person_id: personId, method: 'email_link', at: now.toISOString() }).execute()
+  await ownerOf(db).insertInto('reauth_events').values({ id: newId(), person_id: personId, method: 'email_link', at: now.toISOString() }).execute()
   const person = await db.selectFrom('people').select('name').where('id', '=', personId).executeTakeFirst()
   // The one cross-workspace step: which workspaces to log it in (a narrow named bypass); each log entry is written inside its workspace.
   const workspaces = await withBypass('recheck:memberships', () => db.selectFrom('memberships').select('workspace_id').where('person_id', '=', personId).where('revoked_at', 'is', null).execute())

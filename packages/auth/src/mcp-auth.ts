@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from 'jose'
 import type { Kysely } from 'kysely'
-import { newId, nowIso, type CoreTables, withBypass } from '@agfn/db'
+import { ownerOf, newId, nowIso, type CoreTables, withBypass } from '@agfn/db'
 
 /** What S7 (packages/mcp) needs to authenticate an OAuth bearer token. Agent keys are verified by S7 itself. */
 export interface VerifiedAccessToken {
@@ -124,14 +124,14 @@ export function createPendingGrants(db: Kysely<CoreTables>) {
   return {
     async set(sessionId: string, clientId: string, personId: string, grantId: string, ttlMs = 15 * 60_000): Promise<void> {
       const row = { session_id: sessionId, client_id: clientId, grant_id: grantId, person_id: personId, expires_at: new Date(Date.now() + ttlMs).toISOString(), created_at: nowIso() }
-      await db.insertInto('oauth_pending_grants').values(row).onConflict((oc) => oc.columns(['session_id', 'client_id']).doUpdateSet({ grant_id: grantId, person_id: personId, expires_at: row.expires_at })).execute()
+      await ownerOf(db).insertInto('oauth_pending_grants').values(row).onConflict((oc) => oc.columns(['session_id', 'client_id']).doUpdateSet({ grant_id: grantId, person_id: personId, expires_at: row.expires_at })).execute()
     },
     /** The grant for this session and client, or undefined. `consume` deletes it in the same statement. */
     async get(sessionId: string, clientId: string, opts: { consume?: boolean } = {}): Promise<string | undefined> {
       const now = nowIso()
       const r = opts.consume
-        ? await db.deleteFrom('oauth_pending_grants').where('session_id', '=', sessionId).where('client_id', '=', clientId).where('expires_at', '>', now).returning(['grant_id']).executeTakeFirst()
-        : await db.selectFrom('oauth_pending_grants').select(['grant_id']).where('session_id', '=', sessionId).where('client_id', '=', clientId).where('expires_at', '>', now).executeTakeFirst()
+        ? await ownerOf(db).deleteFrom('oauth_pending_grants').where('session_id', '=', sessionId).where('client_id', '=', clientId).where('expires_at', '>', now).returning(['grant_id']).executeTakeFirst()
+        : await ownerOf(db).selectFrom('oauth_pending_grants').select(['grant_id']).where('session_id', '=', sessionId).where('client_id', '=', clientId).where('expires_at', '>', now).executeTakeFirst()
       const grantId = (r as { grant_id?: string } | undefined)?.grant_id
       if (!grantId) return undefined
       // Belt and braces: the grant itself must have been made for this client (MCP grants table, when installed).
@@ -140,7 +140,7 @@ export function createPendingGrants(db: Kysely<CoreTables>) {
       return grantId
     },
     async clear(sessionId: string, clientId?: string): Promise<void> {
-      let q = db.deleteFrom('oauth_pending_grants').where('session_id', '=', sessionId)
+      let q = ownerOf(db).deleteFrom('oauth_pending_grants').where('session_id', '=', sessionId)
       if (clientId) q = q.where('client_id', '=', clientId)
       await q.execute()
     },
@@ -151,18 +151,18 @@ export function createPendingGrants(db: Kysely<CoreTables>) {
 export function createReauth(db: Kysely<CoreTables>) {
   return {
     async record(personId: string, method: 'passkey' | 'magic_link' | 'social' | 'email_link'): Promise<void> {
-      await db.insertInto('reauth_events').values({ id: newId(), person_id: personId, method, at: nowIso() }).execute()
+      await ownerOf(db).insertInto('reauth_events').values({ id: newId(), person_id: personId, method, at: nowIso() }).execute()
     },
     async requireRecentPasskey(personId: string, withinMs: number): Promise<boolean> {
       const since = new Date(Date.now() - withinMs).toISOString()
       // The one-time email link (apps/server/src/recheck.ts) is the fallback for a passkey that isn't on this device.
-      const r = await db.selectFrom('reauth_events').select('id').where('person_id', '=', personId).where('method', 'in', ['passkey', 'email_link']).where('at', '>=', since).executeTakeFirst()
+      const r = await ownerOf(db).selectFrom('reauth_events').select('id').where('person_id', '=', personId).where('method', 'in', ['passkey', 'email_link']).where('at', '>=', since).executeTakeFirst()
       return !!r
     },
     /** People without any passkey yet fall back to a fresh sign-in of any kind. */
     async requireRecentAuth(personId: string, withinMs: number): Promise<boolean> {
       const since = new Date(Date.now() - withinMs).toISOString()
-      const r = await db.selectFrom('reauth_events').select('id').where('person_id', '=', personId).where('at', '>=', since).executeTakeFirst()
+      const r = await ownerOf(db).selectFrom('reauth_events').select('id').where('person_id', '=', personId).where('at', '>=', since).executeTakeFirst()
       return !!r
     },
   }

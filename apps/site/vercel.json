@@ -1,28 +1,6 @@
 {
   "redirects": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "docs.aggregate.finance"
-        }
-      ],
-      "destination": "https://app.aggregate.finance/docs/guides",
-      "permanent": false
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "docs.aggregate.finance"
-        }
-      ],
-      "destination": "https://app.aggregate.finance/docs/:path*",
-      "permanent": false
-    },
-    {
       "source": "/(.*)",
       "has": [
         {

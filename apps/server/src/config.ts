@@ -58,6 +58,10 @@ export interface ServerConfig {
   toolInvestments?: boolean
   /** AGFN_SET_ASIDES=1: `set_aside` on the bucket tools, the available_cash metric, and set-asides in the app. Changes tools/list, so off while a directory review pins it. The ledger and the app don't depend on it. */
   setAsides?: boolean
+  /** AGFN_FRIEND_INVITES=1: "Invite someone" in the app and its API. Off until the privacy policy and the email's postal address are done. */
+  friendInvites?: boolean
+  /** AGFN_FRIEND_INVITES_PER_DAY: invite emails for everyone, per day (friend-invites.ts). They share the quota with sign-in mail. */
+  friendInvitesPerDay?: number
   /** AGFN_MCP_PROMPTS=1: the prompt packs (packages/mcp/src/packs.ts). Off while a directory review pins the prompt list. */
   mcpPrompts?: boolean
   /** AGFN_DOCS_HOST (docs.aggregate.finance): this server also answers for the docs on that host (docs-host.ts). Unset: only /docs. */
@@ -196,6 +200,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(env.AGFN_INVESTMENTS === '1' ? { investments: true } : {}),
     ...(env.AGFN_TOOL_INVESTMENTS === '1' ? { toolInvestments: true } : {}),
     ...(env.AGFN_SET_ASIDES === '1' ? { setAsides: true } : {}),
+    ...(env.AGFN_FRIEND_INVITES === '1' ? { friendInvites: true } : {}),
+    ...(Number(env.AGFN_FRIEND_INVITES_PER_DAY) > 0 ? { friendInvitesPerDay: Number(env.AGFN_FRIEND_INVITES_PER_DAY) } : {}),
     ...(env.AGFN_DOCS_HOST ? { docsHost: env.AGFN_DOCS_HOST.trim().toLowerCase() } : {}),
     ...(env.AGFN_MCP_PROMPTS === '1' ? { mcpPrompts: true } : {}),
     ...(env.AGFN_OAUTH_CIMD === '1' ? { oauthCimd: true } : {}),

@@ -94,13 +94,27 @@ so. A snapshot is never stacked on holdings that are already there, so nothing i
 
 **Today:** two exceptions in [Definitions](definitions.md):
 - **Payouts:** a processor payout (Stripe, Square or Shopify to your bank) is normally not revenue, because the sale was
-  counted when the customer paid. But if the processor isn't connected, the payout is the only sign of those sales, so
-  it counts as revenue, net of fees Aggregate can't see.
+  counted when the customer paid. If the processor isn't connected, the deposit waits in Review as money nobody has
+  explained, so it isn't revenue yet. Revenue reads low and net burn high until you answer. If you say it's revenue, it
+  counts net of fees Aggregate can't see.
 - **Card payments:** paying off a credit card is normally not spending, because the purchases were counted when you
   swiped. But if the card isn't connected, the payment is the only sign of that spending, so it counts as spending, in
   one lump instead of purchase by purchase.
 
 **What happens instead:** connect the processor or the card, and both are counted the normal way.
+
+## Money a processor holds
+
+**Today:** cash counts a processor's whole balance, including funds still pending. On Stripe it also counts funds
+reserved for connected accounts. So part of it may not be spendable yet. `list_accounts` shows each account's available
+amount next to its balance.
+
+**What happens instead:**
+- Funds held in a reserve leave cash and sit in Other assets until they're released. They aren't spending.
+- A processor advance or loan is money owed (Other liabilities). Repayments lower what's owed and aren't spending. The
+  interest or fee inside a repayment isn't split out.
+- A payout that has left the processor and hasn't reached the bank is in neither account until it lands.
+- Stripe Connect transfers to your sellers stay in transit, and aren't spending. A warning appears after a week.
 
 ## Several companies added together
 
@@ -150,7 +164,7 @@ test compares SQLite and Postgres figure by figure.
 ## Providers not live on the hosted version yet
 
 **Today:** some providers are waiting for the provider's own approval, or for keys:
-- **Xero** connects up to 5 organizations across all of hosted Aggregate until Xero certifies the app.
+- **Xero** connects up to 5 organizations across all of hosted Aggregate, because Aggregate is not a certified Xero app.
 - **Finch and Rippling** are built and being tested with real accounts. On hosted, they also need production keys
   from each provider.
 - **Justworks** has no direct connection on hosted: Justworks didn't approve a partner key.

@@ -1,5 +1,5 @@
 // Always-on checks. Each returns ok / warn / fail with the numbers behind it; failures surface as one grey
-// "needs review" line in the UI and in every metric answer.
+// "needs review" line in the UI, and in the coverage gaps and reason of the figures they affect (metrics.ts).
 import type { Currency, EntityId, Id, IsoDate, Money, PaymentApplied, ReportSnapshot } from '@agfn/contracts'
 import { convert, formatMoney, NOT_MONEY } from './money.ts'
 import { assertionChecks } from './coverage.ts'

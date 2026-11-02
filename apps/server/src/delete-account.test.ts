@@ -64,9 +64,19 @@ describe('DELETE /api/me', () => {
     const key = await app.request('/api/ai/keys', req(founder, 'POST', { name: 'n8n', shape: { entityIds: 'all', dataTypes: ['balances'], write: false, reviewMode: 'instant', dailyWriteCap: 10, expiresAt: '2026-12-01T00:00:00.000Z' } }))
     expect(key.status).toBeLessThan(300)
 
+    // Invites the founder sent, their code, and being invited by the other owner.
+    const friendDb = db as never as import('kysely').Kysely<Record<string, Record<string, unknown>>>
+    const at = new Date().toISOString()
+    const otherId = (await db.selectFrom('people').select('id').where('email', '=', 'avi@example.com').executeTakeFirstOrThrow()).id
+    await friendDb.insertInto('friend_codes').values({ person_id: me.id, code: 'aaaaaaaaaaaaaaaa', created_at: at }).execute()
+    await friendDb.insertInto('friend_invites').values({ id: 'fi', inviter_id: me.id, email_hash: 'h', created_at: at }).execute()
+    await friendDb.insertInto('friend_signups').values({ person_id: me.id, inviter_id: otherId, created_at: at }).execute()
+    await friendDb.insertInto('friend_signups').values({ person_id: otherId, inviter_id: me.id, created_at: at }).execute()
+
     const del = await app.request('/api/me', req(founder, 'DELETE', { confirm: 'DELETE' }))
     expect(del.status, await del.clone().text()).toBe(200)
     expect(await del.json()).toMatchObject({ ok: true, workspaces: 1, workspacesDeleted: 0, grantsRevoked: 1 })
+    for (const t of ['friend_codes', 'friend_invites', 'friend_signups']) expect(await friendDb.selectFrom(t).selectAll().execute(), t).toEqual([])
     expect(await db.selectFrom('workspaces').select('id').where('id', '=', ws).execute()).toHaveLength(1)
 
     // Signed out everywhere; nothing that identifies them is left; their AI access is dead.

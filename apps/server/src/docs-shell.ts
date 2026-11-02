@@ -3,6 +3,7 @@
 // the /docs links. The CSP allows no inline script, so behavior lives in DOCS_JS, served at DOCS_JS_PATH.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { INSTITUTIONS_CSS } from './docs-institutions.ts'
 
 export const DOCS_JS_PATH = '/assets/docs.js'
 export const DOCS_SEARCH_PATH = '/assets/docs-search.json'
@@ -17,6 +18,7 @@ export const DOCS_NAV: Array<{ name: string; items: Array<{ label: string; href:
     items: [
       { label: 'Get started', href: '/docs' },
       { label: 'What it connects', href: '/docs/connectors' },
+      { label: 'Connect all your finances to AI', href: '/docs/guides/connect-all-your-finances-to-ai' },
       { label: 'All guides', href: '/docs/guides' },
     ],
   },
@@ -29,12 +31,16 @@ export const DOCS_NAV: Array<{ name: string; items: Array<{ label: string; href:
       { label: 'Cursor and VS Code', href: '/docs/guides/connect-cursor' },
       { label: 'Perplexity', href: '/docs/guides/connect-perplexity' },
       { label: 'Other apps', href: '/docs/connect-your-ai' },
+      { label: 'Bank, Stripe and QuickBooks to Claude', href: '/docs/guides/connect-finances-to-claude' },
+      { label: 'Bank, Stripe and QuickBooks to ChatGPT', href: '/docs/guides/connect-finances-to-chatgpt' },
     ],
   },
   {
     name: 'Use it',
     items: [
       { label: 'Prompt recipes', href: '/docs/recipes' },
+      { label: 'AI CFO for startups', href: '/docs/guides/ai-cfo-for-startups' },
+      { label: 'Best finance MCP servers', href: '/docs/guides/best-finance-mcp-server' },
       { label: 'How we count cash, burn and runway', href: '/docs/guides/definitions' },
       { label: 'What it can’t do yet', href: '/docs/guides/limits' },
     ],
@@ -144,6 +150,7 @@ a:hover{text-decoration-color:var(--ink)}
 .dchips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 28px}
 .dchips button{height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--hairline);background:var(--card);color:var(--muted);font:400 14px var(--sans);cursor:pointer}
 .dchips button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.dupdated{margin:-8px 0 20px;font-size:14px;line-height:21px;color:var(--muted)}
 .dcat{margin-bottom:36px}
 .dcat[hidden]{display:none}
 .dcat h2{margin:0 0 6px;font-size:22px;line-height:28px}
@@ -261,7 +268,7 @@ const crumbOf = (path: string): string | undefined =>
 export function docsPage(o: { path: string; head: string; body: string; wide?: boolean }): string {
   const crumb = o.path === '/docs' ? undefined : crumbOf(o.path)
   return `<!doctype html>
-<html lang="en"><head>${o.head}<style>${DOCS_CSS}</style><script src="${DOCS_JS_PATH}" defer></script></head>
+<html lang="en"><head>${o.head}<style>${DOCS_CSS}${INSTITUTIONS_CSS}</style><script src="${DOCS_JS_PATH}" defer></script></head>
 <body>
 <header class="dtop">
 <a class="dhome" href="/docs">${MARK(34)}<b>Aggregate</b><span>Docs</span></a>
@@ -293,7 +300,7 @@ export function docsHomeBody(): string {
 <p>Connect your accounts, then connect the AI you already use. Three steps, about five minutes. Aggregate only reads; it can’t move money.</p>
 <ol class="dsteps">
 ${step(1, 'Create your workspace', 'Sign up with a passkey, Google or a one-time email code. No passwords.', '%AGFN_BASE_URL%/?start=1', 'Sign up')}
-${step(2, 'Connect your accounts', '9,900+ US banks through Plaid, plus Stripe, QuickBooks, Shopify and 15 more apps.', '/docs/connectors', 'See all 18')}
+${step(2, 'Connect your accounts', '9,600+ US institutions through Plaid, plus Stripe, QuickBooks, Shopify and 15 more apps.', '/docs/connectors', 'See all 18')}
 ${step(3, 'Connect your AI', 'Paste one link into Claude, ChatGPT or any app that supports MCP, then choose what it can see.', '/docs/connect-your-ai', 'How')}
 </ol>
 <div class="dlink"><div><small>Your Aggregate link</small><code>${LINK}</code></div><button type="button" class="dcopy" data-copy="${LINK}">Copy</button></div>
@@ -359,7 +366,7 @@ export function hostedConnections(md: string): Array<{ name: string; rows: Conne
 }
 
 /** connectors.md as the page "See all" opens: its intro, the connections as rows with filters, and what follows them. */
-export function connectionsBody(md: string, render: (md: string) => string, icons: Record<string, string>): string {
+export function connectionsBody(md: string, render: (md: string) => string, icons: Record<string, string>, institutions = ''): string {
   const sections = hostedConnections(md)
   const intro = md.slice(0, md.indexOf('\n## '))
   const rest = md.slice(md.indexOf('## Everything else'))
@@ -372,6 +379,7 @@ export function connectionsBody(md: string, render: (md: string) => string, icon
   return `${render(intro)}
 <div class="dchips" role="group" aria-label="Filter"><button type="button" aria-pressed="true">All</button>${sections.map((s) => `<button type="button" aria-pressed="false" data-cat="${esc(s.name)}">${esc(s.name)}</button>`).join('')}</div>
 ${sections.map((s) => `<section class="dcat" data-cat="${esc(s.name)}"><h2>${esc(s.name)}</h2><div class="drows">${s.rows.map(row).join('')}</div></section>`).join('\n')}
+${institutions}
 ${render(rest)}
 <p>Running your own server? <a href="${SELF_HOSTING}">Self-hosting adds PayPal, Lemon Squeezy, Expensify and more.</a></p>
 <p class="dfine">Logos belong to their owners and are shown only to identify services you can connect. No endorsement implied. Brands whose terms need written permission show a letter instead.</p>`

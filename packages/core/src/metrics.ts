@@ -143,13 +143,48 @@ function blank(name: MetricName, basis: Basis, asOf: string, formula: string): M
  */
 async function scopedChecks(rc: MetricContext, entityIds: EntityId[], _asOf: IsoDate): Promise<CheckResult[]> {
   const all = await memo(rc, 'entities|*', () => rc.directory.listEntities(rc.ws))
-  // The books' problems as they stand today, whatever period the figure covers: what needs attention now (and one
-  // check run per request instead of one per as-of date; last month's flows asked for a second, cold).
-  const now = await todayFor(rc)
-  const every = await memo(rc, `checks|*|${now}`, () => runChecks(rc, { entityIds: all.map((e) => e.id), asOf: now, problemsOnly: true }))
+  const every = await checksNow(rc)
   const scope = new Set(entityIds)
   const whole = all.every((e) => scope.has(e.id))
   return every.filter((c) => (c.entityId === null ? whole : scope.has(c.entityId)))
+}
+
+async function checksNow(rc: MetricContext): Promise<CheckResult[]> {
+  const all = await memo(rc, 'entities|*', () => rc.directory.listEntities(rc.ws))
+  // The books' problems as they stand today, whatever period the figure covers: what needs attention now (and one
+  // check run per request instead of one per as-of date; last month's flows asked for a second, cold).
+  const now = await todayFor(rc)
+  return memo(rc, `checks|*|${now}`, () => runChecks(rc, { entityIds: all.map((e) => e.id), asOf: now, problemsOnly: true }))
+}
+
+// ---------- A failing check in the answer it affects ----------
+
+const TIE_OUTS: readonly CheckResult['name'][] = ['balance_identity', 'balance_assertion']
+
+/**
+ * Failed checks, as facts for the reader. A balance figure gets the tie-outs of its own accounts, in the check's words.
+ * Burn or revenue can go to a connection that can't see balances, so it gets the account's name and no amount.
+ */
+async function checkCaveats(s: Scope, a: MetricAnswer, checks: CheckResult[]): Promise<string[]> {
+  const balance = BALANCE_METRICS.includes(a.name)
+  if (!balance && !FLOW_METRICS.includes(a.name)) return []
+  const accounts = await memo(s.rc, 'sourceAccounts|*', () => s.rc.directory.listSourceAccounts(s.rc.ws))
+  const failed = checks.filter((c) => c.status === 'fail')
+  if (balance) return [...new Set(failed.filter((c) => TIE_OUTS.includes(c.name) && (!a.includedAccounts.length || a.includedAccounts.includes(c.subjectId as Id))).map((c) => c.message))]
+  return [...new Set(failed.map((c) => `${accounts.find((x) => x.id === c.subjectId)?.name ?? 'A check'} doesn't match, so this figure may be off`))]
+}
+
+/** The caveats go in coverage.gaps and the reason. A figure already unknown or short of history keeps its own state. */
+function withCaveats(a: MetricAnswer, caveats: string[]): MetricAnswer {
+  if (!caveats.length) return a
+  const reason = caveats.join('; ')
+  return {
+    ...a,
+    ...(a.state === undefined || a.state === 'ok' ? { state: 'stale' as const } : {}),
+    unknownReason: a.unknownReason ? `${a.unknownReason}; ${reason}` : reason,
+    checkCaveat: true,
+    coverage: { accounts: a.coverage?.accounts ?? [], gaps: [...(a.coverage?.gaps ?? []), ...caveats] },
+  }
 }
 
 /** Fill the shared provenance fields every answer carries. */
@@ -170,9 +205,13 @@ async function finish(s: Scope, a: MetricAnswer, rowIds: Id[]): Promise<CoreMetr
     memo(rc, `cov|${ids}|${s.asOf}|${s.from}|${s.to}`, () => coverageBlock(s)),
   ])
   const order = await accountOrder(s)
+  // A problem with no company (a broken ledger) touches every figure, even when scopedChecks leaves it off a company's list.
+  const caveats = s.figureOnly ? [] : await checkCaveats(s, a, [...checks, ...(await checksNow(rc)).filter((c) => c.entityId === null && !checks.includes(c))])
   return {
-    ...honesty({ ...a, includedAccounts: [...a.includedAccounts].sort(order.byId), excludedAccounts: [...a.excludedAccounts].sort((x, y) => order.byId(x.id, y.id)) }, s, cov),
-    coverage: { accounts: cov.accounts, gaps: cov.gaps },
+    ...withCaveats({
+      ...honesty({ ...a, includedAccounts: [...a.includedAccounts].sort(order.byId), excludedAccounts: [...a.excludedAccounts].sort((x, y) => order.byId(x.id, y.id)) }, s, cov),
+      coverage: { accounts: cov.accounts, gaps: cov.gaps },
+    }, caveats),
     asOf: await answerAsOf(s, a.asOf ?? s.asOf),
     staleSources: stale,
     pendingReviewCount: review.length,

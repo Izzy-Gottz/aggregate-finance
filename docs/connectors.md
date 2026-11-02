@@ -13,7 +13,7 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 
 | Connection | What it brings in | Hosted |
 |---|---|---|
-| Plaid | 9,900+ US banks, credit unions and card issuers: accounts, balances, transactions and investment holdings | Live |
+| Plaid | 9,600+ US banks, credit unions, brokerages and card issuers: accounts, balances, transactions, investment holdings, and loans and cards (mortgages, student, auto and personal loans, card APRs and due dates) | Live |
 | SimpleFIN Bridge | Bank accounts and transactions through your own SimpleFIN Bridge token | Live |
 | Mercury | Accounts, balances and transactions | Beta |
 | Brex | Cards, accounts and spending | Beta |

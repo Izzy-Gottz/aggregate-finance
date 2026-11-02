@@ -1,0 +1,10 @@
+{
+  "name": "aggregate",
+  "displayName": "Aggregate",
+  "version": "0.1.1",
+  "description": "Read-only finance MCP server: ask about your cash, burn and runway across your banks, cards, payment apps, books and payroll. It can't move money.",
+  "author": { "name": "Aggregate", "url": "https://aggregate.finance" },
+  "homepage": "https://aggregate.finance",
+  "repository": "https://github.com/Izzy-Gottz/aggregate-finance",
+  "license": "AGPL-3.0-only"
+}

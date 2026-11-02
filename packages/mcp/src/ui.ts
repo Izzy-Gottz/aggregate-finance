@@ -529,6 +529,7 @@ export class AiUi {
     if (entry.amount.minor <= 0 || !Number.isSafeInteger(entry.amount.minor)) throw new ToolError('invalid', 'Enter an amount above zero.')
     if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new ToolError('invalid', 'Pick a date.')
     currencyExponent(entry.amount.currency)
+    const accountId = await this.#personalCashAccount(actor, entry)
     const r = await this.deps.pipeline.submit({
       actor: await this.personActor(actor),
       origin: 'ui',
@@ -545,7 +546,7 @@ export class AiUi {
         counterparty: entry.counterparty.trim().slice(0, 120) || null,
         category: null,
         bucketId: null,
-        accountId: null,
+        accountId,
         toAccountId: null,
         toEntityId: null,
         description: entry.note?.slice(0, 500) ?? null,
@@ -553,6 +554,15 @@ export class AiUi {
       idempotencyKey,
     })
     return toWriteResult(r)
+  }
+
+  /** Cash out on Personal comes off Cash on hand, so it lowers what was added. Without one it stays paid personally. */
+  async #personalCashAccount(actor: PersonActor, entry: CashEntry): Promise<string | null> {
+    if (entry.direction !== 'out' || entry.paidBy !== 'company') return null
+    const entity = (await this.deps.reader.entities(actor.workspaceId)).find((e) => e.id === entry.entityId)
+    if (entity?.kind !== 'personal') return null
+    const accounts = await this.deps.reader.accounts({ workspaceId: actor.workspaceId, entityIds: [entry.entityId] }, {})
+    return accounts.find((a) => a.type === 'cash_on_hand' && !a.closed)?.id ?? null
   }
 
   /**

@@ -68,6 +68,14 @@ export function kindForType(type: string): ProcessorKind {
   return 'other'
 }
 
+/** Funds held back, or a Shopify Capital advance and its repayments: on the balance sheet, not income or spending. */
+export function balanceRoleForType(type: string): ProcessorBalanceTxn['balanceRole'] {
+  const t = type.toUpperCase()
+  if (t.startsWith('RESERVED_FUNDS')) return 'other_assets'
+  if (t.startsWith('ADVANCE') || t.startsWith('LENDING_')) return 'other_liabilities'
+  return undefined
+}
+
 function addUp(gross: Money, fee: Money, net: Money): { gross: Money; fee: Money; net: Money } {
   if (gross.minor - fee.minor === net.minor) return { gross, fee, net }
   return { gross, fee: { minor: gross.minor - net.minor, currency: net.currency }, net }
@@ -88,6 +96,7 @@ export function mapBalanceTxn(t: ShopifyBalanceTransaction, shop: string, fallba
     at: isoTimestamp(t.transactionDate),
     kind: kindForType(t.type),
     ...amounts,
+    ...(balanceRoleForType(t.type) ? { balanceRole: balanceRoleForType(t.type) } : {}),
     ...(payout ? { payoutExternalId: payout } : {}),
     ...(t.sourceId ? { sourceExternalId: String(t.sourceId) } : {}),
   }
@@ -114,13 +123,13 @@ export function mapPayout(p: ShopifyPayout, shop: string, connectionId: string, 
   }
 }
 
-const SUMMARY: Array<{ key: string; gross: keyof ShopifyPayoutSummary; fee: keyof ShopifyPayoutSummary; kind: ProcessorKind }> = [
+const SUMMARY: Array<{ key: string; gross: keyof ShopifyPayoutSummary; fee: keyof ShopifyPayoutSummary; kind: ProcessorKind; balanceRole?: ProcessorBalanceTxn['balanceRole'] }> = [
   { key: 'charges', gross: 'chargesGross', fee: 'chargesFee', kind: 'charge' },
   { key: 'refunds', gross: 'refundsFeeGross', fee: 'refundsFee', kind: 'refund' },
   { key: 'adjustments', gross: 'adjustmentsGross', fee: 'adjustmentsFee', kind: 'adjustment' },
-  { key: 'reserved_funds', gross: 'reservedFundsGross', fee: 'reservedFundsFee', kind: 'adjustment' },
+  { key: 'reserved_funds', gross: 'reservedFundsGross', fee: 'reservedFundsFee', kind: 'adjustment', balanceRole: 'other_assets' },
   { key: 'retried_payouts', gross: 'retriedPayoutsGross', fee: 'retriedPayoutsFee', kind: 'adjustment' },
-  { key: 'advances', gross: 'advanceGross', fee: 'advanceFees', kind: 'adjustment' },
+  { key: 'advances', gross: 'advanceGross', fee: 'advanceFees', kind: 'adjustment', balanceRole: 'other_liabilities' },
 ]
 
 /**
@@ -148,6 +157,7 @@ export function mapPayoutSummary(p: ShopifyPayout, shop: string, connectionId: s
       fee,
       net: { minor: gross.minor - fee.minor, currency: cur },
       payoutExternalId: p.id,
+      ...(s.balanceRole ? { balanceRole: s.balanceRole } : {}),
     })
   }
   return out

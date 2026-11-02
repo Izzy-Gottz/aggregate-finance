@@ -3,6 +3,8 @@
 // continues the authorization (what apps/web does after an in-place sign-in) → consent → code → token.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHash, randomBytes } from 'node:crypto'
+import type { Kysely } from 'kysely'
+import { withBypass } from '@agfn/db'
 import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { boot, type Booted } from './boot.ts'
 import { createApp } from './app.ts'
@@ -118,14 +120,16 @@ describe('time from sign-in to Allow', () => {
     const consentQuery = consentUrl.slice(consentUrl.indexOf('?') + 1)
     // Allow on the consent page: the grant, then the continue the page makes. Returns the continue's status and the code.
     const allow = async (oauthQuery = consentQuery) => {
-      expect((await post('/api/ai/consent', { clientId: client.client_id, clientName: 'ChatGPT', shape: { entityIds: 'all', dataTypes: ['balances', 'transactions', 'invoices', 'bills', 'reports'], write: false, reviewMode: 'instant', expiresAt: null } })).status).toBe(200)
+      const asked = await post('/api/ai/consent', { clientId: client.client_id, clientName: 'ChatGPT', oauthQuery, shape: { entityIds: 'all', dataTypes: ['balances', 'transactions', 'invoices', 'bills', 'reports'], write: false, reviewMode: 'instant', expiresAt: null } })
+      if (asked.status !== 200) return { status: asked.status, body: await asked.text(), code: null }
       const r = await post('/api/auth/oauth2/continue', { postLogin: true, oauth_query: oauthQuery })
       let done = ((await r.clone().json()) as { url?: string }).url ?? ''
       if (r.ok && done.includes('/#/connect-ai/consent')) done = ((await (await post('/api/auth/oauth2/consent', { accept: true, oauth_query: done.slice(done.indexOf('?') + 1) })).json()) as { url?: string }).url ?? ''
       return { status: r.status, body: await r.text(), code: done.startsWith(CALLBACK) ? new URL(done).searchParams.get('code') : null }
     }
     const token = async (code: string) => ((await (await app.request('/api/auth/oauth2/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: CALLBACK, client_id: client.client_id, code_verifier: verifier, resource: `${BASE}/mcp` }) })).json()) as { access_token?: string }).access_token
-    return { consentQuery, allow, token }
+    const grants = async () => Number((await withBypass('test', () => (booted!.handle.db as Kysely<any>).selectFrom('grants').select((eb) => eb.fn.countAll<number>().as('n')).where('client_id', '=', client.client_id).executeTakeFirstOrThrow())).n)
+    return { consentQuery, allow, token, grants }
   }
   const later = (minutes: number) => vi.setSystemTime(Date.now() + minutes * 60_000)
 
@@ -147,8 +151,10 @@ describe('time from sign-in to Allow', () => {
     later(31)
     const r = await flow.allow()
     expect(r.status).toBe(400)
-    expect(r.body).toContain('invalid_signature')
+    // The consent screen reads this field to say the link expired.
+    expect((JSON.parse(r.body) as { error?: string; code?: string })).toMatchObject({ error: 'invalid_signature' })
     expect(r.code).toBeNull()
+    expect(await flow.grants()).toBe(0)
   })
 
   it('a tampered query is refused, however soon', async () => {
@@ -162,6 +168,7 @@ describe('time from sign-in to Allow', () => {
     const longer = new URLSearchParams(flow.consentQuery)
     longer.set('exp', String(Number(longer.get('exp')) + 24 * 3600))
     expect((await flow.allow(longer.toString())).status).toBe(400)
+    expect(await flow.grants()).toBe(0)
   })
 })
 

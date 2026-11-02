@@ -124,7 +124,9 @@ export function decimalToString(d: Decimal): string {
   const digits = (negative ? -d.num : d.num).toString().padStart(d.scale + 1, '0')
   const whole = d.scale > 0 ? digits.slice(0, -d.scale) : digits
   let frac = d.scale > 0 ? digits.slice(-d.scale) : ''
-  frac = frac.replace(/0+$/, '')
+  let end = frac.length
+  while (end > 0 && frac[end - 1] === '0') end--
+  frac = frac.slice(0, end)
   return `${negative ? '-' : ''}${whole}${frac ? '.' + frac : ''}`
 }
 

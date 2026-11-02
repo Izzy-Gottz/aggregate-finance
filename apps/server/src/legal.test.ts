@@ -6,7 +6,8 @@ import { loadConfig } from './config.ts'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { findLegalFonts, renderLegal, renderMarkdown } from './legal.ts'
+import { pathToFileURL } from 'node:url'
+import { findLegalFonts, loadGuides, renderLegal, renderMarkdown } from './legal.ts'
 
 describe('legal pages', () => {
   it('serve /privacy and /terms publicly, final and indexable (approved 2026-10-11)', async () => {
@@ -94,5 +95,35 @@ describe('legal pages', () => {
     } finally {
       await booted.shutdown()
     }
+  })
+})
+
+describe('guide front matter', () => {
+  const guide = (md: string) => {
+    const dir = mkdtempSync(join(tmpdir(), 'guide-'))
+    try {
+      writeFileSync(join(dir, 'g.md'), md)
+      return loadGuides(pathToFileURL(`${dir}/`)).get('g')!
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  }
+
+  it('description: replaces the first paragraph, and the date shows once with its marker', () => {
+    const page = guide('---\ndescription: Connect Stripe to Claude, read-only.\n---\n# Guide\n\nUsing Claude Code instead?\n\nLast checked 2026-11-01 against the docs.\n')
+    expect(page.title).toBe('Guide')
+    expect(page.description).toBe('Connect Stripe to Claude, read-only.')
+    expect(page.html).toContain('<meta name="description" content="Connect Stripe to Claude, read-only.">')
+    expect(page.html).not.toContain('description: Connect')
+    expect(page.html).toContain('<meta property="article:modified_time" content="2026-11-01">')
+    expect(page.html).toContain('<time itemprop="dateModified" datetime="2026-11-01">November 1, 2026</time>')
+    expect(page.updated).toBe('2026-11-01')
+  })
+
+  it('without front matter: first paragraph, and no date line when none was checked', () => {
+    const page = guide('# Guide\n\nFirst paragraph here.\n')
+    expect(page.description).toBe('First paragraph here.')
+    expect(page.updated).toBeUndefined()
+    expect(page.html).not.toContain('dateModified')
   })
 })

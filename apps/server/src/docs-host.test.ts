@@ -4,16 +4,17 @@ import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { boot } from './boot.ts'
 import { createApp } from './app.ts'
 import { loadConfig } from './config.ts'
+import type { Services } from './services.ts'
 import { docsPath, forDocsHost } from './docs-host.ts'
 
 const HOST = 'docs.money.example.com'
 const BASE = 'https://money.example.com'
 
-async function withApp(env: Record<string, string>, run: (app: ReturnType<typeof createApp>) => Promise<void>) {
+async function withApp(env: Record<string, string>, run: (app: ReturnType<typeof createApp>) => Promise<void>, services: Partial<Services> = {}) {
   const config = loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: BASE, WEB_DIST: '/nonexistent', AGFN_HOSTED: '1', ...env })
   const booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async () => {} } })
   try {
-    await run(createApp(booted.services))
+    await run(createApp({ ...booted.services, ...services }))
   } finally {
     await booted.shutdown()
   }
@@ -102,5 +103,37 @@ describe('the docs host', () => {
       expect((await app.request(`${BASE}/docs/connectors`)).status).toBe(200)
       expect(await (await app.request(`${BASE}/sitemap.xml`)).text()).toContain(`${BASE}/docs/connectors`)
     })
+  })
+})
+
+describe('what crawlers read', () => {
+  it('docs host: robots, llms files and dated sitemap, all public text', async () => {
+    await withApp({ AGFN_DOCS_HOST: HOST }, async (app) => {
+      const robots = await on(app, '/robots.txt')
+      expect(robots.headers.get('content-type')).toContain('text/plain')
+      const rules = await robots.text()
+      expect(rules).toContain('User-agent: OAI-SearchBot')
+      expect(rules).toContain(`Sitemap: https://${HOST}/sitemap.xml`)
+      expect(rules).not.toContain('Disallow')
+      const llms = await (await on(app, '/llms.txt')).text()
+      expect(llms).toContain(`(https://${HOST}/connectors)`)
+      expect(llms).toContain(`(https://${HOST}/guides/connect-stripe-to-claude)`)
+      expect(llms).not.toContain('/docs/')
+      const full = await (await on(app, '/llms-full.txt')).text()
+      expect(full).toContain(`Source: https://${HOST}/guides/connect-stripe-to-claude`)
+      expect(full).not.toContain('](/docs')
+      const map = await (await on(app, '/sitemap.xml')).text()
+      expect(map).toMatch(new RegExp(`<loc>https://${HOST}/guides/connect-dust</loc><lastmod>\\d{4}-\\d{2}-\\d{2}</lastmod>`))
+    })
+  })
+
+  it('app host: robots keeps crawlers off signed-in paths in every group, and the sitemap has /demo', async () => {
+    await withApp({ AGFN_DOCS_HOST: HOST }, async (app) => {
+      const rules = await (await app.request(`${BASE}/robots.txt`)).text()
+      expect(rules.match(/Disallow: \/api\//g)).toHaveLength(2)
+      expect(rules).not.toMatch(/Disallow: \/demo$/m)
+      expect(rules).toContain(`Sitemap: https://${HOST}/sitemap.xml`)
+      expect(await (await app.request(`${BASE}/sitemap.xml`)).text()).toContain(`<loc>${BASE}/demo</loc>`)
+    }, { publicDemo: {} as Services['publicDemo'] })
   })
 })

@@ -17,7 +17,7 @@ import { DemoMixError, assertConnectorAllowed, createDemoWorkspace, demoFillPlac
 import { AgfnHttp, buildOpenApi, DbRateLimiter, MemoryRateLimiter, ToolError } from '@agfn/mcp'
 import { clearAttention, listAttention, recordWebhookReceipt, setAttention, type ConnectorTables } from '@agfn/connector-sdk/db'
 import { isConnectorError, plainError } from '@agfn/connector-sdk'
-import { ADVISORY_KEYS, advisoryLock, newId, nowIso, PoolBusyError, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
+import { ownerOf, ADVISORY_KEYS, advisoryLock, newId, nowIso, PoolBusyError, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import type { Kysely } from 'kysely'
 import type { GrantShape, MetricAnswer } from '@agfn/contracts'
 import type { LedgerEngine } from '@agfn/core'
@@ -49,7 +49,11 @@ import { peopleFromAuth } from '@agfn/mcp'
 import { financeFor } from './finance.ts'
 import { confirmPage, dropPending, embeddedPage, SHOPIFY_LINK_COOKIE, shopifyEmbeddedRoutes, takePendingByLink } from './shopify-embedded.ts'
 import { deleteUploadedFile, FileDeleteError } from './delete-file.ts'
+import { APP_DISALLOW, type CrawlPage, llmsFullTxt, llmsTxt, robotsTxt } from './docs-crawl.ts'
 import { docsHost } from './docs-host.ts'
+import { INSTITUTIONS_JS, INSTITUTIONS_PATH, loadInstitutions } from './docs-institutions.ts'
+import { FRIEND_COOKIE, validFriendCode } from './friend-invites.ts'
+import { friendInviteRoutes, friendInviteStopRoutes } from './routes/friend-invites.ts'
 import { DOCS_JS, DOCS_JS_PATH, DOCS_SEARCH_PATH, docsSearchIndex, loadDocsIcons } from './docs-shell.ts'
 import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, ERASE_WHEN_REVOKED, eraseConnectionData, SHOPIFY_ERASE_WARNING, logConnectionChange, noteConnection, providerOrgOf, retireDeleted, retireReplaced } from './retire.ts'
 import { personalHidden } from './personal.ts'
@@ -145,7 +149,14 @@ export function createApp(s: Services): Hono<Env> {
         host: config.docsHost,
         baseUrl: config.baseUrl,
         isDoc: (p) => p === SETUP_DOCS_PATH || listedDocs().includes(p),
-        sitemap: () => sitemapXml(`https://${config.docsHost}`, listedDocs().map((p) => p.replace(/^\/docs\/?/, '/'))),
+        sitemap: () => sitemapXml(`https://${config.docsHost}`, listedDocs().map((p) => p.replace(/^\/docs\/?/, '/')), (p) => docsUpdated(`/docs${p === '/' ? '' : p}`)),
+        text: (p) => {
+          const origin = `https://${config.docsHost}`
+          if (p === '/robots.txt') return robotsTxt([`${origin}/sitemap.xml`])
+          if (p === '/llms.txt') return llmsTxt(origin, crawlPages())
+          if (p === '/llms-full.txt') return llmsFullTxt(origin, crawlPages())
+          return null
+        },
         render: (p, c) => Promise.resolve(app.fetch(new Request(new URL(p, config.baseUrl), { method: c.req.method }), { docsInner: true } as never)),
       }),
     )
@@ -228,6 +239,12 @@ export function createApp(s: Services): Hono<Env> {
   // /r/<code>: remember a live creator code in a first-party cookie (the code only), then go to the home page. Unknown or
   // expired codes just redirect. Its own small per-IP limit, apart from the sign-in limits.
   const refLimiter = new DbRateLimiter(db)
+  // An invite link (friend-invites.ts): remembered in a cookie, so sign-up can say who invited this person.
+  app.use('/', async (c, next) => {
+    await next()
+    const code = c.req.query('from')
+    if (code && validFriendCode(code) && c.req.method === 'GET') c.res.headers.append('set-cookie', `${FRIEND_COOKIE}=${code}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 86_400}${config.baseUrl.startsWith('https:') ? '; Secure' : ''}`)
+  })
   app.get('/r/:code', async (c) => {
     const ip = clientIp(c.req.raw.headers, config.clientIpHeader)
     if (ip && (await refLimiter.hit(`ref:ip:${ip}`, 30, 60_000, Date.now())) > 0) return c.redirect('/', 302)
@@ -314,17 +331,17 @@ export function createApp(s: Services): Hono<Env> {
     const { code: raw } = await c.req.json<{ code?: unknown }>().catch(() => ({ code: undefined }))
     const at = new Date(now).toISOString()
     // signin_codes is person-level (no workspace_id), so row-level security doesn't apply and no bypass is needed.
-    const row = await db.selectFrom('signin_codes').selectAll().where('nonce_hash', '=', sha256(nonce)).where('used_at', 'is', null).where('expires_at', '>', at).orderBy('created_at', 'desc').executeTakeFirst()
+    const row = await ownerOf(db).selectFrom('signin_codes').selectAll().where('nonce_hash', '=', sha256(nonce)).where('used_at', 'is', null).where('expires_at', '>', at).orderBy('created_at', 'desc').executeTakeFirst()
     if (!row) return gone()
     const code = normalizeCode(raw)
     const attempts = row.attempts + 1
     if (!code || !sameHash(codeHash(row.id, code), row.code_hash)) {
       const spent = attempts >= CODE_TRIES
-      await db.updateTable('signin_codes').set({ attempts, ...(spent ? { used_at: at } : {}) }).where('id', '=', row.id).execute()
+      await ownerOf(db).updateTable('signin_codes').set({ attempts, ...(spent ? { used_at: at } : {}) }).where('id', '=', row.id).execute()
       if (spent) return c.json({ error: 'too_many', message: 'Too many wrong codes. Ask for a new email.' }, 429)
       return c.json({ error: 'wrong_code', message: `That code didn’t match. ${CODE_TRIES - attempts} ${CODE_TRIES - attempts === 1 ? 'try' : 'tries'} left.`, triesLeft: CODE_TRIES - attempts }, 400)
     }
-    const claimed = await db.updateTable('signin_codes').set({ used_at: at, attempts }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
+    const claimed = await ownerOf(db).updateTable('signin_codes').set({ used_at: at, attempts }).where('id', '=', row.id).where('used_at', 'is', null).executeTakeFirst()
     if (Number(claimed.numUpdatedRows ?? 0) !== 1) return gone()
     // Verify the same magic link here, so this browser gets the session (and the link can't be used again). The creator
     // link cookie rides along (only it), so a first sign-up by code is attributed like one by link.
@@ -661,7 +678,7 @@ export function createApp(s: Services): Hono<Env> {
     const person = await db.selectFrom('people').select('auth_user_id').where('id', '=', personId).executeTakeFirst()
     if (!person?.auth_user_id) return false
     const anyDb = db as unknown as Kysely<Record<string, Record<string, unknown>>>
-    return Boolean(await anyDb.selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst().catch(() => undefined))
+    return Boolean(await ownerOf(anyDb).selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst().catch(() => undefined))
   }
 
   // The email re-check (recheck.ts): a one-time link to the person's own address, for anyone whose passkey isn't on
@@ -856,7 +873,7 @@ export function createApp(s: Services): Hono<Env> {
     const connectedKeys = new Set(connections.map((x) => x.connectorKey))
     const demo = await isDemoWorkspace(db, ws)
     return c.json({
-      me: { personId: p.personId, name: p.name, email: p.email, workspaceId: ws, mcpUrl: `${config.baseUrl}/mcp`, selfHosted: config.selfHosted, demo, ...(demo ? { demoReady: await isDemoReady(db, ws), ...(await demoQueue(ws)) } : {}) },
+      me: { ...(config.friendInvites ? { friendInvites: true } : {}), personId: p.personId, name: p.name, email: p.email, workspaceId: ws, mcpUrl: `${config.baseUrl}/mcp`, selfHosted: config.selfHosted, demo, ...(demo ? { demoReady: await isDemoReady(db, ws), ...(await demoQueue(ws)) } : {}) },
       entities: summaries,
       connections,
       suggested: demo ? [] : suggestConnectors(offered(p.email), connectedKeys),
@@ -1628,8 +1645,14 @@ export function createApp(s: Services): Hono<Env> {
     const ws = requireWs(c)
     if (!s.mcp) fail(503, 'The AI connection is not installed on this server yet.')
     const p = c.get('person')
-    const body = await c.req.json<{ clientId: string; clientName?: string; shape: unknown; disclosureVersion?: string }>()
+    const body = await c.req.json<{ clientId: string; clientName?: string; shape: unknown; disclosureVersion?: string; oauthQuery?: string }>()
     if (!body.clientId) fail(400, 'This AI connection request is incomplete. Start again from your AI app.')
+    // An expired or altered link creates nothing, so no unused AI shows up on the person's list. Better Auth doesn't
+    // export its check, but runs it on any request carrying oauth_query; with no step named, continue then stops there.
+    if (body.oauthQuery) {
+      const checked = await s.auth.handler(new Request(`${config.baseUrl.replace(/\/+$/, '')}/api/auth/oauth2/continue`, { method: 'POST', headers: { 'content-type': 'application/json', origin: config.baseUrl, cookie: c.req.header('cookie') ?? '' }, body: JSON.stringify({ oauth_query: body.oauthQuery }) }))
+      if (((await checked.json().catch(() => ({}))) as { error?: string }).error === 'invalid_signature') return c.json({ message: 'This link expired. Start again from your AI app.', error: 'invalid_signature' }, 400)
+    }
     const consent = consentShown(body.disclosureVersion, aiDisclosure(body.clientName ?? body.clientId))
     const shape = body.shape as GrantShape | undefined
     if (!shape || typeof shape !== 'object' || !Array.isArray(shape.dataTypes) || !(shape.entityIds === 'all' || Array.isArray(shape.entityIds))) fail(422, 'Choose what this AI can see before continuing.')
@@ -1764,6 +1787,9 @@ export function createApp(s: Services): Hono<Env> {
   // ---------- AI, review, cash entries, undo, buckets (S7 routes) ----------
   app.route('/api', aiRoutes(s))
   app.route('/api', settingsRoutes(s))
+  if (config.friendInvites) app.route('/api', friendInviteRoutes(s))
+  // Stays on with the flag off: a link in an email already sent must keep working.
+  app.route('/', friendInviteStopRoutes(s))
   app.route('/api', connectionRoutes(s))
   app.route('/api', inboundRoutes(s))
   app.route('/api', financeRoutes(s, { setAsides: !!config.setAsides }))
@@ -1779,7 +1805,9 @@ export function createApp(s: Services): Hono<Env> {
   const docs = loadPublicDocs(undefined, findLegalFonts(config.webDist), loadDocsIcons(config.webDist))
   const docsHomePage = renderDocsHome(findLegalFonts(config.webDist))
   app.get('/docs', (c) => c.html(withBaseUrl(docsHomePage.html, config.baseUrl, '/docs'), 200, { 'cache-control': 'public, max-age=300' }))
-  app.get(DOCS_JS_PATH, (c) => c.body(DOCS_JS, 200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' }))
+  app.get(DOCS_JS_PATH, (c) => c.body(DOCS_JS + INSTITUTIONS_JS, 200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' }))
+  const institutions = loadInstitutions()
+  if (institutions) app.get(INSTITUTIONS_PATH, (c) => c.json({ names: institutions.names }, 200, { 'cache-control': 'public, max-age=86400' }))
   for (const slug of Object.keys(docs) as Array<keyof typeof docs>) app.get(`/docs/${slug}`, (c) => c.html(withBaseUrl(docs[slug].html, config.baseUrl, `/docs/${slug}`), 200, { 'cache-control': 'public, max-age=300' }))
   // REST reference (api-docs.ts), built once from this server's own /v1/openapi.json so it matches the tools it serves
   // (without the MCP module, from the default tool set).
@@ -1818,6 +1846,9 @@ export function createApp(s: Services): Hono<Env> {
       { 'cache-control': 'public, max-age=300' },
     ),
   )
+  const crawlPages = (): CrawlPage[] =>
+    [...Object.entries(docs).map(([d, page]) => [`/docs/${d}`, page] as const), ...[...guideDocs].map(([g, page]) => [g ? `/docs/guides/${g}` : '/docs/guides', page] as const)].map(([path, page]) => ({ path, title: page.title, description: page.description ?? '', md: page.md ?? '' }))
+  const docsUpdated = (path: string) => (path.startsWith('/docs/guides/') ? guideDocs.get(path.slice('/docs/guides/'.length))?.updated : undefined)
   const listedDocs = () => ['/docs', ...Object.keys(docs).map((d) => `/docs/${d}`), '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
   // After a disconnect made inside QuickBooks or Xero, they send the person here (the app's Disconnect URL in their portals):
   // a plain page saying what happened and how to reconnect. Static and public, like the legal pages.
@@ -1838,9 +1869,11 @@ export function createApp(s: Services): Hono<Env> {
   // Search engines get the public pages of the hosted service; a self-hosted server lists nothing. Docs on their own host
   // are listed there.
   if (config.hosted) {
-    const pages = ['/', '/privacy', '/terms', '/security', '/support', ...(config.docsHost ? [] : listedDocs())]
-    const sitemap = sitemapXml(config.baseUrl, pages)
+    const pages = ['/', ...(s.publicDemo ? ['/demo'] : []), '/privacy', '/terms', '/security', '/support', ...(config.docsHost ? [] : listedDocs())]
+    const sitemap = sitemapXml(config.baseUrl, pages, docsUpdated)
     app.get('/sitemap.xml', (c) => c.body(sitemap, 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }))
+    const robots = robotsTxt([`${config.baseUrl}/sitemap.xml`, ...(config.docsHost ? [`https://${config.docsHost}/sitemap.xml`] : [])], APP_DISALLOW)
+    app.get('/robots.txt', (c) => c.text(robots, 200, { 'cache-control': 'public, max-age=3600' }))
   }
   // Connector setup for self-hosters, built from the same guides as the app and `agfn doctor` (registry setup.ts). On a
   // self-hosted server the redirect URIs are this server's and each section says whether it's set up; hosted shows a
@@ -1954,7 +1987,7 @@ async function requirePasskeyCheck(s: Services, personId: string): Promise<void>
   // Reviewer demo accounts never pass: their fresh sign-in must not count as the check (reviewer.ts).
   if (isReviewerEmail(person?.email)) fail(403, 'Not available in the reviewer demo.', { error: 'demo' })
   const anyDb = s.db as unknown as Kysely<Record<string, Record<string, unknown>>>
-  const has = person?.auth_user_id ? await anyDb.selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst() : undefined
+  const has = person?.auth_user_id ? await ownerOf(anyDb).selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst() : undefined
   if (!has) {
     // No passkey: the email link (or a fresh sign-in) is the check. Refusing outright left email-only people unable
     // to connect anything even after confirming by email.
@@ -1991,8 +2024,12 @@ function providerFirst(key: string, provider: string | undefined, name: string):
   return !provider || key === 'plaid' || key === 'simplefin' || name.toLowerCase().startsWith(provider.toLowerCase()) ? name : `${provider} · ${name}`
 }
 
-function sitemapXml(origin: string, pages: string[]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join('\n')}\n</urlset>\n`
+function sitemapXml(origin: string, pages: string[], updated: (page: string) => string | undefined = () => undefined): string {
+  const url = (p: string) => {
+    const date = updated(p)
+    return `  <url><loc>${origin}${p}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(url).join('\n')}\n</urlset>\n`
 }
 
 async function connectionSummaries(s: Services, workspaceId: string) {

@@ -135,7 +135,7 @@ export function Shell({ children, onSearch }: { children: ComponentChildren; onS
       ${pub ? null : html`<a href="#/preferences" aria-current=${page === 'preferences' ? 'page' : undefined} onClick=${nav('preferences')}>Preferences</a>`}
       <button type="button" class="navbtn" onClick=${() => (setMenu(false), onSearch())}>Search <span class="kbd kbdhint" aria-hidden="true">${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</span></button>
       <div class="gap"></div>
-      ${isReviewer(app) || pub || !isManager(app) ? null : html`<button type="button" class="navbtn" onClick=${() => (setMenu(false), app.open({ kind: 'invite' }))}>Invite someone</button>`}
+      ${isReviewer(app) || pub || !isManager(app) ? null : html`<button type="button" class="navbtn" onClick=${() => (setMenu(false), app.open({ kind: 'invite' }))}>Add a teammate</button>`}
       ${demo ? html`<button type="button" class="navbtn" disabled=${leaving} onClick=${() => (setMenu(false), void leave())}>${leaving ? 'Leaving the demo…' : 'Leave the demo'}</button>` : null}
       <${Help} onPick=${() => setMenu(false)} />
       ${pub ? html`<button type="button" class="navbtn" onClick=${() => signUpFromDemo(app)}>Sign up</button>` : html`<button type="button" class="navbtn" onClick=${signOut}>Log out</button>`}

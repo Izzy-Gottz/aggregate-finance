@@ -10,7 +10,7 @@ import { oauthProvider, type ClientMetadataResourceFetch } from '@better-auth/oa
 import { cimd } from '@better-auth/cimd'
 import { fetchClientMetadataResource } from '@better-auth/cimd/node'
 import type { Kysely } from 'kysely'
-import { newId, nowIso, withBypass, type CoreTables, type DbKind } from '@agfn/db'
+import { ownerOf, newId, nowIso, withBypass, type CoreTables, type DbKind } from '@agfn/db'
 import { inviteEmail, signInEmail } from './email.ts'
 import { codeHash, newCode } from './email-codes.ts'
 
@@ -22,6 +22,8 @@ export interface Mailer {
 
 export interface AuthConfig {
   db: Kysely<CoreTables>
+  /** Where Better Auth keeps sessions and tokens: the owner's side of RLS, because requests have no rights on them. */
+  authDb?: Kysely<CoreTables>
   dbKind: DbKind
   /** Public origin, e.g. https://you.example (no trailing slash). */
   baseUrl: string
@@ -125,7 +127,7 @@ export function authOptions(cfg: AuthConfig) {
     baseURL: cfg.baseUrl,
     basePath: '/api/auth',
     secret: cfg.secret,
-    database: { db: cfg.db, type: cfg.dbKind === 'postgres' ? 'postgres' : 'sqlite' },
+    database: { db: cfg.authDb ?? cfg.db, type: cfg.dbKind === 'postgres' ? 'postgres' : 'sqlite' },
     user: { modelName: AUTH_MODEL_NAMES.user },
     session: {
       modelName: AUTH_MODEL_NAMES.session,
@@ -161,9 +163,9 @@ export function authOptions(cfg: AuthConfig) {
           const person = await cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', uid).executeTakeFirst()
           if (!person) return
           const anyDb = cfg.db as unknown as Kysely<Record<string, Record<string, unknown>>>
-          const count = (await anyDb.selectFrom('passkey').select((eb) => eb.fn.countAll().as('n')).where('userId', '=', uid).executeTakeFirst()) as { n: number | string } | undefined
-          const recent = await cfg.db.selectFrom('reauth_events').select('id').where('person_id', '=', person.id).where('at', '>=', new Date(Date.now() - 10 * 60_000).toISOString()).executeTakeFirst()
-          if (Number(count?.n ?? 0) === 1 && recent) await cfg.db.insertInto('reauth_events').values({ id: newId(), person_id: person.id, method: 'passkey', at: nowIso() }).execute()
+          const count = (await ownerOf(anyDb).selectFrom('passkey').select((eb) => eb.fn.countAll().as('n')).where('userId', '=', uid).executeTakeFirst()) as { n: number | string } | undefined
+          const recent = await ownerOf(cfg.db).selectFrom('reauth_events').select('id').where('person_id', '=', person.id).where('at', '>=', new Date(Date.now() - 10 * 60_000).toISOString()).executeTakeFirst()
+          if (Number(count?.n ?? 0) === 1 && recent) await ownerOf(cfg.db).insertInto('reauth_events').values({ id: newId(), person_id: person.id, method: 'passkey', at: nowIso() }).execute()
           return
         }
         const method = ctx.path.startsWith('/passkey/verify-authentication')
@@ -176,7 +178,7 @@ export function authOptions(cfg: AuthConfig) {
         const userId = ctx.context.newSession?.user.id
         if (!method || !userId) return
         const person = await cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', userId).executeTakeFirst()
-        if (person) await cfg.db.insertInto('reauth_events').values({ id: newId(), person_id: person.id, method, at: nowIso() }).execute()
+        if (person) await ownerOf(cfg.db).insertInto('reauth_events').values({ id: newId(), person_id: person.id, method, at: nowIso() }).execute()
       }),
     },
     databaseHooks: {
@@ -233,7 +235,7 @@ export function authOptions(cfg: AuthConfig) {
             const id = newId()
             const code = newCode()
             const now = Date.now()
-            await (cfg.db
+            await (ownerOf(cfg.db)
               .insertInto('signin_codes')
               .values({ id, email: email.toLowerCase(), code_hash: codeHash(id, code), nonce_hash: pending.nonceHash, link_token: token, attempts: 0, created_at: new Date(now).toISOString(), expires_at: new Date(now + 10 * 60_000).toISOString(), used_at: null })
               .execute())
@@ -308,7 +310,7 @@ export function isNativeRedirect(uri: string): boolean {
     const u = new URL(uri)
     if (u.protocol === 'https:') return false
     if (u.protocol === 'http:') return ['127.0.0.1', 'localhost', '[::1]'].includes(u.hostname)
-    return /^[a-z][a-z0-9+.-]*:$/i.test(u.protocol) && !['javascript:', 'data:', 'file:'].includes(u.protocol)
+    return /^[a-z][a-z0-9+.-]*:$/i.test(u.protocol) && !['javascript:', 'data:', 'file:', 'vbscript:'].includes(u.protocol)
   } catch {
     return false
   }

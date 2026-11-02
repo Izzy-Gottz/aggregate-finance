@@ -74,6 +74,14 @@ export function kindForEntryType(type: string | undefined): ProcessorKind {
   return 'other'
 }
 
+/** Funds held back or Square Loans: on the balance sheet, not income or spending. */
+export function balanceRoleForEntry(type: string | undefined): ProcessorBalanceTxn['balanceRole'] {
+  const t = (type ?? '').toUpperCase()
+  if (['HOLD_ADJUSTMENT', 'RELEASE_ADJUSTMENT', 'RESERVE_HOLD', 'RESERVE_RELEASE'].includes(t)) return 'other_assets'
+  if (t === 'SQUARE_CAPITAL_PAYMENT' || t === 'SQUARE_CAPITAL_REVERSED_PAYMENT') return 'other_liabilities'
+  return undefined
+}
+
 /** The source object of an entry (payment, refund, dispute...) from its type_*_details. */
 export function entrySource(e: SquarePayoutEntry): string | undefined {
   for (const [k, v] of Object.entries(e)) {
@@ -109,6 +117,7 @@ export function mapEntry(e: SquarePayoutEntry, merchantId: string, fallbackCurre
     ...amounts,
     payoutExternalId: e.payout_id,
     ...(source ? { sourceExternalId: source } : {}),
+    ...(balanceRoleForEntry(e.type) ? { balanceRole: balanceRoleForEntry(e.type) } : {}),
   }
 }
 

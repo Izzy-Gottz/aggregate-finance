@@ -26,7 +26,7 @@ export function endPublicDemo(): void {
 export const isPublicDemo = (app: Pick<App, 'me'>): boolean => !!app.me?.publicDemo
 
 /** Drawers that change something: in the public demo they open "This is a read-only demo" instead. */
-export const DEMO_WRITE_VIEWS = new Set(['add', 'connect', 'connect-ai', 'company-new', 'invite', 'person', 'plaid-return', 'delete-workspace', 'delete-me', 'equity-add', 'equity-round', 'equity-exit', 'stake-add', 'share', 'ai'])
+export const DEMO_WRITE_VIEWS = new Set(['add', 'connect', 'connect-ai', 'company-new', 'invite', 'friend-invite', 'person', 'plaid-return', 'delete-workspace', 'delete-me', 'equity-add', 'equity-round', 'equity-exit', 'stake-add', 'share', 'ai'])
 
 /** Leave the demo for sign-up. */
 export function signUpFromDemo(app: Pick<App, 'go'>): void {

@@ -86,6 +86,7 @@ export function demoState(now: number = Date.now(), opts: { signedIn?: boolean; 
     name: 'Dana Reyes',
     email: 'dana@example.com',
     workspaceId: 'w_demo',
+    friendInvites: true,
     mcpUrl: 'https://app.aggregate.finance/mcp',
     selfHosted: false,
     demo: true,

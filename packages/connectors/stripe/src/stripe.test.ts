@@ -10,7 +10,7 @@ import type {
   SubscriptionUpsert,
 } from '@agfn/contracts'
 import { MemoryRawSink, dedupeEvents, runSync } from '@agfn/connector-sdk'
-import { counterpartyOf, mapBalanceTxn } from './map.ts'
+import { balanceRole, counterpartyOf, mapBalanceTxn } from './map.ts'
 import { assertRedacted, assertValidEvents, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
 import {
   STRIPE_FULL_ACCESS_HOSTED_WARNING,
@@ -226,6 +226,7 @@ describe('stripe mapping', () => {
     expect(txnKind('stripe_fx_fee')).toBe('fee')
     expect(txnKind('transfer_refund')).toBe('transfer')
     expect(txnKind('reserve_hold')).toBe('other')
+    expect(['reserved_funds', 'advance_funding', 'anticipation_repayment', 'topup', 'charge'].map(balanceRole)).toEqual(['other_assets', 'other_assets', 'other_liabilities', 'clearing_payouts', undefined])
   })
 
   it('maps invoices: partially paid, tax, every line (follows the lines endpoint), no email', async () => {

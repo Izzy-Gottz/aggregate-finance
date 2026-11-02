@@ -73,7 +73,7 @@ export interface Routes {
   /** Better Auth: an OAuth client's public info (for the consent page's name). */
   'GET /api/auth/oauth2/public-client': { body: { client_id: string }; res: { client_name?: string } }
   /** Creates the grant from the control sentence; then the client calls /api/auth/oauth2/continue. */
-  'POST /api/ai/consent': { body: { clientId: string; clientName?: string; shape: GrantShape; disclosureVersion: string }; res: { grantId: string; next: string } }
+  'POST /api/ai/consent': { body: { clientId: string; clientName?: string; shape: GrantShape; disclosureVersion: string; oauthQuery: string }; res: { grantId: string; next: string } }
   /** Better Auth: resume the OAuth authorize request after consent. */
   'POST /api/auth/oauth2/continue': { body: { postLogin: true; oauth_query: string }; res: { url?: string; redirect?: boolean; redirectURI?: string } }
   /** Better Auth: accept the OAuth consent step that follows post-login (the control sentence was the real consent). */
@@ -139,6 +139,8 @@ export interface Routes {
   'GET /api/preferences': { body: void; res: Preferences }
   'PATCH /api/preferences': { body: Partial<Omit<Preferences, 'people' | 'signIn' | 'recovery'>>; res: Preferences }
   'POST /api/people': { body: { email: string; role: RolePreset; entityIds: string[] | 'all' }; res: PersonRow }
+  'GET /api/friend-invite': { body: void; res: { link: string } }
+  'POST /api/friend-invite': { body: { email: string }; res: { ok: true } }
   'PATCH /api/people/:id': { body: Partial<Pick<PersonRow, 'role' | 'entityIds' | 'grid'>>; res: PersonRow }
   'DELETE /api/people/:id': { body: void; res: { ok: true } }
   'DELETE /api/documents/:id': { body: void; res: { ok: true; name: string } }
@@ -195,7 +197,7 @@ export const ROUTES = [
   'GET /api/ai/:grantId', 'PATCH /api/ai/:grantId', 'POST /api/ai/:grantId/pause', 'POST /api/ai/:grantId/revoke',
   'POST /api/ai/pause-all', 'POST /api/ai/keys', 'GET /api/ai/activity/latest',
   'GET /api/review', 'POST /api/review/:id', 'GET /api/review/filed', 'POST /api/review/filed/:id/undo', 'POST /api/review/group/:key',
-  'GET /api/preferences', 'PATCH /api/preferences', 'POST /api/people', 'PATCH /api/people/:id', 'DELETE /api/people/:id', 'POST /api/people/:id/resend', 'POST /api/workspace/leave', 'POST /api/export',
+  'GET /api/preferences', 'PATCH /api/preferences', 'POST /api/people', 'GET /api/friend-invite', 'POST /api/friend-invite', 'PATCH /api/people/:id', 'DELETE /api/people/:id', 'POST /api/people/:id/resend', 'POST /api/workspace/leave', 'POST /api/export',
   'GET /api/entities/:id/investments', 'POST /api/entities/:id/investments',
   'GET /api/entities/:id/equity', 'POST /api/entities/:id/equity/events', 'POST /api/entities/:id/equity/import', 'GET /api/entities/:id/equity/ocf',
   'POST /api/entries/cash', 'POST /api/documents', 'POST /api/documents/:id/account', 'POST /api/documents/:id/answer', 'POST /api/recheck/email', 'POST /api/signin/code', 'POST /api/recheck/code', 'GET /api/documents', 'DELETE /api/documents/:id', 'POST /api/entities/:id/period', 'GET /api/entities/:id/mrr', 'GET /api/inbound/:entityId', 'PUT /api/inbound/:entityId',
@@ -416,7 +418,7 @@ export class HttpApi implements AgfnApi {
     }
   }
   async consent(i: { clientId: string; clientName: string; shape: GrantShape; oauthQuery: string }) {
-    await this.call('POST /api/ai/consent', {}, { clientId: i.clientId, clientName: i.clientName, shape: i.shape, disclosureVersion: AI_DISCLOSURE.version })
+    await this.call('POST /api/ai/consent', {}, { clientId: i.clientId, clientName: i.clientName, shape: i.shape, disclosureVersion: AI_DISCLOSURE.version, oauthQuery: i.oauthQuery })
     const r = await this.call('POST /api/auth/oauth2/continue', {}, { postLogin: true, oauth_query: i.oauthQuery })
     const next = r.url ?? r.redirectURI ?? null
     // Better Auth asks for its own consent step after post-login, pointing back at this page; accept it here,
@@ -570,6 +572,8 @@ export class HttpApi implements AgfnApi {
   // ----- preferences -----
   preferences = () => this.call('GET /api/preferences')
   updatePreferences = (patch: Routes['PATCH /api/preferences']['body']) => this.call('PATCH /api/preferences', {}, patch)
+  friendLink = () => this.call('GET /api/friend-invite', {})
+  inviteFriend = (email: string) => this.call('POST /api/friend-invite', {}, { email })
   invite = (email: string, role: RolePreset, entityIds: string[] | 'all') => this.call('POST /api/people', {}, { email, role, entityIds })
   updatePerson = (id: string, patch: Routes['PATCH /api/people/:id']['body']) => this.call('PATCH /api/people/:id', { id }, patch)
   removePerson = (id: string) => this.call('DELETE /api/people/:id', { id })

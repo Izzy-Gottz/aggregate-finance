@@ -241,6 +241,7 @@ describe('reviewer access links', () => {
 
   it('block list', () => {
     expect(reviewerBlocked('GET', '/api/workspace')).toBe(false)
+    expect(reviewerBlocked('POST', '/api/workspaces///')).toBe(true)
     expect(reviewerBlocked('POST', '/api/workspace/leave')).toBe(true)
     expect(reviewerBlocked('POST', '/api/ai/keys')).toBe(false)
     expect(reviewerBlocked('POST', '/api/connectors/plaid/finish')).toBe(true)

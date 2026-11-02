@@ -5,6 +5,7 @@ import { MemoryRawSink, runSync } from '@agfn/connector-sdk'
 import { assertRedacted, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
 import { createPayPalConnector, interpretPayPalWebhook, kindForEventCode, PAYPAL_NO_BALANCES_WARNING, PAYPAL_NO_INVOICES_WARNING, PAYPAL_WRITE_WARNING, type PayPalConnectorOptions } from './index.ts'
 import type { PayPalTransactionDetail } from './types.ts'
+import { balanceRoleForEventCode } from './map.ts'
 
 const fx = JSON.parse(readFileSync(new URL('../fixtures/redacted/sandbox-account.json', import.meta.url), 'utf8')) as {
   token: unknown
@@ -69,6 +70,10 @@ const txn = (events: NormalizedEvent[], id: string) =>
   events.find((e): e is ProcessorBalanceTxn => e.type === 'processor.balance_txn' && e.externalId === id)
 
 describe('paypal contract', () => {
+  it('holds, reserves and bank deposits stay on the balance sheet', () => {
+    expect(['T1501', 'T2101', 'T0300', 'T0006'].map(balanceRoleForEventCode)).toEqual(['other_assets', 'other_assets', 'clearing_payouts', undefined])
+  })
+
   it('passes the connector contract', async () => {
     await runConnectorContract({
       make: () => make(),

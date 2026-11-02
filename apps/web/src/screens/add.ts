@@ -11,12 +11,12 @@ import { Button, CopyButton, Field, LinkButton, Row, Rows, Section, Segmented, T
 import { Drawer } from '../ui/drawer.ts'
 import { html } from '../ui/html.ts'
 
-function useCompanyChoice() {
+function useCompanyChoice(withPersonal = false) {
   const app = useApp()
-  const options = (app.ws?.entities ?? []).filter((e) => e.kind === 'company')
+  const options = (app.ws?.entities ?? []).filter((e) => e.kind === 'company' || withPersonal)
   const [chosen, setEntityId] = useState(app.scope && options.some((o) => o.id === app.scope) ? app.scope : '')
   const entityId = chosen && options.some((o) => o.id === chosen) ? chosen : (options[0]?.id ?? '')
-  const select = html`<${Field} label="Company">
+  const select = html`<${Field} label=${withPersonal ? 'Where' : 'Company'}>
     <select class="input" value=${entityId} onChange=${(e: Event) => setEntityId((e.target as HTMLSelectElement).value)}>
       ${options.map((o) => html`<option value=${o.id}>${o.name}</option>`)}
     </select>
@@ -29,7 +29,8 @@ export const cashDraft: { amount: string; direction: 'in' | 'out' } = { amount: 
 
 export function AddCashView({ onClose, onBack }: { onClose: () => void; onBack: (() => void) | null }) {
   const app = useApp()
-  const { entityId, select, options } = useCompanyChoice()
+  const { entityId, select, options } = useCompanyChoice(true)
+  const personal = options.find((o) => o.id === entityId)?.kind === 'personal'
   const [direction, setDirection] = useState<'in' | 'out'>(cashDraft.direction)
   const [paidBy, setPaidBy] = useState<'company' | 'me'>('company')
   const [amount, setAmount] = useState(() => {
@@ -53,10 +54,13 @@ export function AddCashView({ onClose, onBack }: { onClose: () => void; onBack: 
     if (!m || m.minor <= 0) return setErr('Enter an amount, like 1,200 or 64.20.')
     setBusy(true)
     try {
-      const r = await app.api.addCash({ entityId, direction, amount: m, date, counterparty: who.trim(), paidBy: direction === 'out' ? paidBy : 'company', ...(note.trim() ? { note: note.trim() } : {}) })
+      const r = await app.api.addCash({ entityId, direction, amount: m, date, counterparty: who.trim(), paidBy: direction === 'out' && !personal ? paidBy : 'company', ...(note.trim() ? { note: note.trim() } : {}) })
       if (r.status === 'rejected') return setErr(r.message ?? 'That couldn’t be added.')
       const company = options.find((o) => o.id === entityId)?.name ?? ''
-      const text = `${direction === 'in' ? 'Added' : 'Recorded'} ${fmt(m)} ${direction === 'in' ? 'to' : 'for'} ${company}${r.status === 'pending_review' ? ', waiting for review' : ''}.`
+      // On Personal the summary's ending says where the money went: Cash on hand, or paid personally.
+      const where = personal ? r.summary?.match(/, ((?:added to|paid personally)\b.*)$/)?.[1] : undefined
+      const said = where ? `${fmt(m)} ${where}` : `${direction === 'in' ? 'Added' : 'Recorded'} ${fmt(m)} ${direction === 'in' ? 'to' : 'for'} ${company}`
+      const text = `${said}${r.status === 'pending_review' ? ', waiting for review' : ''}.`
       const id = r.recordId
       app.toast({ text, ...(id ? { undo: async () => (await app.api.undo(id), app.toast({ text: 'Undone.' }), app.reload()) } : {}) })
       await app.reload()
@@ -72,7 +76,7 @@ export function AddCashView({ onClose, onBack }: { onClose: () => void; onBack: 
       <${Field} label="Amount"><input class="input tn" inputmode="decimal" value=${amount} onInput=${(e: Event) => setAmount((e.target as HTMLInputElement).value)} placeholder="1,200" required /></${Field}>
       <${Field} label=${direction === 'in' ? 'From' : 'Paid to'}><input class="input" value=${who} onInput=${(e: Event) => setWho((e.target as HTMLInputElement).value)} placeholder=${direction === 'in' ? 'Lee’s Deli' : 'Designer'} /></${Field}>
       ${select}
-      ${direction === 'out'
+      ${direction === 'out' && !personal
         ? html`<div class="field"><span aria-hidden="true">Whose money paid</span>
             <${Segmented} label="Whose money paid" value=${paidBy} onChange=${setPaidBy} options=${[{ value: 'company', label: 'The company’s cash' }, { value: 'me', label: 'I paid personally' }]} />
           </div>

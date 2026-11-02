@@ -5,11 +5,16 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { connectionsBody, docsHomeBody, docsPage } from './docs-shell.ts'
+import { institutionsBody, loadInstitutions } from './docs-institutions.ts'
 
 export interface LegalPage {
   title: string
   draft: boolean
   html: string
+  /** Docs pages: the preview text, the markdown body and the date it was last checked (llms.txt, sitemap). */
+  description?: string
+  md?: string
+  updated?: string
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
@@ -241,12 +246,20 @@ ${renderMarkdown(body)}
   return { title, draft, html }
 }
 
+const updatedLine = (date: string) => {
+  const shown = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+  return `<p class="dupdated" itemscope itemtype="https://schema.org/TechArticle">Last updated <time itemprop="dateModified" datetime="${date}">${shown}</time></p>`
+}
+
 /** A public docs page in the docs frame (docs-shell.ts). `body` replaces the markdown, for pages built from it. */
 export function renderDoc(md: string, fonts: LegalFonts, path: string, o: { body?: (md: string) => string; wide?: boolean } = {}): LegalPage {
   const { meta, body } = frontMatter(md.replace(/\r\n?/g, '\n').replace(/<!--[\s\S]*?-->\n?/g, ''))
   const title = meta.title ?? 'Aggregate'
   const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Aggregate</title><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="canonical" href="${BASE_URL_TOKEN}${PATH_TOKEN}">${shareMeta(`${title} · Aggregate`, summary(meta, body))}<style>${faces(fonts)}</style>`
-  return { title, draft: false, html: docsPage({ path, head, body: o.body ? o.body(body) : renderMarkdown(body), ...(o.wide ? { wide: true } : {}) }) }
+  const updated = /^\d{4}-\d{2}-\d{2}$/.test(meta.updated ?? '') ? meta.updated : undefined
+  const shown = o.body ? o.body(body) : renderMarkdown(body)
+  const html = docsPage({ path, head: updated ? `${head}<meta property="article:modified_time" content="${updated}">` : head, body: updated ? shown.replace('</h1>', `</h1>${updatedLine(updated)}`) : shown, ...(o.wide ? { wide: true } : {}) })
+  return { title, draft: false, html, description: summary(meta, body), md: body, ...(updated ? { updated } : {}) }
 }
 
 /** The docs home. Its words live in docs-shell.ts: it's a page of links, not a document. */
@@ -302,7 +315,7 @@ export function loadPublicDocs(dir: URL = new URL('../../../docs/', import.meta.
       body = `# ${d.title}\n\nNot published yet.\n`
     }
     const page = `---\ntitle: ${d.title}\nstatus: final\n---\n\n${publicDocLinks(body)}`
-    const connections = slug === 'connectors' ? { wide: true, body: (md: string) => connectionsBody(md, renderMarkdown, icons) } : {}
+    const connections = slug === 'connectors' ? { wide: true, body: (md: string) => connectionsBody(md, renderMarkdown, icons, institutionsBody(loadInstitutions())) } : {}
     out[slug] = renderDoc(page, fonts, `/docs/${slug}`, connections)
   }
   return out
@@ -343,7 +356,10 @@ export function loadGuides(dir: URL = new URL('../../../docs/guides/', import.me
     const md = readFileSync(new URL(file, dir), 'utf8').replace(/\r\n?/g, '\n')
     const title = (/^# (.+)$/m.exec(md)?.[1] ?? 'Guides').trim().replace(/\n/g, ' ').replace(/\s*:\s+/g, ' – ').replace(/:/g, ' ')
     const slug = m[1] === 'README' ? '' : m[1]!
-    out.set(slug, renderDoc(`---\ntitle: ${title}\nstatus: final\n---\n\n${guideLinks(md)}`, fonts, slug ? `/docs/guides/${slug}` : '/docs/guides'))
+    const { meta, body } = frontMatter(md)
+    const checked = meta.updated ?? /Last checked (\d{4}-\d{2}-\d{2})/.exec(body)?.[1]
+    const front = [`title: ${title}`, 'status: final', ...(meta.description ? [`description: ${meta.description}`] : []), ...(checked ? [`updated: ${checked}`] : [])]
+    out.set(slug, renderDoc(`---\n${front.join('\n')}\n---\n\n${guideLinks(body)}`, fonts, slug ? `/docs/guides/${slug}` : '/docs/guides'))
   }
   return out
 }

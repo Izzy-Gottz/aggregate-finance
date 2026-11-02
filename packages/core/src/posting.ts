@@ -591,7 +591,7 @@ async function planProcessor(ctx: PlanContext, ev: ProcessorBalanceTxn, view: Ba
       adjustment: ev.salesTax ? ['sales_tax_payable', 'other'] : [gross >= 0 ? 'suspense' : 'uncategorized_expense', 'other'],
       other: [gross >= 0 ? 'suspense' : 'uncategorized_expense', 'other'],
     }
-    const [role, k] = byKind[ev.kind]
+    const [role, k]: [string, TxnKind] = ev.balanceRole ? [ev.balanceRole, 'other'] : byKind[ev.kind]
     kind = k
     lines.push(line(ctx.override?.category ?? role, -gross, cur, { memo, bucketId: ctx.override?.bucketId ?? null }))
   }

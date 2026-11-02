@@ -21,6 +21,7 @@ export type View =
   | { kind: 'add'; what: 'cash' | 'upload' | 'email' }
   | { kind: 'company-new' }
   | { kind: 'invite' }
+  | { kind: 'friend-invite' }
   | { kind: 'person'; id: string }
   | { kind: 'plaid-return' }
   | { kind: 'health' }
@@ -71,6 +72,7 @@ function parseView(s: string): View | null {
     case 'connect-ai':
     case 'company-new':
     case 'invite':
+    case 'friend-invite':
     case 'plaid-return':
     case 'health':
     case 'delete-workspace':
@@ -92,6 +94,7 @@ export function viewKey(v: View): string {
     case 'connect-ai':
     case 'company-new':
     case 'invite':
+    case 'friend-invite':
     case 'plaid-return':
     case 'health':
     case 'delete-workspace':

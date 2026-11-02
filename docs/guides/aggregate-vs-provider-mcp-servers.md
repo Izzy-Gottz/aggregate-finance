@@ -10,7 +10,7 @@ both: the provider's server to *do* things in that tool, Aggregate to *answer* q
 | Sources | Banks, cards, Stripe, Square, Shopify, QuickBooks, Xero, payroll, cap table, statements | One QuickBooks company | Your Stripe account(s) |
 | Where it runs | Hosted (`app.aggregate.finance/mcp`) or self-hosted | Locally, on your own machine (stdio) [1] | Hosted at `mcp.stripe.com` [2] |
 | Can change data at the provider | No. Reads only | Yes: create, update and delete tools; each can be switched off with environment flags [1] | Yes: `stripe_api_write` covers create, update and delete calls, including refunds; Stripe asks a person to confirm some actions, such as refunds and outbound payments [2] |
-| Can move money | Never | n/a | Refunds, plus Treasury tools such as `send_money` in private preview [2] |
+| Can move money | Never | n/a | Refunds, plus Treasury tools such as `send_money` in public preview [2] |
 | Several companies side by side | Yes, plus a private Personal space | One company at a time [1] | Several Stripe accounts can be granted in one OAuth session [2] |
 | Payouts matched to bank deposits | Yes | No bank data | No bank data |
 | Depth inside that one provider | What the sync reads | ~145 tools across 29 entity types and 11 reports [1] | Most of the Stripe API through `stripe_api_read` / `stripe_api_write` [2] |
@@ -30,14 +30,19 @@ both: the provider's server to *do* things in that tool, Aggregate to *answer* q
 - You want an AI connection that **cannot** change anything at your bank or provider, with a permission you can read
   as one sentence and a log of every question it asks.
 
+Intuit also offers a hosted QuickBooks connector for Claude, available to US customers, which can generate reports and create invoices [3]. The table above covers its open-source server.
+
 ## Using both
 
 You can add Aggregate and a provider's server to the same assistant. Give the provider's server only the permissions
-you'd give a person, and keep its write confirmations on.
+you'd give a person, and keep its write confirmations on. Stripe warns about prompt injection when its server runs
+alongside others [2], and Gusto advises using its server on its own [4].
 
 ## Sources
 
 1. [intuit/quickbooks-online-mcp-server on GitHub](https://github.com/intuit/quickbooks-online-mcp-server), read 2026-10-12.
-2. [Stripe docs: Model Context Protocol](https://docs.stripe.com/mcp), read 2026-10-12.
+2. [Stripe docs: Model Context Protocol](https://docs.stripe.com/mcp), read 2026-11-01.
+3. [QuickBooks: use the QuickBooks connector in Claude](https://quickbooks.intuit.com/learn-support/en-us/help-article/accounting-bookkeeping/use-quickbooks-connector-claude/L3YBlo6Ht_US_en_US), read 2026-11-01.
+4. [Gusto docs: MCP](https://docs.gusto.com/app-integrations/docs/mcp), read 2026-11-01.
 
-*Last checked 2026-10-12. Spotted something out of date? Open an issue.*
+*Last checked 2026-11-01. Spotted something out of date? Open an issue.*

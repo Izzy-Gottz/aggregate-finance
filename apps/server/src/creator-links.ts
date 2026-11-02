@@ -3,7 +3,7 @@
 // starts, the first 100 sign-ups per link, links valid through 2026-12-31. Made and counted with `agfn creator-link`.
 import { randomBytes } from 'node:crypto'
 import { sql, type Kysely } from 'kysely'
-import type { DbKind } from '@agfn/db'
+import { ownerOf, type DbKind } from '@agfn/db'
 
 export const REF_COOKIE = 'agfn_ref'
 export const DEFAULT_CAP = 100
@@ -96,7 +96,7 @@ export async function creatorPerk(db: Kysely<any>, workspaceId: string): Promise
   return row ? { code: row.code, label: row.label, months: PERK_MONTHS, since: row.created_at } : null
 }
 
-export const forgetAttribution = (db: Kysely<any>, personId: string) => t(db).deleteFrom('creator_attributions').where('person_id', '=', personId).execute()
+export const forgetAttribution = (db: Kysely<any>, personId: string) => t(ownerOf(db)).deleteFrom('creator_attributions').where('person_id', '=', personId).execute()
 
 /** The code from a Cookie header, if any. */
 export function refFromCookie(header: string | null | undefined): string | null {

@@ -47,6 +47,17 @@ describe('error states', () => {
     expect(screen.queryByRole('heading', { name: 'Done' })).toBeNull()
   })
 
+  it('consent: Allow on an expired link says so and where to go, with nothing to press', async () => {
+    const api = new MockApi()
+    start(api, '#/connect-ai/consent?client_id=claude&scope=read&exp=1&sig=abc')
+    const allow = await screen.findByRole('button', { name: 'Allow' })
+    api.consent = () => Promise.reject(new HttpError(400, 'Something went wrong. Nothing was changed.', 'invalid_signature'))
+    fireEvent.click(allow)
+    await screen.findByRole('heading', { name: 'This link expired' })
+    expect(screen.getByRole('alert').textContent).toBe('Links to connect an AI last 30 minutes. Start again from your AI app.')
+    expect(screen.queryByRole('button', { name: 'Allow' })).toBeNull()
+  })
+
   it('upload names every file that didn’t make it, with the server’s 8 MB limit', async () => {
     start(new MockApi(), '#/?d=add:upload')
     const d = await screen.findByRole('dialog')

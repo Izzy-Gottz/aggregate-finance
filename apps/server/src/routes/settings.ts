@@ -10,7 +10,7 @@ import { HTTPException } from 'hono/http-exception'
 import type { Kysely } from 'kysely'
 import type { DataType } from '@agfn/contracts'
 import { addMember, effectiveGrid, isTimeZone, type PermissionGrid } from '@agfn/auth'
-import { nowIso, withBypass, withWorkspace, type CoreTables, type RolePreset } from '@agfn/db'
+import { ownerOf, nowIso, withBypass, withWorkspace, type CoreTables, type RolePreset } from '@agfn/db'
 import { appendActivity, DbRateLimiter, peopleFromAuth, ToolError, type AgfnMcpHandle } from '@agfn/mcp'
 import type { RequestPerson } from '../app.ts'
 import type { Services } from '../services.ts'
@@ -112,7 +112,7 @@ export function createSettings(s: Services) {
   async function requireRecheck(personId: string): Promise<void> {
     if (await people.requireRecentPasskey(personId, RECHECK_MS)) return
     const person = await db.selectFrom('people').select('auth_user_id').where('id', '=', personId).executeTakeFirst()
-    const passkey = person?.auth_user_id ? await anyDb.selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst().catch(() => undefined) : undefined
+    const passkey = person?.auth_user_id ? await ownerOf(anyDb).selectFrom('passkey').select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst().catch(() => undefined) : undefined
     const method = passkey ? 'passkey' : 'email'
     reply(403, { error: 'recheck', method, fallback: 'email', message: method === 'passkey' ? 'Confirm it’s you with your passkey, or by email.' : 'Confirm it’s you: we’ll email you a link.' })
   }
@@ -155,9 +155,9 @@ export function createSettings(s: Services) {
     let apple = false
     let google = false
     if (person.auth_user_id) {
-      const pk = await anyDb.selectFrom('passkey').select(['id', 'name', 'createdAt']).where('userId', '=', person.auth_user_id).execute().catch(() => [])
+      const pk = await ownerOf(anyDb).selectFrom('passkey').select(['id', 'name', 'createdAt']).where('userId', '=', person.auth_user_id).execute().catch(() => [])
       passkeys = pk.map((p) => ({ id: String(p.id), name: String(p.name ?? 'Passkey'), addedAt: new Date(p.createdAt as string | number | Date).toISOString() }))
-      const accounts = await anyDb.selectFrom('auth_account').select('providerId').where('userId', '=', person.auth_user_id).execute().catch(() => [])
+      const accounts = await ownerOf(anyDb).selectFrom('auth_account').select('providerId').where('userId', '=', person.auth_user_id).execute().catch(() => [])
       apple = accounts.some((x) => x.providerId === 'apple')
       google = accounts.some((x) => x.providerId === 'google')
     }
@@ -391,7 +391,7 @@ export function createSettings(s: Services) {
     const others = new Set(
       (await db.selectFrom('entities').select('id').where('workspace_id', '=', a.workspaceId).where('kind', '=', 'personal').where((eb) => eb.or([eb('owner_person_id', '!=', a.personId), eb('owner_person_id', 'is', null)])).execute()).map((r) => r.id),
     )
-    const tables = await db.introspection.getTables()
+    const tables = (await db.introspection.getTables()).filter((t) => (t.schema ?? 'public') === 'public')
     const SECRET_COL = /secret|_enc$|^key_hash$|token|password|verifier|private/i
     const SKIP_TABLE = /^(auth_|passkey|jwks|oauth|kysely_|rate_limit|jobs$|reauth)/i
     const out: Record<string, unknown[]> = {}

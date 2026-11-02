@@ -568,6 +568,12 @@ export class MockApi implements AgfnApi {
     Object.assign(this.s.prefs, clone(patch))
     return this.ok(this.s.prefs)
   }
+  friendLink() {
+    return this.ok({ link: 'https://app.aggregate.finance/?start=1&from=0123456789abcdef' })
+  }
+  inviteFriend(_email: string) {
+    return this.ok({ ok: true as const })
+  }
   invite(email: string, role: PersonRow['role'], entityIds: PersonRow['entityIds']) {
     const p: PersonRow = { id: this.id('p'), name: email.split('@')[0] ?? email, email, role, entityIds, grid: gridFor(role), pending: true }
     this.s.prefs.people.push(p)

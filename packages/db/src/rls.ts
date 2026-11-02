@@ -47,18 +47,19 @@ export async function workspaceTables(db: Kysely<any>): Promise<string[]> {
 
 /**
  * Tables with workspace_id that do NOT carry the current agfn_workspace policy with RLS forced on. Empty when fully
- * covered. A policy from before phase 2 (one that honors the bypass setting for anyone) counts as missing, so the next
- * boot replaces it.
+ * covered. A policy that honors the bypass setting for anyone but this role counts as missing, so the next boot
+ * replaces it, including after the owner role changes.
  */
 export async function tablesMissingRls(db: Kysely<any>): Promise<string[]> {
   const tables = await workspaceTables(db)
   if (!tables.length) return []
+  const owner = await currentRole(db)
   const r = await sql<{ relname: string }>`
     select c.relname from pg_class c
     join pg_namespace n on n.oid = c.relnamespace and n.nspname = current_schema()
     where c.relrowsecurity and c.relforcerowsecurity
       and exists (select 1 from pg_policy p where p.polrelid = c.oid and p.polname = 'agfn_workspace'
-        and pg_get_expr(p.polqual, p.polrelid) ilike '%current_user%')`.execute(db)
+        and pg_get_expr(p.polqual, p.polrelid) ilike ${`%current_user = '${owner.replaceAll("'", "''")}'%`})`.execute(db)
   const covered = new Set(r.rows.map((x) => x.relname))
   return tables.filter((t) => !covered.has(t))
 }
@@ -114,27 +115,48 @@ export function rlsPool<P extends PoolLike>(pool: P, opts: { role?: string; appP
 }
 
 const POLICY = 'agfn_workspace'
-/** The role requests run as (AGFN_PG_RLS_ROLE, default agfn_app). Only a valid identifier, since it goes into DDL. */
-export const appRoleName = (env: Record<string, string | undefined> = process.env) => {
-  const r = env.AGFN_PG_RLS_ROLE || 'agfn_app'
-  if (!/^[a-z_][a-z0-9_]{0,62}$/.test(r)) throw new Error('AGFN_PG_RLS_ROLE must be a plain lowercase Postgres role name')
-  return r
-}
-// The bypass setting is honored only for roles other than the app role: SQL running as the app role (an injection,
-// a bug) can set agfn.rls_bypass itself, so for it the setting means nothing. Bypass work runs as the owner.
-const check = (appRole: string) => sql.raw(`workspace_id = current_setting('agfn.workspace_id', true) or (current_setting('agfn.rls_bypass', true) = 'on' and current_user <> '${appRole}')`)
+// The bypass setting is honored only for the role that runs bypass work, named here so that a role added later starts
+// closed. Any session can write the setting, so naming the role is what makes it mean anything. Neon's owner has
+// BYPASSRLS and doesn't need it; a plain Postgres owner does.
+const check = (owner: string) => sql.raw(`workspace_id = current_setting('agfn.workspace_id', true) or (current_setting('agfn.rls_bypass', true) = 'on' and current_user = ${"'"}${owner.replaceAll("'", "''")}${"'"})`)
+
+const currentRole = async (db: Kysely<any>): Promise<string> => (await sql<{ r: string }>`select current_user as r`.execute(db)).rows[0]?.r as string
 
 /**
  * Enable RLS with the workspace policy on `tables` (idempotent). FORCE makes it apply to the table owner too, so the
- * app can keep connecting as the owner during the prototype. Run inside withBypass (it is DDL).
+ * app can keep connecting as the owner during the prototype. Run inside withBypass (it is DDL), as the role that does
+ * bypass work: that's the one the policy names.
  */
-export async function enableRls(db: Kysely<any>, tables: readonly string[], appRole = appRoleName()): Promise<void> {
-  for (const t of tables) {
-    const id = sql.id(t)
-    await sql`alter table ${id} enable row level security`.execute(db)
-    await sql`alter table ${id} force row level security`.execute(db)
-    await sql`drop policy if exists ${sql.id(POLICY)} on ${id}`.execute(db)
-    await sql`create policy ${sql.id(POLICY)} on ${id} using (${check(appRole)}) with check (${check(appRole)})`.execute(db)
+export async function enableRls(db: Kysely<any>, tables: readonly string[]): Promise<void> {
+  const owner = await currentRole(db)
+  for (const t of tables) await policyOn(db, t, owner)
+}
+
+const LOCK_TRIES = 5
+
+/**
+ * One table, in one transaction. Changing a policy waits for reads on the table, and every new query queues behind it,
+ * so a short wait and a few tries keep one long read from stalling the table. `set local` holds through poolers too.
+ */
+async function policyOn(db: Kysely<any>, t: string, owner: string): Promise<void> {
+  const id = sql.id(t)
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await db.transaction().execute(async (tx) => {
+        await sql`set local lock_timeout = '2s'`.execute(tx)
+        const on = await sql<{ rls: boolean; forced: boolean; policies: number }>`
+          select c.relrowsecurity as rls, c.relforcerowsecurity as forced, (select count(*)::int from pg_policy p where p.polrelid = c.oid and p.polname = ${POLICY}) as policies
+          from pg_class c where c.oid = quote_ident(${t})::regclass`.execute(tx)
+        const now = on.rows[0]
+        if (!now?.rls) await sql`alter table ${id} enable row level security`.execute(tx)
+        if (!now?.forced) await sql`alter table ${id} force row level security`.execute(tx)
+        if (now?.policies) await sql`alter policy ${sql.id(POLICY)} on ${id} using (${check(owner)}) with check (${check(owner)})`.execute(tx)
+        else await sql`create policy ${sql.id(POLICY)} on ${id} using (${check(owner)}) with check (${check(owner)})`.execute(tx)
+      })
+      return
+    } catch (err) {
+      if ((err as { code?: string }).code !== '55P03' || attempt === LOCK_TRIES) throw err
+    }
   }
 }
 
@@ -156,15 +178,103 @@ export async function disableRls(db: Kysely<any>, tables: readonly string[]): Pr
 }
 
 /**
+ * The same pool, with every checkout on the bypass side. For Better Auth: its tables hold sessions and OAuth tokens, and
+ * requests never need them directly, so the app role has no rights on them. Closing belongs to the main handle.
+ */
+export function ownerPool<P extends PoolLike>(pool: P): P {
+  const wrapped = Object.create(pool) as P
+  wrapped.connect = () => withBypass('owner-pool', () => pool.connect())
+  wrapped.end = async () => undefined
+  return wrapped
+}
+
+const owners = new WeakMap<object, object>()
+
+/** Remembers a handle's bypass-side twin, for ownerOf. */
+export const registerOwner = (db: object, owner: object): void => void owners.set(db, owner)
+
+/**
+ * `db` on the bypass side, for the tables requests have no rights on (sign-in, links, tokens). Those carry no workspace,
+ * so there's nothing for RLS to scope; grants keep requests away from them, and this is the one way through.
+ */
+export const ownerOf = <T extends object>(db: T): T => (owners.get(db) as T | undefined) ?? db
+
+/**
+ * For a `.catch` on a delete or revoke: a missing table or row is fine, but a refused one means tokens stay behind, so
+ * it must fail where someone sees it. 42501 is Postgres's insufficient_privilege.
+ */
+export const unlessDenied =
+  <T>(fallback: T) =>
+  (err: unknown): T => {
+    if ((err as { code?: string }).code !== '42501') return fallback
+    console.error('[agfn] permission denied on a delete or revoke:', err instanceof Error ? err.message : String(err))
+    throw err
+  }
+
+const FULL = ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
+
+/**
+ * What the app role may do on tables with no workspace_id, which have no policy: grants are all that protects them.
+ * Tables with workspace_id get full rights, because RLS scopes them. Anything else, including a new table, gets nothing.
+ */
+const APP_RIGHTS: Record<string, readonly string[]> = {
+  people: ['SELECT', 'INSERT', 'UPDATE'],
+  workspaces: ['SELECT', 'INSERT', 'UPDATE'],
+  fx_rates: ['SELECT', 'INSERT', 'UPDATE'],
+  rate_limit_counters: FULL,
+  creator_links: ['SELECT'],
+  creator_attributions: ['SELECT'],
+}
+
+type GrantChange = { table: string; add: string[]; drop: string[] }
+
+/** What differs from what the role should hold, by what Postgres would actually allow, whoever granted it. */
+async function grantChanges(db: Kysely<any>, role: string): Promise<GrantChange[]> {
+  const owned = new Set(await workspaceTables(db))
+  const rows = await sql<{ name: string; priv: string; has: boolean }>`
+    select c.relname as name, r.priv, has_table_privilege(${role}, c.oid, r.priv) as has
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace and n.nspname = current_schema()
+    cross join unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE']) as r(priv)
+    where c.relkind in ('r', 'p')`.execute(db)
+  const byTable = new Map<string, GrantChange>()
+  for (const { name, priv, has } of rows.rows) {
+    const c = byTable.get(name) ?? { table: name, add: [], drop: [] }
+    const want = (owned.has(name) ? FULL : (APP_RIGHTS[name] ?? [])).includes(priv)
+    if (want && !has) c.add.push(priv)
+    if (!want && has) c.drop.push(priv)
+    byTable.set(name, c)
+  }
+  return [...byTable.values()].filter((c) => c.add.length || c.drop.length)
+}
+
+/**
+ * Only what differs is changed, in one transaction, so a boot with nothing to do takes no locks and no request sees a
+ * gap. A right that can't be removed (held through another role, or granted by someone else) refuses to start.
+ */
+async function syncAppGrants(db: Kysely<any>, role: string): Promise<void> {
+  const changes = await grantChanges(db, role)
+  if (changes.length)
+    await db.transaction().execute(async (tx) => {
+      for (const c of changes) {
+        if (c.add.length) await sql`grant ${sql.raw(c.add.join(', '))} on ${sql.id(c.table)} to ${sql.id(role)}`.execute(tx)
+        if (c.drop.length) await sql`revoke ${sql.raw(c.drop.join(', '))} on ${sql.id(c.table)} from ${sql.id(role)}`.execute(tx)
+      }
+    })
+  const left = await grantChanges(db, role)
+  if (left.length) throw new RlsBootError(`${role} doesn't hold the right rights on ${left.length} table(s) (${left.slice(0, 5).map((c) => c.table).join(', ')}). Refusing to start.`)
+}
+
+/**
  * A role that RLS applies to (no superuser, no BYPASSRLS), with rights on the public schema. For tests and for
- * deployments whose connection user is a superuser (PGlite always is). Idempotent.
+ * deployments whose connection user is a superuser (PGlite always is). Idempotent. Run after migrations: a new table
+ * gets its rights here, so a table that isn't listed stays closed to requests.
  */
 export async function ensureAppRole(db: Kysely<any>, role = 'agfn_app'): Promise<void> {
   const exists = await sql<{ n: number }>`select count(*)::int as n from pg_roles where rolname = ${role}`.execute(db)
   if (!exists.rows[0]?.n) await sql`create role ${sql.id(role)} nologin nosuperuser nobypassrls`.execute(db)
   await sql`grant usage on schema public to ${sql.id(role)}`.execute(db)
-  await sql`grant select, insert, update, delete on all tables in schema public to ${sql.id(role)}`.execute(db)
-  await sql`alter default privileges in schema public grant select, insert, update, delete on tables to ${sql.id(role)}`.execute(db)
+  await sql`alter default privileges in schema public revoke select, insert, update, delete on tables from ${sql.id(role)}`.execute(db)
+  await syncAppGrants(db, role)
   await sql`grant usage, select on all sequences in schema public to ${sql.id(role)}`.execute(db)
   await sql`alter default privileges in schema public grant usage, select on sequences to ${sql.id(role)}`.execute(db)
   // The login must be able to switch into the role per checkout (rlsPool's set_config('role', …)). On PostgreSQL 16+ a

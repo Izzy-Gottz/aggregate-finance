@@ -45,8 +45,9 @@ export function looksLikeCamt(head: string): boolean {
 
 /** First IBAN or other account id in a camt file (for matching the statement to an account by its last 4). */
 export function camtAccountNumber(text: string): string | undefined {
-  const m = /<(?:\w+:)?IBAN>\s*([A-Za-z0-9 ]+?)\s*</.exec(text) ?? /<(?:\w+:)?Othr>\s*<(?:\w+:)?Id>\s*([^<\s]+)\s*</.exec(text)
-  return m?.[1]?.replace(/\s/g, '')
+  // Bounded, no nested spaces: the file is the uploader's, and a run of spaces must not stall the server.
+  const m = /<(?:\w+:)?IBAN>([^<]{1,64})</.exec(text) ?? /<(?:\w+:)?Othr>[^<]{0,64}<(?:\w+:)?Id>([^<]{1,64})</.exec(text)
+  return m?.[1]?.replace(/\s/g, '') || undefined
 }
 
 function amountOf(node: XmlNode | undefined, fallbackCurrency: string | undefined, where: string): Money {

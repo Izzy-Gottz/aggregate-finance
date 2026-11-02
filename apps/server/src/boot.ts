@@ -2,6 +2,7 @@ import { monitorEventLoopDelay } from 'node:perf_hooks'
 import { getHeapStatistics } from 'node:v8'
 import { digestWithRecurring } from './digest.ts'
 import { attributeSignup, refFromCookie } from './creator-links.ts'
+import { friendFromCookie, pruneFriendInvites, recordFriendSignup } from './friend-invites.ts'
 import { financeFor } from './finance.ts'
 import { pruneExpiredExports } from './exports.ts'
 import { mkdirSync } from 'node:fs'
@@ -222,6 +223,7 @@ export async function boot(opts: BootOptions): Promise<Booted> {
   if (!config.smtpUrl && !config.selfHosted && !opts.mailer) console.warn('[agfn] SMTP_URL is not set: sign-in links will be printed to this console.')
   const authCfg: AuthConfig = {
     db: handle.db,
+    ...(handle.ownerDb ? { authDb: handle.ownerDb } : {}),
     dbKind: handle.kind,
     baseUrl: config.baseUrl,
     secret: config.authSecret,
@@ -237,6 +239,14 @@ export async function boot(opts: BootOptions): Promise<Booted> {
     // Recorded just after the sign-up rather than inside it: Better Auth may still hold the sign-up's connection, and on
     // a one-connection database (SQLite, PGlite) a transaction started here would wait on it forever.
     onPersonCreated: async (personId, headers) => {
+      const friend = friendFromCookie(headers?.get('cookie'))
+      if (friend) {
+        setImmediate(() => {
+          void withBypass('auth:friend-invite', () => recordFriendSignup(handle.db, personId, friend)).catch((err: unknown) =>
+            console.warn('[agfn] friend invite attribution failed', { error: err instanceof Error ? err.message : String(err) }),
+          )
+        })
+      }
       const code = refFromCookie(headers?.get('cookie'))
       if (!code) return
       setImmediate(() => {
@@ -430,6 +440,7 @@ export async function boot(opts: BootOptions): Promise<Booted> {
           if (r.rows) console.warn('[agfn] retention: raw payloads purged', r)
           const orphans = await revokeUnboundOauthGrants(handle.db)
           if (orphans) console.warn('[agfn] retention: never-connected AI grants revoked', { count: orphans })
+          await pruneFriendInvites(handle.db)
           await deleteMemberlessWorkspaces(orphanDeps)
           const idle = await sendInactivityNotices({ db: handle.db, mailer, baseUrl: config.baseUrl })
           if (idle.notified) console.warn('[agfn] retention: 90-day inactivity notices sent', { workspaces: idle.notified })

@@ -110,7 +110,7 @@ export function PreferencesPage() {
       <${Rows}>
         ${p.people.map((x) => html`<${Row} name=${x.name} line=${`${roleName(x.role)} · ${where(x.entityIds)}${x.pending ? ' · invited' : ''}`} onClick=${limited || !isManager(app) || x.id === app.me?.personId || (x.role === 'owner' && !isOwner) ? undefined : () => app.open({ kind: 'person', id: x.id })} />`)}
       </${Rows}>
-      ${limited || !isManager(app) ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'invite' })}>Invite someone</${PlusAction}>`}
+      ${limited || !isManager(app) ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'invite' })}>Add a teammate</${PlusAction}>`}
       ${p.canLeave && !limited && !app.ws?.me.demo ? html`<${LeaveWorkspace} />` : null}
     </${Section}>
 
@@ -156,7 +156,7 @@ export function InviteView({ onClose, onBack }: { onClose: () => void; onBack: (
     app.toast({ text: `Invite sent to ${to}.` })
     onClose()
   }
-  return html`<${Drawer} title="Invite someone" sub="They sign in with their own passkey or email." onClose=${onClose} onBack=${onBack}>
+  return html`<${Drawer} title="Add a teammate" sub="They join this workspace and sign in with their own passkey or email." onClose=${onClose} onBack=${onBack}>
     <form onSubmit=${submit} novalidate>
       <${Field} label="Email"><input class="input" type="email" value=${email} onInput=${(e: Event) => setEmail((e.target as HTMLInputElement).value)} placeholder="name@company.com" /></${Field}>
       <fieldset class="field" style="border:0;padding:0;margin-top:24px"><legend class="sub" style="margin-bottom:6px">Role</legend>

@@ -1,7 +1,7 @@
 import { Kysely, PostgresDialect } from 'kysely'
 import pg from 'pg'
 import { nodeSqliteDialect } from './sqlite-dialect.ts'
-import { rlsEnabled, rlsPool } from './rls.ts'
+import { ownerPool, registerOwner, rlsEnabled, rlsPool } from './rls.ts'
 import { perfCount, perfEnabled, perfPool } from './perf.ts'
 import { heldCheckPool } from './held.ts'
 
@@ -9,6 +9,8 @@ export type DbKind = 'sqlite' | 'postgres'
 
 export interface DbHandle<T> {
   db: Kysely<T>
+  /** Always on the bypass side of RLS, on the same pool. Only for Better Auth. */
+  ownerDb?: Kysely<T>
   kind: DbKind
   close(): Promise<void>
 }
@@ -100,9 +102,12 @@ export function connect<T>(url: string): DbHandle<T> {
     const appPool = appUrl ? secondPool(appUrl, onError, statementMs, idleTxMs) : undefined
     const pool = rlsEnabled() ? rlsPool(counted, { ...(process.env.AGFN_PG_RLS_ROLE ? { role: process.env.AGFN_PG_RLS_ROLE } : {}), ...(appPool ? { appPool: perfEnabled() ? perfPool(appPool) : appPool } : {}) }) : counted
     const pools = [Object.assign(raw, { name: 'main' }), ...(appPool ? [Object.assign(appPool, { name: 'app' })] : [])]
-    const db = new Kysely<T>({ dialect: new PostgresDialect({ pool: failFastCheckout(heldCheckPool(pool), pools) }) })
+    const checked = failFastCheckout(heldCheckPool(pool), pools)
+    const db = new Kysely<T>({ dialect: new PostgresDialect({ pool: checked }) })
     pooled.add(db)
-    return { db, kind: 'postgres', close: () => db.destroy() }
+    const ownerDb = new Kysely<T>({ dialect: new PostgresDialect({ pool: ownerPool(checked) }) })
+    registerOwner(db, ownerDb)
+    return { db, ownerDb, kind: 'postgres', close: () => db.destroy() }
   }
   throw new Error('DATABASE_URL must start with sqlite: or postgres://')
 }

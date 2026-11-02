@@ -56,8 +56,11 @@ PAGES = [
              ('How much did we spend on software each month this year?', 'query_transactions')]),
     dict(slug='connect-quickbooks-to-chatgpt', base='connect-quickbooks-to-claude', assistant='ChatGPT'),
     dict(slug='connect-xero-to-claude', source='Xero', source_short='Xero', assistant='Claude',
-         what='invoices, bills, payments, contacts, bank transactions and reports',
-         status='Live on the hosted version. Aggregate is not yet a certified Xero app, so Xero currently limits it to 25 connected organisations in total.',
+         what='invoices, bills, payments, bank transactions and reports',
+         status='Live on the hosted version, with limited room. Aggregate is not a certified Xero app, so hosted Aggregate connects up to 5 Xero organisations in total, across all customers. Each organisation you choose takes one place. If they are all taken, you can [self-host](../self-hosting.md) with your own Xero app, or upload bank statements instead.',
+         checked='2026-11-01',
+         brings=['Your chart of accounts', 'Invoices and bills, with their credit notes', 'Payments, overpayments and prepayments', 'Bank transactions (spend and receive money)', 'Manual journals', "Your monthly profit and loss, so Aggregate's totals can be checked against Xero's own"],
+         not_brought="Xero doesn't give apps access to Xero Payroll or expense claims, so wages, payroll tax and claimed expenses in Xero's profit and loss are missing from Aggregate's. Aggregate flags those months and says why. Connect your bank to include them.",
          connect='Open **Workspace → Connections → + More connections → Xero**, sign in to Xero, choose the organisation, and allow access.',
          signin="Xero's own sign-in page", scope_note=' (Aggregate asks Xero only for read scopes.)',
          selfhost_need='Xero developer app',
@@ -80,8 +83,8 @@ PAGES = [
              ('Compare this month\'s sales with the same month last year.', 'query_transactions')]),
     dict(slug='connect-stripe-to-claude', source='Stripe', source_short='Stripe', assistant='Claude',
          what='charges, refunds, fees, payouts, invoices and subscription revenue (MRR)',
-         status='Hosted sign-in with Stripe opens once Stripe approves the Aggregate app, which is in review. Self-hosted Aggregate works with Stripe today using a restricted key with read permissions.',
-         connect='Once the app is approved: open **Workspace → Connections → + More connections → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.',
+         status='Works on the hosted version today, and Aggregate is available on the Stripe App Marketplace. Self-hosted Aggregate works too, with a restricted key with read permissions.',
+         connect='Open **Workspace → Connections → + More connections → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.',
          signin="Stripe's own sign-in page", scope_note=' (Aggregate asks Stripe only for read permissions.)',
          selfhost_need='Stripe restricted key with read permissions',
          qs=[('What is our MRR, and how much came from new customers vs. churn last month?', 'get_mrr_movements'),
@@ -147,6 +150,9 @@ def render(p):
     title = f"Connect {p['source'].split(' (')[0][0].upper() + p['source'].split(' (')[0][1:]} to {a}"
     title = p.get('title', title)
     qs = '\n'.join(f'{i}. *"{q}"* (uses `{t}`)' for i, (q, t) in enumerate(p['qs'], 1))
+    brings = ''
+    if p.get('brings'):
+        brings = '## What it brings in\n\n' + '\n'.join(f'- {b}' for b in p['brings']) + f"\n\n{p['not_brought']}\n\n"
     return f'''# {title}
 
 **Short answer:** connect {p['source']} to Aggregate, then add Aggregate to {a} with one link
@@ -156,7 +162,7 @@ choose exactly what {a} can see.
 
 **Status:** {p['status']}
 
-## Set it up
+{brings}## Set it up
 
 ### 1. Connect {p['source_short'] if p['source_short'] not in ('bank', 'statements') else p['source']} to Aggregate
 Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). {p['connect']}
@@ -179,7 +185,7 @@ behind it.
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 
-*Last checked {CHECKED}.*
+*Last checked {p.get('checked', CHECKED)}.*
 '''
 
 os.makedirs(OUT, exist_ok=True)

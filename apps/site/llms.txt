@@ -1,0 +1,25 @@
+# Aggregate
+
+> Aggregate (aggregate.finance) is a read-only finance MCP server. It brings banks, cards, payment apps, accounting, payroll and investments into one ledger, and connects it to Claude, ChatGPT, Perplexity or any app that supports MCP. It can't move money. The hosted version is free during beta, and the code is open source (AGPL-3.0).
+
+MCP link: https://app.aggregate.finance/mcp
+
+## Start here
+
+- [How to connect all your finances to AI](https://docs.aggregate.finance/guides/connect-all-your-finances-to-ai)
+- [What Aggregate connects](https://docs.aggregate.finance/connectors): every connection, marked Live, Beta or Self-host
+- [Demo on sample data, no signup](https://app.aggregate.finance/demo)
+
+## Guides
+
+- [Connect your bank, Stripe and QuickBooks to Claude](https://docs.aggregate.finance/guides/connect-finances-to-claude)
+- [Connect your bank, Stripe and QuickBooks to ChatGPT](https://docs.aggregate.finance/guides/connect-finances-to-chatgpt)
+- [AI CFO for startups: what works today](https://docs.aggregate.finance/guides/ai-cfo-for-startups)
+- [Best finance MCP servers: an honest comparison](https://docs.aggregate.finance/guides/best-finance-mcp-server)
+- [Definitions: cash, burn, runway, MRR](https://docs.aggregate.finance/guides/definitions)
+- [Known limits](https://docs.aggregate.finance/guides/limits)
+
+## Optional
+
+- [Source code](https://github.com/Izzy-Gottz/aggregate-finance)
+- [Security](https://app.aggregate.finance/security)

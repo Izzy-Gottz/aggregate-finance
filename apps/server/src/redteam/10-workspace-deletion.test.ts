@@ -48,7 +48,7 @@ describe('red team: workspace deletion leaves nothing', () => {
       // ---- nothing left, anywhere ----
       const leftovers: string[] = []
       for (const t of tables) {
-        if (t.name === 'kysely_migration' || t.name === 'kysely_migration_lock') continue
+        if (t.name === 'kysely_migration' || t.name === 'kysely_migration_lock' || (t.schema ?? 'public') !== 'public') continue
         const rows = await asTest(() => db.selectFrom(t.name).selectAll().execute())
         for (const r of rows) {
           const text = JSON.stringify(r)

@@ -23,8 +23,8 @@ On every table with a `workspace_id` column:
 alter table t enable row level security;
 alter table t force row level security;          -- applies to the table owner too
 create policy agfn_workspace on t
-  using      (workspace_id = current_setting('agfn.workspace_id', true) or current_setting('agfn.rls_bypass', true) = 'on')
-  with check (workspace_id = current_setting('agfn.workspace_id', true) or current_setting('agfn.rls_bypass', true) = 'on');
+  using      (workspace_id = current_setting('agfn.workspace_id', true) or (current_setting('agfn.rls_bypass', true) = 'on' and current_user = '<owner>'))
+  with check (workspace_id = current_setting('agfn.workspace_id', true) or (current_setting('agfn.rls_bypass', true) = 'on' and current_user = '<owner>'));
 ```
 
 `current_setting(…, true)` returns empty when unset, so **no context means no rows and no writes: fail closed.**
@@ -34,16 +34,26 @@ create policy agfn_workspace on t
 
 | Role | RLS | Used for |
 |---|---|---|
-| owner (the connection user today) | applies, because of `force` | everything, while the prototype runs |
-| `agfn_app` (target) | applies; `nosuperuser nobypassrls`, DML only | web requests and MCP calls |
-| `agfn_admin` (target) | `bypassrls`, owns the tables | migrations, worker jobs that span workspaces, auth setup |
+| owner (`aggregate_app` on Neon) | **never applies**: Neon's owner has `BYPASSRLS` through `neon_superuser`, and that overrides `force` | migrations and everything inside `withBypass` |
+| owner on plain Postgres | applies, because of `force`; the `agfn.rls_bypass` setting lets it through | the same |
+| `agfn_app` | applies; `nosuperuser nobypassrls` | web requests and MCP calls |
+| `agfn_admin` (not built) | a bypass role without `neon_superuser` | bypass work, split from the owner when its password is next rotated |
 
-Phase 1 (the prototype) uses one login with `force` RLS. The bypass is a session setting (`agfn.rls_bypass = on`) that
-the server sets only inside `withBypass(...)`. That stops **bugs**: a forgotten filter, or a wrong id from another
-tenant. It doesn't stop **SQL injection**, because injected SQL could set the setting itself. Kysely parameterizes
-every value and we never build SQL from strings, so injection is a much smaller risk than a forgotten filter.
+The policy honours `agfn.rls_bypass` only for the role that created it (the owner). Any session can write that setting, so naming the role is what makes it safe: any other role, including a read-only one, ignores it.
 
-Phase 2 closes that gap with real roles. Requests run as `agfn_app`, which can't bypass anything. Bypass work switches to the owner (`set_config('role', …)` per checkout, already prototyped with `AGFN_PG_RLS_ROLE`) or uses a second pool that logs in as `agfn_admin`. A second pool is the cleaner option: the app login can't `SET ROLE` its way out.
+**What this does and doesn't protect.** The workspace scope is enforced against bugs in our code: a forgotten filter or a wrong id returns nothing. It is **not** enforced against SQL injection. `agfn.workspace_id` is a setting that any session can write, so SQL running as `agfn_app` could name another workspace (checked on staging, 2026-11-01). That's accepted for now and will be revisited after launch; the fix would be a signed workspace token checked by the policy. Parameterized queries are the defense against injection. Tables with no `workspace_id` have no policy at all, so grants are what protect them.
+
+Phase 1 (the prototype) used one login. The bypass was a session setting (`agfn.rls_bypass = on`) that the server sets only inside `withBypass(...)`.
+
+Phase 2 is what hosted runs. Requests log in as `agfn_app` through their own pool (`AGFN_PG_APP_URL`), and `withBypass` work uses the owner's pool. `agfn_app` can't bypass RLS, but see the limit above: it can still choose a workspace.
+
+## Tables with no workspace
+
+Tables with no `workspace_id` have no policy, so grants protect them. `ensureAppRole` (run at every boot, after migrations) gives `agfn_app` full rights on tables with `workspace_id`, the short list in `APP_RIGHTS` on the rest, and nothing on anything else, so a new table starts closed.
+
+Sign-in, token and link tables (`auth_*`, `oauth*`, `passkey`, `signin_codes`, `recheck_links`, `reauth_events`, `reviewer_links`, `shopify_pending_installs`) are on the owner's side. Better Auth gets `ownerDb`, and our own code reaches them with `ownerOf(db)`. Neither sets a workspace, and neither may be inside a transaction on the app's connection.
+
+`people` and `workspaces` stay readable and writable by `agfn_app` because requests need them, and they have no policy: SQL running as the app could read names and emails, and an update that forgot its filter would touch every row.
 
 ## How a request sets its workspace
 `packages/db/src/rls.ts`:
@@ -136,7 +146,7 @@ Each of these must run under bypass, or be rewritten to find the workspace first
 ## Phase 2 (built)
 
 **1. The bypass can't be switched on from inside a request.** The policy is now
-`workspace_id = current_setting('agfn.workspace_id') or (current_setting('agfn.rls_bypass') = 'on' and current_user <> 'agfn_app')`.
+`workspace_id = current_setting('agfn.workspace_id') or (current_setting('agfn.rls_bypass') = 'on' and current_user = '<owner>')`.
 SQL running as the app role (an injection, a bug) can set `agfn.rls_bypass` on its own connection, and for that role
 it now means nothing. Boot replaces older policies automatically (a policy without the `current_user` check counts as
 missing). Red team: `packages/db/src/rls.test.ts` sets the setting by hand inside a request and still sees zero

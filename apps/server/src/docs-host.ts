@@ -23,7 +23,7 @@ export function forDocsHost(html: string, baseUrl: string, host: string): string
 }
 
 /** `render`: the same request, as the app would answer it at /docs. */
-export function docsHost(o: { host: string; baseUrl: string; isDoc: (appPath: string) => boolean; sitemap: () => string; render: (appPath: string, c: Context) => Promise<Response> }) {
+export function docsHost(o: { host: string; baseUrl: string; isDoc: (appPath: string) => boolean; sitemap: () => string; text: (path: string) => string | null; render: (appPath: string, c: Context) => Promise<Response> }) {
   const app = o.baseUrl.replace(/\/+$/, '')
   const moved = (path: string, search: string) => `https://${o.host}${path}${search}`
   return async (c: Context, next: Next) => {
@@ -39,6 +39,8 @@ export function docsHost(o: { host: string; baseUrl: string; isDoc: (appPath: st
     if (!reading) return c.notFound()
     const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, '') : url.pathname
     if (ASSET.test(path)) return next()
+    const text = o.text(path)
+    if (text !== null) return c.text(text, 200, { 'cache-control': 'public, max-age=3600' })
     if (path === '/sitemap.xml') return c.body(o.sitemap(), 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' })
     if (path === '/docs' || path.startsWith('/docs/')) return c.redirect(path.replace(/^\/docs\/?/, '/') + url.search, 301)
     if (APP_PAGES.has(path)) return c.redirect(`${app}${path}`, 301)

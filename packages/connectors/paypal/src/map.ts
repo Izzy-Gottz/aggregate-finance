@@ -84,6 +84,13 @@ export function payerName(p: PayPalPayerInfo | undefined): string | undefined {
   return full ? full.slice(0, 120) : undefined
 }
 
+/** Holds and reserves (T15xx, T21xx), or a bank deposit into PayPal (T03xx): on the balance sheet, not income or spending. */
+export function balanceRoleForEventCode(code: string): ProcessorBalanceTxn['balanceRole'] {
+  if (code.startsWith('T15') || code.startsWith('T21')) return 'other_assets'
+  if (code.startsWith('T03')) return 'clearing_payouts'
+  return undefined
+}
+
 /** Denied rows (status D) never moved money; we skip them. Returns undefined for rows without an amount. */
 export function mapTxn(d: PayPalTransactionDetail, accountId: string, connectionId: string, rawRef: string): ProcessorBalanceTxn | undefined {
   const t = d.transaction_info
@@ -94,6 +101,7 @@ export function mapTxn(d: PayPalTransactionDetail, accountId: string, connection
   const fee: Money = { minor: feeRaw.minor === 0 ? 0 : -feeRaw.minor, currency: cur }
   const net: Money = { minor: gross.minor - fee.minor, currency: cur }
   const kind = kindForEventCode(t.transaction_event_code)
+  const role = balanceRoleForEventCode(t.transaction_event_code ?? '')
   const at = isoTimestamp(t.transaction_initiation_date ?? t.transaction_updated_date ?? '')
   const customer = kind === 'charge' || kind === 'refund' || kind === 'dispute' ? payerName(d.payer_info) : undefined
   return {
@@ -111,6 +119,7 @@ export function mapTxn(d: PayPalTransactionDetail, accountId: string, connection
     ...(kind === 'payout' ? { payoutExternalId: t.transaction_id } : {}),
     ...(t.paypal_reference_id && t.paypal_reference_id !== t.transaction_id ? { sourceExternalId: t.paypal_reference_id } : {}),
     ...(customer ? { customer } : {}),
+    ...(role ? { balanceRole: role } : {}),
   }
 }
 

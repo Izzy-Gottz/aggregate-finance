@@ -7,7 +7,7 @@ import { setCookie } from 'hono/cookie'
 import type { Kysely } from 'kysely'
 import { seal, unseal } from '@agfn/security'
 import { appendActivity } from '@agfn/mcp'
-import { withBypass, withWorkspace } from '@agfn/db'
+import { ownerOf, withBypass, withWorkspace } from '@agfn/db'
 import { noteConnection, SHOPIFY_ERASE_WARNING } from './retire.ts'
 import type { Services } from './services.ts'
 
@@ -44,7 +44,7 @@ export async function takePendingByLink(
 ): Promise<{ shop: string; secret: unknown } | { wrongPerson: string } | { needsConfirm: string } | null> {
   const db = pendingDb(s)
   const h = hash(linkToken)
-  const row = await db.selectFrom('shopify_pending_installs').selectAll().where('link_hash', '=', h).executeTakeFirst()
+  const row = await ownerOf(db).selectFrom('shopify_pending_installs').selectAll().where('link_hash', '=', h).executeTakeFirst()
   if (!row || !row.link_expires_at || Date.parse(row.link_expires_at) < (opts.now ?? Date.now())) return null
   if (row.link_email) {
     if (row.link_email !== personEmail.trim().toLowerCase()) return { wrongPerson: maskEmail(row.link_email) }
@@ -52,14 +52,14 @@ export async function takePendingByLink(
     // Shopify named no staff member: the person confirms which store goes into which workspace instead.
     return { needsConfirm: row.shop }
   }
-  const r = await db.updateTable('shopify_pending_installs').set({ link_hash: null, link_expires_at: null }).where('shop', '=', row.shop).where('link_hash', '=', h).executeTakeFirst()
+  const r = await ownerOf(db).updateTable('shopify_pending_installs').set({ link_hash: null, link_expires_at: null }).where('shop', '=', row.shop).where('link_hash', '=', h).executeTakeFirst()
   if (Number(r.numUpdatedRows) !== 1) return null
   return { shop: row.shop, secret: unseal(s.keys, row.secret_enc, SEAL(row.shop)) }
 }
 
 /** The Shopify staff email a link was issued to (to prefill sign-in), or null. Doesn't use the link. */
 export async function pendingEmailForLink(s: Services, linkToken: string): Promise<string | null> {
-  const row = await pendingDb(s).selectFrom('shopify_pending_installs').select(['link_email', 'link_expires_at']).where('link_hash', '=', hash(linkToken)).executeTakeFirst()
+  const row = await ownerOf(pendingDb(s)).selectFrom('shopify_pending_installs').select(['link_email', 'link_expires_at']).where('link_hash', '=', hash(linkToken)).executeTakeFirst()
   return row?.link_email && row.link_expires_at && Date.parse(row.link_expires_at) > Date.now() ? row.link_email : null
 }
 
@@ -84,7 +84,7 @@ export function maskEmail(email: string): string {
 
 /** Forget a store's waiting token (connected, uninstalled, or erased). */
 export async function dropPending(s: Services, shop: string): Promise<void> {
-  await pendingDb(s).deleteFrom('shopify_pending_installs').where('shop', '=', shop).execute()
+  await ownerOf(pendingDb(s)).deleteFrom('shopify_pending_installs').where('shop', '=', shop).execute()
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`)
@@ -217,20 +217,20 @@ export function shopifyEmbeddedRoutes(app: Hono<any>, s: Services): void {
   const connectUrlFor = async (shop: string, sessionToken: string): Promise<string> => {
     const db = pendingDb(s)
     const now = Date.now()
-    const row = await db.selectFrom('shopify_pending_installs').select(['created_at']).where('shop', '=', shop).executeTakeFirst()
+    const row = await ownerOf(db).selectFrom('shopify_pending_installs').select(['created_at']).where('shop', '=', shop).executeTakeFirst()
     if (!row || now - Date.parse(row.created_at) > PENDING_TTL_MS) {
       const exchange = connector(s)?.exchangeSessionToken
       if (!exchange) throw new Error('Shopify isn’t set up on this server.')
       const secret = await exchange(shop, sessionToken)
       const values = { secret_enc: seal(s.keys, secret, SEAL(shop)), created_at: new Date(now).toISOString(), link_hash: null, link_expires_at: null, link_email: null }
-      if (row) await db.updateTable('shopify_pending_installs').set(values).where('shop', '=', shop).execute()
-      else await db.insertInto('shopify_pending_installs').values({ shop, ...values }).execute()
+      if (row) await ownerOf(db).updateTable('shopify_pending_installs').set(values).where('shop', '=', shop).execute()
+      else await ownerOf(db).insertInto('shopify_pending_installs').values({ shop, ...values }).execute()
     }
     // Who is asking, in Shopify: only an Aggregate person with the same email can use this link. Shopify naming
     // nobody (rare) leaves it to a confirm step after sign-in instead.
     const email = (await connector(s)?.staffEmail?.(shop, sessionToken).catch(() => undefined)) ?? null
     const link = randomBytes(32).toString('base64url')
-    await db.updateTable('shopify_pending_installs').set({ link_hash: hash(link), link_expires_at: new Date(now + LINK_TTL_MS).toISOString(), link_email: email }).where('shop', '=', shop).execute()
+    await ownerOf(db).updateTable('shopify_pending_installs').set({ link_hash: hash(link), link_expires_at: new Date(now + LINK_TTL_MS).toISOString(), link_email: email }).where('shop', '=', shop).execute()
     return `${s.config.baseUrl}/api/connectors/shopify/link?t=${link}`
   }
   // The one cross-workspace step: which connections (in any workspace) belong to this verified store.

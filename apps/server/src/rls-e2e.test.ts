@@ -22,7 +22,7 @@ beforeAll(async () => {
     await migrateToLatest(db.db)
     await ensureAppRole(db.db as Kysely<any>)
   })
-  const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'postgres://unused', BASE_URL: BASE, WEB_DIST: '/nonexistent', INBOUND_EMAIL_DOMAIN: 'in.example.com', INBOUND_WEBHOOK_SECRET: 'hook-secret', AGFN_REVIEWER_LINKS: '1' }), runWorker: false }
+  const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'postgres://unused', BASE_URL: BASE, AGFN_FRIEND_INVITES: '1', WEB_DIST: '/nonexistent', INBOUND_EMAIL_DOMAIN: 'in.example.com', INBOUND_WEBHOOK_SECRET: 'hook-secret', AGFN_REVIEWER_LINKS: '1' }), runWorker: false }
   booted = await boot({ config, db, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async (m) => void outbox.push({ to: m.to, text: m.text }) } })
   app = createApp(booted.services)
 }, 120_000)
@@ -128,15 +128,28 @@ describe('row-level security prototype, end to end', () => {
     const leaver = await signIn('leaver@example.com')
     const owner = await signIn('stays@example.com')
     expect((await app.request('/api/workspaces', req(owner, 'POST', { companyName: 'Stays Co' }))).status).toBeLessThan(300)
+    // Before the demo: a demo can't send invites.
+    expect((await app.request('/api/friend-invite', req(leaver, 'POST', { email: 'pal@example.com' }))).status).toBe(200)
     // The leaver has their own demo (deleted with the account) and also belongs to the owner's workspace (as finance).
     expect((await app.request('/api/demo', req(leaver, 'POST'))).status).toBeLessThan(300)
     const db = booted.handle.db
     const staysWs = ((await (await app.request('/api/me', { headers: { cookie: owner } })).json()) as { workspaceId: string }).workspaceId
     const leaverId = (await db.selectFrom('people').select('id').where('email', '=', 'leaver@example.com').executeTakeFirstOrThrow()).id
     await withWorkspace(staysWs, () => db.insertInto('memberships').values({ id: newId(), workspace_id: staysWs, person_id: leaverId, role: 'finance', grid_json: null, expires_at: null, invited_by: null, created_at: nowIso(), revoked_at: null }).execute())
+    // Invite records are closed to the app role, so these go from the owner side (a silent denial would leave the hashes).
+    const friends = db as never as Kysely<any>
+    const friendRows = async () => withBypass('test', async () => [
+      ...(await friends.selectFrom('friend_invites').select('inviter_id as who').execute()),
+      ...(await friends.selectFrom('friend_codes').select('person_id as who').execute()),
+    ].filter((r) => r.who === leaverId))
+    expect(await friendRows()).toHaveLength(2)
+    const stop = /\/invites\/stop\?h=([a-f0-9]{64})&s=([a-f0-9]{64})/.exec(outbox.at(-1)!.text)!
+    expect((await app.request('/invites/stop', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ h: stop[1]!, s: stop[2]!, action: 'stop' }) })).status).toBe(200)
+    expect(await withBypass('test', () => friends.selectFrom('friend_invite_optouts').select('email_hash').execute())).toEqual([{ email_hash: stop[1] }])
     const del = await app.request('/api/me', req(leaver, 'DELETE', { confirm: 'DELETE' }))
     expect(del.status, await del.clone().text()).toBe(200)
     expect(await del.json()).toMatchObject({ ok: true, workspaces: 2, workspacesDeleted: 1 })
+    expect(await friendRows()).toEqual([])
     const left = await withBypass('test', () => db.selectFrom('memberships').select(['workspace_id', 'person_id']).where('workspace_id', '=', staysWs).execute())
     expect(left.map((m) => m.person_id)).not.toContain(leaverId)
     expect(left).toHaveLength(1) // the owner stays

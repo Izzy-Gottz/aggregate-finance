@@ -1,3 +1,4 @@
+import { ownerOf, unlessDenied } from '@agfn/db'
 import type { Kysely } from 'kysely'
 import type { CoreTables } from '@agfn/db'
 import type { FileStore } from '@agfn/files'
@@ -66,9 +67,9 @@ export async function deleteWorkspace(deps: { db: Kysely<CoreTables>; files: Fil
   // 3. Rows. Tables reference each other, so delete in rounds until a whole round goes through with nothing failing.
   // Every round tries every table again, not just the ones that failed: a sync still finishing elsewhere can add
   // children (journal lines) to a table that was already cleared, and those must go before their parents can.
-  const grantIds = (await anyDb.selectFrom('grants').select('id').where('workspace_id', '=', workspaceId).execute().catch(() => [])) as Array<{ id: string }>
-  if (grantIds.length) await anyDb.deleteFrom('oauth_pending_grants').where('grant_id', 'in', grantIds.map((g) => g.id)).execute().catch(() => undefined)
-  const tables = (await db.introspection.getTables()).filter((t) => t.name !== 'workspaces' && t.columns.some((c) => c.name === 'workspace_id')).map((t) => t.name)
+  const grantIds = (await anyDb.selectFrom('grants').select('id').where('workspace_id', '=', workspaceId).execute().catch(unlessDenied([]))) as Array<{ id: string }>
+  if (grantIds.length) await ownerOf(anyDb).deleteFrom('oauth_pending_grants').where('grant_id', 'in', grantIds.map((g) => g.id)).execute().catch(unlessDenied(undefined))
+  const tables = (await db.introspection.getTables()).filter((t) => (t.schema ?? 'public') === 'public' && t.name !== 'workspaces' && t.columns.some((c) => c.name === 'workspace_id')).map((t) => t.name)
   let rows = 0
   let failed: string[] = []
   const why = new Map<string, string>()
@@ -88,7 +89,7 @@ export async function deleteWorkspace(deps: { db: Kysely<CoreTables>; files: Fil
     // table was cleared, and then this fails on that row until the next round takes it.
     if (!failed.length) {
       try {
-        await db.deleteFrom('workspaces').where('id', '=', workspaceId).execute()
+        await ownerOf(db).deleteFrom('workspaces').where('id', '=', workspaceId).execute()
         break
       } catch (err) {
         failed.push('workspaces')

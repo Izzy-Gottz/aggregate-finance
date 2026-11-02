@@ -1,0 +1,8 @@
+{
+  "name": "aggregate-finance",
+  "description": "Aggregate, the read-only finance MCP server, for Claude Code.",
+  "owner": { "name": "Aggregate", "url": "https://aggregate.finance" },
+  "plugins": [
+    { "name": "aggregate", "source": "./plugins/aggregate" }
+  ]
+}

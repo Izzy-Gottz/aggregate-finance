@@ -3,7 +3,7 @@
 
 import type { Kysely } from 'kysely'
 import type { Can, EntityId, EntityKind, PersonId, WorkspaceId } from '@agfn/contracts'
-import type { CoreTables } from '@agfn/db'
+import { ownerOf, type CoreTables } from '@agfn/db'
 import type { PeopleDirectory } from './ports.ts'
 
 export interface AuthPermissions {
@@ -53,7 +53,7 @@ export function peopleFromAuth(deps: { db: Kysely<CoreTables>; permissions: Auth
       if (purpose === 'first_grant' || deps.passkeysPossible === false) return reauth.requireRecentAuth(personId, withinMs)
       let hasPasskey = false
       if (person?.auth_user_id) {
-        const pk = await anyDb.selectFrom(passkeyTable).select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst()
+        const pk = await ownerOf(anyDb).selectFrom(passkeyTable).select('id').where('userId', '=', person.auth_user_id).limit(1).executeTakeFirst()
         hasPasskey = Boolean(pk)
       }
       return hasPasskey ? reauth.requireRecentPasskey(personId, withinMs) : reauth.requireRecentAuth(personId, withinMs)

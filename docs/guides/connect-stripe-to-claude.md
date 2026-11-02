@@ -5,12 +5,12 @@
 accounts and companies. Aggregate only reads from Stripe, it can never move money, and you
 choose exactly what Claude can see.
 
-**Status:** Hosted sign-in with Stripe opens once Stripe approves the Aggregate app, which is in review. Self-hosted Aggregate works with Stripe today using a restricted key with read permissions.
+**Status:** Works on the hosted version today, and Aggregate is available on the Stripe App Marketplace. Self-hosted Aggregate works too, with a restricted key with read permissions.
 
 ## Set it up
 
 ### 1. Connect Stripe to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Once the app is approved: open **Workspace → Connections → + More connections → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →
@@ -57,4 +57,4 @@ Stripe restricted key with read permissions.
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 
-*Last checked 2026-10-12.*
+*Last checked 2026-11-01.*

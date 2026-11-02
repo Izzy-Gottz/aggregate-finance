@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely'
 import { forgetAttribution } from './creator-links.ts'
-import { withBypass, withWorkspace, type CoreTables } from '@agfn/db'
+import { ownerOf, unlessDenied, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import type { FileStore } from '@agfn/files'
 import type { SyncEngine } from '@agfn/sync'
 import { isDemoWorkspace } from '@agfn/demo'
@@ -45,7 +45,7 @@ async function workspacesWithRowsOf(db: Kysely<CoreTables>, personId: string): P
   return withBypass('account:workspaces', async () => {
     const ids = new Set<string>()
     for (const r of await db.selectFrom('memberships').select('workspace_id').where('person_id', '=', personId).execute()) ids.add(r.workspace_id)
-    for (const r of (await anyDb.selectFrom('grants').select('workspace_id').where('person_id', '=', personId).execute().catch(() => [])) as Array<{ workspace_id: string }>) ids.add(r.workspace_id)
+    for (const r of (await anyDb.selectFrom('grants').select('workspace_id').where('person_id', '=', personId).execute().catch(unlessDenied([]))) as Array<{ workspace_id: string }>) ids.add(r.workspace_id)
     for (const r of await db.selectFrom('entities').select('workspace_id').where('owner_person_id', '=', personId).execute()) ids.add(r.workspace_id)
     return [...ids]
   })
@@ -98,13 +98,13 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
   for (const ws of await workspacesWithRowsOf(db, personId)) {
     await withWorkspace(ws, async () => {
       // 1. AI access.
-      const grants = (await anyDb.selectFrom('grants').select(['id', 'workspace_id']).where('person_id', '=', personId).where('revoked_at', 'is', null).execute().catch(() => [])) as Array<{ id: string; workspace_id: string }>
+      const grants = (await anyDb.selectFrom('grants').select(['id', 'workspace_id']).where('person_id', '=', personId).where('revoked_at', 'is', null).execute().catch(unlessDenied([]))) as Array<{ id: string; workspace_id: string }>
       for (const g of grants) {
         if (deps.revokeGrant) await deps.revokeGrant(g.workspace_id, personId, g.id)
         else await anyDb.updateTable('grants').set({ revoked_at: new Date().toISOString(), revoked_by: personId }).where('id', '=', g.id).execute()
         grantsRevoked++
       }
-      await anyDb.updateTable('agent_keys').set({ revoked_at: new Date().toISOString() }).where('created_by', '=', personId).where('revoked_at', 'is', null).execute().catch(() => undefined)
+      await anyDb.updateTable('agent_keys').set({ revoked_at: new Date().toISOString() }).where('created_by', '=', personId).where('revoked_at', 'is', null).execute().catch(unlessDenied(undefined))
 
       // 2. Personal spaces: their own connections and documents.
       const personal = (await db.selectFrom('entities').select('id').where('owner_person_id', '=', personId).where('kind', '=', 'personal').execute()).map((e) => e.id)
@@ -129,15 +129,20 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
   }
 
   // 4. Person-level records (no workspace, so no row-level security): re-check history, then sign-in records.
-  await anyDb.deleteFrom('reauth_events').where('person_id', '=', personId).execute().catch(() => undefined)
+  await ownerOf(anyDb).deleteFrom('reauth_events').where('person_id', '=', personId).execute().catch(unlessDenied(undefined))
   // The person row stays (anonymized), so its creator-link attribution is removed here rather than by cascade.
-  await forgetAttribution(anyDb, personId).catch(() => undefined)
+  await forgetAttribution(anyDb, personId).catch(unlessDenied(undefined))
+  // Same for "Invite someone": the hashes of the addresses they invited, their code, and who invited whom.
+  const owner = ownerOf(anyDb)
+  await owner.deleteFrom('friend_signups').where((eb) => eb.or([eb('person_id', '=', personId), eb('inviter_id', '=', personId)])).execute().catch(unlessDenied(undefined))
+  await owner.deleteFrom('friend_invites').where('inviter_id', '=', personId).execute().catch(unlessDenied(undefined))
+  await owner.deleteFrom('friend_codes').where('person_id', '=', personId).execute().catch(unlessDenied(undefined))
   if (person.auth_user_id) {
     const uid = person.auth_user_id
     for (const t of ['auth_session', 'auth_account', 'passkey', 'oauthAccessToken', 'oauthRefreshToken', 'oauthConsent']) {
-      await anyDb.deleteFrom(t).where('userId', '=', uid).execute().catch(() => undefined)
+      await ownerOf(anyDb).deleteFrom(t).where('userId', '=', uid).execute().catch(unlessDenied(undefined))
     }
-    await anyDb.deleteFrom('auth_user').where('id', '=', uid).execute()
+    await ownerOf(anyDb).deleteFrom('auth_user').where('id', '=', uid).execute()
   }
 
   // 5. Keep the row (history points at it) but nothing that identifies them.

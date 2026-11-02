@@ -1,3 +1,4 @@
+import { ownerPool, registerOwner } from './rls.ts'
 import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -82,7 +83,9 @@ export async function connectPglite<T>(
   // Checked outermost: under exclusivePool a nested checkout would otherwise wait forever before reaching the check.
   const pool = heldCheckPool(opts.wrapPool ? opts.wrapPool(base) : base)
   const db = new Kysely<T>({ dialect: new PostgresDialect({ pool: pool as never }) })
-  return { db, kind: 'postgres', close: () => db.destroy() }
+  const ownerDb = new Kysely<T>({ dialect: new PostgresDialect({ pool: ownerPool(pool) as never }) })
+  registerOwner(db, ownerDb)
+  return { db, ownerDb, kind: 'postgres', close: () => db.destroy() }
 }
 
 /**

@@ -7,6 +7,8 @@ choose exactly what Claude can see.
 
 **Status:** Bank connections on the hosted version go through Plaid. You can also upload statement files (CSV, OFX, QFX or QBO, or PDF statements: 11 known bank layouts import automatically when they reconcile, and any other PDF is kept for your AI to read) or connect through SimpleFIN Bridge, a separate paid service that links most US banks.
 
+Mortgages, student, auto and personal loans, and card APRs and due dates come through Plaid too. If you linked a bank earlier and don't see these, disconnect it, then connect it again.
+
 ## Set it up
 
 ### 1. Connect your bank accounts and cards to Aggregate

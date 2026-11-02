@@ -131,6 +131,19 @@ export function txnKind(type: string, reportingCategory?: string | null): Balanc
   }
 }
 
+const HELD = new Set([
+  'reserved_funds', 'reserve_hold', 'reserve_release', 'reserve_transaction', 'payment_network_reserve_hold', 'payment_network_reserve_release',
+  'payout_minimum_balance_hold', 'payout_minimum_balance_release', 'advance', 'advance_funding',
+])
+
+/** Funds held or settled early, a loan repayment, or a topup: on the balance sheet, not income or spending. */
+export function balanceRole(type: string): ProcessorBalanceTxn['balanceRole'] {
+  if (HELD.has(type)) return 'other_assets'
+  if (type === 'anticipation_repayment') return 'other_liabilities'
+  if (type === 'topup' || type === 'topup_reversal') return 'clearing_payouts'
+  return undefined
+}
+
 export const idOf = (v: string | { id: string } | null | undefined): string | undefined =>
   typeof v === 'string' ? v : v && typeof v.id === 'string' ? v.id : undefined
 
@@ -180,6 +193,7 @@ export function mapBalanceTxn(
     net,
     ...(payoutExternalId ? { payoutExternalId } : {}),
     ...(sourceId ? { sourceExternalId: sourceId } : {}),
+    ...(balanceRole(t.type) ? { balanceRole: balanceRole(t.type) } : {}),
     ...(customer ? { customer } : {}),
     ...(counterparty ? { counterparty } : {}),
     ...(traceId || chargePi ? { linkRefs: { ...(traceId ? { trace_id: traceId } : {}), ...(chargePi ? { payment_intent: chargePi } : {}) } } : {}),

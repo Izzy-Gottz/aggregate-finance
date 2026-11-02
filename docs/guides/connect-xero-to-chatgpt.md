@@ -1,11 +1,22 @@
 # Connect Xero to ChatGPT
 
 **Short answer:** connect Xero to Aggregate, then add Aggregate to ChatGPT with one link
-(`https://app.aggregate.finance/mcp`). ChatGPT can then answer questions about your invoices, bills, payments, contacts, bank transactions and reports, using one ledger that also holds your other
+(`https://app.aggregate.finance/mcp`). ChatGPT can then answer questions about your invoices, bills, payments, bank transactions and reports, using one ledger that also holds your other
 accounts and companies. Aggregate only reads from Xero, it can never move money, and you
 choose exactly what ChatGPT can see.
 
-**Status:** Live on the hosted version. Aggregate is not yet a certified Xero app, so Xero currently limits it to 25 connected organisations in total.
+**Status:** Live on the hosted version, with limited room. Aggregate is not a certified Xero app, so hosted Aggregate connects up to 5 Xero organisations in total, across all customers. Each organisation you choose takes one place. If they are all taken, you can [self-host](../self-hosting.md) with your own Xero app, or upload bank statements instead.
+
+## What it brings in
+
+- Your chart of accounts
+- Invoices and bills, with their credit notes
+- Payments, overpayments and prepayments
+- Bank transactions (spend and receive money)
+- Manual journals
+- Your monthly profit and loss, so Aggregate's totals can be checked against Xero's own
+
+Xero doesn't give apps access to Xero Payroll or expense claims, so wages, payroll tax and claimed expenses in Xero's profit and loss are missing from Aggregate's. Aggregate flags those months and says why. Connect your bank to include them.
 
 ## Set it up
 
@@ -56,4 +67,4 @@ Xero developer app.
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 
-*Last checked 2026-10-12.*
+*Last checked 2026-11-01.*

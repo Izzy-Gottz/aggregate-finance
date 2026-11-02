@@ -49,6 +49,8 @@ export interface Me {
   name: string
   email: string
   workspaceId: Id
+  /** This server offers "Invite someone" (AGFN_FRIEND_INVITES). */
+  friendInvites?: boolean
   /** The one link people paste into their AI. */
   mcpUrl: string
   /** True when the server runs on the person's own machine (no public URL for claude.ai / ChatGPT). */
@@ -762,6 +764,9 @@ export interface AgfnApi {
   preferences(): Promise<Preferences>
   updatePreferences(patch: Partial<Omit<Preferences, 'people' | 'signIn' | 'recovery'>>): Promise<Preferences>
   invite(email: string, role: RolePreset, entityIds: EntityId[] | 'all'): Promise<PersonRow>
+  /** Someone's own, separate account: nothing of yours is shared. */
+  friendLink(): Promise<{ link: string }>
+  inviteFriend(email: string): Promise<{ ok: true }>
   updatePerson(id: Id, patch: Partial<Pick<PersonRow, 'role' | 'entityIds' | 'grid'>>): Promise<PersonRow>
   /** Remove a member, or cancel a pending invite. Someone else: owners/admins, with a re-check; an owner only by an owner. */
   removePerson(id: Id): Promise<{ ok: true }>

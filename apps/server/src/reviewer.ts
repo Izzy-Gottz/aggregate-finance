@@ -19,7 +19,7 @@
 
 import { createHash, randomBytes } from 'node:crypto'
 import type { Kysely } from 'kysely'
-import { newId, nowIso, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
+import { ownerOf, newId, nowIso, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import { captureReviewerMagicLink, REVIEWER_EMAIL_DOMAIN } from '@agfn/auth'
 import type { LedgerEngine } from '@agfn/core'
 import { createDemoWorkspace, isDemoWorkspace, leaveDemoWorkspace, type DemoExtrasPorts } from '@agfn/demo'
@@ -61,7 +61,7 @@ export async function reviewerWorkspace(db: Kysely<CoreTables>, personId: string
  * link it came from, nor fall back to "the first workspace" when the account isn't demo-only.
  */
 export async function reviewerAccess(db: Kysely<CoreTables>, personId: string, now: Date = new Date()): Promise<string | null> {
-  const live = await db.selectFrom('reviewer_links').select('id').where('person_id', '=', personId).where('revoked_at', 'is', null).where('expires_at', '>', now.toISOString()).executeTakeFirst()
+  const live = await ownerOf(db).selectFrom('reviewer_links').select('id').where('person_id', '=', personId).where('revoked_at', 'is', null).where('expires_at', '>', now.toISOString()).executeTakeFirst()
   return live ? reviewerWorkspace(db, personId) : null
 }
 
@@ -79,20 +79,20 @@ export async function mintReviewerLink(deps: ReviewerDeps, opts: { label: string
   const token = randomBytes(32).toString('base64url')
   const id = newId()
   const expiresAt = new Date(now.getTime() + days * 86_400_000).toISOString()
-  await deps.db.insertInto('reviewer_links').values({ id, person_id: personId, token_hash: hashOf(token), label, created_at: now.toISOString(), expires_at: expiresAt, revoked_at: null, last_used_at: null, uses: 0 }).execute()
+  await ownerOf(deps.db).insertInto('reviewer_links').values({ id, person_id: personId, token_hash: hashOf(token), label, created_at: now.toISOString(), expires_at: expiresAt, revoked_at: null, last_used_at: null, uses: 0 }).execute()
   return { id, url: `${opts.baseUrl.replace(/\/+$/, '')}/review-access/${token}`, expiresAt, workspaceId, email }
 }
 
 export async function listReviewerLinks(db: Kysely<CoreTables>): Promise<Array<{ id: string; label: string; createdAt: string; expiresAt: string; revoked: boolean; uses: number; lastUsedAt: string | null }>> {
-  const rows = await db.selectFrom('reviewer_links').selectAll().orderBy('created_at', 'desc').execute()
+  const rows = await ownerOf(db).selectFrom('reviewer_links').selectAll().orderBy('created_at', 'desc').execute()
   return rows.map((r) => ({ id: r.id, label: r.label, createdAt: r.created_at, expiresAt: r.expires_at, revoked: Boolean(r.revoked_at), uses: Number(r.uses), lastUsedAt: r.last_used_at }))
 }
 
 /** Revoke a link and end every session of its reviewer account. */
 export async function revokeReviewerLink(db: Kysely<CoreTables>, id: string, now: Date = new Date()): Promise<boolean> {
-  const row = await db.selectFrom('reviewer_links').select(['person_id', 'revoked_at']).where('id', '=', id).executeTakeFirst()
+  const row = await ownerOf(db).selectFrom('reviewer_links').select(['person_id', 'revoked_at']).where('id', '=', id).executeTakeFirst()
   if (!row) return false
-  if (!row.revoked_at) await db.updateTable('reviewer_links').set({ revoked_at: now.toISOString() }).where('id', '=', id).execute()
+  if (!row.revoked_at) await ownerOf(db).updateTable('reviewer_links').set({ revoked_at: now.toISOString() }).where('id', '=', id).execute()
   await endReviewerAccess(db, row.person_id, now)
   return true
 }
@@ -108,14 +108,14 @@ async function endReviewerAccess(db: Kysely<CoreTables>, personId: string, now: 
   const person = await db.selectFrom('people').select('auth_user_id').where('id', '=', personId).executeTakeFirst()
   // Grants and agent keys are core tables: any failure there is thrown, never swallowed. Only the auth tables may be
   // missing (a minimal install without OAuth); anything else they throw is thrown too.
-  if (person?.auth_user_id) await optionalTable(anyDb.deleteFrom('auth_session').where('userId', '=', person.auth_user_id).execute())
+  if (person?.auth_user_id) await optionalTable(ownerOf(anyDb).deleteFrom('auth_session').where('userId', '=', person.auth_user_id).execute())
   const grants = ((await anyDb.selectFrom('grants').select('id').where('person_id', '=', personId).execute()) as Array<{ id: string }>).map((g) => g.id)
   await anyDb.updateTable('grants').set({ revoked_at: at, revoked_by: 'system:reviewer-revoke' }).where('person_id', '=', personId).where('revoked_at', 'is', null).execute()
   await anyDb.updateTable('agent_keys').set({ revoked_at: at }).where('created_by', '=', personId).where('revoked_at', 'is', null).execute()
   if (grants.length) {
     await anyDb.updateTable('agent_keys').set({ revoked_at: at }).where('grant_id', 'in', grants).where('revoked_at', 'is', null).execute()
-    await optionalTable(anyDb.deleteFrom('oauthRefreshToken').where('referenceId', 'in', grants).execute())
-    await optionalTable(anyDb.deleteFrom('oauthConsent').where('referenceId', 'in', grants).execute())
+    await optionalTable(ownerOf(anyDb).deleteFrom('oauthRefreshToken').where('referenceId', 'in', grants).execute())
+    await optionalTable(ownerOf(anyDb).deleteFrom('oauthConsent').where('referenceId', 'in', grants).execute())
   }
 }
 
@@ -144,7 +144,7 @@ export async function redeemReviewerLink(
 ): Promise<RedeemResult> {
   const now = deps.now?.() ?? new Date()
   if (!TOKEN_RE.test(token)) return { ok: false, reason: 'unknown' }
-  const row = await deps.db.selectFrom('reviewer_links').selectAll().where('token_hash', '=', hashOf(token)).executeTakeFirst()
+  const row = await ownerOf(deps.db).selectFrom('reviewer_links').selectAll().where('token_hash', '=', hashOf(token)).executeTakeFirst()
   if (!row) return { ok: false, reason: 'unknown' }
   if (row.revoked_at) return { ok: false, reason: 'revoked' }
   if (row.expires_at <= now.toISOString()) return { ok: false, reason: 'expired' }
@@ -157,7 +157,7 @@ export async function redeemReviewerLink(
   }
   const url = await captureReviewerMagicLink(() => deps.signIn(person.email))
   if (!url) throw new Error('reviewer sign-in: no link was produced')
-  await deps.db.updateTable('reviewer_links').set({ last_used_at: now.toISOString(), uses: Number(row.uses) + 1 }).where('id', '=', row.id).execute()
+  await ownerOf(deps.db).updateTable('reviewer_links').set({ last_used_at: now.toISOString(), uses: Number(row.uses) + 1 }).where('id', '=', row.id).execute()
   await deps.log?.(`reviewer link used (${row.label})`, { linkId: row.id, workspaceId: ws })
   return { ok: true, redirect: url, personId: person.id, workspaceId: ws }
 }
@@ -168,11 +168,11 @@ export async function redeemReviewerLink(
  */
 export async function reseedReviewerDemos(deps: ReviewerDeps): Promise<number> {
   const now = (deps.now?.() ?? new Date()).toISOString()
-  const live = await deps.db.selectFrom('reviewer_links').select('person_id').where('revoked_at', 'is', null).where('expires_at', '>', now).execute()
+  const live = await ownerOf(deps.db).selectFrom('reviewer_links').select('person_id').where('revoked_at', 'is', null).where('expires_at', '>', now).execute()
   const anyDb = deps.db as unknown as Kysely<Record<string, Record<string, unknown>>>
   // Links that ran out since: their accounts' sessions and AI connections end too (revocation does this at once).
   const liveIds = new Set(live.map((r) => r.person_id))
-  const dead = await deps.db.selectFrom('reviewer_links').select('person_id').where((eb) => eb.or([eb('revoked_at', 'is not', null), eb('expires_at', '<=', now)])).execute()
+  const dead = await ownerOf(deps.db).selectFrom('reviewer_links').select('person_id').where((eb) => eb.or([eb('revoked_at', 'is not', null), eb('expires_at', '<=', now)])).execute()
   for (const personId of new Set(dead.map((r) => r.person_id).filter((id) => !liveIds.has(id)))) {
     await endReviewerAccess(deps.db, personId, new Date(now))
     // The account can't be used again, so its demo books go too.
@@ -196,7 +196,9 @@ export async function reseedReviewerDemos(deps: ReviewerDeps): Promise<number> {
 
 /** Requests a reviewer session may not make: anything that creates, joins, deletes, invites or connects real providers. */
 export function reviewerBlocked(method: string, path: string): boolean {
-  const p = path.replace(/\/+$/, '')
+  let end = path.length
+  while (end > 0 && path[end - 1] === '/') end--
+  const p = path.slice(0, end)
   // Sign-in methods: blocked whatever the method (some of Better Auth's passkey routes are GETs).
   if (/^\/api\/auth\/(passkey\/|link-social|change-email|delete-user|update-user|unlink-account|list-accounts)/.test(p)) return true
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return false

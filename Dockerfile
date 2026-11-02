@@ -1,13 +1,13 @@
 # One image for self-host and hosted (MASTER.md §10). Node runs TypeScript directly; the web app is prebuilt here.
 # The runtime stage gets production dependencies and runtime sources only (no tests, fixtures, docs or build tools).
 
-FROM node:22-bookworm-slim AS manifests
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS manifests
 WORKDIR /app
 COPY packages ./packages-src
 # Only package manifests, so dependency layers stay cached until a manifest changes.
 RUN find packages-src -name package.json -not -path '*/node_modules/*' | while read f; do d=$(dirname "$f" | sed 's#^packages-src#packages#'); mkdir -p "$d"; cp "$f" "$d/"; done && rm -rf packages-src
 
-FROM node:22-bookworm-slim AS deps
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/server/package.json apps/server/
@@ -15,7 +15,7 @@ COPY apps/web/package.json apps/web/
 COPY --from=manifests /app/packages ./packages
 RUN npm ci --no-audit --no-fund
 
-FROM node:22-bookworm-slim AS prod-deps
+FROM node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/server/package.json apps/server/
@@ -42,8 +42,8 @@ RUN mkdir /out \
 
 # Plain Alpine plus the node binary (same Alpine release as the node image): no npm, yarn or corepack in the shipped
 # image. Every dependency is pure JavaScript (SQLite is node:sqlite), so musl is fine.
-FROM node:22-alpine3.24 AS node
-FROM alpine:3.24 AS runtime
+FROM node:22-alpine3.24@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS node
+FROM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS runtime
 RUN apk add --no-cache libstdc++ libgcc && addgroup -g 1000 node && adduser -u 1000 -G node -s /bin/sh -D node
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 ENV NODE_ENV=production \
@@ -59,7 +59,9 @@ COPY docs/legal ./docs/legal
 COPY docs/connect-your-ai.md ./docs/connect-your-ai.md
 COPY docs/recipes.md ./docs/recipes.md
 COPY docs/connectors.md ./docs/connectors.md
+COPY docs/institutions.json ./docs/institutions.json
 COPY docs/guides ./docs/guides
+COPY docs/institutions.json ./docs/institutions.json
 # AGFN_MASTER_KEY_COMMAND runs this at boot. The rest of scripts/ stays out of the image.
 COPY scripts/kms-master-key.mjs ./scripts/kms-master-key.mjs
 RUN mkdir -p /data && chown -R node:node /data && chmod 700 /data

@@ -68,7 +68,7 @@ export async function addMember(
   input: { workspaceId: string; email: string; name?: string; role: RolePreset; grid?: Partial<PermissionGrid>; expiresAt?: string | null; invitedBy: string },
 ): Promise<{ personId: string; membershipId: string }> {
   const email = input.email.trim().toLowerCase()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('That email address doesn’t look right')
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('That email address doesn’t look right')
   let person = await db.selectFrom('people').select('id').where('email', '=', email).executeTakeFirst()
   if (!person) {
     person = { id: newId() }

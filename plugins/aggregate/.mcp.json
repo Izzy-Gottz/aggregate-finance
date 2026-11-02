@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "aggregate": { "type": "http", "url": "https://app.aggregate.finance/mcp" }
+  }
+}

@@ -45,11 +45,12 @@ export function commands(app: App, close: () => void): Command[] {
     { id: 'connect-bank', group: 'Actions', label: 'Connect a bank or card', run: go(() => app.open({ kind: 'connect', key: 'plaid' })) },
     { id: 'more', group: 'Actions', label: 'Add a connection', run: go(() => app.open({ kind: 'connect' })) },
     { id: 'copy-link', group: 'Actions', label: 'Copy AI link', run: go(() => { navigator.clipboard?.writeText(ws.me.mcpUrl).catch(() => {}); app.toast({ text: 'AI link copied.' }) }) },
+    ...(ws.me.friendInvites && !ws.me.demo ? [{ id: 'friend-invite', group: 'Actions' as const, label: 'Invite someone', run: go(() => app.open({ kind: 'friend-invite' })) }] : []),
     { id: 'connect-ai', group: 'Actions', label: 'Connect another AI', run: go(() => app.open({ kind: 'connect-ai' })) },
     ...(isManager(app)
       ? [
           { id: 'new-company', group: 'Actions' as const, label: 'Add a company', run: go(() => app.open({ kind: 'company-new' })) },
-          { id: 'invite', group: 'Actions' as const, label: 'Invite someone', run: go(() => app.open({ kind: 'invite' })) },
+          { id: 'invite', group: 'Actions' as const, label: 'Add a teammate', run: go(() => app.open({ kind: 'invite' })) },
         ]
       : []),
     ...(ws.inbound.length ? [{ id: 'email-in', group: 'Actions' as const, label: 'Email addresses for bills and receipts', run: go(() => app.open({ kind: 'add', what: 'email' })) }] : []),
@@ -65,7 +66,7 @@ export function commands(app: App, close: () => void): Command[] {
     ...ws.ais.map((a) => ({ id: 'a:' + a.grantId, group: 'AI' as const, label: `${a.client} · ${a.personName}`, run: go(() => app.open({ kind: 'ai', id: a.grantId })) })),
   ]
   // Reviewer demo: leave out what the server refuses there.
-  const refused = new Set(['connect-bank', 'more', 'new-company', 'invite', 'pause'])
+  const refused = new Set(['connect-bank', 'more', 'new-company', 'invite', 'friend-invite', 'pause'])
   return isReviewer(app) ? list.filter((x) => !refused.has(x.id)) : list
 }
 

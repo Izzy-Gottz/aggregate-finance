@@ -173,6 +173,15 @@ export class WritePipeline {
     // 5. Holds.
     const heldBecause = await this.holdReason(w, settings.review_mode_default)
 
+    // A refusal nobody could fix at Review comes now: otherwise the AI hears "saved" and the person can only discard it.
+    try {
+      await this.deps.writer.precheck?.({ op: w.op, workspaceId: ws, entityId: w.entityId, payload: w.payload })
+    } catch (err) {
+      if (!(err instanceof WriteRejected)) throw err
+      await this.log(w, { action: `write.${w.op}`, status: 'denied', detail: err.message })
+      throw new ToolError('invalid', err.message)
+    }
+
     // 6. Claim the idempotency key.
     const id = newId(now.getTime())
     const row: WriteRequestsTable = {

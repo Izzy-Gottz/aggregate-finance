@@ -15,8 +15,8 @@ AI can show its work.
 ## Cash
 
 **The sum of the latest balance each bank reports for the accounts counted as cash: bank accounts, cash on hand and
-processor balances (Stripe, Square, Shopify…).** It uses the bank's *current* balance, not the *available* one. Accounts
-in other currencies are converted at the rate on the as-of date.
+processor balances (Stripe, Square, Shopify…).** It uses the *current* balance, not the *available* one, so a processor's pending
+funds count. Accounts in other currencies are converted at the rate on the as-of date.
 
 - **Card debt is not subtracted.** *Net cash* is cash minus what's owed on credit cards.
 - **Not cash:** loans, investment and retirement accounts (listed separately, never added to cash), accounts you set to
@@ -31,7 +31,7 @@ Code: `balanceMetric` and `computeCashFigures` in
 ## Burn
 
 **Gross burn** is everything spent in the period, cash basis: every expense account (card purchases on the day of the
-swipe, payroll, fees, taxes, software, rent…) plus refunds paid to customers.
+swipe, as your bank or card reports the date, payroll, fees, taxes, software, rent…) plus refunds paid to customers.
 
 **Net burn** is gross burn minus operating money in: revenue, interest and other income. Positive means the company is
 burning cash; zero or below means it isn't burning ("not burning").
@@ -77,8 +77,8 @@ Code: `revenueMetric` in
 - **Transfers between your own accounts**, including between your companies and you.
 - **Credit card payments.**
 - **Processor payouts** (Stripe, Square, Shopify to your bank). The sale was already counted when the customer was
-  charged; the payout only moves it. *The one exception:* if the processor isn't connected, the payout is the only
-  sign of those sales, so it counts as revenue, net of the fees you can't see.
+  charged; the payout only moves it. *The one exception:* if the processor isn't connected, the deposit waits in
+  Review as unexplained money. Once you say it's revenue, it counts net of the fees you can't see.
 - **Owner money:** a founder putting money in is a loan to the company or an owner contribution, never revenue. Until
   you say which, it's kept as "owner money, not yet specified".
 - **Investor money:** SAFEs, convertible notes and share purchases go to equity (SAFEs, convertible notes, paid-in

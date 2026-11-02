@@ -26,10 +26,10 @@ describe('Actions by role', () => {
     expect(screen.getByRole('button', { name: 'Sync now' })).toBeTruthy()
   })
 
-  it('an accountant sees no Invite someone or Add a company', async () => {
+  it('an accountant sees no Add a teammate or Add a company', async () => {
     start(as('accountant'), '#/preferences')
     await screen.findByText('Sign-in')
-    expect(screen.queryByRole('button', { name: /Invite someone/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Add a teammate/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /Add a company/ })).toBeNull()
   })
 

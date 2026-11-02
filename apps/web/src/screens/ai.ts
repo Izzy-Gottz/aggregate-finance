@@ -254,6 +254,7 @@ export function ConsentPage() {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState<string | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
+  const [expired, setExpired] = useState(false)
   const [outdated, setOutdated] = useState(false)
   // Signed in a while ago: Allow needs a quick check that it's you first (a passkey, or a code by email). Shown right
   // here with its own buttons; the AI's request is kept, so the check ends in Allow, never a dead end.
@@ -288,6 +289,8 @@ export function ConsentPage() {
       }
       // The words changed since this page loaded (c7's 409): reloading shows the current ones; the AI app needn't restart.
       else if (e instanceof HttpError && e.code === 'consent_outdated') (setOutdated(true), setFailed(e.message || 'This page is out of date. Reload this page and try again.'))
+      // Better Auth's signed query outlived its 30 minutes (auth.ts codeExpiresIn), or was changed: only the AI app can start a new one.
+      else if (e instanceof HttpError && e.code === 'invalid_signature') (setExpired(true), setFailed('Links to connect an AI last 30 minutes. Start again from your AI app.'))
       else setFailed(`${e instanceof Error ? e.message : 'That didn’t work.'} Start again from your AI app.`)
     } finally {
       setBusy(false)
@@ -317,7 +320,7 @@ export function ConsentPage() {
           ? html`<h1>This link expired</h1><p class="sub lead">${error} Start again from your assistant.</p>`
           : null}
       ${done ? html`<h1>Done</h1><p class="sub lead">${done}</p>` : null}
-      ${failed ? html`<h1>That didn’t work</h1><p class="sub lead" role="alert">${failed}</p>${outdated ? html`<div class="stack" style="margin-top:32px"><${Button} big onClick=${() => location.reload()}>Reload</${Button}></div>` : null}` : null}
+      ${failed ? html`<h1>${expired ? 'This link expired' : 'That didn’t work'}</h1><p class="sub lead" role="alert">${failed}</p>${outdated ? html`<div class="stack" style="margin-top:32px"><${Button} big onClick=${() => location.reload()}>Reload</${Button}></div>` : null}` : null}
       ${!error && !info ? html`<p class="sub lead" role="status">Loading…</p>` : null}
       ${!error && !done && !failed && info && current && app.ws
         ? html`<h1>Connect “${info.clientName}”?<span class="sub unverified"><span class="sr"> · </span>unverified name</span></h1>

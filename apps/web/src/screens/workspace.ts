@@ -131,6 +131,7 @@ export function WorkspacePage() {
       <${Pluses}>
         <${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'cash' })}>Add cash or a receipt</${PlusAction}>
         <${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'upload' })}>Upload a file</${PlusAction}>
+        ${isReviewer(app) || !app.ws?.me.friendInvites || app.ws.me.demo ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'friend-invite' })}>Invite someone</${PlusAction}>`}
         ${inbound.length && !limited ? html`<${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'email' })}>${inbound.length > 1 ? 'Other email addresses, and who can send' : 'Who can email it'}</${PlusAction}>` : null}
       </${Pluses}>
     </${Section}>

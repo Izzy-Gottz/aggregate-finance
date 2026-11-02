@@ -1,6 +1,7 @@
 // Scheduled retention (data-retention policy §8): raw provider payloads of a disconnected connection are deleted
 // 30 days after disconnect. Runs daily as the `retention.purge` worker job. The ledger is untouched; see the policy.
 
+import { ownerOf, unlessDenied } from '@agfn/db'
 import type { Kysely } from 'kysely'
 import type { CoreTables } from '@agfn/db'
 import { inactivityEmail } from '@agfn/auth'
@@ -44,13 +45,13 @@ export async function revokeUnboundOauthGrants(db: Kysely<CoreTables>, opts: { n
     .where('client_id', '!=', PUBLIC_DEMO_CLIENT)
   if (opts.personId) q = q.where('person_id', '=', opts.personId)
   if (opts.clientId) q = q.where('client_id', '=', opts.clientId)
-  const candidates = ((await q.execute().catch(() => [])) as Array<{ id: string }>).map((r) => r.id)
+  const candidates = ((await q.execute().catch(unlessDenied([]))) as Array<{ id: string }>).map((r) => r.id)
   if (!candidates.length) return 0
-  const bound = new Set(((await anyDb.selectFrom('oauthConsent').select('referenceId').where('referenceId', 'in', candidates).execute().catch(() => [])) as Array<{ referenceId: string }>).map((r) => r.referenceId))
+  const bound = new Set(((await ownerOf(anyDb).selectFrom('oauthConsent').select('referenceId').where('referenceId', 'in', candidates).execute().catch(unlessDenied([]))) as Array<{ referenceId: string }>).map((r) => r.referenceId))
   const orphans = candidates.filter((id) => !bound.has(id))
   if (!orphans.length) return 0
   await anyDb.updateTable('grants').set({ revoked_at: now.toISOString(), revoked_by: 'system:never-connected', updated_at: now.toISOString() }).where('id', 'in', orphans).execute()
-  await db.deleteFrom('oauth_pending_grants').where('grant_id', 'in', orphans).execute()
+  await ownerOf(db).deleteFrom('oauth_pending_grants').where('grant_id', 'in', orphans).execute()
   return orphans.length
 }
 
@@ -70,14 +71,14 @@ const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date
 export async function lastActivity(db: Kysely<CoreTables>, workspaceId: string): Promise<string | null> {
   const anyDb = db as unknown as AnyDb
   const ws = await db.selectFrom('workspaces').select('created_at').where('id', '=', workspaceId).executeTakeFirst()
-  const act = (await anyDb.selectFrom('activity_log').select((eb) => eb.fn.max('at').as('at')).where('workspace_id', '=', workspaceId).where('actor_kind', 'in', ['person', 'agent']).executeTakeFirst().catch(() => undefined)) as { at?: unknown } | undefined
-  const ai = (await anyDb.selectFrom('grants').select((eb) => eb.fn.max('last_used_at').as('at')).where('workspace_id', '=', workspaceId).executeTakeFirst().catch(() => undefined)) as { at?: unknown } | undefined
+  const act = (await anyDb.selectFrom('activity_log').select((eb) => eb.fn.max('at').as('at')).where('workspace_id', '=', workspaceId).where('actor_kind', 'in', ['person', 'agent']).executeTakeFirst().catch(unlessDenied(undefined))) as { at?: unknown } | undefined
+  const ai = (await anyDb.selectFrom('grants').select((eb) => eb.fn.max('last_used_at').as('at')).where('workspace_id', '=', workspaceId).executeTakeFirst().catch(unlessDenied(undefined))) as { at?: unknown } | undefined
   const users = (await db.selectFrom('memberships').innerJoin('people', 'people.id', 'memberships.person_id').select('people.auth_user_id').where('memberships.workspace_id', '=', workspaceId).where('memberships.revoked_at', 'is', null).execute())
     .map((r) => r.auth_user_id)
     .filter((x): x is string => Boolean(x))
   let signin: string | null = null
   if (users.length) {
-    const s = (await anyDb.selectFrom('auth_session').select((eb) => [eb.fn.max('updatedAt').as('u'), eb.fn.max('createdAt').as('c')]).where('userId', 'in', users).executeTakeFirst().catch(() => undefined)) as { u?: unknown; c?: unknown } | undefined
+    const s = (await ownerOf(anyDb).selectFrom('auth_session').select((eb) => [eb.fn.max('updatedAt').as('u'), eb.fn.max('createdAt').as('c')]).where('userId', 'in', users).executeTakeFirst().catch(unlessDenied(undefined))) as { u?: unknown; c?: unknown } | undefined
     signin = maxOf(iso(s?.u), iso(s?.c))
   }
   return maxOf(ws?.created_at, iso(act?.at), iso(ai?.at), signin)
