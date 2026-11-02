@@ -21,6 +21,8 @@ export interface MetricContext extends ReadContext {
   engine: { metricProviders?: Map<string, MetricProvider> }
   /** Optional per-request memo, so many metrics in one overview share one checks/review pass. */
   memo?: Map<string, Promise<unknown>>
+  /** AGFN_SET_ASIDES: runway uses available cash. */
+  setAsides?: boolean
 }
 
 function memo<T>(rc: MetricContext, key: string, fn: () => Promise<T>): Promise<T> {
@@ -691,7 +693,8 @@ async function availableCashMetric(s: Scope): Promise<CoreMetricAnswer> {
 async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
   const months = trailingMonths(s.asOf, 3)
   const figures = await cashFigures(s)
-  const out = await setAsideOut(s, figures.included)
+  // Flag off, set-asides change no number: runway is cash over burn, which is what the tools' note says.
+  const out = s.rc.setAsides ? await setAsideOut(s, figures.included) : { total: 0, lines: [] }
   const cash = { ...figures, cash: figures.cash - out.total }
   const cashWord = out.lines.length ? 'Available cash (after set-asides)' : 'Cash'
   const nets: number[] = []

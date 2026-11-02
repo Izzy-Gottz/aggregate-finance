@@ -11,13 +11,15 @@ on:
     types: [opened, closed, synchronize]
 
 permissions:
-  actions: write
-  contents: write # to write signatures to the cla-signatures branch
-  pull-requests: write
-  statuses: write
+  contents: read
 
 jobs:
   cla:
+    permissions:
+      actions: write
+      contents: write # to write signatures to the cla-signatures branch
+      pull-requests: write
+      statuses: write
     if: >-
       github.event.repository.private == false &&
       (github.event_name == 'pull_request_target' ||

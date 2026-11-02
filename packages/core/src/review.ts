@@ -30,6 +30,8 @@ export interface ReviewItem {
   question?: string
   /** The names from outside that question quotes; the rest of it is our own words. */
   questionNames?: string[]
+  /** When a move's money arrived, for telling two otherwise alike matches apart. */
+  arrivedOn?: string
   /** What Confirm does, in words ("Confirm: a card payment"), or "Yes" where the question already says it. */
   confirmLabel?: string
   /** "No" where the question is a yes-or-no one. */
@@ -209,7 +211,7 @@ async function computeReviewItems(rc: ReadContext, opts: { entityIds?: EntityId[
     rank.set(`suggested_match:${l.id}`, { tier: move && !personal ? TIER.moves : TIER.profit, minor: sized(from) })
     const asked = move ? moveQuestion(l, from, to) : undefined
     items.push({
-      ...(asked ? { rejectLabel: 'No', questionNames: [nameOf(from) ?? '', nameOf(to) ?? ''] } : {}),
+      ...(asked ? { rejectLabel: 'No', questionNames: [nameOf(from) ?? '', nameOf(to) ?? ''], arrivedOn: shortDate(to.date, year) } : {}),
       question: asked ?? (l.type === 'invoice_payment' ? `Is this payment of ${docWord(from)}${docNumber(from)}?` : `Is this ${LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' ')}?`),
       id: `suggested_match:${l.id}`,
       kind: 'suggested_match',
@@ -437,7 +439,9 @@ function oneCardPerMovement(items: ReviewItem[], links: Link[], linked: Map<Id, 
     const ids = new Set(card.recordIds)
     const alternatives = left.filter((i) => i.recordIds.some((id) => ids.has(id)))
     for (const a of alternatives) left.splice(left.indexOf(a), 1)
-    kept.set(card.id, alternatives.length ? { ...card, alternatives } : card)
+    // Same words for different deposits: the day each arrived is the difference.
+    const arriving = (i: ReviewItem): ReviewItem => (alternatives.some((a) => a.question === card.question) && i.arrivedOn ? { ...i, question: i.question?.replace(/\?$/, `, arriving ${i.arrivedOn}?`) } : i)
+    kept.set(card.id, alternatives.length ? { ...arriving(card), alternatives: alternatives.map(arriving) } : card)
   }
   return items.flatMap((i) => (isMove(i) ? (kept.has(i.id) ? [kept.get(i.id) as ReviewItem] : []) : [i]))
 }

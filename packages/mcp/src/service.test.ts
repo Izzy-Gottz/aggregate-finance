@@ -174,6 +174,16 @@ describe('reads', () => {
     expect((await call(principal, 'get_metric', { metric: 'cash' })).data.checks).toBeUndefined()
   })
 
+  it('get_overview says when a zero means no data, and what bills_due_30d adds up, only for what the grant covers', async () => {
+    const ov = await call((await H.connectAi({})).principal, 'get_overview')
+    const gaps = (ov.data.companies as Array<{ company: string; owed_to_you: { total: { amount: string } } }>).filter((c) => c.owed_to_you.total.amount === '0.00').map((c) => c.company)
+    expect(gaps.length).toBeGreaterThan(0)
+    expect(ov.summary).toContain(`No invoices to read for ${gaps.join(', ')}: owed_to_you 0.00 there means no data, not nothing owed.`)
+    expect(ov.summary).toContain('bills_due_30d adds up open bills, recurring charges and card and loan minimums.')
+    const narrow = await call((await H.connectAi({ dataTypes: ['balances'] })).principal, 'get_overview')
+    for (const word of ['owed_to_you', 'bills_due_30d']) expect(narrow.summary).not.toContain(word)
+  })
+
   it('get_overview shows invoices, bills, payroll and MRR only where the grant covers them', async () => {
     const { principal } = await H.connectAi({ entityIds: [DEMO.acme], dataTypes: ['balances'] })
     const ov = await call(principal, 'get_overview')

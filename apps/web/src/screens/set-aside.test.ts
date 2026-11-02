@@ -22,7 +22,7 @@ describe('Set aside', () => {
     const id = api.s.entities.find((e) => e.kind === 'company')!.id
     api.s.companies[id]!.entity.setAside = { available: usd(12_500), held: usd(7_500) }
     start(api, `#/?d=company:${id}`)
-    await screen.findByText('Cash $12,500 · $7,500 set aside')
+    await screen.findByText('Available $12,500 · $7,500 set aside')
   })
 
   it('a bucket with nothing set aside offers it behind +', async () => {

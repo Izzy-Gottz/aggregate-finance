@@ -358,9 +358,15 @@ const getOverview = defineTool({
       })
       .map((a) => ({ kind: a.kind, company: a.entityId ? s.names.get(a.entityId) : null, text: untrusted(a.text, SYSTEM_ATTENTION.has(a.kind) ? 'aggregate' : 'processor_description'), record_id: a.recordId ?? null }))
     const checks = ov.failingChecks.filter(checkVisible)
+    // The field stays a 0 while the directory reviews pin the output: the summary says what that 0 means.
+    const noData = (figure: 'owedToYou' | 'billsDue30d', seen: Set<EntityId>) => inScope(ov.entities, s.set).filter((e) => seen.has(e.entityId) && e.noData?.includes(figure)).map((e) => s.names.get(e.entityId))
+    const noInvoices = noData('owedToYou', inv)
+    const noBills = noData('billsDue30d', bills)
+    const owedNote = noInvoices.length ? ` No invoices to read for ${noInvoices.join(', ')}: owed_to_you 0.00 there means no data, not nothing owed.` : ''
+    const billsNote = bills.size ? ` bills_due_30d adds up open bills, recurring charges and card and loan minimums.${noBills.length ? ` No bills to read for ${noBills.join(', ')}: open bills aren't in that figure there, and 0.00 means no data, not nothing due.` : ''}` : ''
     return {
       data: { as_of: ov.asOf, home_currency: ov.homeCurrency, companies, attention, needs_review: checks.map((c) => ({ company: c.entityId ? s.names.get(c.entityId) : null, check: c.check, detail: c.detail })), freshness: freshness(sources, ctx.clock.now()) },
-      summary: companies.map((c) => `${c.company}: cash ${c.cash ? `${say(c.cash.amount, c.cash.currency)}` : 'unknown'}${c.available_cash ? ` (available ${say(c.available_cash.amount, c.available_cash.currency)} after set-asides)` : ''}${burnLine(c)}${c.caveats?.length ? ` (${[...new Set(c.caveats.map((x) => x.reason))].join('; ')})` : ''}${c.books_closed_through ? `, books closed through ${c.books_closed_through}` : ''}`).join('; ') + (checks.length ? `. ${checks.length} reconciliation check(s) need review.` : '') + (await heldBucketsNote(ctx, args.company)),
+      summary: companies.map((c) => `${c.company}: cash ${c.cash ? `${say(c.cash.amount, c.cash.currency)}` : 'unknown'}${c.available_cash ? ` (available ${say(c.available_cash.amount, c.available_cash.currency)} after set-asides)` : ''}${burnLine(c)}${c.caveats?.length ? ` (${[...new Set(c.caveats.map((x) => x.reason))].join('; ')})` : ''}${c.books_closed_through ? `, books closed through ${c.books_closed_through}` : ''}`).join('; ') + (checks.length ? `. ${checks.length} reconciliation check(s) need review.` : '') + owedNote + billsNote + (await heldBucketsNote(ctx, args.company)),
       rows: companies.length,
       entityIds: s.ids,
     }

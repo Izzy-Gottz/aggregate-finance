@@ -29,17 +29,17 @@ export async function loadInstalledModules(env: NodeJS.ProcessEnv, given?: { reg
     const install = registry.installedConnectors
     out.connectors = ({ fileSource }) => install(env, { fileSource })
   }
-  out.ledger = (h) => ledgerFor(h.db)
+  out.ledger = (h, config) => ledgerFor(h.db, config)
   // Finance (S1 + S4/S5 + S6) composed once per database; also registers the sync engine's book routing and
   // payroll-detection hooks.
   out.mcp = (s) => mcpFor(s, financeFor(s))
   return out
 }
 
-export function ledgerFor(db: Kysely<CoreTables>): LedgerEngine {
+export function ledgerFor(db: Kysely<CoreTables>, config: { setAsides?: boolean } = {}): LedgerEngine {
   const scope = new DbScope(db as never)
   const store = new KyselyLedgerStore(scope)
-  const engine = new LedgerEngine({ store, directory: new KyselyDirectory(scope), rates: new CachedRateSource(store, new FrankfurterRateSource()) })
+  const engine = new LedgerEngine({ store, directory: new KyselyDirectory(scope), rates: new CachedRateSource(store, new FrankfurterRateSource()), ...(config.setAsides ? { setAsides: true } : {}) })
   // S6 answers get_metric('fully_diluted') from the cap table.
   engine.registerMetricProvider('fully_diluted', equityFor({ db, ledger: engine as never }).fullyDilutedMetric)
   return engine

@@ -43,6 +43,7 @@ Both must pass. Don't skip or loosen tests to make them green; if a test is wron
 - **Never move money.** Connectors are read-only at the source, and Aggregate never sends payments, invoices or emails
   on anyone's behalf. Pull requests that change this won't be merged.
 - **Every amount must reconcile.** Ledger changes need tests that prove totals still balance.
+- **New behavior comes with tests.** A new feature or a bug fix adds tests that fail without it.
 - **No real financial data** in fixtures, screenshots or issues. Use made-up companies.
 - **Small pull requests**, one change each, with a sentence on why.
 
@@ -52,6 +53,10 @@ Aggregate is [AGPL-3.0](LICENSE). On your first pull request, a bot will ask you
 [Contributor License Agreement](docs/legal/CLA.md) by posting one comment. You keep the copyright in your work; the agreement lets
 the project use your contribution and, if it ever needs to, offer the code under other license terms too. If you
 contribute on behalf of your employer, have them sign the entity part once (details in [the agreement](docs/legal/CLA.md)).
+
+## Releases
+
+How versions, tags and release notes work is in [docs/releasing.md](docs/releasing.md).
 
 ## Security
 

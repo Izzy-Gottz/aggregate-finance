@@ -148,7 +148,7 @@ export class AgfnHttp {
   }
 
   private challenge(status: 401 | 403, error: string, description: string): Response {
-    const scope = status === 403 ? ` scope="${SCOPES.read} ${SCOPES.write}",` : ''
+    const scope = ` scope="${SCOPES.read} ${SCOPES.write}",`
     return json({ error, error_description: description }, status, {
       'www-authenticate': `Bearer resource_metadata="${this.resourceMetadataUrl}",${scope} error="${error}", error_description="${description.replace(/"/g, "'")}"`,
     })

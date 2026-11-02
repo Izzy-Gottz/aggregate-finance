@@ -61,7 +61,7 @@ export interface BootOptions {
   mailer?: Mailer
   /** Connector factories, or a function that builds them once platform services (the upload queue) exist. */
   connectors?: ConnectorFactory[] | ((ctx: { fileSource: Documents['fileSource'] }) => ConnectorFactory[])
-  ledger?: (db: DbHandle<CoreTables>) => Ledger
+  ledger?: (db: DbHandle<CoreTables>, config: Pick<ServerConfig, 'setAsides'>) => Ledger
   mcp?: (s: Omit<Services, 'mcp'>) => McpModule
   fileStore?: FileStore
   /** Where nightly backups go (tests). Default: BACKUP_S3_* when set, otherwise no backups. */
@@ -254,7 +254,7 @@ export async function boot(opts: BootOptions): Promise<Booted> {
   await withBypass('auth:seed', () => auth.$context)
 
   const registry = new ConnectorRegistry()
-  const ledger = opts.ledger ? opts.ledger(handle) : emptyLedger
+  const ledger = opts.ledger ? opts.ledger(handle, config) : emptyLedger
   // Accounts given a company by a migration (0301) are re-posted once, the same way as /api/accounts/assign.
   await withBypass('migrate:reassign', () => applyPendingReassignments(handle.db, ledger))
   const queue = new JobQueue(handle.db)

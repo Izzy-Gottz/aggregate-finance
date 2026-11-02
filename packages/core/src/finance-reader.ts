@@ -328,6 +328,7 @@ export class LedgerFinanceReader implements FinanceReader {
         billsDue30d: mv(ap),
         nextPayroll,
         ...caveatsOf({ cash, cardDebt: cards, netBurn3mo: burn, runwayMonths: runway }),
+        ...noDataOf({ owedToYou: arOpen, billsDue30d: ap }),
       })
       if (typeof runway.value === 'number' && runway.value < 6) attention.push({ kind: 'low_runway', entityId: e.id, text: `${e.name}: about ${runway.value} months of runway` })
       for (const it of receivable.filter((i) => i.dueDate && i.dueDate < asOfDate).slice(0, 3)) {
@@ -1233,6 +1234,11 @@ export class LedgerFinanceReader implements FinanceReader {
 const CATEGORY_CHUNK = 500
 
 /** Overview figures that are unknown or stale, with the reason (the figure itself shows 0 or the last known value). */
+function noDataOf(figures: Record<'owedToYou' | 'billsDue30d', MetricAnswer>): { noData?: NonNullable<OverviewEntity['noData']> } {
+  const out = (Object.keys(figures) as Array<keyof typeof figures>).filter((f) => figures[f].state === 'no_data')
+  return out.length ? { noData: out } : {}
+}
+
 function caveatsOf(figures: Record<'cash' | 'cardDebt' | 'netBurn3mo' | 'runwayMonths', MetricAnswer>): { caveats?: NonNullable<OverviewEntity['caveats']> } {
   const out: NonNullable<OverviewEntity['caveats']> = []
   for (const [figure, a] of Object.entries(figures) as Array<[keyof typeof figures, MetricAnswer]>) {

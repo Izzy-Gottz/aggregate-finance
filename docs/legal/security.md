@@ -98,8 +98,10 @@ files right away, and they age out of backups within 30 days.
 Today only the founder can reach the production systems: directly, or through AI tools the founder runs under the
 founder's own accounts. The accounts that reach production are protected by two-step sign-in where the provider
 offers it. Customer data is looked at only to fix a problem a customer reported, to respond to a security incident,
-or when the law requires it. The app's activity log records each question an AI connection asks and every change
-made through Aggregate; direct database access by the founder isn't logged that way today. If anyone else ever gets
+or when the law requires it. The app's activity log records each question an AI connection asks and every change made through Aggregate. When we run
+a command on one workspace's data from our server, we record who ran it and why, and that workspace's owners and admins
+can see it through their AI, as "Aggregate support · reason". There's no screen for this in the app yet. Commands that
+cover every workspace are recorded in our own log. Direct database access by the founder isn't logged this way today. If anyone else ever gets
 access, it will be written down, limited to what the job needs, and removed when it's no longer needed.
 
 ## Open source

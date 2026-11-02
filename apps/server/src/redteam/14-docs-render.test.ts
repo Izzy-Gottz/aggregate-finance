@@ -10,6 +10,7 @@ import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { boot } from '../boot.ts'
 import { createApp } from '../app.ts'
 import { loadConfig } from '../config.ts'
+import { DOCS_JS_PATH } from '../docs-shell.ts'
 import { renderLegal, renderMarkdown } from '../legal.ts'
 
 const TAG = /^(?:\/?(?:p|h[123]|ul|ol|li|strong|code|pre|mark|blockquote|table|thead|tbody|tr|th|td|a)|a href="(?:https?:\/\/|mailto:)[^"<>]*"|h[123] id="[a-z0-9-]*")>/
@@ -164,7 +165,8 @@ process.stdout.write(JSON.stringify(out))`
         // attribute handler could not run.
         expect(/script-src ([^;]*)/.exec(csp)?.[1] ?? '', path).not.toMatch(/unsafe-inline|unsafe-eval|\*(?!\.)/)
         const body = await plain.text()
-        expect(body, path).not.toMatch(/<script|\son\w+=|javascript:/i)
+        // The docs frame's one script is same-origin and fixed; nothing else may appear, on any page.
+        expect(body.replace(`<script src="${DOCS_JS_PATH}" defer></script>`, ''), path).not.toMatch(/<script|\son\w+=|javascript:/i)
         // Rendered once at boot: the query string can't change a byte.
         const q = await app.request(`${path}?title=${encodeURIComponent(X)}&q=${encodeURIComponent(X)}`)
         expect(await q.text(), path).toBe(body)

@@ -126,7 +126,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<Server> {
       ...((opts.connectors ?? []).some((f) => keyOf(f) === 'files') ? [] : [(d: Parameters<ConnectorFactory>[0]) => createFilesConnector({ source: fileSource as never }, d)]),
     ],
     // Same wiring as modules.ts loadInstalledModules: the S1 engine, then finance (S1 + S4/S5) behind MCP.
-    ledger: (h) => ledgerFor(h.db),
+    ledger: (h, c) => ledgerFor(h.db, c),
     mcp: (s) => mcpFor(s, financeFor(s)),
   })
   return { booted, app: createApp(booted.services), outbox, files, close: () => booted.shutdown() }

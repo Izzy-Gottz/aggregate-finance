@@ -215,6 +215,7 @@ export class DemoBooks implements FinanceReader, RecordWriter {
         owedToYou: { total: usd(open(recv)), overdue: usd(open(recv.filter((i) => i.status === 'overdue'))) },
         billsDue30d: usd(open(pay)),
         nextPayroll: null,
+        ...(recv.length && pay.length ? {} : { noData: [...(recv.length ? [] : ['owedToYou' as const]), ...(pay.length ? [] : ['billsDue30d' as const])] }),
       }
     })
     const attention: Overview['attention'] = []

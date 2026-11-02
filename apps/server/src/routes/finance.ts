@@ -5,7 +5,7 @@
 
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import type { AccountView, Actor, DataType, FinanceReader, HoldingView, MetricAnswer, Money, ReadScope } from '@agfn/contracts'
+import type { AccountView, Actor, DataType, FinanceReader, HoldingView, MetricAnswer, Money, ReadScope, SetAsideView } from '@agfn/contracts'
 import { RegisterError } from '@agfn/connector-payroll-detect'
 import { ToolError } from '@agfn/mcp'
 import type { RequestPerson } from '../app.ts'
@@ -47,7 +47,7 @@ const ACCOUNT_KIND: Partial<Record<AccountView['type'], 'bank' | 'card' | 'payme
 const STALE_MS = 48 * 3600_000
 
 /** A bucket without a schedule, told by what it holds: "$25,000 · SAFE · Mar 1, 2026"; "N paid" once payments exist. */
-export function bucketLine(b: { name: string; fields: Array<{ key: string; type: string }>; values: Record<string, unknown>; status: { paid: number } }): string {
+export function bucketLine(b: { name: string; fields: Array<{ key: string; type: string }>; values: Record<string, unknown>; status: { paid: number } }, held?: Money): string {
   if (b.status.paid > 0) return `${b.status.paid} paid`
   const of = (type: string) => b.fields.filter((f) => f.type === type).map((f) => b.values[f.key])
   const money = of('money').filter((v): v is Money => !!v && typeof v === 'object' && typeof (v as Money).minor === 'number' && typeof (v as Money).currency === 'string').map(fmtMoney)
@@ -55,7 +55,8 @@ export function bucketLine(b: { name: string; fields: Array<{ key: string; type:
   const text = of('text').filter((v): v is string => typeof v === 'string' && !!v.trim() && !name.includes(v.trim().toLowerCase())).map((v) => v.trim().slice(0, 40))
   const dates = of('date').filter((v): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)).map((v) => new Date(`${v}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }))
   const parts = [...money, ...text, ...dates]
-  return parts.length ? parts.slice(0, 4).join(' · ') : 'Nothing paid yet'
+  if (parts.length) return parts.slice(0, 4).join(' · ')
+  return held ? `Set aside ${fmtMoney(held)}` : 'Nothing paid yet'
 }
 
 /** Minor units to major ones by the currency's own exponent (JPY 0, USD 2, BHD 3), never a fixed 100. */
@@ -165,6 +166,11 @@ export function financeRoutes(s: S, o: { setAsides?: boolean } = {}): Hono<Env> 
     const availableAnswer = await started.availableCash
     const availableValue = availableAnswer?.value && typeof availableAnswer.value === 'object' ? availableAnswer.value : null
     const setAside = cashValue && availableValue && availableValue.minor !== cashValue.minor ? { available: availableValue, held: { minor: cashValue.minor - availableValue.minor, currency: cashValue.currency } } : null
+    // Runway starts from available cash, so the rows have to come to that figure.
+    const runwayExplained = (answer: MetricAnswer) => {
+      const e = explained('Runway', answer)
+      return setAside ? { ...e, rows: [...e.rows, { id: 'set-aside', label: 'Set aside', detail: 'Doesn’t count in cash', amount: { minor: -setAside.held.minor, currency: setAside.held.currency } }] } : e
+    }
     const trend = cashValue ? await started.trend : []
 
     // Books, payroll and equity sections.
@@ -187,22 +193,32 @@ export function financeRoutes(s: S, o: { setAsides?: boolean } = {}): Hono<Env> 
       }
     }
     let bills: Record<string, unknown> | null = null
-    if (seeBills && payable.length) {
+    if (seeBills && (payable.length || (ov?.billsDue30d.minor ?? 0) > 0)) {
       // Due in the next 30 days as get_overview counts it: open bills, recurring charges and card/loan minimums.
       const soon = payable.filter((v) => (v.dueDate ?? v.issueDate) <= addDays(today, 30) && v.total.currency === currency)
+      const openSoon = soon.reduce((sum, v) => sum + open(v).minor, 0)
+      const dueSoon = ov?.billsDue30d ?? { minor: openSoon, currency }
+      const other = dueSoon.minor - openSoon
       bills = {
-        dueSoon: ov?.billsDue30d ?? { minor: soon.reduce((sum, v) => sum + open(v).minor, 0), currency },
+        dueSoon,
+        ...(other > 0 ? { breakdown: { openBills: { minor: openSoon, currency: dueSoon.currency }, recurring: { minor: other, currency: dueSoon.currency } } } : {}),
         rows: payable
           .sort((a, b) => ((a.dueDate ?? a.issueDate) < (b.dueDate ?? b.issueDate) ? -1 : 1))
           .map((v) => ({ id: v.id, name: v.counterparty, amount: open(v), dueDate: v.dueDate ?? v.issueDate, detail: v.status === 'overdue' ? `${v.daysOverdue} days overdue` : (v.number ?? v.source) })),
       }
     }
 
+    // Only this company's accounts, and only for someone who may see its balances: a set-aside can span companies.
+    const heldHere = (b: { setAside?: SetAsideView }): Money | undefined => {
+      const here = o.setAsides && seeBalances ? (b.setAside?.perAccount ?? []).filter((p) => p.entityId === entity.id) : []
+      const minor = here.reduce((n, p) => n + p.heldBase.minor, 0)
+      return minor > 0 ? { minor, currency: here[0]!.heldBase.currency } : undefined
+    }
     const buckets = seeBuckets
       ? ((await started.buckets) ?? []).map((b) => ({
           id: b.id,
           name: b.name,
-          line: b.schedule ? `${fmtMoney(b.schedule.amount)} ${b.schedule.cadence}${b.schedule.dueDay ? ` · day ${b.schedule.dueDay}` : ''}` : bucketLine(b),
+          line: b.schedule ? `${fmtMoney(b.schedule.amount)} ${b.schedule.cadence}${b.schedule.dueDay ? ` · day ${b.schedule.dueDay}` : ''}` : bucketLine(b, heldHere(b)),
           status: b.status.missed > 0 ? 'missed' : b.status.upcoming > 0 ? 'upcoming' : 'ok',
         }))
       : []
@@ -265,7 +281,7 @@ export function financeRoutes(s: S, o: { setAsides?: boolean } = {}): Hono<Env> 
       entity: { id: entity.id, kind: entity.kind, name: entity.name, currency, cash: cashValue, ...(setAside ? { setAside } : {}), hidden: await personalHidden(s.db, ws, entity, p.personId) },
       asOf: now.toISOString(),
       cash: cashAnswer ? explained('Cash', cashAnswer) : null,
-      runway: runwayAnswer ? { months: runwayAnswer.state !== 'unknown' && typeof runwayAnswer.value === 'number' ? runwayAnswer.value : null, state: ov?.runwayState ?? runwayAnswer.state ?? 'no_data', explained: explained('Runway', runwayAnswer) } : null,
+      runway: runwayAnswer ? { months: runwayAnswer.state !== 'unknown' && typeof runwayAnswer.value === 'number' ? runwayAnswer.value : null, state: ov?.runwayState ?? runwayAnswer.state ?? 'no_data', explained: runwayExplained(runwayAnswer) } : null,
       trend,
       accounts: accountRows,
       owedToYou,

@@ -146,6 +146,8 @@ export interface EngineOptions {
   ruleSuggestThreshold?: number
   /** Reuse checks and review results until the next write (default true). */
   shareDerived?: boolean
+  /** AGFN_SET_ASIDES: runway uses available cash. Off, set-asides change no number (default off). */
+  setAsides?: boolean
 }
 
 export interface PostOptions {
@@ -220,6 +222,7 @@ export class LedgerEngine implements Ledger {
   #locks = new Map<WorkspaceId, Promise<unknown>>()
   #derived = new Map<WorkspaceId, { version: number; at: number; values: Map<string, Promise<unknown>> }>()
   readonly #shareDerived: boolean
+  readonly #setAsides: boolean
   #records = new Map<string, { version: number; rows: number; value: Promise<readonly SourceRecord[]> }>()
 
   constructor(opts: EngineOptions) {
@@ -229,6 +232,7 @@ export class LedgerEngine implements Ledger {
     this.now = opts.now ?? (() => new Date().toISOString())
     this.ruleSuggestThreshold = opts.ruleSuggestThreshold ?? 3
     this.#shareDerived = opts.shareDerived ?? true
+    this.#setAsides = opts.setAsides ?? false
   }
 
   /**
@@ -1922,6 +1926,7 @@ export class LedgerEngine implements Ledger {
       now: this.now(),
       toCurrency: (amount, to, date) => this.#toCurrency(amount, to, date),
       engine: this,
+      ...(this.#setAsides ? { setAsides: true } : {}),
       ...(this.#shareDerived ? { shared: this.#sharedFor(ws) } : {}),
     }
   }

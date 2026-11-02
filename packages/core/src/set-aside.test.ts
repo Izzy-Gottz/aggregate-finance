@@ -17,7 +17,7 @@ describe.each(backends)('set-asides (%s)', (backend) => {
   const minor = (v: unknown) => (v as { minor: number }).minor
 
   beforeEach(async () => {
-    k = await makeKit(backend)
+    k = await makeKit(backend, { setAsides: true })
     acme = await k.company('Acme')
     k.setNow('2026-10-28T12:00:00.000Z')
   })
@@ -147,6 +147,24 @@ describe.each(backends)('set-asides (%s)', (backend) => {
     const after = await metric('runway')
     expect(after.value as number).toBeLessThan(before.value as number)
     expect(after.formula).toContain('Available cash')
+  })
+
+  it('flag off, runway ignores set-asides: cash over burn, as the tools say', async () => {
+    const off = await makeKit(backend)
+    try {
+      const id = await off.company('Acme')
+      off.setNow('2026-10-28T12:00:00.000Z')
+      const bank = await off.account({ entityId: id, name: 'Bank' })
+      await off.engine.postBatch(off.ws, [snapshot(bank, '2026-10-27', 1_200_000), txn(bank, '2026-07-05', -100_000, { externalId: 'a' }), txn(bank, '2026-08-05', -100_000, { externalId: 'b' }), txn(bank, '2026-09-05', -100_000, { externalId: 'c' })])
+      const runway = () => off.engine.metric('runway', { workspaceId: off.ws, entityIds: [id] })
+      const before = await runway()
+      await off.engine.createBucket(off.ws, { entityId: id, name: 'Taxes', setAside: { allocations: [{ accountId: bank.id, kind: 'fixed', minor: 600_000 }], countsInCash: false } })
+      const after = await runway()
+      expect(after.value).toBe(before.value)
+      expect(after.formula).not.toContain('Available cash')
+    } finally {
+      await off.close()
+    }
   })
 })
 

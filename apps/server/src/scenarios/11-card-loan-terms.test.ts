@@ -72,6 +72,9 @@ describe('scenario 11: card and loan terms, investment holdings', () => {
       expect(up.filter((u) => u.what === 'Navient')).toEqual([])
       const ov = await asWs(() => reader.overview(scope))
       expect(ov.entities.find((e) => e.entityId === E.Acme)!.billsDue30d).toEqual(usd(28_500))
+      // Nothing billed, only minimums: the app still shows the section, with the same number.
+      const shown = (await s.get<{ bills: { dueSoon: unknown } | null }>(`/api/entities/${E.Acme}`)).body.bills
+      expect(shown?.dueSoon).toEqual(usd(28_500))
 
       // The drawers carry one line of terms per card or loan (and nothing on the others).
       type Row = { name: string; terms?: Record<string, unknown> }

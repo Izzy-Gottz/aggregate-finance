@@ -449,6 +449,13 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
       expect(o.attention.map((a) => a.kind)).toEqual(expect.arrayContaining(['overdue_invoice', 'needs_review']))
     })
 
+    it('overview: a company with no invoices or bills says so, so its zeros are not read as nothing owed', async () => {
+      const bare = await k.company('Bare')
+      const o = await f.reader.overview({ ...scope, entityIds: [acme, bare] })
+      expect(o.entities.find((e) => e.entityId === bare)?.noData).toEqual(['owedToYou', 'billsDue30d'])
+      expect(o.entities.find((e) => e.entityId === acme)).not.toHaveProperty('noData')
+    })
+
     it('counterparty, upcoming, reports, record view', async () => {
       const cp = await f.reader.counterparty(scope, 'Globex')
       expect(cp).toMatchObject({ name: 'Globex Corp', receivedFromThemAllTime: [usd(120_000)], paidToThemAllTime: [] })

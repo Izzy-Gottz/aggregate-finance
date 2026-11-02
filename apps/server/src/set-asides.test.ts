@@ -120,6 +120,10 @@ describe('set-asides through the tools', () => {
       const id = await accountId(ai, 'Savings')
       const ok = await s.post('/api/buckets', { entityId: E['Acme'], name: 'Taxes', setAside: { allocations: [{ accountId: id, amount: usd(500_000) }], countsInCash: false }, idempotencyKey: 'short-bucket-0001' })
       expect(ok.status, JSON.stringify(ok.body)).toBe(201)
+      const drawer = (await s.get<{ buckets: Array<{ name: string; line: string }>; runway: { explained: { rows: Array<{ label: string; amount: { minor: number } }> } } }>(`/api/entities/${E['Acme']}`)).body
+      expect(drawer.buckets.find((b) => b.name === 'Taxes')?.line).toBe('Set aside $5,000')
+      expect(drawer.runway.explained.rows.reduce((n, r) => n + r.amount.minor, 0)).toBe(1_500_000)
+      expect(drawer.runway.explained.rows.at(-1)).toMatchObject({ label: 'Set aside', amount: { minor: -500_000 } })
       const line = await ai.try('get_overview', { company: 'Acme' })
       expect(line.text).toContain('cash $20,000.00 (available $15,000.00 after set-asides)')
       expect((await s.get<Array<{ kind: string }>>('/api/review')).body.map((r) => r.kind)).not.toContain('set_aside_short')

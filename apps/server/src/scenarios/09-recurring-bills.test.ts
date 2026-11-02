@@ -62,6 +62,10 @@ describe('scenario 9: recurring bills and subscriptions', () => {
       // Bills due in 30 days: the open Comcast bill (120) + Slack (60) + Linear (24). Comcast once, not twice.
       const ov = await ai.call<{ companies: Array<{ company: string; bills_due_30d: Wire }> }>('get_overview', {})
       expect(minor(ov.companies.find((c) => c.company === 'Acme')?.bills_due_30d)).toBe(20_400)
+      // The app says the same number, and what's in it.
+      const bills = (await s.get<{ bills: { dueSoon: { minor: number }; breakdown: { openBills: { minor: number }; recurring: { minor: number } } } }>(`/api/entities/${E.Acme}`)).body.bills
+      expect(bills.dueSoon.minor).toBe(20_400)
+      expect([bills.breakdown.openBills.minor, bills.breakdown.recurring.minor]).toEqual([12_000, 8_400])
       const up = await ai.call<{ items: Array<{ kind: string; what: string; date: string; amount: Wire }> }>('list_upcoming', { company: 'Acme', days: 30 })
       expect(up.items.filter((i) => i.kind === 'subscription').map((i) => [i.what, i.date, i.amount.amount])).toEqual([
         ['Slack Technologies', '2026-10-14', '-60.00'],

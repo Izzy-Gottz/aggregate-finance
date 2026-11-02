@@ -4,7 +4,7 @@
 //                                     server can't serve fake companies; it also carries a .mock marker)
 //   node scripts/build.mjs --serve    dev server on :5178 with rebuilds; proxies nothing (use ?api=mock, or run apps/server)
 import * as esbuild from 'esbuild'
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { brotliCompressSync, constants } from 'node:zlib'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -50,6 +50,8 @@ await rm(out, { recursive: true, force: true })
 await mkdir(out, { recursive: true })
 // The home-screen icon: the Convergence mark from the brand kit (apps/site/brand, meridn-23).
 await copyFile(join(root, '../site/brand/app-icons/aggregate-gold-on-black-512.png'), join(out, 'apple-touch-icon.png'))
+// Brand icons for the public docs' connections page (apps/server/src/docs-shell.ts), which inlines them at boot.
+await cp(join(root, 'src/ui/brand'), join(out, 'brand'), { recursive: true, filter: (f) => !f.endsWith('README.md') })
 // The share-preview image (scripts/og.ts makes it from the mark).
 await copyFile(join(root, '../site/brand/og/aggregate-og.png'), join(out, 'og.png'))
 // The ChatGPT app review's demo video (openai-plugin/plugin.json demo_recording_url; docs/compliance/mcp-directory.md §5).

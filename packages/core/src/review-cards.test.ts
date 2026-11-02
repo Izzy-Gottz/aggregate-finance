@@ -33,6 +33,15 @@ describe('Review cards', () => {
     expect((await k.engine.store.getLink(k.ws, items[0]!.linkId!))?.type).toBe('intercompany')
   })
 
+  it('two deposits alike but for the day they arrived: each question says both dates', async () => {
+    const [a, b] = [await account(acme, 'Ally'), await account(acme, 'Summit Savings')]
+    await k.engine.postBatch(k.ws, [txn(a, '2026-11-09', -10_000), txn(b, '2026-11-10', 10_000), txn(b, '2026-11-12', 10_000)])
+    await k.engine.reconcile(k.ws)
+    const [card] = await matches()
+    expect(card!.question).toBe('Did you move $100.00 from Ally to Summit Savings on Nov 9, arriving Nov 10?')
+    expect(card!.alternatives?.map((x) => x.question)).toEqual(['Did you move $100.00 from Ally to Summit Savings on Nov 9, arriving Nov 12?'])
+  })
+
   it('one withdrawal that fits two deposits is one card: the closest first, the other behind it', async () => {
     const [a, b, c] = [await account(acme, 'Ally'), await account(acme, 'Summit Savings'), await account(acme, 'Harbor Checking')]
     await k.engine.postBatch(k.ws, [txn(a, '2026-11-09', -10_000), txn(c, '2026-11-12', 10_000), txn(b, '2026-11-10', 10_000)])

@@ -33,12 +33,25 @@ describe('forDocsHost', () => {
     expect(html).not.toContain('/docs/')
   })
   it('maps paths', () => {
-    expect(docsPath('/')).toBe('/docs/guides')
+    expect(docsPath('/')).toBe('/docs')
     expect(docsPath('/guides/connect-claude')).toBe('/docs/guides/connect-claude')
   })
 })
 
 describe('the docs host', () => {
+  it('answers security.txt on the app and the docs host', async () => {
+    await withApp({ AGFN_DOCS_HOST: HOST }, async (app) => {
+      for (const host of [HOST, 'money.example.com']) {
+        const res = await app.request('https://' + host + '/.well-known/security.txt', { headers: { host } })
+        expect(res.status).toBe(200)
+        expect(res.headers.get('content-type')).toContain('text/plain')
+        const text = await res.text()
+        expect(text).toContain('Contact: mailto:security@aggregate.finance')
+        expect(new Date(/Expires: (\S+)/.exec(text)![1]!).getTime()).toBeGreaterThan(Date.now())
+      }
+    })
+  })
+
   it('serves clean paths from the same pages, with no way back to /docs on the page', async () => {
     await withApp({ AGFN_DOCS_HOST: HOST }, async (app) => {
       for (const p of ['/', '/connectors', '/recipes', '/connect-your-ai', '/guides', '/guides/connect-claude', '/api']) {

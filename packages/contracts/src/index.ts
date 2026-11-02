@@ -943,6 +943,8 @@ export interface OverviewEntity {
   nextPayroll: { date: IsoDate; estimate: Money } | null
   /** Figures that are unknown (show "unknown", not the 0 above) or use stale balances (show the caveat). */
   caveats?: Array<{ figure: 'cash' | 'cardDebt' | 'netBurn3mo' | 'runwayMonths'; state: 'unknown' | 'stale'; reason: string }>
+  /** Figures with no invoices or bills behind them: a 0 above means no data, not nothing owed. */
+  noData?: Array<'owedToYou' | 'billsDue30d'>
 }
 
 export interface AttentionItem {

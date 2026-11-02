@@ -41,7 +41,7 @@ import { deleteAccount, SoleOwnerError } from './delete-account.ts'
 import { deleteIfMemberless, queueIfMemberless, workspacesOf } from './orphans.ts'
 import { confirmRecheckCode, confirmRecheckLink, RECHECK_LINK_MINUTES, safeReturnTo, sendRecheckLink } from './recheck.ts'
 import { revokeUnboundOauthGrants } from './retention.ts'
-import { findLegalFonts, loadGuides, loadLegalPages, loadPublicDocs, renderLegal, withBaseUrl } from './legal.ts'
+import { findLegalFonts, loadGuides, loadLegalPages, loadPublicDocs, renderDoc, renderDocsHome, renderLegal, withBaseUrl } from './legal.ts'
 import { apiDocsMarkdown, type OpenApiDoc } from './api-docs.ts'
 import { readFileSync } from 'node:fs'
 import { demoDocuments, isReviewerEmail, redeemReviewerLink, reviewerAccess, reviewerBlocked } from './reviewer.ts'
@@ -50,6 +50,7 @@ import { financeFor } from './finance.ts'
 import { confirmPage, dropPending, embeddedPage, SHOPIFY_LINK_COOKIE, shopifyEmbeddedRoutes, takePendingByLink } from './shopify-embedded.ts'
 import { deleteUploadedFile, FileDeleteError } from './delete-file.ts'
 import { docsHost } from './docs-host.ts'
+import { DOCS_JS, DOCS_JS_PATH, DOCS_SEARCH_PATH, docsSearchIndex, loadDocsIcons } from './docs-shell.ts'
 import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, ERASE_WHEN_REVOKED, eraseConnectionData, SHOPIFY_ERASE_WARNING, logConnectionChange, noteConnection, providerOrgOf, retireDeleted, retireReplaced } from './retire.ts'
 import { personalHidden } from './personal.ts'
 import { termsByAccount } from './account-terms.ts'
@@ -111,6 +112,16 @@ function signInMethodsFor(config: ServerConfig): string[] {
   return ['passkey', 'magic_link', ...(config.google ? ['google'] : []), ...(config.apple ? ['apple'] : []), ...(config.github ? ['github'] : [])]
 }
 
+const SECURITY_TXT = [
+  'Contact: mailto:security@aggregate.finance',
+  'Expires: 2027-10-31T00:00:00.000Z',
+  'Preferred-Languages: en',
+  'Canonical: https://app.aggregate.finance/.well-known/security.txt',
+  'Canonical: https://docs.aggregate.finance/.well-known/security.txt',
+  'Policy: https://app.aggregate.finance/security',
+  '',
+].join('\n')
+
 export function createApp(s: Services): Hono<Env> {
   const app = new Hono<Env>()
   const { db, config } = s
@@ -134,7 +145,7 @@ export function createApp(s: Services): Hono<Env> {
         host: config.docsHost,
         baseUrl: config.baseUrl,
         isDoc: (p) => p === SETUP_DOCS_PATH || listedDocs().includes(p),
-        sitemap: () => sitemapXml(`https://${config.docsHost}`, listedDocs().map((p) => p.replace(/^\/docs\/?/, '/').replace(/^\/guides$/, '/'))),
+        sitemap: () => sitemapXml(`https://${config.docsHost}`, listedDocs().map((p) => p.replace(/^\/docs\/?/, '/'))),
         render: (p, c) => Promise.resolve(app.fetch(new Request(new URL(p, config.baseUrl), { method: c.req.method }), { docsInner: true } as never)),
       }),
     )
@@ -204,6 +215,8 @@ export function createApp(s: Services): Hono<Env> {
   app.get('/.well-known/openai-apps-challenge', (c) =>
     config.openaiAppsChallenge ? c.text(config.openaiAppsChallenge, 200, { 'cache-control': 'no-store' }) : c.notFound(),
   )
+  // Where to report a security problem (RFC 9116). Expires has to stay in the future: renew it before then.
+  app.get('/.well-known/security.txt', (c) => c.text(SECURITY_TXT, 200, { 'cache-control': 'public, max-age=86400' }))
   // Glama's connector ownership check (docs/launch/directories.md); 404 unless a claim token is configured.
   app.get('/.well-known/glama.json', (c) =>
     config.glamaClaim
@@ -1763,7 +1776,10 @@ export function createApp(s: Services): Hono<Env> {
   const legal = loadLegalPages(undefined, findLegalFonts(config.webDist))
   for (const name of ['privacy', 'terms', 'security', 'support'] as const) app.get(`/${name}`, (c) => c.html(withBaseUrl(legal[name].html, config.baseUrl, `/${name}`), 200, { 'cache-control': 'public, max-age=300' }))
   // Public docs (connect-your-ai.md, recipes.md; legal.ts PUBLIC_DOCS), same renderer: stable URLs for the directory listings.
-  const docs = loadPublicDocs(undefined, findLegalFonts(config.webDist))
+  const docs = loadPublicDocs(undefined, findLegalFonts(config.webDist), loadDocsIcons(config.webDist))
+  const docsHomePage = renderDocsHome(findLegalFonts(config.webDist))
+  app.get('/docs', (c) => c.html(withBaseUrl(docsHomePage.html, config.baseUrl, '/docs'), 200, { 'cache-control': 'public, max-age=300' }))
+  app.get(DOCS_JS_PATH, (c) => c.body(DOCS_JS, 200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' }))
   for (const slug of Object.keys(docs) as Array<keyof typeof docs>) app.get(`/docs/${slug}`, (c) => c.html(withBaseUrl(docs[slug].html, config.baseUrl, `/docs/${slug}`), 200, { 'cache-control': 'public, max-age=300' }))
   // REST reference (api-docs.ts), built once from this server's own /v1/openapi.json so it matches the tools it serves
   // (without the MCP module, from the default tool set).
@@ -1773,7 +1789,7 @@ export function createApp(s: Services): Hono<Env> {
       const res = s.mcp ? await s.mcp.fetch(new Request(new URL('/v1/openapi.json', config.baseUrl))) : null
       if (res && !res.ok) return null
       const spec = (res ? await res.json() : buildOpenApi(new URL('/mcp', config.baseUrl).href)) as OpenApiDoc
-      return renderLegal(`---\ntitle: Aggregate REST API\nstatus: final\n---\n\n${apiDocsMarkdown(spec)}`, findLegalFonts(config.webDist)).html
+      return renderDoc(`---\ntitle: Aggregate REST API\nstatus: final\n---\n\n${apiDocsMarkdown(spec)}`, findLegalFonts(config.webDist), '/docs/api').html
     })().catch((e) => (console.warn('[agfn] /docs/api', e), null))
     const html = await apiPage
     if (!html) {
@@ -1790,7 +1806,19 @@ export function createApp(s: Services): Hono<Env> {
   }
   app.get('/docs/guides', guidePage('', '/docs/guides'))
   app.get('/docs/guides/:slug{[a-z0-9-]+}', (c) => guidePage(c.req.param('slug'), `/docs/guides/${c.req.param('slug')}`)(c))
-  const listedDocs = () => [...Object.keys(docs).map((d) => `/docs/${d}`), '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
+  app.get(DOCS_SEARCH_PATH, (c) =>
+    c.json(
+      docsSearchIndex([
+        { path: '/docs', title: docsHomePage.title, html: docsHomePage.html },
+        ...Object.entries(docs).map(([d, p]) => ({ path: `/docs/${d}`, title: p.title, html: p.html })),
+        ...[...guideDocs].map(([g, p]) => ({ path: g ? `/docs/guides/${g}` : '/docs/guides', title: p.title, html: p.html })),
+        { path: '/docs/api', title: 'Aggregate REST API', html: '' },
+      ]),
+      200,
+      { 'cache-control': 'public, max-age=300' },
+    ),
+  )
+  const listedDocs = () => ['/docs', ...Object.keys(docs).map((d) => `/docs/${d}`), '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
   // After a disconnect made inside QuickBooks or Xero, they send the person here (the app's Disconnect URL in their portals):
   // a plain page saying what happened and how to reconnect. Static and public, like the legal pages.
   const PROVIDER_PAGES = { quickbooks: 'QuickBooks', xero: 'Xero' } as const

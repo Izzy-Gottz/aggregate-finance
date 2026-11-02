@@ -8,6 +8,7 @@ describe('bucket line', () => {
     expect(bucketLine({ name: 'Stake in Lumen Health', fields, values, status: { paid: 0 } })).toBe('$25,000 · SAFE · Mar 1, 2026')
     expect(bucketLine({ name: 'SAFE in Lumen', fields, values, status: { paid: 0 } })).toBe('$25,000 · Mar 1, 2026')
     expect(bucketLine({ name: 'Rent', fields, values, status: { paid: 3 } })).toBe('3 paid')
+    expect(bucketLine({ name: 'Taxes', fields: [], values: {}, status: { paid: 0 } }, { minor: 200_000, currency: 'USD' })).toBe('Set aside $2,000')
     expect(bucketLine({ name: 'Empty', fields: [], values: {}, status: { paid: 0 } })).toBe('Nothing paid yet')
   })
 })

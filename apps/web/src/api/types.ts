@@ -265,7 +265,7 @@ export interface CompanyDetail {
   trend: number[]
   accounts: AccountRow[]
   owedToYou: { total: Money; overdue: Money; aging: Array<{ label: string; amount: Money }>; invoices: InvoiceRow[] } | null
-  bills: { dueSoon: Money; rows: BillRow[] } | null
+  bills: { dueSoon: Money; breakdown?: { openBills: Money; recurring: Money }; rows: BillRow[] } | null
   buckets: BucketSummary[]
   payroll: PayrollSummary | null
   equity: EquitySummary | null

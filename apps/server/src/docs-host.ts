@@ -3,12 +3,12 @@
 // host's own clean paths. The app's old /docs URLs move there for good. Off unless AGFN_DOCS_HOST is set.
 import type { Context, Next } from 'hono'
 
-/** What the page itself needs on this host: fonts, icons. Everything else there is a doc, or a 404. */
-const ASSET = /^\/(assets\/|favicon\.|apple-touch-icon)/
+/** What the page itself needs on this host: fonts, icons; and security.txt. Everything else there is a doc, or a 404. */
+const ASSET = /^\/(assets\/|favicon\.|apple-touch-icon|\.well-known\/security\.txt$)/
 /** Pages that belong to the app, reached from a doc's header. */
 const APP_PAGES = new Set(['/privacy', '/terms', '/security', '/support'])
 
-export const docsPath = (path: string): string => (path === '/' ? '/docs/guides' : `/docs${path}`)
+export const docsPath = (path: string): string => (path === '/' ? '/docs' : `/docs${path}`)
 
 /** A page written for the app, as it reads on the docs host. */
 export function forDocsHost(html: string, baseUrl: string, host: string): string {

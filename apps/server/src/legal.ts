@@ -4,6 +4,7 @@
 
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { connectionsBody, docsHomeBody, docsPage } from './docs-shell.ts'
 
 export interface LegalPage {
   title: string
@@ -149,11 +150,13 @@ export function findLegalFonts(webDist: string): LegalFonts {
 
 // The app's tokens (apps/web/src/ui/tokens.css): light only, off-white page, near-black ink, hairline rules, a thin
 // Geist for text and a light Newsreader for headings, one centered column.
+const face = (family: string, url: string | undefined, weights: string) =>
+  url ? `@font-face{font-family:'${family}';src:url('${url}') format('woff2-variations'),url('${url}') format('woff2');font-weight:${weights};font-display:swap}` : ''
+const faces = (f: LegalFonts) => `${face('Geist', f.geist, '100 900')}${face('Newsreader', f.newsreader, '200 800')}`
+
 function style(f: LegalFonts): string {
-  const face = (family: string, url: string | undefined, weights: string) =>
-    url ? `@font-face{font-family:'${family}';src:url('${url}') format('woff2-variations'),url('${url}') format('woff2');font-weight:${weights};font-display:swap}` : ''
   return `
-${face('Geist', f.geist, '100 900')}${face('Newsreader', f.newsreader, '200 800')}
+${faces(f)}
 :root{--page:#FAF9F7;--ink:#1F1B1C;--grey:#6B6766;--faint:#A8A4A0;--rule:#E7E4E0;--tile:#EFEDE9;--amber:#8A5A00;--serif:'Newsreader',Georgia,'Times New Roman',serif;--sans:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--page);color:var(--ink)}
@@ -238,6 +241,20 @@ ${renderMarkdown(body)}
   return { title, draft, html }
 }
 
+/** A public docs page in the docs frame (docs-shell.ts). `body` replaces the markdown, for pages built from it. */
+export function renderDoc(md: string, fonts: LegalFonts, path: string, o: { body?: (md: string) => string; wide?: boolean } = {}): LegalPage {
+  const { meta, body } = frontMatter(md.replace(/\r\n?/g, '\n').replace(/<!--[\s\S]*?-->\n?/g, ''))
+  const title = meta.title ?? 'Aggregate'
+  const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Aggregate</title><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="canonical" href="${BASE_URL_TOKEN}${PATH_TOKEN}">${shareMeta(`${title} · Aggregate`, summary(meta, body))}<style>${faces(fonts)}</style>`
+  return { title, draft: false, html: docsPage({ path, head, body: o.body ? o.body(body) : renderMarkdown(body), ...(o.wide ? { wide: true } : {}) }) }
+}
+
+/** The docs home. Its words live in docs-shell.ts: it's a page of links, not a document. */
+export function renderDocsHome(fonts: LegalFonts): LegalPage {
+  const md = '---\ntitle: Get started\ndescription: Connect your accounts, then connect the AI you already use. Aggregate only reads; it can\'t move money.\n---\n'
+  return renderDoc(md, fonts, '/docs', { body: docsHomeBody })
+}
+
 /** Read and render both pages. Missing files give a short "not published" page instead of failing boot. */
 export function loadLegalPages(dir: URL = new URL('../../../docs/legal/', import.meta.url), fonts: LegalFonts = {}): Record<'privacy' | 'terms' | 'security' | 'support', LegalPage> {
   const load = (name: 'privacy' | 'terms' | 'security' | 'support', title: string) => {
@@ -275,7 +292,7 @@ export function publicDocLinks(md: string): string {
   })
 }
 
-export function loadPublicDocs(dir: URL = new URL('../../../docs/', import.meta.url), fonts: LegalFonts = {}): Record<keyof typeof PUBLIC_DOCS, LegalPage> {
+export function loadPublicDocs(dir: URL = new URL('../../../docs/', import.meta.url), fonts: LegalFonts = {}, icons: Record<string, string> = {}): Record<keyof typeof PUBLIC_DOCS, LegalPage> {
   const out = {} as Record<keyof typeof PUBLIC_DOCS, LegalPage>
   for (const [slug, d] of Object.entries(PUBLIC_DOCS) as Array<[keyof typeof PUBLIC_DOCS, (typeof PUBLIC_DOCS)[keyof typeof PUBLIC_DOCS]]>) {
     let body: string
@@ -284,7 +301,9 @@ export function loadPublicDocs(dir: URL = new URL('../../../docs/', import.meta.
     } catch {
       body = `# ${d.title}\n\nNot published yet.\n`
     }
-    out[slug] = renderLegal(`---\ntitle: ${d.title}\nstatus: final\n---\n\n${publicDocLinks(body)}`, fonts)
+    const page = `---\ntitle: ${d.title}\nstatus: final\n---\n\n${publicDocLinks(body)}`
+    const connections = slug === 'connectors' ? { wide: true, body: (md: string) => connectionsBody(md, renderMarkdown, icons) } : {}
+    out[slug] = renderDoc(page, fonts, `/docs/${slug}`, connections)
   }
   return out
 }
@@ -323,7 +342,8 @@ export function loadGuides(dir: URL = new URL('../../../docs/guides/', import.me
     if (!m) continue
     const md = readFileSync(new URL(file, dir), 'utf8').replace(/\r\n?/g, '\n')
     const title = (/^# (.+)$/m.exec(md)?.[1] ?? 'Guides').trim().replace(/\n/g, ' ').replace(/\s*:\s+/g, ' – ').replace(/:/g, ' ')
-    out.set(m[1] === 'README' ? '' : m[1]!, renderLegal(`---\ntitle: ${title}\nstatus: final\n---\n\n${guideLinks(md)}`, fonts))
+    const slug = m[1] === 'README' ? '' : m[1]!
+    out.set(slug, renderDoc(`---\ntitle: ${title}\nstatus: final\n---\n\n${guideLinks(md)}`, fonts, slug ? `/docs/guides/${slug}` : '/docs/guides'))
   }
   return out
 }

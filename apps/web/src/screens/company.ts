@@ -161,7 +161,7 @@ function Header({ c, sub }: { c: CompanyDetail; sub: string }) {
       ${shown}
     </button>
     ${caveat ? html`<p class="sub amber">${caveat}</p>` : null}
-    ${c.entity.setAside ? html`<p class="sub">Cash ${fmt(c.entity.setAside.available)} · ${fmt(c.entity.setAside.held)} set aside</p>` : null}
+    ${c.entity.setAside ? html`<p class="sub">Available ${fmt(c.entity.setAside.available)} · ${fmt(c.entity.setAside.held)} set aside</p>` : null}
     ${c.entity.kind === 'personal' && !c.entity.hidden ? html`<p class="sub">${isPublicDemo(app) ? 'Made-up, like the rest of the demo.' : 'Only you see this.'}</p>` : null}
     <${MrrLine} c=${c} />
     <p class="sub">
@@ -229,7 +229,7 @@ export function CompanySections({ c }: { c: CompanyDetail }) {
       : null}
 
     ${c.bills
-      ? html`<${Section} compact title="Bills & you owe soon" sub=${`${fmt(c.bills.dueSoon)} due in the next 30 days · every open bill below`}>
+      ? html`<${Section} compact title="Bills & you owe soon" sub=${`${fmt(c.bills.dueSoon)} due in the next 30 days · ${c.bills.breakdown ? `${fmt(c.bills.breakdown.openBills)} in open bills, ${fmt(c.bills.breakdown.recurring)} in recurring charges and minimums` : 'every open bill below'}`}>
           <${Rows}>
             ${c.bills.rows.map((b) => {
               const due = dueWords(b.dueDate, now)
