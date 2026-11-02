@@ -202,6 +202,8 @@ export class HttpClient {
         signal: AbortSignal.timeout(this.timeoutMs),
       })
     } catch (e) {
+      // A guarded fetch's own refusal (a blocked address) says what it is; it isn't a network error to retry.
+      if (e instanceof ConnectorError) throw e
       const timeout = e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError')
       throw new ConnectorError('transient', timeout ? 'request timed out' : 'network error', {
         provider: this.provider,

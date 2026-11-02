@@ -1,3 +1,7 @@
+---
+description: Connect Square to Claude through Aggregate. Ask about sales, payouts and fees next to your bank data. Read-only.
+---
+
 # Connect Square to Claude
 
 **Short answer:** connect Square to Aggregate, then add Aggregate to Claude with one link

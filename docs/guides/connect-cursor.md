@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Cursor or VS Code as a remote MCP server, then ask about your finances from your editor. Read-only.
+---
+
 # Connect Cursor or VS Code to Aggregate
 
 **One click:** [Add Aggregate to Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=aggregate&config=eyJ1cmwiOiJodHRwczovL2FwcC5hZ2dyZWdhdGUuZmluYW5jZS9tY3AifQ==) or [Add Aggregate to VS Code](vscode:mcp/install?%7B%22name%22%3A%22aggregate%22%2C%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fapp.aggregate.finance%2Fmcp%22%7D) (opens the app and asks you to confirm).

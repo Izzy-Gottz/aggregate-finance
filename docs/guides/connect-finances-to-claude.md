@@ -1,3 +1,7 @@
+---
+description: Connect your bank, Stripe and QuickBooks to Claude with one read-only link. Ask about cash, runway and MRR from one ledger. Free during beta.
+---
+
 # Connect your bank, Stripe and QuickBooks to Claude
 
 **Short answer:** connect your bank, Stripe and QuickBooks Online to Aggregate, then add Aggregate to Claude as a custom

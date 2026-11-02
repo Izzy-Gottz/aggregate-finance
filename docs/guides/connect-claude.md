@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Claude as a custom connector: step-by-step setup for web, desktop and mobile, then ask Claude about your real finances. Read-only.
+---
+
 # Connect Claude to Aggregate
 
 Works in claude.ai, the Claude desktop app and the Claude iPhone and Android apps. Custom connectors need a paid

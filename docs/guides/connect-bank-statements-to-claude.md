@@ -1,3 +1,7 @@
+---
+description: Upload CSV, OFX, QFX or PDF bank statements to Aggregate and ask Claude about them. No bank connection needed. Read-only, and free during beta.
+---
+
 # Connect bank statements to Claude
 
 **Short answer:** connect bank statements (CSV, OFX or PDF) to Aggregate, then add Aggregate to Claude with one link

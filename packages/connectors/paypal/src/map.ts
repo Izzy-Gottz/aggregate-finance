@@ -46,9 +46,10 @@ export function mapBalance(accountId: string, b: PayPalBalanceDetail, connection
  * Event code families (PayPal "Transaction event codes"):
  * T00xx PayPal-account-to-PayPal-account payments, T01xx non-payment fees, T02xx currency conversion,
  * T03xx bank deposits into PayPal, T04xx bank withdrawals out of PayPal, T05xx/T06xx debit/credit card,
- * T07xx/T08xx/T09xx other, T11xx reversals (T1106 PayPal-initiated reversal, T1107 refund...),
- * T12xx adjustments (T1201 chargeback, T1202 chargeback reversal...), T15xx/T16xx/T21xx holds and reserves,
- * T17xx/T18xx/T19xx/T20xx/T22xx other.
+ * T07xx/T08xx/T09xx other, T11xx reversals (T1106 payment reversal, T1107 refund, and fee, bank and hold reversals),
+ * T12xx adjustments and chargebacks, T15xx holds, T16xx buyer credit, T21xx holds and reserves,
+ * T17xx/T18xx/T19xx/T20xx other, T98xx display-only rows that don't touch the balance.
+ * https://developer.paypal.com/docs/transaction-search/transaction-event-codes/
  */
 export function kindForEventCode(code: string | undefined): ProcessorKind {
   if (!code || !/^T\d{4}$/.test(code)) return 'other'
@@ -65,9 +66,12 @@ export function kindForEventCode(code: string | undefined): ProcessorKind {
     case 'T04':
       return 'payout'
     case 'T11':
+      if (code === 'T1108' || code === 'T1109') return 'fee'
+      if (code === 'T1101' || code === 'T1104' || code === 'T1112') return 'transfer'
+      if (code === 'T1105' || code === 'T1110' || code === 'T1111') return 'adjustment'
       return code === 'T1106' ? 'dispute' : 'refund'
     case 'T12':
-      return 'dispute'
+      return code === 'T1200' || code === 'T1203' || code === 'T1204' ? 'adjustment' : 'dispute'
     case 'T15':
     case 'T16':
     case 'T21':
@@ -84,17 +88,18 @@ export function payerName(p: PayPalPayerInfo | undefined): string | undefined {
   return full ? full.slice(0, 120) : undefined
 }
 
-/** Holds and reserves (T15xx, T21xx), or a bank deposit into PayPal (T03xx): on the balance sheet, not income or spending. */
+/** Holds and reserves (T15xx, T21xx, dispute holds), or a bank deposit into PayPal and its reversal: on the balance sheet, not income or spending. */
 export function balanceRoleForEventCode(code: string): ProcessorBalanceTxn['balanceRole'] {
-  if (code.startsWith('T15') || code.startsWith('T21')) return 'other_assets'
-  if (code.startsWith('T03')) return 'clearing_payouts'
+  if (code === 'T2109' || code === 'T2110') return undefined // gift certificates
+  if (code.startsWith('T15') || code.startsWith('T21') || code === 'T1105' || code === 'T1110' || code === 'T1111') return 'other_assets'
+  if (code.startsWith('T03') || code === 'T1104') return 'clearing_payouts'
   return undefined
 }
 
-/** Denied rows (status D) never moved money; we skip them. Returns undefined for rows without an amount. */
+/** Denied rows (status D) never moved money, and display-only rows (T98xx) don't touch the balance; we skip them. Returns undefined for rows without an amount. */
 export function mapTxn(d: PayPalTransactionDetail, accountId: string, connectionId: string, rawRef: string): ProcessorBalanceTxn | undefined {
   const t = d.transaction_info
-  if (!t.transaction_amount || t.transaction_status === 'D') return undefined
+  if (!t.transaction_amount || t.transaction_status === 'D' || t.transaction_event_code?.startsWith('T98')) return undefined
   const cur = normalizeCurrency(t.transaction_amount.currency_code)
   const gross = money(t.transaction_amount.value, cur)
   const feeRaw = t.fee_amount ? money(t.fee_amount.value, cur) : { minor: 0, currency: cur }

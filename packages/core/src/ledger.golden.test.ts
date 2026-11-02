@@ -1111,6 +1111,40 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       expect(o.attention.map((a) => a.kind)).not.toContain('low_runway')
     })
 
+    it('a month-end date counts the month just ended; a start date with no end stops at the last full month', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      await k.engine.postBatch(k.ws, [txn(bank, '2026-07-01', -300_000), txn(bank, '2026-08-10', -600_000), txn(bank, '2026-09-10', -900_000), txn(bank, '2026-10-05', -9_000_000), snapshot(bank, '2026-10-08', 6_000_000)])
+      const atEnd = await k.engine.metric('gross_burn', { workspaceId: k.ws, entityIds: [acme], to: '2026-09-30' })
+      expect(atEnd.value).toEqual(usd(600_000))
+      expect(atEnd.formula).toContain('2026-07-01 to 2026-09-30')
+      expect((await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme], to: '2026-09-30' })).formula).toContain('2026-07-01 to 2026-09-30')
+      // Mid-month is still the months before it.
+      expect((await k.engine.metric('gross_burn', { workspaceId: k.ws, entityIds: [acme], to: '2026-09-15' })).formula).toContain('to 2026-08-31')
+      // October is under way: it isn't averaged in as a whole month.
+      const open = await k.engine.metric('gross_burn', { workspaceId: k.ws, entityIds: [acme], from: '2026-07-01' })
+      expect(open.value).toEqual(usd(600_000))
+      expect(open.formula).toContain('2026-07-01 to 2026-09-30 (3 months)')
+    })
+
+    it('runway is unknown whenever burn is: a missing month in the three, or a card that stopped', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      // A busy account with no rows in August: that's a gap (a quiet one wouldn't be).
+      const busy = (month: string) => [10, 12, 14, 16, 18].map((d) => txn(bank, `2026-${month}-${d}`, -60_000))
+      await k.engine.postBatch(k.ws, [...busy('06'), ...busy('07'), ...busy('09'), snapshot(bank, '2026-10-08', 3_000_000)])
+      const cov = await k.engine.metric('net_burn', { workspaceId: k.ws, entityIds: [acme] })
+      const run = await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme] })
+      expect(cov.state).toBe('unknown')
+      expect(run).toMatchObject({ value: null, state: 'unknown', unknownReason: cov.unknownReason })
+    })
+
+    it('negative cash has no runway', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      await k.engine.postBatch(k.ws, [txn(bank, '2026-07-10', -300_000), txn(bank, '2026-08-10', -300_000), txn(bank, '2026-09-10', -300_000), snapshot(bank, '2026-10-08', -100_000)])
+      const r = await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme] })
+      expect(r).toMatchObject({ value: null, state: 'unknown' })
+      expect(r.unknownReason).toContain('-$1,000.00')
+    })
+
     it('runway says not enough history, or not burning', async () => {
       const bank = await k.account({ entityId: acme })
       await k.engine.post(k.ws, txn(bank, '2026-09-15', -1_000))
@@ -1243,10 +1277,54 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       expect(await k.bal(acme, 'suspense')).toBe(-1_000)
     })
 
+    it('a card payment credited before the bank debit still matches; a plain transfer the other way round does not', async () => {
+      const bank = await k.account({ entityId: acme })
+      const card = await k.account({ entityId: acme, type: 'credit_card' })
+      await k.engine.postBatch(k.ws, [txn(card, '2026-09-24', 4_000_000, { rawText: 'PAYMENT THANK YOU' }), txn(bank, '2026-09-25', -4_000_000, { rawText: 'AMEX EPAY' })])
+      const [link] = await k.engine.store.listLinks(k.ws)
+      expect(link).toMatchObject({ type: 'card_payment', status: 'confirmed' })
+      expect(await k.bal(acme, 'uncategorized_expense')).toBe(0)
+      const savings = await k.account({ entityId: acme })
+      await k.engine.postBatch(k.ws, [txn(savings, '2026-09-24', 70_000), txn(bank, '2026-09-25', -70_000)])
+      expect(await k.engine.store.listLinks(k.ws)).toHaveLength(1)
+    })
+
+    it('once a person confirms two accounts as a pair, later moves between them file themselves, either way round', async () => {
+      const a = await k.account({ entityId: acme })
+      const b = await k.account({ entityId: acme })
+      const other = await k.account({ entityId: acme })
+      await k.engine.postBatch(k.ws, [txn(a, '2026-07-01', -10_000), txn(b, '2026-07-01', 10_000)])
+      const [first] = await k.engine.store.listLinks(k.ws)
+      expect(first?.status).toBe('proposed')
+      await k.engine.decideLink(k.ws, first?.id as string, 'confirmed', 'person-1')
+      await k.engine.postBatch(k.ws, [txn(a, '2026-08-01', -20_000), txn(b, '2026-08-02', 20_000), txn(b, '2026-09-01', -30_000), txn(a, '2026-09-01', 30_000)])
+      await k.engine.postBatch(k.ws, [txn(a, '2026-09-20', -40_000), txn(other, '2026-09-20', 40_000)])
+      const byAmount = (m: number) => k.engine.store.listLinks(k.ws).then((ls) => ls.find((l) => Math.abs(l.amount?.minor ?? 0) === m))
+      expect(await byAmount(20_000)).toMatchObject({ status: 'confirmed', confidence: 0.99 })
+      expect(await byAmount(30_000)).toMatchObject({ status: 'confirmed', confidence: 0.99 })
+      // A different pair of accounts stays a question.
+      expect(await byAmount(40_000)).toMatchObject({ status: 'proposed' })
+    })
+
+    it('equal and opposite amounts with no words are only a suggestion: rent stays spending', async () => {
+      const a = await k.account({ entityId: acme })
+      const b = await k.account({ entityId: acme })
+      await k.engine.postBatch(k.ws, [txn(a, '2026-09-01', -1_200_000, { counterparty: 'Landlord LLC' }), txn(b, '2026-09-03', 1_200_000, { counterparty: 'Globex' })])
+      const [link] = await k.engine.store.listLinks(k.ws)
+      expect(link).toMatchObject({ status: 'proposed', confidence: 0.85 })
+      expect(await k.bal(acme, 'uncategorized_expense')).toBe(1_200_000)
+      expect((await k.engine.autoFile(k.ws)).filed).toBe(0)
+      expect((await k.engine.store.listLinks(k.ws))[0]?.status).toBe('proposed')
+      const burn = await k.engine.metric('gross_burn', { workspaceId: k.ws, entityIds: [acme], from: '2026-09-01', to: '2026-09-30' })
+      expect(burn.value).toEqual(usd(1_200_000))
+      expect(burn.coverage?.gaps).toContain('$12,000.00 in possible transfers is waiting in Review and is counted as spending until confirmed')
+      expect(burn.unknownReason).toContain('possible transfers')
+    })
+
     it('a rejected suggestion is never proposed again; unlinking restores the original posting', async () => {
       const a = await k.account({ entityId: acme })
       const b = await k.account({ entityId: acme })
-      await k.engine.postBatch(k.ws, [txn(a, '2026-09-01', -1_000), txn(b, '2026-09-01', 1_000)])
+      await k.engine.postBatch(k.ws, [txn(a, '2026-09-01', -1_000, { rawText: 'ONLINE TRANSFER' }), txn(b, '2026-09-01', 1_000)])
       const [link] = await k.engine.store.listLinks(k.ws)
       expect(link?.status).toBe('confirmed')
       await k.engine.decideLink(k.ws, link?.id as string, 'rejected', 'person-1')

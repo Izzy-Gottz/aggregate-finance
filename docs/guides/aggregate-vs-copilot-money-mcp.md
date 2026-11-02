@@ -1,3 +1,7 @@
+---
+description: How Aggregate compares with Copilot Money's MCP: personal budgets in Copilot Money versus one read-only ledger for personal and company finances.
+---
+
 # Aggregate vs. Copilot Money's MCP
 
 **Short answer:** if you already use Copilot Money for your personal budget, its MCP lets Claude or ChatGPT

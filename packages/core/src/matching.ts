@@ -25,9 +25,15 @@ export interface MatchInput {
   reportingMinor: ReadonlyMap<Id, number>
   /** Accounts that came from uploaded statements (the files connector): checked against the company's other accounts. */
   uploadedAccounts?: ReadonlySet<Id>
+  /** Two accounts a person has confirmed money moving between, either way round (accountPair): evidence for a transfer. */
+  knownPairs?: ReadonlySet<string>
 }
 
+export const accountPair = (a: Id | null, b: Id | null): string => [a, b].sort().join('|')
+
 export const AUTO_CONFIRM = 0.95
+/** How close two customer names must be to treat a sale in two sources as the same one. */
+const SAME_CUSTOMER = 0.7
 /**
  * Bump when matching finds something it didn't before: each workspace's whole history is re-matched once, on its next
  * settle. 2: open balance of partly paid invoices, cents off, unnamed deposits, pairs, processor charges → invoices.
@@ -48,7 +54,7 @@ const EXCLUSIVE: readonly LinkType[] = ['transfer', 'card_payment', 'intercompan
 
 const PROCESSOR_NAMES = ['stripe', 'paypal', 'square', 'shopify', 'paddle', 'lemon squeezy', 'lemonsqueezy', 'gumroad', 'braintree', 'adyen', 'apple', 'google']
 const PAYROLL_NAMES = ['gusto', 'adp', 'rippling', 'justworks', 'deel', 'paychex', 'trinet', 'payroll', 'oyster', 'remote com']
-const TRANSFER_WORDS = ['transfer', 'xfer', 'trnsfr', 'online banking', 'from chk', 'to chk', 'from sav', 'to sav', 'internal']
+const TRANSFER_WORDS = ['transfer', 'xfer', 'trnsfr', 'online banking', 'from chk', 'to chk', 'from sav', 'to sav', 'internal', 'paid in for', 'paid out from']
 const CARD_PAYMENT_WORDS = ['payment', 'autopay', 'epay', 'card pmt', 'pymt', 'thank you']
 
 function daysBetween(a: string, b: string): number {
@@ -384,7 +390,9 @@ function transferPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, p
   type Cand = { i: SourceRecord; fx: boolean; diff: number; tier: number }
   const candidates = (o: SourceRecord): Cand[] => {
     const oa = o.amount as Money
-    const ok = (i: SourceRecord) => i.sourceAccountId && o.sourceAccountId && i.sourceAccountId !== o.sourceAccountId && daysBetween(o.date, i.date) >= 0 && daysBetween(o.date, i.date) <= 4
+    // A card can show a payment a day or two before the bank does.
+    const earliest = (i: SourceRecord) => (acct(i)?.accountType === 'credit_card' ? -2 : 0)
+    const ok = (i: SourceRecord) => i.sourceAccountId && o.sourceAccountId && i.sourceAccountId !== o.sourceAccountId && daysBetween(o.date, i.date) >= earliest(i) && daysBetween(o.date, i.date) <= 4
     const same = (exact.get(`${oa.currency}|${-oa.minor}`) ?? []).filter(ok)
     // Tiers: 1 same company + same currency, 2 another company + same currency, 3 cross-currency within the band.
     const tier1 = same.filter((i) => i.entityId === o.entityId).map((i) => ({ i, fx: false, diff: 0, tier: 1 }))
@@ -437,8 +445,9 @@ function transferPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, p
       let confidence: number
       // Money between companies always waits for a person; so does anything not unique.
       if (crossEntity) confidence = unique ? (textHint ? 0.9 : 0.85) : textHint ? 0.75 : 0.65
-      else if (fx) confidence = diff <= 0.03 && unique && providerBoth ? 0.95 : 0.75
-      else if (unique && providerBoth) confidence = textHint ? 0.99 : 0.97
+      // Equal and opposite amounts alone are a guess ($12,000 rent, a $12,000 customer ACH): it takes words to confirm.
+      else if (fx) confidence = diff <= 0.03 && unique && providerBoth && textHint ? 0.95 : 0.75
+      else if (unique && providerBoth && (textHint || (type === 'transfer' && input.knownPairs?.has(accountPair(o.sourceAccountId, i.sourceAccountId))))) confidence = 0.99
       else if (unique) confidence = textHint ? 0.9 : 0.85
       else confidence = textHint ? 0.75 : 0.65
       push({
@@ -447,7 +456,7 @@ function transferPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, p
         toId: i.id,
         confidence,
         method: 'rule',
-        scores: { amount: fx ? 1 - diff : 1, date: 1 - daysBetween(o.date, i.date) / 5, unique: unique ? 1 : 0, text: textHint ? 1 : 0 },
+        scores: { amount: fx ? 1 - diff : 1, date: 1 - Math.abs(daysBetween(o.date, i.date)) / 5, unique: unique ? 1 : 0, text: textHint ? 1 : 0 },
         reason: fx ? 'opposite amounts in two currencies within the FX band' : 'opposite equal amounts within 4 days',
       })
     }
@@ -629,7 +638,8 @@ function paymentPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex,
 /**
  * A processor charge that pays an invoice from the same provider (Stripe invoices paid by card): settles AR there
  * instead of being revenue a second time. Exact by the invoice id on the charge (linkRefs.invoice); otherwise the
- * one invoice of that connection with the same amount, issued shortly before (several alike: a question).
+ * one invoice of that connection with the same amount, issued shortly before (several alike: a question). A sale also
+ * in other books (QuickBooks, Xero) is proposed by amount and customer name, never confirmed on its own.
  */
 function processorInvoicePass(live: SourceRecord[], idx: LinkIndex, push: Push): void {
   const invoices = live.filter((r) => r.event.type === 'invoice.upsert' && r.event.direction === 'receivable' && ['open', 'partially_paid', 'paid', 'disputed'].includes(r.event.status))
@@ -654,6 +664,19 @@ function processorInvoicePass(live: SourceRecord[], idx: LinkIndex, push: Push):
     for (const inv of cands) {
       push({ type: 'invoice_payment', fromId: inv.id, toId: c.id, amount: gross, confidence: cands.length === 1 ? AUTO_CONFIRM : 0.7, method: 'fuzzy', scores: { amount: 1, date: 1 }, reason: 'same provider, same amount as the invoice' })
     }
+    if (cands.length > 0 || !c.event.counterparty) continue
+    const who = c.event.counterparty
+    const payments = live.filter((p) => {
+      if (p.event.type !== 'payment.applied' || p.event.direction !== 'receivable' || p.event.bankTxnRef || idx.used(p.id) > 0) return false
+      const days = daysBetween(p.event.date, c.date)
+      return p.connectionId !== c.connectionId && p.entityId === c.entityId && p.event.amount.currency === gross.currency && p.event.amount.minor === gross.minor && days >= -2 && days <= 7 && nameSimilarity(p.event.counterparty ?? '', who) >= SAME_CUSTOMER
+    })
+    const open = payments.length ? [] : invoices.filter((i) => {
+      if (i.event.type !== 'invoice.upsert' || i.event.status === 'paid' || i.connectionId === c.connectionId || i.entityId !== c.entityId || i.event.total.currency !== gross.currency) return false
+      const days = daysBetween(i.event.issueDate, c.date)
+      return remaining(i) === gross.minor && days >= -1 && days <= 45 && nameSimilarity(i.event.counterparty, who) >= SAME_CUSTOMER
+    })
+    for (const r of [...payments, ...open]) push({ type: 'invoice_payment', fromId: r.id, toId: c.id, amount: gross, confidence: 0.8, method: 'fuzzy', scores: { amount: 1, name: 1 }, reason: 'same amount and customer in your books and your processor' })
   }
 }
 

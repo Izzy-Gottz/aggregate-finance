@@ -41,27 +41,41 @@ describe('hostedUnlisted', () => {
     expect(hostedUnlisted({ PLAID_ENV: 'sandbox' })).toEqual([])
   })
   it('hosted: Plaid only in production, Stripe only with a live app key', () => {
-    expect(hostedUnlisted({ AGFN_HOSTED: '1', PLAID_ENV: 'sandbox', STRIPE_APP_SECRET_KEY_TEST: 'rk_test' })).toEqual(['stripe', 'plaid', 'chargebee'])
-    expect(hostedUnlisted({ AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1' })).toEqual([])
+    expect(hostedUnlisted({ AGFN_HOSTED: '1', PLAID_ENV: 'sandbox', STRIPE_APP_SECRET_KEY_TEST: 'rk_test' })).toEqual(['stripe', 'plaid', 'chargebee', 'woocommerce', 'revenuecat'])
+    expect(hostedUnlisted({ AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' })).toEqual([])
   })
   it('hosted: Carta only once it points at production (the playground has fake personas)', () => {
-    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', CARTA_CLIENT_ID: 'c', AGFN_OFFER_CHARGEBEE: '1' }
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', CARTA_CLIENT_ID: 'c', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted({ ...live, CARTA_ENV: 'playground' })).toEqual(['carta'])
     expect(hostedUnlisted({ ...live, CARTA_ENV: 'production' })).toEqual([])
   })
+  it('hosted: WooCommerce only once AGFN_OFFER_WOOCOMMERCE=1 (staging offers it with the test connectors)', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1' }
+    expect(hostedUnlisted(live)).toEqual(['woocommerce'])
+    expect(hostedUnlisted({ ...live, AGFN_OFFER_WOOCOMMERCE: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ AGFN_OFFER_WOOCOMMERCE: undefined })).toEqual([])
+  })
+
   it('hosted: Chargebee only once AGFN_OFFER_CHARGEBEE=1 (staging offers it with the test connectors)', () => {
-    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live' }
-    expect(hostedUnlisted(live)).toEqual(['chargebee'])
-    expect(hostedUnlisted({ ...live, AGFN_OFFER_CHARGEBEE: '1' })).toEqual([])
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual(['chargebee', 'revenuecat'])
+    expect(hostedUnlisted({ ...live, AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1' })).toEqual([])
+  })
+  it('hosted: RevenueCat only once AGFN_OFFER_REVENUECAT=1 (staging offers it with the test connectors)', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual(['revenuecat'])
+    expect(hostedUnlisted({ ...live, AGFN_OFFER_REVENUECAT: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
   })
   it('hosted: Coinbase only once AGFN_OFFER_COINBASE=1, after its OAuth client exists', () => {
-    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1' }
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted(live)).toEqual([])
     expect(hostedUnlisted({ ...live, COINBASE_CLIENT_ID: 'c' })).toEqual(['coinbase'])
     expect(hostedUnlisted({ ...live, COINBASE_CLIENT_ID: 'c', AGFN_OFFER_COINBASE: '1' })).toEqual([])
   })
   it('hosted: Gumroad only once AGFN_OFFER_GUMROAD=1, after Aggregate’s app exists', () => {
-    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1' }
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g' })).toEqual(['gumroad'])
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g', AGFN_OFFER_GUMROAD: '1' })).toEqual([])
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])

@@ -1,3 +1,7 @@
+---
+description: Connect your bank, Stripe and QuickBooks to ChatGPT with one read-only link. Ask about cash, runway and MRR from one ledger. Free during beta.
+---
+
 # Connect your bank, Stripe and QuickBooks to ChatGPT
 
 **Short answer:** connect your bank, Stripe and QuickBooks Online to Aggregate, then add Aggregate to ChatGPT as a custom

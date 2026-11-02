@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Gumloop as an MCP server so your flows can read your real finances. Read-only.
+---
+
 # Connect Gumloop to Aggregate
 
 Gumloop adds custom MCP servers as **Connectors**, which its agents can then use.

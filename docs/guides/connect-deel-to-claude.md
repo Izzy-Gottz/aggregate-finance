@@ -1,3 +1,7 @@
+---
+description: Connect Deel to Claude through Aggregate with an organization token. Ask about payroll and contractor payments next to your other accounts. Read-only.
+---
+
 # Connect Deel to Claude
 
 **Short answer:** connect Deel to Aggregate, then add Aggregate to Claude with one link

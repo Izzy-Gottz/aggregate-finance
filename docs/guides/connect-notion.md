@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Notion AI as a custom MCP connection on Business and Enterprise plans, then ask about your real finances. Read-only.
+---
+
 # Connect Notion AI to Aggregate
 
 Notion can use custom MCP servers on Business and Enterprise plans, once a workspace admin turns them on.

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    include: ['apps/*/src/**/*.test.ts', 'packages/**/src/**/*.test.ts', 'scripts/*.test.ts', 'scripts/benchmark/*.test.ts'],
+    include: ['apps/*/src/**/*.test.ts', 'packages/**/src/**/*.test.ts', 'scripts/*.test.ts', 'scripts/benchmark/*.test.ts', 'scripts/ai-panel/*.test.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
     // Several builders run the full suite on one machine at once; generous timeouts keep CPU contention from failing
     // correct tests (PGlite boots a WASM Postgres per test file).

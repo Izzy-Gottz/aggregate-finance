@@ -1,3 +1,7 @@
+---
+description: What Aggregate doesn't do yet, what happens instead, and what's coming: crypto, non-US banks, PDF statements, cap tables, currencies and more.
+---
+
 # Known limits: what Aggregate doesn't do yet, and what happens instead
 
 **Short answer:** Aggregate is early. This page lists what it doesn't do, or does imperfectly, today. For each one it
@@ -115,6 +119,15 @@ amount next to its balance.
   interest or fee inside a repayment isn't split out.
 - A payout that has left the processor and hasn't reached the bank is in neither account until it lands.
 - Stripe Connect transfers to your sellers stay in transit, and aren't spending. A warning appears after a week.
+
+## A sale in both a processor and your accounting books
+
+**Today:** if a customer's payment shows in Stripe and also in QuickBooks or Xero, it counts in both until you say
+they're the same.
+
+**What happens instead:** when the amount and customer name agree, Aggregate asks in Review. Once you confirm, it counts
+once. If the names differ, it doesn't ask, so the sale stays counted twice. The revenue check against your accounting
+books won't catch this.
 
 ## Several companies added together
 

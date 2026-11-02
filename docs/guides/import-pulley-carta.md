@@ -1,3 +1,7 @@
+---
+description: Moving off Pulley? Export your cap table before December 8, 2026 and import it into Aggregate. Carta and Mantle exports work too.
+---
+
 # Moving off Pulley? Bring your cap table.
 
 **Short answer:** export your cap table from Pulley as an Excel file before **December 8, 2026**, when Pulley shuts

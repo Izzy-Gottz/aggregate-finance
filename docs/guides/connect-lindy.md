@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Lindy through Add MCP so your assistant can read your real finances. Read-only.
+---
+
 # Connect Lindy to Aggregate
 
 Lindy adds custom MCP servers from its **Integrations** page.

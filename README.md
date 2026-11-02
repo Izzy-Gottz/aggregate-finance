@@ -10,7 +10,7 @@
 <h3 align="center">Ask your AI about your finances.</h3>
 
 <p align="center">
-  An open-source double-entry ledger with an MCP server.<br>
+  Aggregate is a read-only finance MCP server: an open-source double-entry ledger that connects your banks, cards, payment apps, books and payroll to your AI.<br>
   Every account, company and holding, in one link for Claude, ChatGPT or your own agents.<br>
   Reconciled to the cent, and your AI can never move money.
 </p>
@@ -27,6 +27,7 @@
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-C8B38A?style=flat-square&labelColor=0F0E0D"></a>
   <a href="#get-started"><img alt="MCP: remote and local" src="https://img.shields.io/badge/MCP-remote%20%2B%20local-C8B38A?style=flat-square&labelColor=0F0E0D"></a>
   <a href="#run-it-yourself"><img alt="Self-host with Docker" src="https://img.shields.io/badge/self--host-Docker-C8B38A?style=flat-square&labelColor=0F0E0D"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/Izzy-Gottz/aggregate-finance"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/Izzy-Gottz/aggregate-finance/badge"></a>
   <a href="https://skills.sh/Izzy-Gottz/aggregate-finance"><img alt="skills.sh" src="https://skills.sh/b/Izzy-Gottz/aggregate-finance"></a>
 </p>
 

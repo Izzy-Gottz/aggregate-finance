@@ -59,6 +59,7 @@ import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, ERA
 import { personalHidden } from './personal.ts'
 import { termsByAccount } from './account-terms.ts'
 import { connectionRoutes, plaidDuplicateMessage } from './routes/connections.ts'
+import { storeSalesThisMonth } from './store-sales.ts'
 import { passkeysPossible, type ServerConfig } from './config.ts'
 import { startDemoWorkspace } from './demo-start.ts'
 
@@ -1528,7 +1529,11 @@ export function createApp(s: Services): Hono<Env> {
       : Number((await db.selectFrom('raw_records').select((eb) => eb.fn.countAll<number>().as('n')).where('workspace_id', '=', ws).where('connection_id', '=', id).executeTakeFirst())?.n ?? 0)
     // The disconnect drawer can't promise "it stays" where the rule (retire.ts) deletes the data anyway.
     const erasesOnDisconnect = ERASE_ON_DISCONNECT.has(summary.connectorKey) ? ('always' as const) : ERASE_WHEN_REVOKED.has(summary.connectorKey) ? ('maybe' as const) : undefined
-    return c.json({ ...summary, accounts, unassigned, provides, canRefreshBalance, ...(records !== undefined ? { records } : {}), ...(erasesOnDisconnect ? { erasesOnDisconnect } : {}) })
+    // WooCommerce: sales reported by the store, for the company's people who may see its money. App only, never a tool.
+    const storeSales = summary.connectorKey === 'woocommerce'
+      ? await storeSalesThisMonth(db as never, ws, id, await connectionCurrency(s, ws, id), new Date(), async (e) => visible.includes(e) && (await s.permissions.can(actorOf(c), 'view', e, 'balances')) && (await s.permissions.can(actorOf(c), 'view', e, 'reports')))
+      : []
+    return c.json({ ...summary, accounts, unassigned, provides, canRefreshBalance, ...(records !== undefined ? { records } : {}), ...(erasesOnDisconnect ? { erasesOnDisconnect } : {}), ...(storeSales.length ? { storeSales } : {}) })
   })
 
   app.post('/api/connections/:id/sync', async (c) => {
@@ -2032,6 +2037,12 @@ function sitemapXml(origin: string, pages: string[], updated: (page: string) => 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(url).join('\n')}\n</urlset>\n`
 }
 
+/** The store currency the connector noted at connect. */
+async function connectionCurrency(s: Services, workspaceId: string, id: string): Promise<unknown> {
+  const row = await s.db.selectFrom('connections').select('config_json').where('workspace_id', '=', workspaceId).where('id', '=', id).executeTakeFirst()
+  return row?.config_json ? (JSON.parse(row.config_json) as { currency?: unknown }).currency : undefined
+}
+
 async function connectionSummaries(s: Services, workspaceId: string) {
   const rows = await s.db.selectFrom('connections').selectAll().where('workspace_id', '=', workspaceId).where('status', '!=', 'disconnected').orderBy('created_at').execute()
   const accts = await s.db
@@ -2115,7 +2126,7 @@ const LIVE_STATUSES: ReadonlySet<string> = new Set(['active', 'paused'])
 const XERO_FULL = 'New Xero connections are full right now while we add room on Xero’s side. Try again in a day or two, or email support@aggregate.finance and we’ll tell you when it’s ready.'
 
 /** Most founders' next useful connection first; niche tools last. */
-const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin']
+const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin']
 /** Tools whose data another connected tool already brings (an accounting tool carries bills and invoices). */
 const COVERED_BY: Record<string, string[]> = {
   xero: ['quickbooks'],

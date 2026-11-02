@@ -567,7 +567,12 @@ async function planProcessor(ctx: PlanContext, ev: ProcessorBalanceTxn, view: Ba
   let kind: TxnKind
   const invLink = ctx.links.find((l) => l.link.type === 'invoice_payment' && l.other.event.type === 'invoice.upsert')
   const refundLink = ctx.links.find((l) => l.link.type === 'refund')
-  if (invLink && invLink.other.event.type === 'invoice.upsert' && (ev.kind === 'charge' || ev.kind === 'refund')) {
+  // The books recorded this sale as a payment: the charge is where that money was seen, not a second sale.
+  const bookedPayment = ctx.links.find((l) => l.link.type === 'invoice_payment' && l.other.event.type === 'payment.applied')
+  if (bookedPayment && ev.kind === 'charge') {
+    kind = 'revenue'
+    lines.push(line('clearing_unmatched_receipts', -gross, cur, { memo }))
+  } else if (invLink && invLink.other.event.type === 'invoice.upsert' && (ev.kind === 'charge' || ev.kind === 'refund')) {
     const inv = invLink.other.event
     kind = gross >= 0 ? 'revenue' : 'refund'
     if (view === 'accrual') {

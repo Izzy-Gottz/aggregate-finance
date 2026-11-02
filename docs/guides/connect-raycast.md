@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Raycast as an MCP server on Raycast Pro, then ask about your real finances. Read-only.
+---
+
 # Connect Raycast to Aggregate
 
 Raycast AI (Pro) adds MCP servers with its **Install MCP Server** command.

@@ -1,3 +1,7 @@
+---
+description: How Aggregate counts cash, burn, runway, MRR and reports: fixed definitions, where each number comes from, and what counts as reconciled.
+---
+
 # Definitions: how Aggregate counts cash, burn, runway, MRR and the rest
 
 **Short answer:** every number Aggregate gives you or your AI uses one fixed definition, written down here and in the

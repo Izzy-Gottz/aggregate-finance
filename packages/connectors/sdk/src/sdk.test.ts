@@ -72,6 +72,18 @@ describe('toMinor (golden answers)', () => {
 })
 
 describe('HttpClient', () => {
+  it('a ConnectorError thrown by the fetch keeps its kind: a refusal is not retried as a network error', async () => {
+    let calls = 0
+    const refused = new ConnectorError('permanent', 'refused', { provider: 'x', forUser: true })
+    const fetch = async () => {
+      calls++
+      throw refused
+    }
+    const http = new HttpClient({ provider: 'x', baseUrl: 'https://api.example.com', fetch, clock: fakeClock() })
+    await expect(http.request({ path: '/a' })).rejects.toBe(refused)
+    expect(calls).toBe(1)
+  })
+
   it('retries 5xx and 429 with Retry-After, then succeeds', async () => {
     const clock = fakeClock()
     const fx = fixtureFetch([

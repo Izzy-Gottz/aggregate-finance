@@ -6,7 +6,7 @@ import { parseHash } from '../app/router.ts'
 /** The connectors a link may open. Anything else is ignored. */
 const KEYS = new Set([
   'appstore', 'billcom', 'brex', 'carta', 'chargebee', 'coinbase', 'deel', 'expensify', 'files', 'finch', 'googleplay', 'gumroad', 'justworks', 'lemonsqueezy', 'mercury',
-  'paddle', 'paypal', 'plaid', 'polar', 'quickbooks', 'ramp', 'rippling', 'shopify', 'simplefin', 'square', 'stripe', 'wefunder', 'wise', 'xero',
+  'paddle', 'paypal', 'plaid', 'polar', 'quickbooks', 'ramp', 'revenuecat', 'rippling', 'shopify', 'simplefin', 'square', 'stripe', 'wefunder', 'wise', 'woocommerce', 'xero',
 ])
 const KEY = 'agfn.connect-intent'
 const TTL = 24 * 60 * 60 * 1000

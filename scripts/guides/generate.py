@@ -191,5 +191,8 @@ behind it.
 os.makedirs(OUT, exist_ok=True)
 for p in PAGES:
     p = full(p)
-    open(os.path.join(OUT, p['slug'] + '.md'), 'w').write(render(p))
+    path = os.path.join(OUT, p['slug'] + '.md')
+    old = open(path).read() if os.path.exists(path) else ''
+    front = old[:old.index('\n---\n', 4) + 6] + '\n' if old.startswith('---\n') else ''  # descriptions live in the page, keep them
+    open(path, 'w').write(front + render(p))
     print('wrote', p['slug'])

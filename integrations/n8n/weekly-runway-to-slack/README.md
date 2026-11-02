@@ -5,7 +5,7 @@ company's cash, net burn and runway, last week's three biggest money movements, 
 and how many items wait for review in Aggregate. When a company's runway drops under your threshold, a second message
 pings the channel.
 
-Aggregate is the open-source finance MCP (open-sourcing (AGPL) at launch): every bank, card, payment app, invoice and
+Aggregate is the open-source (AGPL-3.0), read-only finance MCP server: every bank, card, payment app, invoice and
 payroll provider of all your companies, reconciled to the cent, behind one link. Numbers come from fixed definitions,
 the same ones the Aggregate app shows, and missing data is reported as unknown, never as zero.
 

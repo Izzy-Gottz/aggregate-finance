@@ -1,0 +1,1121 @@
+{
+ "products": {
+  "object": "list",
+  "items": [
+   {
+    "object": "product",
+    "id": "prod_m",
+    "store_identifier": "com.example.prod_m",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": "P1M",
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_m",
+    "indicative_price": {
+     "object": "indicative_price",
+     "currency": "USD",
+     "country": "US",
+     "amount_micros": 9990000
+    }
+   },
+   {
+    "object": "product",
+    "id": "prod_y",
+    "store_identifier": "com.example.prod_y",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": "P1Y",
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_y",
+    "indicative_price": {
+     "object": "indicative_price",
+     "currency": "USD",
+     "country": "US",
+     "amount_micros": 59990000
+    }
+   },
+   {
+    "object": "product",
+    "id": "prod_w",
+    "store_identifier": "com.example.prod_w",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": "P1W",
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_w",
+    "indicative_price": {
+     "object": "indicative_price",
+     "currency": "USD",
+     "country": "US",
+     "amount_micros": 2990000
+    }
+   },
+   {
+    "object": "product",
+    "id": "prod_3m",
+    "store_identifier": "com.example.prod_3m",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": "P3M",
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_3m",
+    "indicative_price": {
+     "object": "indicative_price",
+     "currency": "USD",
+     "country": "US",
+     "amount_micros": 24990000
+    }
+   },
+   {
+    "object": "product",
+    "id": "prod_noprice",
+    "store_identifier": "com.example.prod_noprice",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": "P1M",
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_noprice",
+    "indicative_price": null
+   },
+   {
+    "object": "product",
+    "id": "prod_nodur",
+    "store_identifier": "com.example.prod_nodur",
+    "type": "subscription",
+    "state": "active",
+    "subscription": {
+     "duration": null,
+     "grace_period_duration": null,
+     "trial_duration": null
+    },
+    "created_at": 1735689600000,
+    "app_id": "app_demo",
+    "display_name": "Plan prod_nodur",
+    "indicative_price": {
+     "object": "indicative_price",
+     "currency": "USD",
+     "country": "US",
+     "amount_micros": 4990000
+    }
+   }
+  ],
+  "next_page": null,
+  "url": "/v2/projects/proj_demo/products"
+ },
+ "customerPages": {
+  "": {
+   "object": "list",
+   "items": [
+    {
+     "object": "customer",
+     "id": "alice@example.com",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_b",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_c",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_d",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_e",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_f",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    }
+   ],
+   "next_page": "/v2/projects/proj_demo/customers?starting_after=cust_f",
+   "url": "/v2/projects/proj_demo/customers"
+  },
+  "cust_f": {
+   "object": "list",
+   "items": [
+    {
+     "object": "customer",
+     "id": "cust_g",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_h",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_i",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_j",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    },
+    {
+     "object": "customer",
+     "id": "cust_k",
+     "project_id": "proj_demo",
+     "first_seen_at": 1767225600000,
+     "last_seen_at": 1790812800000
+    }
+   ],
+   "next_page": null,
+   "url": "/v2/projects/proj_demo/customers"
+  }
+ },
+ "subscriptions": {
+  "alice@example.com": [
+   {
+    "object": "subscription",
+    "id": "sub_app_month",
+    "customer_id": "alice@example.com",
+    "original_customer_id": "alice@example.com",
+    "product_id": "prod_m",
+    "starts_at": 1767830400000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "app_store",
+    "store_subscription_identifier": "store-sub_app_month",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_b": [
+   {
+    "object": "subscription",
+    "id": "sub_play_year",
+    "customer_id": "cust_b",
+    "original_customer_id": "cust_b",
+    "product_id": "prod_y",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "play_store",
+    "store_subscription_identifier": "store-sub_play_year",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_c": [
+   {
+    "object": "subscription",
+    "id": "sub_play_week",
+    "customer_id": "cust_c",
+    "original_customer_id": "cust_c",
+    "product_id": "prod_w",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "play_store",
+    "store_subscription_identifier": "store-sub_play_week",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_d": [
+   {
+    "object": "subscription",
+    "id": "sub_amz_year",
+    "customer_id": "cust_d",
+    "original_customer_id": "cust_d",
+    "product_id": "prod_y",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "amazon",
+    "store_subscription_identifier": "store-sub_amz_year",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_e": [
+   {
+    "object": "subscription",
+    "id": "sub_rc_week",
+    "customer_id": "cust_e",
+    "original_customer_id": "cust_e",
+    "product_id": "prod_w",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "rc_billing",
+    "store_subscription_identifier": "store-sub_rc_week",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_f": [
+   {
+    "object": "subscription",
+    "id": "sub_roku_q",
+    "customer_id": "cust_f",
+    "original_customer_id": "cust_f",
+    "product_id": "prod_3m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "in_grace_period",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "roku",
+    "store_subscription_identifier": "store-sub_roku_q",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_g": [
+   {
+    "object": "subscription",
+    "id": "sub_galaxy_retry",
+    "customer_id": "cust_g",
+    "original_customer_id": "cust_g",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": false,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "in_billing_retry",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "galaxy",
+    "store_subscription_identifier": "store-sub_galaxy_retry",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_h": [
+   {
+    "object": "subscription",
+    "id": "sub_trial",
+    "customer_id": "cust_h",
+    "original_customer_id": "cust_h",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "trialing",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 0,
+     "commission": 0,
+     "tax": 0,
+     "proceeds": 0
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "app_store",
+    "store_subscription_identifier": "store-sub_trial",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_paused",
+    "customer_id": "cust_h",
+    "original_customer_id": "cust_h",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": null,
+    "ends_at": null,
+    "gives_access": false,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "paused",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "play_store",
+    "store_subscription_identifier": "store-sub_paused",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_unknown",
+    "customer_id": "cust_h",
+    "original_customer_id": "cust_h",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "unknown",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "rc_billing",
+    "store_subscription_identifier": "store-sub_unknown",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_incomplete",
+    "customer_id": "cust_h",
+    "original_customer_id": "cust_h",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "incomplete",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "rc_billing",
+    "store_subscription_identifier": "store-sub_incomplete",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_cancelling",
+    "customer_id": "cust_h",
+    "original_customer_id": "cust_h",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_not_renew",
+    "status": "trialing",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "amazon",
+    "store_subscription_identifier": "store-sub_cancelling",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_i": [
+   {
+    "object": "subscription",
+    "id": "sub_expired",
+    "customer_id": "cust_i",
+    "original_customer_id": "cust_i",
+    "product_id": "prod_m",
+    "starts_at": 1769904000000,
+    "current_period_starts_at": 1772928000000,
+    "current_period_ends_at": 1775606400000,
+    "ends_at": 1775606400000,
+    "gives_access": false,
+    "pending_payment": false,
+    "auto_renewal_status": "will_not_renew",
+    "status": "expired",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "app_store",
+    "store_subscription_identifier": "store-sub_expired",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_trial_lapsed",
+    "customer_id": "cust_i",
+    "original_customer_id": "cust_i",
+    "product_id": "prod_m",
+    "starts_at": 1777593600000,
+    "current_period_starts_at": 1777593600000,
+    "current_period_ends_at": 1778198400000,
+    "ends_at": 1778198400000,
+    "gives_access": false,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "expired",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 0,
+     "commission": 0,
+     "tax": 0,
+     "proceeds": 0
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "amazon",
+    "store_subscription_identifier": "store-sub_trial_lapsed",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_j": [
+   {
+    "object": "subscription",
+    "id": "sub_stripe",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "stripe",
+    "store_subscription_identifier": "store-sub_stripe",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_paddle",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "paddle",
+    "store_subscription_identifier": "store-sub_paddle",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_promo",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": null,
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "promotional",
+    "store_subscription_identifier": "store-sub_promo",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_test",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "test_store",
+    "store_subscription_identifier": "store-sub_test",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_external",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "external",
+    "store_subscription_identifier": "store-sub_external",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_newstore",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "some_future_store",
+    "store_subscription_identifier": "store-sub_newstore",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_sandbox",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "sandbox",
+    "store": "app_store",
+    "store_subscription_identifier": "store-sub_sandbox",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_family",
+    "customer_id": "cust_j",
+    "original_customer_id": "cust_j",
+    "product_id": "prod_m",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "app_store",
+    "store_subscription_identifier": "store-sub_family",
+    "ownership": "family_shared",
+    "country": "US",
+    "management_url": null
+   }
+  ],
+  "cust_k": [
+   {
+    "object": "subscription",
+    "id": "sub_noprice",
+    "customer_id": "cust_k",
+    "original_customer_id": "cust_k",
+    "product_id": "prod_noprice",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "rc_billing",
+    "store_subscription_identifier": "store-sub_noprice",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   },
+   {
+    "object": "subscription",
+    "id": "sub_nodur",
+    "customer_id": "cust_k",
+    "original_customer_id": "cust_k",
+    "product_id": "prod_nodur",
+    "starts_at": 1773100800000,
+    "current_period_starts_at": 1790812800000,
+    "current_period_ends_at": 1793491200000,
+    "ends_at": 1793491200000,
+    "gives_access": true,
+    "pending_payment": false,
+    "auto_renewal_status": "will_renew",
+    "status": "active",
+    "total_revenue_in_usd": {
+     "currency": "USD",
+     "gross": 100,
+     "commission": 15,
+     "tax": 5,
+     "proceeds": 80
+    },
+    "presented_offering_id": null,
+    "environment": "production",
+    "store": "paypal",
+    "store_subscription_identifier": "store-sub_nodur",
+    "ownership": "purchased",
+    "country": "US",
+    "management_url": null
+   }
+  ]
+ },
+ "transactions": {
+  "sub_app_month": [
+   {
+    "object": "subscription_transaction",
+    "id": "tx_a10",
+    "purchased_at": 1790812800000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 9.99,
+     "commission": 0,
+     "tax": 0.5,
+     "proceeds": 9.49
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1793491200000,
+    "effective_expiration_date": 1793491200000
+   },
+   {
+    "object": "subscription_transaction",
+    "id": "tx_a9",
+    "purchased_at": 1788220800000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 9.99,
+     "commission": 0,
+     "tax": 0.5,
+     "proceeds": 9.49
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1790812800000,
+    "effective_expiration_date": 1790812800000
+   },
+   {
+    "object": "subscription_transaction",
+    "id": "tx_a1",
+    "purchased_at": 1768435200000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 9.99,
+     "commission": 0,
+     "tax": 0.5,
+     "proceeds": 9.49
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1771113600000,
+    "effective_expiration_date": 1771113600000
+   },
+   {
+    "object": "subscription_transaction",
+    "id": "tx_a0",
+    "purchased_at": 1767830400000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 0,
+     "commission": 0,
+     "tax": 0,
+     "proceeds": 0
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1768435200000,
+    "effective_expiration_date": 1768435200000
+   }
+  ],
+  "sub_play_year": [
+   {
+    "object": "subscription_transaction",
+    "id": "tx_b1",
+    "purchased_at": 1773100800000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "EUR",
+     "gross": 59.99,
+     "commission": 0,
+     "tax": 9.58,
+     "proceeds": 50.410000000000004
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1804636800000,
+    "effective_expiration_date": 1804636800000
+   }
+  ],
+  "sub_play_week": [
+   {
+    "object": "subscription_transaction",
+    "id": "tx_c1",
+    "purchased_at": 1790812800000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "JPY",
+     "gross": 500,
+     "commission": 0,
+     "tax": 0,
+     "proceeds": 500
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1791417600000,
+    "effective_expiration_date": 1791417600000
+   }
+  ],
+  "sub_expired": [
+   {
+    "object": "subscription_transaction",
+    "id": "tx_i2",
+    "purchased_at": 1772928000000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 9.99,
+     "commission": 0,
+     "tax": 0.5,
+     "proceeds": 9.49
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1775606400000,
+    "effective_expiration_date": 1775606400000
+   },
+   {
+    "object": "subscription_transaction",
+    "id": "tx_i1",
+    "purchased_at": 1770508800000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 9.99,
+     "commission": 0,
+     "tax": 0.5,
+     "proceeds": 9.49
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1772928000000,
+    "effective_expiration_date": 1772928000000
+   },
+   {
+    "object": "subscription_transaction",
+    "id": "tx_i0",
+    "purchased_at": 1769904000000,
+    "product_store_identifier": "com.example.store",
+    "revenue_in_local_currency": {
+     "currency": "USD",
+     "gross": 0,
+     "commission": 0,
+     "tax": 0,
+     "proceeds": 0
+    },
+    "revenue_in_usd": null,
+    "expiration_date": 1770508800000,
+    "effective_expiration_date": 1770508800000
+   }
+  ]
+ },
+ "errors": {
+  "unauthorized": {
+   "object": "error",
+   "type": "authentication_error",
+   "message": "Invalid API key",
+   "retryable": false,
+   "doc_url": "https://errors.rev.cat/authentication-error"
+  },
+  "forbidden": {
+   "object": "error",
+   "type": "authorization_error",
+   "message": "Missing permission",
+   "retryable": false,
+   "doc_url": "https://errors.rev.cat/authorization-error"
+  },
+  "rateLimited": {
+   "object": "error",
+   "type": "rate_limit_error",
+   "message": "Rate limit exceeded",
+   "retryable": true,
+   "doc_url": "https://errors.rev.cat/rate-limit-error",
+   "backoff_ms": 1000
+  }
+ }
+}

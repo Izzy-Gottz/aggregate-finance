@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Claude Code, Codex, Gemini CLI, Zed and other command-line tools with one link, then ask about your finances. Read-only.
+---
+
 # Connect Claude Code, Codex, Gemini CLI or Zed to Aggregate
 
 **Claude Code:**

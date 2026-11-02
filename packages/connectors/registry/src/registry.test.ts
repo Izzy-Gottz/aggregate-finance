@@ -12,7 +12,13 @@ describe('connector registry', () => {
     const keys = installedConnectorList({}).map((c) => c.key)
     expect(keys).not.toContain('plaid')
     expect(keys).not.toContain('files')
-    expect(keys).toEqual(expect.arrayContaining(['stripe', 'mercury', 'brex', 'ramp', 'wise', 'paypal', 'square', 'shopify', 'paddle', 'polar', 'lemonsqueezy', 'chargebee', 'appstore', 'googleplay']))
+    expect(keys).toEqual(expect.arrayContaining(['stripe', 'mercury', 'brex', 'ramp', 'wise', 'paypal', 'square', 'shopify', 'paddle', 'polar', 'lemonsqueezy', 'chargebee', 'revenuecat', 'woocommerce', 'appstore', 'googleplay']))
+  })
+
+  it('WooCommerce is installed on hosted too, where it refuses a key that can write; config.ts holds it back', async () => {
+    expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).toContain('woocommerce')
+    const c = installedConnectors({ AGFN_HOSTED: '1' }).find((f) => f(deps).describe().key === 'woocommerce')!(deps)
+    expect(c.describe()).toMatchObject({ name: 'WooCommerce', provides: ['reports'], auth: 'api_key' })
   })
 
   it("hides Rippling on the hosted service (its terms forbid using a customer's token for them); self-hosters keep it", () => {

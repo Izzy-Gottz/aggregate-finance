@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Grok as a custom connector, then ask Grok about your real finances. Read-only.
+---
+
 # Connect Grok to Aggregate
 
 Grok adds custom MCP servers as **Connectors** on grok.com.

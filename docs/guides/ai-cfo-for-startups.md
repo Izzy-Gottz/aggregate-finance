@@ -1,3 +1,7 @@
+---
+description: What an AI CFO can do for a startup today: cash, burn, runway and investor updates from real numbers, what still needs a person, and your options.
+---
+
 # AI CFO for startups: what works today
 
 **Short answer:** an AI can do a useful share of a startup CFO's reporting today if it's working from reconciled numbers:

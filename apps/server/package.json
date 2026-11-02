@@ -12,6 +12,7 @@
     "@agfn/connector-files": "*",
     "@agfn/connector-payroll-detect": "*",
     "@agfn/connector-registry": "*",
+    "@agfn/connector-woocommerce": "*",
     "@agfn/core": "*",
     "@agfn/demo": "*",
     "@agfn/equity": "*",

@@ -207,6 +207,68 @@ describe.each(backends)('coverage and balance assertions (%s)', (backend) => {
     expect(checks.map((c) => [c.status, c.message])).toEqual([['ok', 'Acme: 2026-09-01 to 2026-09-30 (accrual) matches the P&L in QuickBooks']])
   })
 
+  describe('a store sales report (WooCommerce) is not books', () => {
+    const woo = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual', sales = 987_654) => ({
+      type: 'report.snapshot' as const,
+      externalId: `woocommerce:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [
+        { account: 'Sales reported by the store', amount: usd(sales), section: 'Sales', depth: 0 },
+        { account: 'Net sales reported by the store', amount: usd(sales), section: 'Sales', depth: 0 },
+      ],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const store = await k.connection({ entityId: acme, key: 'woocommerce' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        woo(store as never, '2026-08'),
+        woo(store as never, '2026-08', 'cash'),
+        // Even if a row ever read like one, it would not be compared.
+        { ...woo(store as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...woo(store as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, wooFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const store = await kit.connection({ entityId: acmeId, key: 'woocommerce' })
+          const both = [woo(store as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(wooFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          // The real comparison still runs, against the books' own number, and still fails where it should.
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
   it("a gap the connector can't read is explained, and the advice changes once payroll comes from elsewhere", async () => {
     const books = await k.connection({ entityId: acme, key: 'xero' })
     const notCovered = { text: 'connect payroll to include wages', withPayroll: 'your payroll connection is counted instead' }

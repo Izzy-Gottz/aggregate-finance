@@ -1,0 +1,32 @@
+{
+  "_note": "Hand-built from the WooCommerce REST API docs and plugin source. NOT recorded from a real store. Field shapes: wc/v3 orders and refunds, with dp=4. Totals are worked by hand in woocommerce.test.ts.",
+  "orders": [
+    { "id": 500, "status": "completed", "currency": "USD", "date_created": "2023-05-10T09:00:00", "total": "12.0000", "total_tax": "0.0000", "shipping_total": "0.0000" },
+    { "id": 900, "status": "refunded", "currency": "USD", "date_created": "2026-08-20T10:00:00", "total": "43.3000", "total_tax": "3.3000", "shipping_total": "0.0000" },
+    { "id": 1001, "status": "completed", "currency": "USD", "date_created": "2026-09-01T00:00:00", "total": "108.2500", "total_tax": "8.2500", "shipping_total": "10.0000" },
+    { "id": 1002, "status": "processing", "currency": "USD", "date_created": "2026-09-14T12:30:00", "total": "54.1200", "total_tax": "4.1200", "shipping_total": "0.0000" },
+    { "id": 1003, "status": "refunded", "currency": "USD", "date_created": "2026-09-15T08:00:00", "total": "21.6500", "total_tax": "1.6500", "shipping_total": "5.0000" },
+    { "id": 1004, "status": "cancelled", "currency": "USD", "date_created": "2026-09-16T08:00:00", "total": "999.0000", "total_tax": "0.0000", "shipping_total": "0.0000" },
+    { "id": 1005, "status": "pending", "currency": "USD", "date_created": "2026-09-17T08:00:00", "total": "888.0000", "total_tax": "0.0000", "shipping_total": "0.0000" },
+    { "id": 1006, "status": "failed", "currency": "USD", "date_created": "2026-09-18T08:00:00", "total": "777.0000", "total_tax": "0.0000", "shipping_total": "0.0000" },
+    { "id": 1007, "status": "on-hold", "currency": "USD", "date_created": "2026-09-19T08:00:00", "total": "666.0000", "total_tax": "0.0000", "shipping_total": "0.0000" },
+    { "id": 1008, "status": "completed", "currency": "USD", "date_created": "2026-09-30T23:59:59", "total": "32.4800", "total_tax": "2.4800", "shipping_total": "0.0000" },
+    { "id": 1010, "status": "completed", "currency": "USD", "date_created": "2026-10-01T00:00:00", "total": "64.9500", "total_tax": "4.9500", "shipping_total": "0.0000" },
+    { "id": 1011, "status": "completed", "currency": "EUR", "date_created": "2026-10-02T11:00:00", "total": "119.0000", "total_tax": "19.0000", "shipping_total": "0.0000" }
+  ],
+  "refunds": [
+    { "id": 2001, "parent_id": 1003, "date_created": "2026-09-20T10:00:00", "amount": "21.6500", "line_items": [{ "total": "-15.0000", "total_tax": "-1.2400" }], "shipping_lines": [{ "total": "-5.0000", "total_tax": "-0.4100" }], "fee_lines": [] },
+    { "id": 2002, "parent_id": 1001, "date_created": "2026-09-21T10:00:00", "amount": "32.4800", "line_items": [{ "total": "-30.0000", "total_tax": "-2.4800" }], "shipping_lines": [], "fee_lines": [] },
+    { "id": 2003, "parent_id": 1002, "date_created": "2026-09-22T10:00:00", "amount": "5.0000", "line_items": [], "shipping_lines": [], "fee_lines": [] },
+    { "id": 2004, "parent_id": 1004, "date_created": "2026-09-23T10:00:00", "amount": "7.0000", "line_items": [{ "total": "-7.0000", "total_tax": "0.0000" }], "shipping_lines": [], "fee_lines": [] },
+    { "id": 2005, "parent_id": 1001, "date_created": "2026-10-05T10:00:00", "amount": "10.0000", "line_items": [], "shipping_lines": [{ "total": "-10.0000", "total_tax": "0.0000" }], "fee_lines": [] },
+    { "id": 2006, "parent_id": 900, "date_created": "2026-10-06T10:00:00", "amount": "43.3000", "line_items": [{ "total": "-40.0000", "total_tax": "-3.3000" }], "shipping_lines": [], "fee_lines": [] },
+    { "id": 2007, "parent_id": 500, "date_created": "2026-10-07T10:00:00", "amount": "12.0000", "line_items": [{ "total": "-12.0000", "total_tax": "0.0000" }], "shipping_lines": [], "fee_lines": [] }
+  ],
+  "orderTotals": [
+    { "slug": "pending", "name": "Pending payment", "total": 1 },
+    { "slug": "completed", "name": "Completed", "total": 5 },
+    { "slug": "shipped", "name": "Shipped", "total": 3 }
+  ],
+  "unauthorized": { "code": "woocommerce_rest_cannot_view", "message": "Sorry, you cannot list resources.", "data": { "status": 401 } }
+}

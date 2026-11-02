@@ -1,3 +1,7 @@
+---
+description: An honest comparison of finance MCP servers: Aggregate, Stripe, Mercury, Brex, Ramp, Gusto, QuickBooks, BankSync and more, with sources. We make Aggregate.
+---
+
 # Best finance MCP servers: an honest comparison
 
 **Short answer:** it depends on what you need, and we make one of the options, so weigh this page accordingly. For one

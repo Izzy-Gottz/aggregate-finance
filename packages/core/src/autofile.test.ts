@@ -21,10 +21,40 @@ describe('filed for you', () => {
     await k.close()
   })
 
+  it('matching amounts with no words stay a question', async () => {
+    const [a, b] = [await account(acme, 'Ally'), await account(await k.company('Beta'), 'Northbank')]
+    await k.engine.postBatch(k.ws, [txn(a, '2026-11-02', -15_000), txn(b, '2026-11-04', 15_000)])
+    expect(await run()).toEqual({ filed: 0 })
+  })
+
+  it('a move confirmed on amounts alone is listed, says why, and undo stays undone through a rematch', async () => {
+    const [a, b] = [await account(acme, 'Ally'), await account(acme, 'Northbank')]
+    await k.engine.postBatch(k.ws, [txn(a, '2026-11-02', -15_000), txn(b, '2026-11-02', 15_000)])
+    await k.engine.reconcile(k.ws)
+    const [link] = await k.engine.store.listLinks(k.ws, { statuses: ['proposed'] })
+    await k.engine.decideLink(k.ws, link!.id, 'confirmed', 'auto:rule')
+    const [filed] = await k.engine.filedItems(k.ws)
+    expect(filed!.text).toBe('$150.00 moved from Ally to Northbank on Nov 2. Matched automatically: same amount, own accounts')
+
+    await k.engine.undoFiled(k.ws, filed!.id)
+    expect(await k.engine.filedItems(k.ws)).toEqual([])
+    const again = await k.engine.link(k.ws, { type: link!.type, fromId: link!.fromId, toId: link!.toId, confidence: 0.99, method: 'rule' })
+    expect(again.status).toBe('proposed')
+    expect((await questions()).map((i) => i.kind)).toEqual(['suggested_match'])
+  })
+
+  it('a move confirmed with transfer words isn’t listed: the words already prove it', async () => {
+    const [a, b] = [await account(acme, 'Ally'), await account(acme, 'Northbank')]
+    await k.engine.postBatch(k.ws, [txn(a, '2026-11-02', -15_000, { rawText: 'ONLINE TRANSFER' }), txn(b, '2026-11-02', 15_000)])
+    await k.engine.reconcile(k.ws)
+    expect((await k.engine.store.listLinks(k.ws, { statuses: ['confirmed'] }))[0]!.decidedBy).toBe('auto:rule')
+    expect(await k.engine.filedItems(k.ws)).toEqual([])
+  })
+
   it('an exact, unique move between two companies is filed, and undo asks it and leaves it asked', async () => {
     const other = await k.company('Beta')
     const [a, b] = [await account(acme, 'Ally'), await account(other, 'Northbank')]
-    await k.engine.postBatch(k.ws, [txn(a, '2026-11-02', -15_000), txn(b, '2026-11-04', 15_000)])
+    await k.engine.postBatch(k.ws, [txn(a, '2026-11-02', -15_000, { rawText: 'ONLINE TRANSFER' }), txn(b, '2026-11-04', 15_000)])
     expect(await run()).toEqual({ filed: 1 })
     expect(await questions()).toEqual([])
     const [filed] = await k.engine.filedItems(k.ws)
@@ -115,7 +145,7 @@ describe('filed for you', () => {
     const me = await k.personal('Sam Rivera')
     const [a, b, h] = [await account(acme, 'Ally'), await account(other, 'Northbank'), await account(me, 'Home')]
     await k.engine.postBatch(k.ws, [
-      txn(a, '2026-08-10', -15_000),
+      txn(a, '2026-08-10', -15_000, { rawText: 'ONLINE TRANSFER' }),
       txn(b, '2026-08-10', 15_000),
       txn(a, '2026-08-11', 40, { rawText: 'INTEREST' }),
       txn(h, '2026-06-01', 70_000, { rawText: 'DEPOSIT' }),
@@ -156,7 +186,7 @@ describe('filed for you', () => {
     const [a, b, c, h] = [await account(acme, 'Ally'), await account(other, 'Northbank'), await account(other, 'Harbor'), await account(me, 'Home')]
     const rows = []
     // 8 moves between companies, each proposed under its old type too: 16 cards before.
-    for (let n = 0; n < 8; n++) rows.push(txn(a, `2026-10-0${n + 1}`, -10_000 - n), txn(b, `2026-10-0${n + 1}`, 10_000 + n))
+    for (let n = 0; n < 8; n++) rows.push(txn(a, `2026-10-0${n + 1}`, -10_000 - n, { rawText: 'ONLINE TRANSFER' }), txn(b, `2026-10-0${n + 1}`, 10_000 + n))
     // A withdrawal with two possible deposits: 2 cards before, 1 now.
     rows.push(txn(a, '2026-11-09', -22_000), txn(b, '2026-11-10', 22_000), txn(c, '2026-11-12', 22_000))
     // Small interest, 3 cards before.

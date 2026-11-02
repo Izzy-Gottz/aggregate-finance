@@ -29,7 +29,7 @@ import type { BalanceAssertion, PeriodLock, Basis, EntityInfo, EntryBasis, Journ
 import { convert, impliedRate, NOT_MONEY } from './money.ts'
 import { RateUnavailableError } from './fx.ts'
 import { changePoints, initialPoints, mrrMovements, nextPoint, type MrrMonth } from './mrr.ts'
-import { AUTO_CONFIRM, MATCHER_VERSION, findMatchesYielding, type Proposal } from './matching.ts'
+import { AUTO_CONFIRM, MATCHER_VERSION, accountPair, findMatchesYielding, type Proposal } from './matching.ts'
 import { classifyTxn, fxFits, plan, PostingError, UTILITY_HINT, type Classification, type LinkedRecord, type PlanContext, type PlannedEntry } from './posting.ts'
 import { applyRules, suggestRules, validateRule, type RuleSuggestion } from './rules.ts'
 import type { AccountDirectory, ConnectionInfo, LedgerStore, RateSource } from './store.ts'
@@ -39,7 +39,7 @@ import { bucketView, validateFields, validateSchedule, validateValues, type Buck
 import { runChecks, type CheckOptions, type CheckResult } from './checks.ts'
 import { balanceSheet, cashFlow, profitAndLoss, type BalanceSheet, type CashFlow, type ProfitAndLoss } from './reports.ts'
 import { listReviewItems, type ReviewItem } from './review.ts'
-import { AUTO_FILED, AUTO_STALE, AUTO_UNDONE, filedItems, planAutoFile, type FiledItem } from './autofile.ts'
+import { AUTO_FILED, AUTO_STALE, AUTO_UNDONE, filedItems, isFiledLink, planAutoFile, type FiledItem } from './autofile.ts'
 import { dataHealth, type DataHealth } from './health.ts'
 import { findAnomalies, type Anomaly, type AnomalyOptions } from './anomalies.ts'
 import { weeklyDigest as buildDigest, type WeeklyDigest } from './digest.ts'
@@ -737,7 +737,7 @@ export class LedgerEngine implements Ledger {
         const ctx = await this.#ctx(ws)
         if (kind === 'link') {
           const link = await this.store.getLink(ws, subject)
-          if (!link || link.status !== 'confirmed' || link.decidedBy !== AUTO_FILED) throw new LinkError('That was not filed automatically')
+          if (!link || !isFiledLink(link)) throw new LinkError('That was not filed automatically')
           await this.#decide(ctx, link, 'proposed', null)
           const back = await this.store.getLink(ws, subject)
           await this.store.saveLink({ ...(back as Link), scores: { ...(back?.scores ?? {}), noAuto: 1 } })
@@ -1543,7 +1543,9 @@ export class LedgerEngine implements Ledger {
       if (existing.status === 'rejected' && (p.method === 'human' || p.method === 'agent')) {
         return this.#decide(ctx, existing, 'confirmed', createdBy)
       }
-      if (existing.status === 'proposed' && autoConfirm) return this.#decide(ctx, existing, 'confirmed', createdBy)
+      // A filing the person undid stays a question: only they can confirm it again.
+      const undone = existing.scores?.['noAuto'] === 1 && p.method !== 'human' && p.method !== 'agent'
+      if (existing.status === 'proposed' && autoConfirm && !undone) return this.#decide(ctx, existing, 'confirmed', createdBy)
       return { linkId: existing.id, status: existing.status === 'confirmed' ? 'confirmed' : 'proposed' }
     }
     // Without an explicit amount, a link explains the smaller of the two sightings (one debit of a payroll run). A
@@ -1714,7 +1716,11 @@ export class LedgerEngine implements Ledger {
     }
     const uploadConns = new Set([...(await this.#connections(ctx)).values()].filter((c) => c.connectorKey === 'files').map((c) => c.id))
     const uploadedAccounts = new Set([...ctx.accounts.values()].filter((a) => a.connectionId !== null && uploadConns.has(a.connectionId)).map((a) => a.id))
-    const found = await findMatchesYielding({ records, accounts: ctx.accounts, entities: ctx.entities, links, reportingMinor, uploadedAccounts })
+    // All history, not this pass's window: the last confirmed move between two accounts can be months old.
+    const confirmedMoves = (await this.store.listLinks(ws, { types: ['transfer'], statuses: ['confirmed'] })).filter((l) => l.decidedBy && !l.decidedBy.startsWith('auto:'))
+    const moveRows = new Map((await this.store.getRecords(ws, [...new Set(confirmedMoves.flatMap((l) => [l.fromId, l.toId]))])).map((r) => [r.id, r.sourceAccountId]))
+    const knownPairs = new Set(confirmedMoves.map((l) => accountPair(moveRows.get(l.fromId) ?? null, moveRows.get(l.toId) ?? null)))
+    const found = await findMatchesYielding({ knownPairs, records, accounts: ctx.accounts, entities: ctx.entities, links, reportingMinor, uploadedAccounts })
     // What a person already said this money is ("Revenue", a category) isn't asked again as a guessed match.
     const answered = new Set((await this.store.listOverrides(ws)).filter((o) => o.kind !== undefined || o.category !== undefined).map((o) => o.recordId))
     // Only synced rows: a hand-added entry's category is part of what it is, and it may still be a duplicate.

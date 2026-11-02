@@ -1,3 +1,7 @@
+---
+description: Aggregate compared with QuickBooks' and Stripe's own MCP servers: one read-only ledger across sources versus deep access and actions in a single tool.
+---
+
 # Aggregate vs. a provider's own MCP server (QuickBooks, Stripe)
 
 **Short answer:** a provider's own MCP server gives your AI deep access to that one provider, including the power to

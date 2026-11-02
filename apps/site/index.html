@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Aggregate</title>
-<meta name="description" content="Ask your AI about your finances. Your banks, cards and business apps, connected to the AI you already use. Read-only.">
+<title>Aggregate: connect your banks, cards and business apps to your AI</title>
+<meta name="description" content="Aggregate is a read-only finance MCP server. Connect your banks, cards, Stripe, QuickBooks and more, then ask the AI you already use about your cash, burn and runway. It can't move money. Free during beta.">
 <meta name="theme-color" content="#FCFCFB">
 <meta name="color-scheme" content="light">
 <meta property="og:title" content="Aggregate">
@@ -17,6 +17,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,300&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Organization","@id":"https://aggregate.finance/#org","name":"Aggregate","url":"https://aggregate.finance","logo":"https://app.aggregate.finance/icon-512.png","sameAs":["https://github.com/Izzy-Gottz/aggregate-finance"]},
+{"@type":"WebSite","name":"Aggregate","url":"https://aggregate.finance","publisher":{"@id":"https://aggregate.finance/#org"}},
+{"@type":"SoftwareApplication","name":"Aggregate","url":"https://aggregate.finance","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Aggregate is a read-only finance MCP server. It brings your banks, cards, payment apps, books and payroll into one ledger, then connects it to the AI you already use. It can't move money.","offers":{"@type":"Offer","price":0,"priceCurrency":"USD","description":"Free during beta"},"featureList":["Read-only connections to banks, cards, payments, accounting and payroll","Cash, burn, runway and MRR with fixed definitions","Open source (AGPL-3.0)"],"publisher":{"@id":"https://aggregate.finance/#org"}}
+]}
+</script>
 <style>
   /* Light only (Yisrael, 11-01): the same type pair as the app, Newsreader for the headline and Geist for the rest. */
   :root {
@@ -74,6 +81,10 @@
   .note a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--underline); text-underline-offset: 5px; transition: text-decoration-color .15s ease; }
   .note a:hover { text-decoration-color: var(--ink); }
 
+  .what { max-width: 620px; margin: 0 auto; padding: 0 16px 72px; display: grid; gap: 22px; text-align: center; }
+  .what h2 { margin: 0 0 6px; font-size: 13px; font-weight: 400; color: var(--faint); }
+  .what p { margin: 0; font-size: 15px; line-height: 1.65; color: var(--muted); text-wrap: pretty; }
+
   footer { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 0 16px 28px; }
   /* Works with: each brand's own file, untouched and at full strength (apps/site/logos/README.md). */
   .works { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 32px 60px; margin: 0; padding: 0; list-style: none; }
@@ -105,6 +116,7 @@
   @media (max-width: 520px) {
     header { padding: 16px 20px; justify-content: center; gap: 24px; }
     main { align-items: center; text-align: center; justify-content: center; padding: 8px 24px 48px; }
+    .what { padding: 0 24px 48px; }
     h1 { font-size: 40px; line-height: 1.06; max-width: 15ch; }
     .sub { margin-top: 16px; max-width: none; }
     .cta { margin-top: 28px; padding: 13px 26px; }
@@ -145,6 +157,20 @@
   <a class="cta" href="https://app.aggregate.finance/?start=1">Get started</a>
   <p class="note">Free during beta. <a href="https://app.aggregate.finance/demo">Try the demo</a></p>
 </main>
+<section class="what" aria-label="About Aggregate">
+  <div>
+    <h2>What it is</h2>
+    <p>Aggregate is a read-only finance MCP server. It brings your banks, cards, Stripe, QuickBooks, Shopify and payroll into one ledger, then connects it to the AI you already use, such as Claude, ChatGPT or Perplexity.</p>
+  </div>
+  <div>
+    <h2>What you can ask</h2>
+    <p>Cash, burn and runway. Who owes you and what’s due. Why spending changed. A Stripe payout and the bank deposit it becomes count once, so the answers add up.</p>
+  </div>
+  <div>
+    <h2>Your choice</h2>
+    <p>You pick what each AI can see, and every question is logged. Open source.</p>
+  </div>
+</section>
 <footer>
   <div class="with">
     <p class="head" id="connects">Connects to 18 apps and 9,600+ US institutions</p>
@@ -165,6 +191,7 @@
       <a class="quiet" href="https://app.aggregate.finance/terms">Terms</a>
       <a class="quiet" href="https://app.aggregate.finance/privacy">Privacy</a>
       <a class="quiet" href="https://app.aggregate.finance/security">Security</a>
+      <a class="quiet" href="/trust">Trust</a>
     </nav>
   </div>
 </footer>

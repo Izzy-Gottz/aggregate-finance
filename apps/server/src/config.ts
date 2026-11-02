@@ -252,6 +252,12 @@ export function hostedUnlisted(env: NodeJS.ProcessEnv): string[] {
   // Chargebee: built and fixture-tested, not yet run against a real Chargebee site. Staging offers it (test
   // connectors above); live waits for AGFN_OFFER_CHARGEBEE=1.
   if (env.AGFN_OFFER_CHARGEBEE !== '1') out.push('chargebee')
+  // WooCommerce: built and fixture-tested, not yet run against a real store. Staging offers it (test connectors above);
+  // live waits for AGFN_OFFER_WOOCOMMERCE=1.
+  if (env.AGFN_OFFER_WOOCOMMERCE !== '1') out.push('woocommerce')
+  // RevenueCat: same, built and fixture-tested from its docs only. RevenueCat can't show a key's permissions either, so
+  // read-only rests on the steps we give. Live waits for AGFN_OFFER_REVENUECAT=1.
+  if (env.AGFN_OFFER_REVENUECAT !== '1') out.push('revenuecat')
   // Wefunder: until Wefunder approves the app, only Aggregate's own team could authorize it (others see "not reviewed").
   if (env.WEFUNDER_CLIENT_ID && env.WEFUNDER_APPROVED !== '1') out.push('wefunder')
   // Coinbase: sign-in only on hosted (no keys). Once the OAuth client exists, staging tries it first (test connectors

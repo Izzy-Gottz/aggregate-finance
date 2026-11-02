@@ -706,7 +706,7 @@ export interface AgfnApi {
   finishConnect(connectorKey: string, input: Record<string, unknown> & { state: string }): Promise<{ connectionId: Id; accounts: NewAccount[] }>
   assignAccounts(assignments: Array<{ accountId: Id; entityId: EntityId | 'personal' | 'skip' }>): Promise<void>
   /** records: how many records it has brought in (invoices, bills…), for connections without bank accounts (Xero, QuickBooks). */
-  connection(id: Id): Promise<ConnectionSummary & { /** Disconnecting deletes its data: always, or it may (the server decides then). */ erasesOnDisconnect?: 'always' | 'maybe'; accounts: AccountRow[]; unassigned?: Array<{ id: Id; name: string; mask?: string }>; provides: DataType[]; canRefreshBalance?: boolean; records?: number }>
+  connection(id: Id): Promise<ConnectionSummary & { /** Disconnecting deletes its data: always, or it may (the server decides then). */ erasesOnDisconnect?: 'always' | 'maybe'; accounts: AccountRow[]; unassigned?: Array<{ id: Id; name: string; mask?: string }>; provides: DataType[]; canRefreshBalance?: boolean; records?: number; /** WooCommerce: this month's sales reported by the store, one per currency. Not revenue. */ storeSales?: Money[] }>
   /** Xero organisations this connection's sign-in can reach that the workspace doesn't have yet (shared before, so Xero won't offer them again). Empty for other connectors and non-admins. */
   sharedOffers(id: Id): Promise<Array<{ id: string; name: string }>>
   /** Add one of those organisations as its own connection on the same sign-in; it starts syncing. 409 when it's no longer available. */

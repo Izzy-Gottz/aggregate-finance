@@ -1,3 +1,7 @@
+---
+description: Connect Shopify to ChatGPT through Aggregate. Ask about orders, payouts and fees next to your bank data. Read-only.
+---
+
 # Connect Shopify to ChatGPT
 
 **Short answer:** connect Shopify to Aggregate, then add Aggregate to ChatGPT with one link

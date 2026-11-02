@@ -46,4 +46,26 @@ describe('a failing balance check', () => {
       await srv.close()
     }
   })
+
+  it('a pinned balance that disagrees shows in cash too', async () => {
+    const srv = await startServer()
+    try {
+      const s = await signIn(srv, 'founder-pin@example.com', 'Acme')
+      const E = await entities(s)
+      const bank = await connectProvider(srv, s, 'plaid', { entityId: E.Acme, name: 'Chase' })
+      bank.push((c) => [
+        { type: 'account.upsert', externalId: 'chk', connectionId: c, name: 'Acme Checking', accountType: 'depository', currency: 'USD', institution: 'Chase' },
+        { type: 'balance.snapshot', externalId: 'b0', connectionId: c, accountExternalId: 'chk', at: '2026-10-09T08:00:00Z', current: usd(900_000) },
+      ])
+      expect((await bank.sync()).status).toBe('ok')
+      const ai = await connectAi(srv, s)
+      await ai.call('pin_balance', { account: 'Acme Checking', date: '2026-10-09', balance: { amount: '14000.00', currency: 'USD' }, source: 'statement', idempotency_key: 'pin-check-0001' })
+      const cash = await ai.try('get_metric', { metric: 'cash', company: 'Acme' })
+      expect((cash.data?.coverage as { gaps: string[] }).gaps.join(' ')).toContain('Acme Checking')
+      expect(cash.data).toMatchObject({ state: 'stale' })
+      expect(cash.text).toContain('needs a look')
+    } finally {
+      await srv.close()
+    }
+  })
 })

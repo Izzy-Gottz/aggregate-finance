@@ -1,3 +1,7 @@
+---
+description: Connect Xero to Claude through Aggregate, with limited room on the hosted version. Ask about invoices, bills and reports. Read-only.
+---
+
 # Connect Xero to Claude
 
 **Short answer:** connect Xero to Aggregate, then add Aggregate to Claude with one link

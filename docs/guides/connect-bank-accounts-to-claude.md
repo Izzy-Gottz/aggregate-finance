@@ -1,3 +1,7 @@
+---
+description: Connect your bank accounts and cards to Claude through Aggregate, read-only, with one link. Ask about balances, spending and cash. It can't move money.
+---
+
 # Connect bank accounts and cards to Claude
 
 **Short answer:** connect your bank accounts and cards to Aggregate, then add Aggregate to Claude with one link

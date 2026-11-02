@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Le Chat by Mistral as a custom MCP connector, then ask about your real finances. Read-only.
+---
+
 # Connect Le Chat (Mistral) to Aggregate
 
 Le Chat adds custom MCP servers as **Connectors**. Only an admin can add one; on Free, Pro and Student plans the account owner is the admin.

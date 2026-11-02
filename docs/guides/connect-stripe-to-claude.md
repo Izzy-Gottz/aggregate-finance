@@ -1,3 +1,7 @@
+---
+description: Connect Stripe to Claude through Aggregate. Ask about MRR, fees and payouts, and whether each payout reached the bank. Read-only.
+---
+
 # Connect Stripe to Claude
 
 **Short answer:** connect Stripe to Aggregate, then add Aggregate to Claude with one link

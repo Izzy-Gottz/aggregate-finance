@@ -124,6 +124,7 @@ export async function assertionChecks(rc: ReadContext, entityIds: EntityId[], as
       ...(near ? { matchesOn: near } : {}),
       entityId: a.entityId,
       subjectId: x.id,
+      accountId: x.accountId,
       expectedMinor: stated,
       actualMinor: ledger,
       differenceMinor: stated - ledger,

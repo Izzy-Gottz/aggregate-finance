@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to ChatGPT as a custom MCP server: step-by-step setup, then ask ChatGPT about your real finances. Read-only.
+---
+
 # Connect ChatGPT to Aggregate
 
 Custom MCP servers are added on ChatGPT on the web. Which plans can add one has changed more than once; check

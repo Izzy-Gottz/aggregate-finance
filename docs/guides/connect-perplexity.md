@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Perplexity as a remote MCP connector on Pro, Max and Enterprise, then ask about your real finances. Read-only.
+---
+
 # Connect Perplexity to Aggregate
 
 Perplexity adds custom remote MCP servers as **connectors** (Pro, Max and Enterprise).

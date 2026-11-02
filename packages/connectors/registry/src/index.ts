@@ -18,6 +18,8 @@ import { createPaddleConnector } from '@agfn/connector-paddle'
 import { createPolarConnector } from '@agfn/connector-polar'
 import { createLemonSqueezyConnector } from '@agfn/connector-lemonsqueezy'
 import { createChargebeeConnector } from '@agfn/connector-chargebee'
+import { createWooCommerceConnector } from '@agfn/connector-woocommerce'
+import { createRevenueCatConnector } from '@agfn/connector-revenuecat'
 import { createAppStoreConnector } from '@agfn/connector-appstore'
 import { createGooglePlayConnector } from '@agfn/connector-googleplay'
 import { createGumroadConnector } from '@agfn/connector-gumroad'
@@ -291,6 +293,11 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
   }
   // Chargebee: a read-only key (subscriptions only, for MRR). Hosted holds it back until it's run on a real site (config.ts).
   add('chargebee', (deps) => createChargebeeConnector({}, deps))
+  // WooCommerce: a Read key on the store's own address, for sales reported by the store (never posted). Hosted refuses a
+  // key it can't show is Read only, and holds it back until it's run on a real store (config.ts).
+  add('woocommerce', (deps) => createWooCommerceConnector(env.AGFN_HOSTED === '1' ? { hosted: true } : {}, deps))
+  // RevenueCat: a read-only key (subscriptions only, for MRR and churn). Hosted holds it back until it's run on a real project (config.ts).
+  add('revenuecat', (deps) => createRevenueCatConnector({}, deps))
   // Expensify's partner credentials act as the person with the whole API (writes included): self-hosted only, like
   // Lemon Squeezy. Beta: built against Expensify's docs, not yet run on a real account.
   if (env.AGFN_HOSTED !== '1') add('expensify', (deps) => createExpensifyConnector({ deps }))

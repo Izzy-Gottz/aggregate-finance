@@ -1,3 +1,7 @@
+---
+description: Connect QuickBooks Online to ChatGPT through Aggregate. Ask about invoices, bills and profit and loss next to your bank data. Read requests only.
+---
+
 # Connect QuickBooks Online to ChatGPT
 
 **Short answer:** connect QuickBooks Online to Aggregate, then add Aggregate to ChatGPT with one link

@@ -90,7 +90,7 @@ export async function computeMetric(name: MetricName, scope: MetricScope, rc: Me
       return availableCashMetric(await makeScope(rc, scope, 'cash'))
     case 'gross_burn':
     case 'net_burn':
-      return burnMetric(name, await makeScope(rc, scope, 'cash'), scope.from !== undefined)
+      return burnMetric(name, await makeScope(rc, scope, 'cash'), scope.from !== undefined, scope.to === undefined)
     case 'runway':
       return runwayMetric(await makeScope(rc, scope, 'cash'))
     case 'revenue':
@@ -170,8 +170,23 @@ async function checkCaveats(s: Scope, a: MetricAnswer, checks: CheckResult[]): P
   if (!balance && !FLOW_METRICS.includes(a.name)) return []
   const accounts = await memo(s.rc, 'sourceAccounts|*', () => s.rc.directory.listSourceAccounts(s.rc.ws))
   const failed = checks.filter((c) => c.status === 'fail')
-  if (balance) return [...new Set(failed.filter((c) => TIE_OUTS.includes(c.name) && (!a.includedAccounts.length || a.includedAccounts.includes(c.subjectId as Id))).map((c) => c.message))]
-  return [...new Set(failed.map((c) => `${accounts.find((x) => x.id === c.subjectId)?.name ?? 'A check'} doesn't match, so this figure may be off`))]
+  const accountOf = (c: CheckResult) => c.accountId ?? c.subjectId
+  if (balance) return [...new Set(failed.filter((c) => TIE_OUTS.includes(c.name) && (!a.includedAccounts.length || a.includedAccounts.includes(accountOf(c) as Id))).map((c) => c.message))]
+  const flowChecks: readonly CheckResult['name'][] = [...TIE_OUTS, 'trial_balance', 'duplicate_source', 'provider_report']
+  return [...new Set(failed.filter((c) => flowChecks.includes(c.name)).map((c) => `${accounts.find((x) => x.id === accountOf(c))?.name ?? 'A check'} doesn't match, so this figure may be off`))]
+}
+
+/** Burn counts a proposed transfer's debit as spending until someone answers, so the answer says how much that is. */
+async function unconfirmedMoves(s: Scope, name: MetricName, from: IsoDate, to: IsoDate): Promise<string[]> {
+  if (name !== 'gross_burn' && name !== 'net_burn' && name !== 'runway') return []
+  const links = (await s.rc.store.listLinks(s.rc.ws, { statuses: ['proposed'] })).filter((l) => l.type === 'transfer' || l.type === 'intercompany')
+  if (!links.length) return []
+  const scope = new Set<string>(s.entityIds)
+  const debits = (await s.rc.store.getRecords(s.rc.ws, [...new Set(links.map((l) => l.fromId))])).filter((r) => r.entityId && scope.has(r.entityId) && r.date >= from && r.date <= to && r.amount && r.amount.minor < 0)
+  if (!debits.length) return []
+  let total = 0
+  for (const r of debits) total += Math.abs((await s.rc.toCurrency(r.amount as Money, s.currency, r.date)).minor)
+  return [`${formatMoney(total, s.currency)} in possible transfers is waiting in Review and is counted as spending until confirmed`]
 }
 
 /** The caveats go in coverage.gaps and the reason. A figure already unknown or short of history keeps its own state. */
@@ -206,7 +221,7 @@ async function finish(s: Scope, a: MetricAnswer, rowIds: Id[]): Promise<CoreMetr
   ])
   const order = await accountOrder(s)
   // A problem with no company (a broken ledger) touches every figure, even when scopedChecks leaves it off a company's list.
-  const caveats = s.figureOnly ? [] : await checkCaveats(s, a, [...checks, ...(await checksNow(rc)).filter((c) => c.entityId === null && !checks.includes(c))])
+  const caveats = s.figureOnly ? [] : [...(await checkCaveats(s, a, [...checks, ...(await checksNow(rc)).filter((c) => c.entityId === null && !checks.includes(c))])), ...(await unconfirmedMoves(s, a.name, a.name === 'runway' ? addMonths(s.from, -2) : s.from, s.to))]
   return {
     ...withCaveats({
       ...honesty({ ...a, includedAccounts: [...a.includedAccounts].sort(order.byId), excludedAccounts: [...a.excludedAccounts].sort((x, y) => order.byId(x.id, y.id)) }, s, cov),
@@ -650,17 +665,26 @@ function monthsSpanned(from: IsoDate, to: IsoDate): number {
   return Math.max(1, n(to) - n(from) + 1)
 }
 
+/** The last complete months as of a day. A month-end date in the past has just completed its month, so that month counts. */
+async function completedMonths(s: Scope, n: number): Promise<Array<{ from: IsoDate; to: IsoDate }>> {
+  const ended = s.asOf === monthEnd(s.asOf) && s.asOf < (await todayFor(s.rc))
+  return trailingMonths(ended ? addDays(s.asOf, 1) : s.asOf, n)
+}
+
 /**
  * Burn is a monthly average. Without a start date: the last 3 full months, or those of them history covers (a company
  * two months old averages two). With a period: its total ÷ the calendar months it spans.
  */
-async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPeriod: boolean): Promise<CoreMetricAnswer> {
+async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPeriod: boolean, openEnded = false): Promise<CoreMetricAnswer> {
   let from = s.from
   let to = s.to
+  // A start with no end stops at the last full month: an average can't count a month still under way as whole.
+  const fullThrough = (trailingMonths(s.asOf, 1)[0] as { to: IsoDate }).to
+  if (explicitPeriod && openEnded && from <= fullThrough) to = fullThrough
   let months = monthsSpanned(from, to)
   let short = false
   if (!explicitPeriod) {
-    const trailing = trailingMonths(s.asOf, 3)
+    const trailing = await completedMonths(s, 3)
     const weights = monthWeights(trailing, await earliestActivity(s))
     const first = weights.findIndex((w) => w > 0)
     short = first < 0
@@ -730,7 +754,7 @@ async function availableCashMetric(s: Scope): Promise<CoreMetricAnswer> {
 }
 
 async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
-  const months = trailingMonths(s.asOf, 3)
+  const months = await completedMonths(s, 3)
   const figures = await cashFigures(s)
   // Flag off, set-asides change no number: runway is cash over burn, which is what the tools' note says.
   const out = s.rc.setAsides ? await setAsideOut(s, figures.included) : { total: 0, lines: [] }
@@ -761,10 +785,20 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
     unknownReason = NO_CASH_ACCOUNT
   } else if (!enough) state = 'not_enough_history'
   else if (avg <= 0) state = 'not_burning'
-  else {
+  else if (cash.cash <= 0) {
+    state = 'unknown'
+    unknownReason = `Cash is ${formatMoney(cash.cash, s.currency)}, so there's no runway to work out`
+  } else {
     value = Math.round((cash.cash / avg) * 10) / 10
     const runOut = addDays(s.asOf, Math.floor(value * 30.4375))
     formula += ` ${cashWord} ${formatMoney(cash.cash, s.currency)} ÷ ${formatMoney(Math.round(avg), s.currency)} per month = ${value} months (around ${runOut}).`
+  }
+  // Runway rests on burn: when burn can't be trusted over these months, nor can it (a gap in any of them, a stale card).
+  const burn = await burnMetric('net_burn', s, false)
+  if (value !== null && burn.state === 'unknown') {
+    value = null
+    state = 'unknown'
+    unknownReason = burn.unknownReason
   }
   return finish(
     s,

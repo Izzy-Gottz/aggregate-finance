@@ -33,6 +33,8 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | App Store | App sales and subscriptions | Beta |
 | Google Play | App sales and subscriptions | Beta |
 | PayPal, Lemon Squeezy, Chargebee | Sales and payouts | Self-host |
+| WooCommerce | Monthly sales reported by the store, with refunds, shipping and sales tax apart. Not booked revenue: the money arrives through Stripe, PayPal or your bank | Self-host |
+| RevenueCat | MRR and churn for app subscriptions | Self-host |
 
 ## Accounting and bills
 

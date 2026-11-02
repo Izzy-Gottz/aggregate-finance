@@ -1,3 +1,7 @@
+---
+description: How to connect all your finances to AI: link your banks, cards, Stripe, books and payroll to one read-only service, then add it to Claude or ChatGPT.
+---
+
 # How to connect all your finances to AI
 
 **Short answer:** connect your accounts to one read-only service, then add that service to your AI with one link.

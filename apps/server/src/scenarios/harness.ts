@@ -55,6 +55,7 @@ const DESCRIPTIONS: Record<string, ConnectorDescription> = {
   simplefin: { key: 'simplefin', name: 'SimpleFIN Bridge', group: 'banks', provides: ['balances', 'transactions'], freshness: 'scripted', auth: 'api_key' },
   square: { key: 'square', name: 'Square', group: 'payments', provides: ['balances', 'transactions', 'invoices'], freshness: 'scripted', auth: 'oauth' },
   shopify: { key: 'shopify', name: 'Shopify Payments', group: 'payments', provides: ['balances', 'transactions'], freshness: 'scripted', auth: 'oauth' },
+  woocommerce: { key: 'woocommerce', name: 'WooCommerce', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'api_key' },
 }
 
 function scripted(key: string): ConnectorFactory {

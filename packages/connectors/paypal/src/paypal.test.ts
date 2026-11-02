@@ -5,7 +5,7 @@ import { MemoryRawSink, runSync } from '@agfn/connector-sdk'
 import { assertRedacted, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
 import { createPayPalConnector, interpretPayPalWebhook, kindForEventCode, PAYPAL_NO_BALANCES_WARNING, PAYPAL_NO_INVOICES_WARNING, PAYPAL_WRITE_WARNING, type PayPalConnectorOptions } from './index.ts'
 import type { PayPalTransactionDetail } from './types.ts'
-import { balanceRoleForEventCode } from './map.ts'
+import { balanceRoleForEventCode, mapTxn } from './map.ts'
 
 const fx = JSON.parse(readFileSync(new URL('../fixtures/redacted/sandbox-account.json', import.meta.url), 'utf8')) as {
   token: unknown
@@ -123,6 +123,18 @@ describe('paypal mapping', () => {
     expect(['T0006', 'T0106', 'T0200', 'T0300', 'T0400', 'T1107', 'T1106', 'T1201', 'T1501', 'T9900', 'x'].map(kindForEventCode)).toEqual([
       'charge', 'fee', 'transfer', 'transfer', 'payout', 'refund', 'dispute', 'dispute', 'adjustment', 'other', 'other',
     ])
+  })
+
+  it('reads each reversal, adjustment and hold as PayPal defines it', () => {
+    expect(['T1108', 'T1109', 'T1101', 'T1104', 'T1112', 'T1105', 'T1110', 'T1111', 'T1200', 'T1203', 'T1204', 'T1202', 'T1205'].map(kindForEventCode)).toEqual([
+      'fee', 'fee', 'transfer', 'transfer', 'transfer', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'dispute', 'dispute',
+    ])
+    expect(['T1105', 'T1110', 'T1111', 'T1104', 'T2103', 'T2109', 'T2110', 'T1107'].map(balanceRoleForEventCode)).toEqual(['other_assets', 'other_assets', 'other_assets', 'clearing_payouts', 'other_assets', undefined, undefined, undefined])
+  })
+
+  it('skips display-only rows, which never touch the balance', () => {
+    const t = { transaction_id: 'T98', transaction_event_code: 'T9800', transaction_status: 'S', transaction_amount: { currency_code: 'USD', value: '10.00' }, transaction_initiation_date: '2026-10-01T10:00:00Z' }
+    expect(mapTxn({ transaction_info: t } as never, 'acct', 'c', 'r')).toBeUndefined()
   })
 
   it('maps invoices across pages', async () => {

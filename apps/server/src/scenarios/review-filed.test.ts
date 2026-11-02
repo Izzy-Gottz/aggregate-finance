@@ -16,8 +16,8 @@ describe('review: filed for you', () => {
         const bank = await connectProvider(srv, s, 'plaid', { entityId: E[company], name })
         bank.push((c) => [
           { type: 'account.upsert', externalId: name, connectionId: c, name, accountType: 'depository', currency: 'USD', institution: name },
-          { type: 'txn.upsert', externalId: `${name}1`, connectionId: c, accountExternalId: name, date: '2026-10-02', amount: usd(sign * 15_000), status: 'posted' },
-          { type: 'txn.upsert', externalId: `${name}2`, connectionId: c, accountExternalId: name, date: '2026-10-05', amount: usd(sign * 20_000), status: 'posted' },
+          { type: 'txn.upsert', externalId: `${name}1`, connectionId: c, accountExternalId: name, date: '2026-10-02', amount: usd(sign * 15_000), status: 'posted', rawText: 'ONLINE TRANSFER' },
+          { type: 'txn.upsert', externalId: `${name}2`, connectionId: c, accountExternalId: name, date: '2026-10-05', amount: usd(sign * 20_000), status: 'posted', rawText: 'ONLINE TRANSFER' },
         ])
         expect((await bank.sync()).status).toBe('ok')
       }

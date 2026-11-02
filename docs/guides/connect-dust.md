@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Dust as a remote MCP server so your agents can answer questions about your real finances. Read-only.
+---
+
 # Connect Dust to Aggregate
 
 In Dust, a workspace admin adds Aggregate once as a remote MCP server; agents then use it as a tool.

@@ -18,6 +18,11 @@ const OBVIOUS_DAYS = 3
 /** Money in below this ($1) isn't worth a question. */
 const IMMATERIAL_MINOR = 100
 const RECENT_DAYS = 30
+/** The matcher confirmed a move on amounts alone, with no transfer words: the person should be able to see and undo it. */
+const AUTO_MATCHED = 'auto:rule'
+
+/** A confirmed link Aggregate decided by itself: shown in the filed list, and undoable. */
+export const isFiledLink = (l: Link) => l.status === 'confirmed' && (l.decidedBy === AUTO_FILED || (l.decidedBy === AUTO_MATCHED && MOVES.includes(l.type) && l.scores?.['text'] === 0))
 
 export interface AutoFilePlan {
   /** Proposals whose type no longer fits the rows' companies, where another proposal for the same rows does. */
@@ -72,6 +77,8 @@ export async function planAutoFile(rc: ReadContext): Promise<AutoFilePlan> {
     const [from, to] = [records.get(l.fromId), records.get(l.toId)]
     if (!from || !to || !from.amount || !to.amount) continue
     if (l.scores?.['noAuto'] === 1) continue
+    // Matching amounts alone aren't evidence: the rows have to say it's a move.
+    if (l.scores?.['text'] !== 1) continue
     if (partners.get(from.id) !== 1 || partners.get(to.id) !== 1) continue
     if (from.origin !== 'connector' || to.origin !== 'connector') continue
     if (from.status !== 'posted' || to.status !== 'posted') continue
@@ -119,7 +126,7 @@ export async function filedItems(rc: ReadContext, opts: { entityIds?: EntityId[]
   const year = rc.now.slice(0, 4)
   const scope = opts.entityIds ? new Set(opts.entityIds) : null
   const inScope = (r: SourceRecord | undefined) => r !== undefined && (!scope || (r.entityId !== null && scope.has(r.entityId)))
-  const links = (await rc.store.listLinks(ws, { statuses: ['confirmed'] })).filter((l) => l.decidedBy === AUTO_FILED)
+  const links = (await rc.store.listLinks(ws, { statuses: ['confirmed'] })).filter(isFiledLink)
   const overrides = (await rc.store.listOverrides(ws)).filter((o) => o.updatedBy === AUTO_FILED)
   const records = new Map((await rc.store.getRecords(ws, [...links.flatMap((l) => [l.fromId, l.toId]), ...overrides.map((o) => o.recordId)])).map((r) => [r.id, r]))
   const accounts = new Map((await rc.directory.listSourceAccounts(ws)).map((a) => [a.id, a.name]))
@@ -128,7 +135,7 @@ export async function filedItems(rc: ReadContext, opts: { entityIds?: EntityId[]
   for (const l of links) {
     const [from, to] = [records.get(l.fromId), records.get(l.toId)]
     if (!from || !to || (!inScope(from) && !inScope(to)) || !from.amount) continue
-    out.push({ id: `link:${l.id}`, entityId: from.entityId, text: `${formatMoney(Math.abs(from.amount.minor), from.amount.currency)} moved from ${name(from)} to ${name(to)} on ${shortDate(from.date, year)}`, filedAt: l.decidedAt ?? rc.now })
+    out.push({ id: `link:${l.id}`, entityId: from.entityId, text: `${formatMoney(Math.abs(from.amount.minor), from.amount.currency)} moved from ${name(from)} to ${name(to)} on ${shortDate(from.date, year)}${l.decidedBy === AUTO_MATCHED ? '. Matched automatically: same amount, own accounts' : ''}`, filedAt: l.decidedAt ?? rc.now })
   }
   for (const o of overrides) {
     const r = records.get(o.recordId)

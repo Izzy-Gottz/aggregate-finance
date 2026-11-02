@@ -1,3 +1,7 @@
+---
+description: Add Aggregate to Poke with its MCP link, then ask about your real finances. Read-only.
+---
+
 # Connect Poke to Aggregate
 
 Poke adds custom MCP servers as **Integrations**, from the web or the command line.

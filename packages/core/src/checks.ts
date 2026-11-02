@@ -24,6 +24,8 @@ export interface CheckResult {
   message: string
   /** balance_assertion only: the neighbouring day the ledger does match (a midnight date shift, not an error). */
   matchesOn?: IsoDate
+  /** balance_assertion only: the account pinned (subjectId is the pin). */
+  accountId?: Id
   /** clearing only: the clearing account's role (payouts and transfers in transit, or book payments not yet at the bank). */
   role?: string
 }
@@ -527,6 +529,9 @@ async function clearingAndSuspense(rc: ReadContext, entities: EntityInfo[], asOf
 
 const PROVIDER_NAMES: Record<string, string> = { quickbooks: 'QuickBooks', xero: 'Xero' }
 
+/** Sales a store reports, stored as report snapshots: not a company's books, so never compared with the ledger's P&L. */
+const NOT_BOOKS = new Set(['woocommerce'])
+
 /** Records that put amounts on a P&L outside bank feeds (books, billing and payroll sources). */
 const BOOKED_TYPES = ['invoice.upsert', 'credit_note.upsert', 'payment.applied', 'payroll.run', 'journal.upsert', 'equity.event']
 
@@ -631,15 +636,17 @@ async function providerReports(rc: ReadContext, entities: EntityInfo[], asOf: Is
   if (ids.length === 0) return out
   const byEntity = new Map(entities.map((e) => [e.id, e]))
   const reports = await rc.store.listRecords(rc.ws, { entityIds: ids, eventTypes: ['report.snapshot'], statuses: ['recorded'], fromDate: addDays(asOf, -400) })
+  const conns = new Map((await rc.directory.listConnections(rc.ws)).map((c) => [c.id, c]))
   const latest = new Map<string, SourceRecord>()
   for (const r of reports) {
     const ev = r.event
     if (ev.type !== 'report.snapshot' || ev.kind !== 'profit_and_loss' || ev.to > asOf || !r.entityId) continue
+    // Before the period key: a store's report for a month must not stand in for the books' report of that month.
+    if (NOT_BOOKS.has(conns.get(r.connectionId)?.connectorKey ?? '')) continue
     const key = `${r.entityId}|${ev.from}|${ev.to}|${ev.basis}`
     const prev = latest.get(key)
     if (!prev || r.updatedAt > prev.updatedAt) latest.set(key, r)
   }
-  const conns = new Map((await rc.directory.listConnections(rc.ws)).map((c) => [c.id, c]))
   for (const r of latest.values()) {
     const ev = r.event as ReportSnapshot
     const e = byEntity.get(r.entityId as EntityId) as EntityInfo

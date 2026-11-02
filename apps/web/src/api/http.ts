@@ -1,3 +1,4 @@
+import type { Money } from '@agfn/contracts'
 // AgfnApi over REST: the contract between apps/web (S8) and apps/server (S0, wired to S1 ledger / S7 grants).
 // `Routes` is the source of truth: method + path → request body/query and response. The server returns the view models
 // in types.ts as they are. Conventions:
@@ -102,7 +103,7 @@ export interface Routes {
   /** body: {state, ...}. Plaid {publicToken, institution?}; API key {apiKey}. OAuth finishes at the server's callback. */
   'POST /api/connectors/:key/finish': { body: Record<string, unknown> & { state: string }; res: { connectionId: string; accounts: NewAccount[] } }
   'POST /api/accounts/assign': { body: { assignments: Array<{ accountId: string; entityId: string }> }; res: Ok }
-  'GET /api/connections/:id': { body: void; res: ConnectionSummary & { accounts: AccountRow[]; unassigned?: Array<{ id: string; name: string; mask?: string }>; provides: string[]; records?: number } }
+  'GET /api/connections/:id': { body: void; res: ConnectionSummary & { accounts: AccountRow[]; unassigned?: Array<{ id: string; name: string; mask?: string }>; provides: string[]; records?: number; storeSales?: Money[] } }
   'GET /api/connections/:id/shared': { body: void; res: { offers: Array<{ id: string; name: string }> } }
   'POST /api/connections/:id/shared': { body: { id: string }; res: { connectionId: string; name: string } }
   'POST /api/connections/:id/company': { body: { entityId: string }; res: { ok: true; moved: number } }

@@ -1,3 +1,7 @@
+---
+description: Connect Xero to ChatGPT through Aggregate, with limited room on the hosted version. Ask about invoices, bills and reports. Read-only.
+---
+
 # Connect Xero to ChatGPT
 
 **Short answer:** connect Xero to Aggregate, then add Aggregate to ChatGPT with one link

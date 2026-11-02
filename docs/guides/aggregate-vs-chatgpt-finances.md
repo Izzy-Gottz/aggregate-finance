@@ -1,3 +1,7 @@
+---
+description: How Aggregate compares with ChatGPT's personal finance feature: who can use it, which AI, business sources, and when each is the better choice.
+---
+
 # Aggregate vs. ChatGPT's personal finance feature
 
 **Short answer:** ChatGPT's finance feature (preview, May 2026) is the simplest way to ask ChatGPT about your personal
