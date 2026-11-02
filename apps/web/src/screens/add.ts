@@ -149,7 +149,12 @@ export function UploadView({ onClose, onBack }: { onClose: () => void; onBack: (
 export function EmailInView({ onClose, onBack }: { onClose: () => void; onBack: (() => void) | null }) {
   const app = useApp()
   const ws = app.ws
-  if (!ws) return null
+  // No addresses on this server (a saved link): nothing to show here, so go to adding a file instead of an empty drawer.
+  const none = !!ws && ws.inbound.length === 0
+  useEffect(() => {
+    if (none) app.open({ kind: 'add', what: 'upload' })
+  }, [none])
+  if (!ws || none) return null
   return html`<${Drawer} title="Email it in" sub="Forward bills and receipts. Each company has its own address." onClose=${onClose} onBack=${onBack}>
     <${Section} compact title="Addresses" sub="Anything sent here waits as an unread document for your AI">
       <${Rows}>

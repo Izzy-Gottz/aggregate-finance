@@ -63,7 +63,8 @@ import { addDays, addMonths, daysBetween, localDate, monthStart, today, todayFor
 import { balanceSheet, cashFlow, profitAndLoss, type ReportSection } from './reports.ts'
 import { applyRules, merchantKey } from './rules.ts'
 import { matchesFilter, parseQuery } from './query.ts'
-import { listReviewItems } from './review.ts'
+import { listReviewItems, type ReviewItem } from './review.ts'
+import { setAsideView } from './set-aside.ts'
 import { YIELD_EVERY, yieldNow } from './yield.ts'
 import { syncedLongAgo } from './store.ts'
 
@@ -544,7 +545,7 @@ export class LedgerFinanceReader implements FinanceReader {
     // Waiting on a suggested match only while Review still asks it: an alternative left over once another match used
     // the money up (the other of two alike invoices) isn't a question any more.
     const proposed = new Set(
-      (await listReviewItems(this.engine.metricContext(scope.workspaceId), { entityIds: scope.entityIds })).filter((i) => i.kind === 'suggested_match').flatMap((i) => i.recordIds),
+      (await listReviewItems(this.engine.metricContext(scope.workspaceId), { entityIds: scope.entityIds })).filter((i) => i.kind === 'suggested_match').flatMap((i) => [...i.recordIds, ...(i.alternatives ?? []).flatMap((a) => a.recordIds)]),
     )
     const views = async (rows: typeof hits): Promise<TxnView[]> => {
       if (rows.length === 0) return []
@@ -906,6 +907,7 @@ export class LedgerFinanceReader implements FinanceReader {
     const v: CoreBucketView = await bucketView(this.engine.metricContext(ws), b, await todayFor(this.engine.metricContext(ws)))
     const rules = (await this.#store.listRules(ws)).filter((r) => r.actions.bucketId === b.id && r.status === 'active')
     const count = (s: string) => v.occurrences.filter((o) => o.status === s).length
+    const setAside = await setAsideView(this.engine.metricContext(ws), b, await todayFor(this.engine.metricContext(ws)))
     const cadence = b.schedule ? ({ weekly: 'weekly', biweekly: 'weekly', monthly: 'monthly', quarterly: 'quarterly', annual: 'yearly' } as const)[b.schedule.cadence] : null
     const addedBy: AddedBy =
       b.origin === 'agent'
@@ -926,6 +928,7 @@ export class LedgerFinanceReader implements FinanceReader {
         ...v.payments.map((p) => ({ date: p.date, amount: p.amount, state: 'paid' as const, txnId: p.recordId })),
         ...v.occurrences.filter((o) => o.status === 'upcoming' || o.status === 'missed').map((o) => ({ date: o.dueDate, amount: o.expected, state: o.status as 'upcoming' | 'missed' })),
       ].sort((a, b2) => (a.date < b2.date ? -1 : 1)),
+      ...(setAside ? { setAside, createdOn: b.createdAt.slice(0, 10) } : {}),
       addedBy,
     }
   }
@@ -1117,6 +1120,10 @@ export class LedgerFinanceReader implements FinanceReader {
     return out
   }
 
+  async filedItems(scope: ReadScope): Promise<Array<{ id: string; entityId: EntityId | null; text: string; filedAt: IsoTimestamp }>> {
+    return this.engine.filedItems(scope.workspaceId, { entityIds: scope.entityIds })
+  }
+
   async reviewItems(scope: ReadScope, kinds?: ReviewItemView['kind'][]): Promise<ReviewItemView[]> {
     const ws = scope.workspaceId
     const items = await listReviewItems(this.engine.metricContext(ws), { entityIds: scope.entityIds })
@@ -1145,9 +1152,27 @@ export class LedgerFinanceReader implements FinanceReader {
         kind = 'whose_money'
         options = ['edit']
         createdAt = (await this.#store.getRecord(ws, it.recordIds[0] as Id))?.createdAt ?? createdAt
+      } else if (it.kind === 'underfunded_set_aside') {
+        // Nothing to answer: it clears when the balance or the set-aside changes.
+        kind = 'underfunded_set_aside'
+        options = []
       } else continue
       if (kinds && !kinds.includes(kind)) continue
-      out.push({ id: it.id, entityId: it.entityId, kind, title: it.title, detail: it.detail, createdAt, recordIds: it.recordIds, options, ...(it.confirmLabel ? { confirmLabel: it.confirmLabel } : {}), ...(it.choices?.length ? { choices: it.choices } : {}) })
+      const words = (i: ReviewItem) => ({ ...(i.question ? { question: i.question } : {}), ...(i.questionNames ? { questionNames: i.questionNames } : {}), ...(i.confirmLabel ? { confirmLabel: i.confirmLabel } : {}), ...(i.rejectLabel ? { rejectLabel: i.rejectLabel } : {}) })
+      out.push({
+        id: it.id,
+        entityId: it.entityId,
+        kind,
+        title: it.title,
+        detail: it.detail,
+        createdAt,
+        recordIds: it.recordIds,
+        options,
+        ...words(it),
+        ...(it.group ? { group: it.group } : {}),
+        ...(it.alternatives ? { alternatives: it.alternatives.map((a) => ({ id: a.id, entityId: a.entityId, kind, title: a.title, detail: a.detail, createdAt, recordIds: a.recordIds, options, ...words(a) })) } : {}),
+        ...(it.choices?.length ? { choices: it.choices } : {}),
+      })
     }
     return out
   }

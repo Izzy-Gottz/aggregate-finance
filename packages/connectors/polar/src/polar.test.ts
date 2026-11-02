@@ -223,4 +223,35 @@ describe('polar errors', () => {
     const { connector } = make([{ match: at('/orders/'), respond: { status: 401, json: { error: 'Unauthorized', detail: 'Invalid token' } } }])
     expect((await connector.health(conn)).status).toBe('needs_reauth')
   })
+
+  describe('disconnect', () => {
+    const app = { clientId: 'polar_client', clientSecret: 'polar_csecret', redirectUri: 'https://app.example.com/cb' }
+    const signedIn = { ...conn, secret: { tokens: { accessToken: 'at_1', refreshToken: 'rt_1', expiresAt: 0 } } }
+    const revokeRoute = (status: number): FixtureRoute => ({ method: 'POST', match: at('/oauth2/revoke'), respond: { status, json: {} } })
+
+    it('revokes both tokens at Polar, form-encoded with the app credentials', async () => {
+      const { connector, calls } = make([revokeRoute(200)], { oauth: app })
+      await expect(connector.disconnect!(signedIn)).resolves.toBeUndefined()
+      const revokes = calls.filter((c) => c.url.endsWith('/oauth2/revoke'))
+      expect(revokes[0]?.url).toContain('sandbox-api.polar.sh')
+      expect(revokes[0]?.headers['content-type']).toBe('application/x-www-form-urlencoded')
+      expect(revokes[0]?.body).toEqual({ token: 'rt_1', token_type_hint: 'refresh_token', client_id: 'polar_client', client_secret: 'polar_csecret' })
+      expect(revokes[1]?.body).toMatchObject({ token: 'at_1', token_type_hint: 'access_token' })
+    })
+
+    it('keeps the sign-in while another organization of it is connected', async () => {
+      const { connector, calls } = make([revokeRoute(200)], { oauth: app })
+      await expect(connector.disconnect!({ ...signedIn, config: { ...signedIn.config, sharedSecretKey: 'polar:x', lastOfGrant: false } })).resolves.toBeUndefined()
+      expect(calls.filter((c) => c.url.endsWith('/oauth2/revoke'))).toHaveLength(0)
+      await connector.disconnect!({ ...signedIn, config: { ...signedIn.config, sharedSecretKey: 'polar:x', lastOfGrant: true } })
+      expect(calls.filter((c) => c.url.endsWith('/oauth2/revoke'))).toHaveLength(2)
+    })
+
+    it('says what to do for a pasted token or a refused revoke', async () => {
+      const { connector, calls } = make([revokeRoute(400)], { oauth: app })
+      await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Delete the token') })
+      expect(calls.filter((c) => c.url.endsWith('/oauth2/revoke'))).toHaveLength(0)
+      await expect(connector.disconnect!(signedIn)).resolves.toEqual({ notRevoked: expect.stringContaining('Remove Aggregate') })
+    })
+  })
 })

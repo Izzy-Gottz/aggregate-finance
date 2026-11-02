@@ -19,6 +19,8 @@ import type {
   AiSummary,
   BucketDetail,
   BucketField,
+  FiledSummary,
+  SetAsideInput,
   CashEntry,
   CompanyDetail,
   ConnectionSummary,
@@ -84,11 +86,11 @@ export interface Routes {
   'POST /api/workspaces': { body: { companyName?: string; currency?: string; timeZone?: string }; res: { workspaceId: string; companyId: string | null; personalId: string } }
   'POST /api/demo': { body: Record<string, never>; res: { workspaceId: string; created: boolean; entities: Array<{ id: string; name: string }> } }
   'DELETE /api/demo': { body: void; res: Ok }
-  'DELETE /api/workspace': { body: { confirm: string }; res: Ok }
+  'DELETE /api/workspace': { body: { confirm: string }; res: Ok & { notRevoked?: string[] } }
   'GET /api/workspace/delete-preview': { body: void; res: { affected: Array<{ personId: string; name: string; email: string; personalConnections: number }> } }
   'GET /api/sign-in-methods': { body: void; res: { methods: Array<SignInMethod | 'magic_link'>; reviewerCode?: boolean } }
   'POST /api/review-access/code': { body: { code: string; email?: string }; res: { ok: true } }
-  'DELETE /api/me': { body: { confirm: string }; res: Ok & { workspaces: number; grantsRevoked: number; connectionsRevoked: number; documents: number } }
+  'DELETE /api/me': { body: { confirm: string }; res: Ok & { workspaces: number; grantsRevoked: number; connectionsRevoked: number; notRevoked?: string[]; documents: number } }
   'GET /api/invites/:id': { body: void; res: { workspaceId: string; workspaceName: string; inviterName: string; claim?: boolean; invitedEmail?: string } }
   'POST /api/invites/:id/accept': { body: Record<string, never>; res: { ok: true; workspaceId: string } }
   'POST /api/entities': { body: { name: string; currency?: string; kind: 'company' }; res: EntitySummary }
@@ -113,7 +115,7 @@ export interface Routes {
 
   // ----- buckets and records -----
   'GET /api/buckets/:id': { body: void; res: BucketDetail }
-  'PATCH /api/buckets/:id': { body: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>> & { idempotencyKey: string }; res: BucketDetail }
+  'PATCH /api/buckets/:id': { body: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>> & { setAside?: SetAsideInput | null; idempotencyKey: string }; res: BucketDetail }
   'POST /api/buckets': { body: { entityId: string; name: string; fields: BucketField[]; idempotencyKey: string }; res: BucketDetail }
   'POST /api/records/:id/undo': { body: { idempotencyKey: string }; res: WriteResult }
 
@@ -129,6 +131,9 @@ export interface Routes {
   // ----- review -----
   'GET /api/review': { body: void; res: Array<ReviewItem & { pick?: ReviewPick }> }
   'POST /api/review/:id': { body: ReviewDecision; res: Ok & { recordId?: string; summary?: string } }
+  'GET /api/review/filed': { body: void; res: FiledSummary }
+  'POST /api/review/filed/:id/undo': { body: Record<string, never>; res: Ok }
+  'POST /api/review/group/:key': { body: { action: 'confirm'; ids: string[] }; res: Ok & { count: number } }
 
   // ----- preferences and people -----
   'GET /api/preferences': { body: void; res: Preferences }
@@ -189,7 +194,7 @@ export const ROUTES = [
   'GET /api/buckets/:id', 'PATCH /api/buckets/:id', 'POST /api/buckets', 'POST /api/records/:id/undo',
   'GET /api/ai/:grantId', 'PATCH /api/ai/:grantId', 'POST /api/ai/:grantId/pause', 'POST /api/ai/:grantId/revoke',
   'POST /api/ai/pause-all', 'POST /api/ai/keys', 'GET /api/ai/activity/latest',
-  'GET /api/review', 'POST /api/review/:id',
+  'GET /api/review', 'POST /api/review/:id', 'GET /api/review/filed', 'POST /api/review/filed/:id/undo', 'POST /api/review/group/:key',
   'GET /api/preferences', 'PATCH /api/preferences', 'POST /api/people', 'PATCH /api/people/:id', 'DELETE /api/people/:id', 'POST /api/people/:id/resend', 'POST /api/workspace/leave', 'POST /api/export',
   'GET /api/entities/:id/investments', 'POST /api/entities/:id/investments',
   'GET /api/entities/:id/equity', 'POST /api/entities/:id/equity/events', 'POST /api/entities/:id/equity/import', 'GET /api/entities/:id/equity/ocf',
@@ -284,6 +289,8 @@ export class HttpApi implements AgfnApi {
     })
     if (r.status === 204) return undefined as unknown as Routes[K]["res"]
     const data = (await r.json().catch(() => ({}))) as { error?: string; message?: string }
+    // Nobody was signed in to lose: the device offered a passkey this server doesn't have.
+    if (r.status === 401 && route === 'POST /api/auth/passkey/verify-authentication') throw new HttpError(401, 'This passkey isn’t recognized here. Use your email instead, then add a new passkey in Settings.', 'passkey_unknown')
     if (r.status === 401) {
       this.onSignedOut()
       throw new HttpError(401, 'Please sign in again.')
@@ -530,7 +537,7 @@ export class HttpApi implements AgfnApi {
 
   // ----- buckets -----
   bucket = (id: string) => this.call('GET /api/buckets/:id', { id })
-  updateBucket = (id: string, patch: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>>) => this.call('PATCH /api/buckets/:id', { id }, { ...patch, idempotencyKey: key() })
+  updateBucket = (id: string, patch: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>> & { setAside?: SetAsideInput | null }) => this.call('PATCH /api/buckets/:id', { id }, { ...patch, idempotencyKey: key() })
   createBucket = (entityId: string, b: { name: string; fields: BucketField[] }) => this.call('POST /api/buckets', {}, { entityId, ...b, idempotencyKey: key() })
   undo = (id: string) => this.call('POST /api/records/:id/undo', { id }, { idempotencyKey: key() })
 
@@ -552,6 +559,9 @@ export class HttpApi implements AgfnApi {
 
   // ----- review -----
   review = async (): Promise<ReviewItem[]> => (await this.call('GET /api/review')).map(fromPick)
+  reviewFiled = () => this.call('GET /api/review/filed')
+  undoFiled = (id: string) => this.call('POST /api/review/filed/:id/undo', { id }, {})
+  confirmGroup = (key: string, ids: string[]) => this.call('POST /api/review/group/:key', { key }, { action: 'confirm', ids })
   resolve = async (id: string, decision: ReviewDecision) => {
     const { recordId, summary } = await this.call('POST /api/review/:id', { id }, decision)
     return { ...(recordId ? { recordId } : {}), ...(summary ? { summary } : {}) }

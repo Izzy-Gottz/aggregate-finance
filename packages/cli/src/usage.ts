@@ -1,18 +1,20 @@
-// agfn usage [--workspace ID] [--days N] [--json]
+// agfn usage [--workspace ID] [--days N] [--json] [--reason WHY]
 // Operator view of what each workspace costs to run (same numbers as GET /api/usage), plus instance totals.
 
 import { UsageError, parseArgs, rejectUnknown, type Io } from './io.ts'
+import { operatorAccess, recordOperatorAccess } from './operator.ts'
 import { bootFromEnv, settleAuth, type BootFn } from './sync.ts'
 
 export async function usageCommand(argv: string[], io: Io, bootFn: BootFn = bootFromEnv): Promise<number> {
   const args = parseArgs(argv, ['json'])
-  rejectUnknown(args, ['workspace', 'days', 'json'])
-  if (args.positionals.length) throw new UsageError('usage: agfn usage [--workspace ID] [--days N] [--json]')
+  rejectUnknown(args, ['workspace', 'days', 'json', 'reason'])
+  if (args.positionals.length) throw new UsageError('usage: agfn usage [--workspace ID] [--days N] [--json] [--reason WHY]')
   const daysFlag = args.flags.get('days')
   const days = daysFlag === undefined ? 30 : Number(daysFlag)
   if (!Number.isInteger(days) || days < 1 || days > 400) throw new UsageError('--days must be a whole number from 1 to 400')
   const only = args.flags.get('workspace')
   if (only === true) throw new UsageError('--workspace needs an id')
+  const access = operatorAccess(args, io)
 
   const booted = await bootFn(io)
   await settleAuth(booted)
@@ -20,6 +22,7 @@ export async function usageCommand(argv: string[], io: Io, bootFn: BootFn = boot
     const usage = booted.services.usage
     const wss = (await booted.services.db.selectFrom('workspaces').select(['id', 'name']).execute()).filter((w) => !only || w.id === only)
     if (only && !wss.length) throw new UsageError(`no workspace ${only}`)
+    await recordOperatorAccess(booted.services.db, access, 'usage', only)
     const rows = []
     for (const w of wss) rows.push({ id: w.id, name: w.name, today: await usage.snapshot(w.id), history: await usage.history(w.id, days) })
     const instance = await usage.instance()

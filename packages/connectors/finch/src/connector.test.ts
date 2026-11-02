@@ -137,4 +137,27 @@ describe('finch connector', () => {
     const { connector } = make([{ method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_1', company_id: 'co_1', provider_id: 'gusto', client_type: 'sandbox' } } }])
     expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_1', companyId: 'co_1', providerId: 'gusto', clientType: 'sandbox' } })
   })
+
+  it('disconnect ends the connection at Finch, the only call that stops its billing', async () => {
+    const { connector, conn, ff } = make([{ method: 'POST', match: '/disconnect', respond: { json: { status: 'success' } } }])
+    await expect(connector.disconnect!(conn)).resolves.toBeUndefined()
+    const call = ff.calls.find((c) => c.url.endsWith('/disconnect'))
+    expect(call?.headers.authorization).toBe('Bearer tok-test')
+    expect(call?.headers['finch-api-version']).toBe('2020-09-17')
+  })
+
+  it('waits for the last connection of an employer and provider, in any workspace', async () => {
+    const { connector, conn, ff } = make([{ method: 'POST', match: '/disconnect', respond: { json: { status: 'success' } } }])
+    expect(connector.accountKey!({ companyId: 'co_1', providerId: 'gusto' })).toBe('co_1:gusto')
+    expect(connector.accountKey!({ companyId: 'co_1' })).toBeUndefined()
+    await expect(connector.disconnect!({ ...conn, config: { ...conn.config, liveElsewhere: true } })).resolves.toEqual({ notRevoked: expect.stringContaining('Another workspace') })
+    expect(ff.calls.filter((c) => c.url.endsWith('/disconnect'))).toHaveLength(0)
+  })
+
+  it('a token Finch refuses is already gone; any other failure tells the person', async () => {
+    const gone = make([{ method: 'POST', match: '/disconnect', respond: { status: 401, json: { message: 'Unauthorized' } } }])
+    await expect(gone.connector.disconnect!(gone.conn)).resolves.toBeUndefined()
+    const down = make([{ method: 'POST', match: '/disconnect', respond: { status: 400, json: { message: 'nope' } } }])
+    await expect(down.connector.disconnect!(down.conn)).resolves.toEqual({ notRevoked: expect.stringContaining('payroll provider') })
+  })
 })

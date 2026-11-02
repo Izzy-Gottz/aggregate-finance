@@ -78,18 +78,19 @@ export async function soleOwnerWorkspaces(db: Kysely<CoreTables>, personId: stri
   return (await ownedAlone(db, personId)).shared
 }
 
-export async function deleteAccount(deps: DeleteAccountDeps, personId: string): Promise<{ workspaces: number; workspacesDeleted: number; grantsRevoked: number; connectionsRevoked: number; documents: number }> {
+export async function deleteAccount(deps: DeleteAccountDeps, personId: string): Promise<{ workspaces: number; workspacesDeleted: number; grantsRevoked: number; connectionsRevoked: number; notRevoked: string[]; documents: number }> {
   const { db, files, sync } = deps
   const anyDb = db as unknown as Kysely<Record<string, Record<string, unknown>>>
   const { shared, solo } = await ownedAlone(db, personId)
   if (shared.length) throw new SoleOwnerError(shared)
 
   const person = await db.selectFrom('people').select(['id', 'auth_user_id']).where('id', '=', personId).executeTakeFirst()
-  if (!person) return { workspaces: 0, workspacesDeleted: 0, grantsRevoked: 0, connectionsRevoked: 0, documents: 0 }
+  if (!person) return { workspaces: 0, workspacesDeleted: 0, grantsRevoked: 0, connectionsRevoked: 0, notRevoked: [], documents: 0 }
   const memberOf = await withBypass('account:memberships', () => db.selectFrom('memberships').select('workspace_id').where('person_id', '=', personId).execute())
 
   // 0. Workspaces only they belong to go first, whole (provider access revoked inside).
-  for (const ws of solo) await withWorkspace(ws, () => deleteWorkspace(deps, ws))
+  const notRevoked: string[] = []
+  for (const ws of solo) notRevoked.push(...(await withWorkspace(ws, () => deleteWorkspace(deps, ws))).notRevoked)
 
   let grantsRevoked = 0
   let connectionsRevoked = 0
@@ -109,7 +110,11 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
       const personal = (await db.selectFrom('entities').select('id').where('owner_person_id', '=', personId).where('kind', '=', 'personal').execute()).map((e) => e.id)
       if (personal.length) {
         const conns = await db.selectFrom('connections').select('id').where('entity_id', 'in', personal).where('status', '!=', 'disconnected').execute()
-        for (const c of conns) if ((await sync.disconnect(c.id)).revoked) connectionsRevoked++
+        for (const c of conns) {
+          const out = await sync.disconnect(c.id)
+          if (out.revoked) connectionsRevoked++
+          else if (out.warning) notRevoked.push(out.warning)
+        }
         const docs = await db.selectFrom('documents').select(['id', 'storage_key']).where('entity_id', 'in', personal).execute()
         for (const d of docs) {
           await files.delete(d.storage_key).catch((err: unknown) => deps.log?.('file delete failed', { error: err instanceof Error ? err.message : 'unknown' }))
@@ -137,5 +142,5 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
 
   // 5. Keep the row (history points at it) but nothing that identifies them.
   await db.updateTable('people').set({ name: 'Former member', email: `deleted-${personId}@invalid`, auth_user_id: null }).where('id', '=', personId).execute()
-  return { workspaces: memberOf.length, workspacesDeleted: solo.length, grantsRevoked, connectionsRevoked, documents }
+  return { workspaces: memberOf.length, workspacesDeleted: solo.length, grantsRevoked, connectionsRevoked, notRevoked, documents }
 }

@@ -170,6 +170,7 @@ export interface LedgerBucketsTable {
   fields_json: string
   values_json: string
   schedule_json: string | null
+  set_aside_json: string | null
   origin: string
   created_by: string | null
   created_at: string
@@ -498,6 +499,7 @@ function toBucket(r: LedgerBucketsTable): Bucket {
     fields: JSON.parse(r.fields_json) as Bucket['fields'],
     values: JSON.parse(r.values_json) as Bucket['values'],
     schedule: parse<Bucket['schedule']>(r.schedule_json),
+    setAside: r.set_aside_json ? parse<NonNullable<Bucket['setAside']>>(r.set_aside_json) : null,
     origin: r.origin as Bucket['origin'],
     createdBy: r.created_by,
     createdAt: r.created_at,
@@ -1878,6 +1880,7 @@ export class KyselyLedgerStore implements LedgerStore {
       fields_json: JSON.stringify(b.fields),
       values_json: JSON.stringify(b.values),
       schedule_json: b.schedule ? JSON.stringify(b.schedule) : null,
+      set_aside_json: b.setAside ? JSON.stringify(b.setAside) : null,
       origin: b.origin,
       created_by: b.createdBy,
       created_at: b.createdAt,

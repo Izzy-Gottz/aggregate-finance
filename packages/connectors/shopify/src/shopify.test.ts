@@ -460,3 +460,49 @@ describe('shopify install from Shopify', () => {
     await expect(make().connector.connect({ ...rest })).rejects.toMatchObject({ kind: 'auth' })
   })
 })
+
+describe('shopify disconnect', () => {
+  const oauthOpts = { clientId: 'cid', clientSecret: 'csecret', pageSize: 3 }
+  const ours = (c: ConnectionRef): ConnectionRef => ({ ...c, secret: { accessToken: 'shpat_ours', refreshToken: 'rt_1', expiresAt: Date.UTC(2099, 0, 1) } })
+  const fetchWith = (status: number) => {
+    const calls: Array<{ url: string; method?: string; token?: string | null }> = []
+    const fetch = (async (url: string | URL, init?: RequestInit) => {
+      calls.push({ url: String(url), ...(init?.method ? { method: init.method } : {}), token: new Headers(init?.headers).get('x-shopify-access-token') })
+      return new Response(status === 200 ? '{}' : '{"errors":"no"}', { status })
+    }) as typeof globalThis.fetch
+    return { calls, fetch }
+  }
+  const make2 = (status: number) => {
+    const f = fetchWith(status)
+    const { conn } = make()
+    return { ...f, conn: ours(conn), plain: conn, connector: createShopifyConnector(oauthOpts, { raw: new MemoryRawSink(), fetch: f.fetch, clock: fakeClock(Date.UTC(2026, 10, 1)), random: () => 0.5 }) }
+  }
+
+  it('uninstalls from the store with its token', async () => {
+    const { connector, conn, calls } = make2(200)
+    await expect(connector.disconnect!(conn)).resolves.toBeUndefined()
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({ method: 'DELETE', token: 'shpat_ours' })
+    expect(calls[0]?.url).toMatch(/^https:\/\/[^/]+\.myshopify\.com\/admin\/api_permissions\/current\.json$/)
+  })
+
+  it('leaves the store installed while another workspace uses it', async () => {
+    const { connector, conn, calls } = make2(200)
+    const r = await connector.disconnect!({ ...conn, config: { ...conn.config, liveElsewhere: true } })
+    expect(r).toEqual({ notRevoked: expect.stringContaining('Another workspace') })
+    expect(calls).toHaveLength(0)
+  })
+
+  it("never uninstalls a store's own app or a pasted token: it says what to do", async () => {
+    const { connector, conn, plain, calls } = make2(200)
+    await expect(connector.disconnect!({ ...plain, secret: { accessToken: 'shpat_pasted_000000000000' } })).resolves.toEqual({ notRevoked: expect.stringContaining('Delete the app or its token') })
+    await expect(connector.disconnect!({ ...conn, secret: { ...(conn.secret as object), appClientId: 'x', appClientSecret: 'y' } })).resolves.toEqual({ notRevoked: expect.stringContaining('Delete the app or its token') })
+    expect(calls).toHaveLength(0)
+  })
+
+  it('an already-uninstalled store is done; any other refusal tells the person', async () => {
+    for (const status of [401, 404]) await expect(make2(status).connector.disconnect!(make2(status).conn)).resolves.toBeUndefined()
+    const { connector, conn } = make2(403)
+    await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Uninstall Aggregate') })
+  })
+})

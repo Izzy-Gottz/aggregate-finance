@@ -16,6 +16,7 @@ export { runChecks, openItems, type CheckName, type CheckResult, type CheckOptio
 export { computeMetric, MAX_ROW_IDS, type CoreMetricAnswer, type MetricProvider } from './metrics.ts'
 export { profitAndLoss, balanceSheet, cashFlow, type ProfitAndLoss, type BalanceSheet, type CashFlow, type ReportSection, type ReportLine } from './reports.ts'
 export { listReviewItems, type ReviewItem, type ReviewKind } from './review.ts'
+export { heldRows, keepUnseenAllocations, setAsideView, SetAsideError, underfundedAccounts, validateSetAside, type HeldRow, type UnderfundedAccount } from './set-aside.ts'
 export {
   bucketView,
   detectRecurring,

@@ -43,10 +43,10 @@ describe('Opening one connector', () => {
     location.hash = '#/?d=connect:plaid'
     render(html`<${Root} api=${api} />`)
     await screen.findByText('One moment…')
-    expect(screen.queryByRole('heading', { name: 'More connections' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Add a connection' })).toBeNull()
     release()
     await waitFor(() => expect(screen.queryByText('One moment…')).toBeNull())
-    expect(screen.queryByRole('heading', { name: 'More connections' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Add a connection' })).toBeNull()
   })
 
   it('loads Plaid when the drawer opens, and the button says "Opening…" (once) while it starts', async () => {
@@ -327,5 +327,40 @@ describe('A passkey check that times out or is cancelled (43, live 11-01)', () =
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Use email instead' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Add passkey' })).toBeNull()
+  })
+})
+
+describe('Providers that aren’t read-only say so before you connect', () => {
+  const open = async (api: MockApi, key: string) => {
+    oneCompany(api)
+    sessionStorage.setItem('agfn.rechecked', String(Date.now()))
+    location.hash = `#/?d=connect:${key}`
+    render(html`<${Root} api=${api} />`)
+  }
+
+  it('QuickBooks, before the Intuit redirect', async () => {
+    await open(new MockApi(), 'quickbooks')
+    await screen.findByText('QuickBooks only offers one accounting permission, which covers reading and writing. Aggregate only reads.')
+    expect(screen.getByRole('button', { name: 'Connect to QuickBooks' })).toBeTruthy()
+  })
+
+  it('BILL, before the sync token', async () => {
+    const api = new MockApi()
+    const list = await api.connectors()
+    api.connectors = async () => [...list, { ...list[0]!, key: 'billcom', name: 'BILL', auth: 'api_key' as const }]
+    await open(api, 'billcom')
+    await screen.findByText('BILL’s sync token can edit records in your BILL account but can’t pay anyone or move money. Aggregate only reads.')
+  })
+
+  it('a key that can’t be limited to reading isn’t headed "all read-only"', async () => {
+    const api = new MockApi()
+    const list = await api.connectors()
+    const lemon = { ...list[0]!, key: 'lemonsqueezy', name: 'Lemon Squeezy', auth: 'api_key' as const }
+    api.connectors = async () => [...list, lemon]
+    api.startConnect = (async () => ({ kind: 'api_key', label: 'Key', helpUrl: '', placeholder: '', permissions: ['Lemon Squeezy keys can’t be limited to reading.'], state: 'st' })) as unknown as typeof api.startConnect
+    await open(api, 'lemonsqueezy')
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue to Lemon Squeezy' }))
+    await screen.findByText('What this key can do:')
+    expect(screen.queryByText('Only these, all read-only:')).toBeNull()
   })
 })

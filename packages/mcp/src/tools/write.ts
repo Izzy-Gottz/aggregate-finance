@@ -2,8 +2,9 @@
 // Every description carries the reconciliation rules (MASTER §7), phrased as facts about the tool, not orders to the model,
 // as the Claude and OpenAI directory policies require (docs/compliance/mcp-directory.md).
 
+import { setAsidePayload, type SetAsideKept } from '../set-aside-input.ts'
 import * as z from 'zod/v4'
-import type { DataType, EntityId } from '@agfn/contracts'
+import { findReviewItem, type DataType, type EntityId } from '@agfn/contracts'
 import type { EntityInfo, WriteOp } from '../ports.ts'
 import { say, wire } from '../money.ts'
 import { ToolError } from '../scope.ts'
@@ -449,6 +450,34 @@ function schedulePayload(s: z.infer<typeof schedule> | null | undefined) {
   return { amountMinor: m.minor, currency: m.currency, cadence: s.cadence, dueDay: s.due_day ?? null, endDate: s.end_date ?? null }
 }
 
+const allocationIn = z
+  .object({
+    account_id: z.string().min(1).max(64),
+    amount: positiveMoney.optional().describe("A fixed amount, in the account's currency."),
+    percent: z.number().gt(0).max(100).multipleOf(0.01).optional().describe('Percent of the balance (30 means 30%); follows the balance.'),
+    percent_of_inflows: z.number().gt(0).max(100).multipleOf(0.01).optional().describe('Percent of each inflow to the account from `since` on (default today), less what left it tagged to this bucket.'),
+    since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD. Only with percent_of_inflows.'),
+  })
+  .describe('Exactly one of amount, percent or percent_of_inflows.')
+  .refine((a) => [a.amount, a.percent, a.percent_of_inflows].filter((x) => x !== undefined).length === 1, 'Give one of amount, percent or percent_of_inflows.')
+const setAsideIn = z.object({
+  allocations: z.array(allocationIn).min(1).max(20),
+  counts_in_cash: z.boolean().optional().describe('Default true: only a label. False: left out of available_cash, for money that isn\'t the user\'s to spend, like taxes. Set false only when the user asks. On a change, left out keeps what\'s set.'),
+  goal: z.object({ amount: positiveMoney, by: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD. A due date goes here.') }).nullable().optional().describe('On a change, left out keeps the goal and null removes it.'),
+  note: z.string().max(500).nullable().optional().describe('The owner\'s plain words for edge cases. On a change, left out keeps the note and null removes it.'),
+})
+
+async function setAsideAccounts(ctx: ToolContext) {
+  const seen = await ctx.access.entities(ctx.principal, 'view', 'balances')
+  return ctx.reader.accounts({ workspaceId: ctx.principal.workspaceId, entityIds: seen.map((e) => e.id) }, {})
+}
+
+async function setAsideFor(ctx: ToolContext, entity: EntityInfo, input: z.infer<typeof setAsideIn>, kept?: SetAsideKept): Promise<Record<string, unknown>> {
+  const accounts = await setAsideAccounts(ctx)
+  const sa = { allocations: input.allocations.map((a) => ({ accountId: a.account_id, ...(a.amount ? { amount: toMinor(a.amount) } : {}), ...(a.percent === undefined ? {} : { percent: a.percent }), ...(a.percent_of_inflows === undefined ? {} : { percentOfInflows: a.percent_of_inflows }), ...(a.since ? { since: a.since } : {}) })), ...(input.counts_in_cash === undefined ? {} : { countsInCash: input.counts_in_cash }), ...(input.goal ? { goal: { amount: toMinor(input.goal.amount), ...(input.goal.by ? { by: input.goal.by } : {}) } } : input.goal === null ? { goal: null } : {}), ...(input.note === undefined ? {} : { note: input.note }) }
+  return setAsidePayload(sa, accounts, entity.currency, ctx.clock.now().toISOString().slice(0, 10), kept)
+}
+
 const createBucket = defineTool({
   name: 'create_bucket',
   title: 'Create a bucket',
@@ -471,7 +500,8 @@ const createBucket = defineTool({
   rest: { method: 'POST', path: '/v1/buckets' },
   async run(ctx, args) {
     const entity = await oneEntity(ctx, args.company, 'buckets')
-    const payload = { name: args.name, fields: args.fields, values: args.values, schedule: schedulePayload(args.schedule), rule: args.rule ? matchPayload(args.rule) : null }
+    const given = (args as { set_aside?: z.infer<typeof setAsideIn> }).set_aside
+    const payload = { name: args.name, fields: args.fields, values: args.values, schedule: schedulePayload(args.schedule), rule: args.rule ? matchPayload(args.rule) : null, ...(given ? { setAside: await setAsideFor(ctx, entity, given) } : {}) }
     const r = await submit(ctx, 'create_bucket', entity, 'buckets', payload, args)
     return writeOutput(r, entity, `bucket "${args.name}"`, ctx)
   },
@@ -516,6 +546,10 @@ const updateBucket = defineTool({
     if (args.fields !== undefined) changes.fields = args.fields
     if (args.values !== undefined) changes.values = args.values
     if (args.schedule !== undefined) changes.schedule = schedulePayload(args.schedule)
+    const given = (args as { set_aside?: z.infer<typeof setAsideIn> | null }).set_aside
+    if (given) changes.setAside = await setAsideFor(ctx, entity, given, (await ctx.reader.bucket(ctx.principal.workspaceId, args.bucket_id))?.setAside)
+    else if (given === null) changes.setAside = null
+    if (given !== undefined) changes.setAsideAccounts = (await setAsideAccounts(ctx)).map((a) => a.id)
     if (!Object.keys(changes).length) throw new ToolError('invalid', 'Nothing to change.')
     const r = await submit(ctx, 'update_bucket', entity, 'buckets', { bucketId: args.bucket_id, changes }, args)
     return writeOutput(r, entity, 'bucket change', ctx)
@@ -720,7 +754,7 @@ const resolveReviewItem = defineTool({
   async run(ctx, args) {
     const visible = await ctx.access.entities(ctx.principal, 'edit', 'transactions')
     const items = await ctx.reader.reviewItems({ workspaceId: ctx.principal.workspaceId, entityIds: visible.map((e) => e.id) })
-    const item = items.find((i) => i.id === args.id)
+    const item = findReviewItem(items, args.id)
     if (item?.kind === 'which_company' && item.entityId === null) {
       // Which company an account feeds: workspace managers only, and only into a company this connection may add to.
       if (!(await ctx.access.canManageWorkspace(ctx.principal))) throw new ToolError('not_found', `No review item "${args.id}" this connection can resolve.`, 'Use list_review_items.')
@@ -850,18 +884,37 @@ const reopenPeriod = defineTool({
   },
 })
 
-export const WRITE_TOOLS: ToolDef[] = [addEntry, addInvoice, recordPayment, createBucket, updateBucket, createRule, updateRecord, recordEquityEvent, resolveReviewItem, voidRecord, pinBalance, closePeriod, reopenPeriod].map(
-  (t) =>
-    ({
-      ...t,
-      input: (t.input as z.ZodObject).extend({ dry_run: dryRun }),
-      output: WRITE_OUTPUT,
-      // Clients that read structuredContent (not the text) get the plain-language result too.
-      run: async (ctx: ToolContext, args: never) => {
-        const out = await t.run(ctx, args)
-        await noteClosedPeriod(ctx, t.name, args as Record<string, unknown>, out)
-        out.data.summary = out.summary
-        return out
-      },
-    }) as ToolDef,
-)
+function asWriteTool(t: ToolDef): ToolDef {
+  return {
+    ...t,
+    input: (t.input as z.ZodObject).extend({ dry_run: dryRun }),
+    output: WRITE_OUTPUT,
+    // Clients that read structuredContent (not the text) get the plain-language result too.
+    run: async (ctx: ToolContext, args: never) => {
+      const out = await t.run(ctx, args)
+      await noteClosedPeriod(ctx, t.name, args as Record<string, unknown>, out)
+      out.data.summary = out.summary
+      return out
+    },
+  } as ToolDef
+}
+
+/** The bucket tools with `set_aside`, for servers with AGFN_SET_ASIDES. Off, their schemas stay what the directory reviews pinned. */
+export const WRITE_WITH_SET_ASIDES: ToolDef[] = [
+  {
+    ...createBucket,
+    description: writeDescription(
+      'Create a bucket (Rent, Loans, Contractors…) with custom fields, an optional schedule (amount, cadence, due day, end) and an optional rule that routes matching transactions into it. It appears in the company drawer. Add set_aside to hold money back in an account: a fixed amount, a percent of its balance, or a percent of each inflow. A set-aside moves no money and never changes profit or reports. Set counts_in_cash false when the user says the money isn\'t theirs to spend, like taxes: it comes off available_cash. Left true, it\'s only a label.',
+    ),
+    input: (createBucket.input as z.ZodObject).extend({ set_aside: setAsideIn.optional() }),
+  } as ToolDef,
+  {
+    ...updateBucket,
+    description: writeDescription(
+      'Rename a bucket or change its fields, values or schedule. Send only what changes; schedule null removes it. set_aside replaces what the bucket holds in the accounts this connection sees; its goal, note and counts_in_cash stay unless sent. Null removes that and keeps the bucket. A bucket that only records a reserve in custom fields (an amount and an account name) isn\'t subtracted from anything: offer to add set_aside here, which keeps the bucket and needs no new one.',
+    ),
+    input: (updateBucket.input as z.ZodObject).extend({ set_aside: setAsideIn.nullable().optional() }),
+  } as ToolDef,
+].map(asWriteTool)
+
+export const WRITE_TOOLS: ToolDef[] = [addEntry, addInvoice, recordPayment, createBucket, updateBucket, createRule, updateRecord, recordEquityEvent, resolveReviewItem, voidRecord, pinBalance, closePeriod, reopenPeriod].map(asWriteTool)

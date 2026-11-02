@@ -361,7 +361,8 @@ export function createSquareConnector(opts: SquareConnectorOptions, deps: Connec
     /** Revoke our access at Square (OAuth only; a personal token is the owner's to delete). Safe to call twice. */
     async disconnect(conn) {
       const secret = conn.secret as Partial<SquareSecret> | null
-      if (!secret || secret.kind !== 'oauth' || !secret.accessToken || !opts.clientId || !opts.clientSecret) return
+      if (secret?.kind !== 'oauth') return { notRevoked: 'In the Square Developer Console, go to your application → Replace the token.' }
+      if (!secret.accessToken || !opts.clientId || !opts.clientSecret) return
       try {
         await client.revoke(configOf(conn).env, opts.clientId, opts.clientSecret, secret.accessToken)
       } catch (e) {

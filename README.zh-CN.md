@@ -120,10 +120,10 @@ https://app.aggregate.finance/mcp
 | **其他一切** | 对账单（CSV、OFX、QFX、QBO）、收据的 PDF 和照片、通过邮件发来的账单，或者直接告诉你的 AI |
 | **即将推出** | BILL、Rippling 和 Justworks：已开发完成，正在用真实账户测试 |
 
-Aggregate 只会从你的服务商读取数据，没有任何办法转移资金。你拥有的每家公司并排存在，另外还有一个私人的**个人**空间。
+Aggregate 只会从你的服务商读取数据，没有任何办法转移资金。在托管版上，Stripe 和 Square 的访问权限在来源处也是只读的。QuickBooks、BILL、Lemon Squeezy 和 Expensify 不提供只读访问，因此它们授予的权限可能不止读取；Aggregate 对这四家也只读取数据。你拥有的每家公司并排存在，另外还有一个私人的**个人**空间。
 
 > [!NOTE]
-> Aggregate 还处于早期阶段。在托管版上，Plaid、Stripe 登录和 Shopify 应用正在等待各服务商审批；在此之前，银行可通过 SimpleFIN Bridge 或对账单连接，Shopify 可使用你自己应用的密钥。其他连接器按各服务商的文档开发，正在用真实账户验证。欢迎提交问题和修复。
+> Aggregate 还处于早期阶段。在托管版上，Stripe 自 2026-10-26 起已上架 Stripe App Marketplace，Shopify 自 2026-10-22 起已上架 Shopify App Store。在 Xero 认证之前，托管版最多可连接 5 个 Xero 组织。其他连接器按各服务商的文档开发，正在用真实账户验证。欢迎提交问题和修复。
 
 <a id="safety"></a>
 ## 安全

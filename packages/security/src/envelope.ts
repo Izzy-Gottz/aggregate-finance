@@ -80,6 +80,12 @@ export function unseal<T = unknown>(ring: KeyRing, sealed: string, ctx: Encrypti
   }
 }
 
+/** Which master key wrapped this value, or null if it isn't one of ours. */
+export function sealedKeyId(sealed: string): string | null {
+  const parts = sealed.split('.')
+  return parts.length === 4 && parts[0] === VERSION ? (parts[1] as string) : null
+}
+
 /** Re-wraps under the current master key (key rotation). The payload's data key is reused only in memory. */
 export function reseal(ring: KeyRing, sealed: string, ctx: EncryptionContext): string {
   return seal(ring, unseal(ring, sealed, ctx), ctx)
@@ -122,7 +128,7 @@ export function unsealBytes(ring: KeyRing, blob: Uint8Array, ctx: EncryptionCont
   const wLen = b.readUInt16BE(o)
   o += 2
   const key = ring.byId.get(id)
-  if (!key) throw new Error(`encrypted with master key ${id}, which is not loaded (set it in AGFN_OLD_MASTER_KEYS)`)
+  if (!key) throw new Error(`encrypted with master key ${id}, which is not loaded (set it in AGFN_OLD_MASTER_KEYS or AGFN_OLD_MASTER_KEYS_COMMAND)`)
   const ad = aad(ctx)
   const dataKey = gcmDecrypt(key.key, b.subarray(o, o + wLen), ad)
   return gcmDecrypt(dataKey, b.subarray(o + wLen), ad)
@@ -205,7 +211,7 @@ export function unsealStream(ring: KeyRing, blob: Uint8Array, ctx: EncryptionCon
   const wLen = b.readUInt16BE(o)
   o += 2
   const key = ring.byId.get(id)
-  if (!key) throw new Error(`encrypted with master key ${id}, which is not loaded (set it in AGFN_OLD_MASTER_KEYS)`)
+  if (!key) throw new Error(`encrypted with master key ${id}, which is not loaded (set it in AGFN_OLD_MASTER_KEYS or AGFN_OLD_MASTER_KEYS_COMMAND)`)
   const ad = aad(ctx)
   const dataKey = gcmDecrypt(key.key, b.subarray(o, o + wLen), ad)
   o += wLen
@@ -275,26 +281,26 @@ export function splitArgv(line: string): string[] {
 export const KEY_COMMAND_TIMEOUT_MS = 10_000
 
 /**
- * Run AGFN_MASTER_KEY_COMMAND once (no shell) and return its stdout. The output is the key, so it is never logged or
+ * Run a key command once (no shell) and return its stdout. The output is the key, so it is never logged or
  * included in errors; only the exit status and the start of stderr are.
  */
-function keyFromCommand(line: string, env: NodeJS.ProcessEnv): string {
+function keyFromCommand(line: string, env: NodeJS.ProcessEnv, name = 'AGFN_MASTER_KEY_COMMAND'): string {
   const [cmd, ...args] = splitArgv(line)
-  if (!cmd) throw new Error('AGFN_MASTER_KEY_COMMAND is empty')
+  if (!cmd) throw new Error(`${name} is empty`)
   try {
     return execFileSync(cmd, args, { encoding: 'utf8', timeout: KEY_COMMAND_TIMEOUT_MS, maxBuffer: 64 * 1024, stdio: ['ignore', 'pipe', 'pipe'], env, windowsHide: true })
   } catch (err) {
     const e = err as { code?: string; status?: number | null; signal?: string | null; stderr?: string }
     const why = e.code === 'ENOENT' ? `"${cmd}" was not found` : e.signal === 'SIGTERM' ? `it did not finish within ${KEY_COMMAND_TIMEOUT_MS / 1000}s` : `it exited with status ${e.status ?? e.code ?? 'unknown'}`
     const stderr = typeof e.stderr === 'string' && e.stderr.trim() ? `: ${e.stderr.trim().slice(0, 300)}` : ''
-    throw new Error(`AGFN_MASTER_KEY_COMMAND failed: ${why}${stderr}`)
+    throw new Error(`${name} failed: ${why}${stderr}`)
   }
 }
 
 /**
  * Loads the key ring from the environment. The current key comes from exactly one of:
  *  AGFN_MASTER_KEY_FILE (a file), AGFN_MASTER_KEY_COMMAND (stdout of a command run once at boot, e.g. a KMS decrypt),
- *  or AGFN_MASTER_KEY (the value). AGFN_OLD_MASTER_KEYS (comma-separated) holds old keys during rotation.
+ *  or AGFN_MASTER_KEY (the value). AGFN_OLD_MASTER_KEYS (comma-separated), or the stdout of AGFN_OLD_MASTER_KEYS_COMMAND, holds old keys during rotation.
  * Refuses a key file stored inside the data directory: a stolen backup of /data must never contain the key.
  */
 export function loadKeyRing(env: NodeJS.ProcessEnv = process.env, dataDir?: string): KeyRing {
@@ -329,7 +335,11 @@ export function loadKeyRing(env: NodeJS.ProcessEnv = process.env, dataDir?: stri
   const current = parseKey(raw)
   const ring: KeyRing = { current: { id: keyIdFor(current), key: current }, byId: new Map() }
   ring.byId.set(ring.current.id, ring.current)
-  for (const old of (env.AGFN_OLD_MASTER_KEYS ?? '').split(',').filter(Boolean)) {
+  const oldCommand = env.AGFN_OLD_MASTER_KEYS_COMMAND?.trim() || undefined
+  if (oldCommand && env.AGFN_OLD_MASTER_KEYS?.trim()) throw new Error('Set only one old key source; found AGFN_OLD_MASTER_KEYS_COMMAND and AGFN_OLD_MASTER_KEYS. Remove one and start again.')
+  const oldKeys = oldCommand ? keyFromCommand(oldCommand, env, 'AGFN_OLD_MASTER_KEYS_COMMAND') : (env.AGFN_OLD_MASTER_KEYS ?? '')
+  if (oldCommand && !oldKeys.trim()) throw new Error('AGFN_OLD_MASTER_KEYS_COMMAND printed nothing; it must print the old keys, comma-separated')
+  for (const old of oldKeys.split(',').map((o) => o.trim()).filter(Boolean)) {
     const k = parseKey(old)
     ring.byId.set(keyIdFor(k), { id: keyIdFor(k), key: k })
   }

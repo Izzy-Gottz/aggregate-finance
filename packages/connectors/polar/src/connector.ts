@@ -202,6 +202,36 @@ export function createPolarConnector(opts: PolarConnectorOptions, deps: Connecto
   return {
     describe: () => description,
 
+    /**
+     * Sign-in: revoke both tokens at Polar (its docs don't say that ending one ends the other), once the last
+     * organization of the sign-in goes. A pasted token is the person's to delete.
+     */
+    async disconnect(conn) {
+      const secret = requireSecret(PROVIDER, conn.secret, isSecret)
+      if ('token' in secret) return { notRevoked: 'In Polar, go to your organization’s settings → Delete the token.' }
+      if (conn.config.sharedSecretKey && conn.config.lastOfGrant !== true) return
+      const failed = { notRevoked: 'In Polar, go to Settings → Remove Aggregate.' }
+      if (!opts.oauth) return failed
+      const f = deps.fetch ?? fetch
+      const { refreshToken, accessToken } = secret.tokens
+      const pairs: Array<[string | undefined, 'refresh_token' | 'access_token']> = [[refreshToken, 'refresh_token'], [accessToken, 'access_token']]
+      let refused = false
+      for (const [token, hint] of pairs) {
+        if (!token) continue
+        try {
+          const res = await f(`${POLAR_API[envOf(conn)]}/oauth2/revoke`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ token, token_type_hint: hint, client_id: opts.oauth.clientId, client_secret: opts.oauth.clientSecret }).toString(),
+          })
+          if (!res.ok) refused = true
+        } catch {
+          refused = true
+        }
+      }
+      if (refused) return failed
+    },
+
     async begin(ctx) {
       if (oauth) return { kind: 'oauth', url: oauth.authorizationUrl({ state: ctx.state }) }
       return {

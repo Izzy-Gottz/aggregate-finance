@@ -16,6 +16,10 @@ Aggregate only reads. It asks banks and providers for balances, transactions, in
 provider lets you choose, we ask for a read-only key, and Aggregate never calls anything that pays, transfers or sends.
 No tool in Aggregate, for you or for an AI, can move money or send anything on your behalf.
 
+A few providers don't offer read-only access, so what they give us could do more than read: QuickBooks (its one
+accounting permission covers reading and writing), BILL (its sync token can edit records but can't pay anyone or move
+money), Lemon Squeezy and Expensify. Aggregate only reads from all four; our code makes no changes in them.
+
 Bank connections go through Plaid or SimpleFIN: you sign in with your bank on their screen, never on ours, and we never
 see your bank password.
 
@@ -60,8 +64,9 @@ has a daily limit on changes, and a change that moves a company's cash by a larg
 Every request is checked against the person making it and the companies they can see, and every database query is
 limited to that person's workspace.
 
-In Postgres, row-level security adds a second wall underneath, so a query that forgot that limit would return nothing
-rather than another workspace's data. It is on.
+In Postgres, row-level security adds a second check underneath, so a query that forgot that limit would return nothing
+rather than another workspace's data. It is on. This guards against mistakes in our code; it doesn't stop someone who
+could run their own SQL as the application.
 
 The checks above are exercised by an automated "red team" test suite that tries to cross workspaces, widen an AI's
 access, reuse keys, forge webhooks, smuggle instructions into uploads and inbound email, and abuse export links.
@@ -72,7 +77,7 @@ Backups are made nightly and encrypted with the same master key before they leav
 kept for 25 days, so deleted data is gone from backups within 30 days. Backups and your uploaded files are stored in
 separate places with separate keys, so a key that can read files can't delete backups.
 
-You can export everything at any time. When you delete a workspace, its connections are revoked first, then its files
+You can export everything at any time. When you delete a workspace, we first revoke our access at each provider where it allows that (and tell you of any step left for you there), then its files
 and every record are deleted right away.
 
 ## Where your data is stored
@@ -107,6 +112,10 @@ credentials for the services you connect.
 
 We don't hold a SOC 2 report or other certification today. We don't use phrases like "bank-level security". We'd
 rather tell you exactly what is built.
+
+## If something goes wrong
+
+If we confirm that someone got into your data without permission, we'll email the owners of the affected workspaces promptly, and as the law requires: what happened, what data was involved and what to do next. We'll keep you updated until it's resolved. Questions about an incident go to security@aggregate.finance.
 
 ## Reporting a problem
 

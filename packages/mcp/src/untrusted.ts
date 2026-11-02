@@ -136,6 +136,12 @@ export function safeLabel(input: string | undefined | null, source: UntrustedSou
   return FLAGGED_LABEL + (text.length > room ? text.slice(0, room - 1) + '…' : text)
 }
 
+/** A sentence of ours that quotes outside names: flagged for what the names say, never for our own "Did you move $300 to". */
+export function safeSentence(input: string, names: readonly string[], source: UntrustedSource = 'processor_description'): string {
+  const text = clean(input, source).text
+  return names.some((n) => safeLabel(n, source)?.startsWith(FLAGGED_LABEL)) ? FLAGGED_LABEL + text : text
+}
+
 /** Collect every string inside an agent-supplied payload, for the injection check on writes. */
 export function collectStrings(value: unknown, out: string[] = [], depth = 0): string[] {
   if (depth > 8) return out

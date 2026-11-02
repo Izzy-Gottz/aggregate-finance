@@ -115,7 +115,7 @@ describe('Delete workspace', () => {
     await screen.findByRole('heading', { name: 'What’s your company called?' })
   })
 
-  it('names the workspace, and with another one left, opens that instead of onboarding', async () => {
+  it('says workspace, names which one, and with another one left, opens that instead of onboarding', async () => {
     const api = new MockApi()
     ;(api.s.me as { demo: boolean }).demo = false
     api.s.me.workspaces = [
@@ -129,10 +129,11 @@ describe('Delete workspace', () => {
     }
     start(api, '#/preferences')
     fireEvent.click(await screen.findByRole('button', { name: 'Delete workspace' }))
-    await screen.findByRole('heading', { name: 'Delete Test workspace' })
+    await screen.findByRole('heading', { name: 'Delete workspace' })
+    await screen.findByText(/^This is the workspace named Test workspace\./)
     fireEvent.input(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
     fireEvent.click(screen.getAllByRole('button', { name: /^Delete/ }).at(-1)!)
-    await screen.findByText('Test workspace and everything in it is deleted. Your banks aren’t affected.')
+    await screen.findByText('The workspace and everything in it is deleted. Your banks aren’t affected.')
     await screen.findByRole('region', { name: 'Money' })
     expect(screen.queryByRole('heading', { name: 'What’s your company called?' })).toBeNull()
   })
@@ -240,10 +241,10 @@ describe('Delete my account', () => {
     const api = new MockApi()
     ;(api.s.me as { demo: boolean }).demo = false
     start(api, '#/preferences')
-    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }))
-    await screen.findByRole('heading', { name: 'Delete my account' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete your Aggregate account' }))
+    await screen.findByRole('heading', { name: 'Delete your Aggregate account' })
     fireEvent.input(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete my account' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete your Aggregate account' }).at(-1)!)
     await screen.findByRole('heading', { name: 'Sign in' })
     expect(await screen.findByText(/Your account and its data are deleted/)).toBeTruthy()
   })
@@ -266,15 +267,15 @@ describe('Delete my account', () => {
       return base(confirm)
     }
     start(api, '#/preferences?d=delete-me')
-    await screen.findByRole('heading', { name: 'Delete my account' })
+    await screen.findByRole('heading', { name: 'Delete your Aggregate account' })
     fireEvent.input(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete my account' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete your Aggregate account' }).at(-1)!)
     fireEvent.click(await screen.findByRole('button', { name: 'Email me a link' }))
     fireEvent.input(await screen.findByLabelText('Or type the code from the email'), { target: { value: '123456' } })
     fireEvent.click(screen.getByRole('button', { name: 'Use code' }))
-    await screen.findByText('Confirmed. Press Delete my account to finish.')
+    await screen.findByText('Confirmed. Press Delete your Aggregate account to finish.')
     expect(deletes).toEqual([false])
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete my account' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete your Aggregate account' }).at(-1)!)
     await screen.findByRole('heading', { name: 'Sign in' })
     expect(deletes).toEqual([false, true])
   })
@@ -286,9 +287,9 @@ describe('Delete my account', () => {
       throw new HttpError(409, 'Make someone else an owner or delete the workspace first.', 'sole_owner')
     }
     start(api, '#/preferences?d=delete-me')
-    await screen.findByRole('heading', { name: 'Delete my account' })
+    await screen.findByRole('heading', { name: 'Delete your Aggregate account' })
     fireEvent.input(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete my account' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete your Aggregate account' }).at(-1)!)
     expect((await screen.findByRole('alert')).textContent).toBe('Make someone else an owner or delete the workspace first.')
     fireEvent.click(screen.getByRole('button', { name: 'Delete workspace' }))
     await screen.findByRole('heading', { name: 'Delete workspace' })
@@ -338,7 +339,7 @@ describe('Reviewer demo', () => {
     expect(await screen.findByText('Reviewer demo · made-up companies · resets nightly')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Leave the demo' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Start with your own companies →' })).toBeNull()
-    for (const name of ['Add a company', 'More connections', 'Invite someone']) expect(screen.queryByRole('button', { name })).toBeNull()
+    for (const name of ['Add a company', 'Add a connection', 'Invite someone']) expect(screen.queryByRole('button', { name })).toBeNull()
     expect(screen.getByRole('button', { name: 'Connect another AI' })).toBeTruthy()
     v.unmount()
     const p = start(reviewer(), '#/preferences')
@@ -562,7 +563,7 @@ describe('Fresh eyes (2026-10-11)', () => {
     api.s.prefs.signIn.apple = false
     api.s.prefs.signIn.google = false
     start(api, '#/preferences')
-    expect(await screen.findByRole('button', { name: 'Delete my account' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Delete your Aggregate account' })).toBeTruthy()
     expect(screen.queryByText('Sign in with Apple')).toBeNull()
     expect(screen.queryByText('Sign in with Google')).toBeNull()
   })
@@ -575,10 +576,10 @@ describe('Delete without a passkey', () => {
     start(api, '#/preferences?d=delete-me')
     const box = await screen.findByLabelText('Type DELETE to confirm')
     fireEvent.input(box, { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete your Aggregate account' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Email me a link' }))
     expect(await screen.findByText(/Check your email at dana@example\.com\. Open the link on any device/)).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete your Aggregate account' }))
     await screen.findByRole('heading', { name: 'Sign in' })
   })
 
@@ -595,7 +596,7 @@ describe('Leaving and coming back', () => {
   it('after deleting the account, sign-in says so (not "You were signed out")', async () => {
     start(new MockApi(), '#/preferences?d=delete-me')
     fireEvent.input(await screen.findByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Delete my account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete your Aggregate account' }))
     expect(await screen.findByText(/Your account and its data are deleted/)).toBeTruthy()
     expect(screen.queryByText(/You were signed out/)).toBeNull()
   })
@@ -635,6 +636,6 @@ describe('Use email instead (every passkey prompt)', () => {
 
   it('the delete dialog says sole-member workspaces, the demo included, go too', async () => {
     start(new MockApi(), '#/preferences?d=delete-me')
-    expect(await screen.findByText(/only member, including the demo, are deleted with all their data/)).toBeTruthy()
+    expect(await screen.findByText(/That includes the demo\. Workspaces you share stay/)).toBeTruthy()
   })
 })

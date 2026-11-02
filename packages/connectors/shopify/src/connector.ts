@@ -415,6 +415,28 @@ export function createShopifyConnector(opts: ShopifyConnectorOptions, deps: Conn
       : {}),
     describe: () => description,
 
+    accountKey: (config) => str(config.shop),
+
+    /**
+     * Ends our access by uninstalling from the store. That ends it for every workspace on the store, and Shopify's
+     * shop/redact follows 48 hours later, so it waits for the last one (the engine sets liveElsewhere). A store's own
+     * app or pasted token isn't ours to remove.
+     */
+    async disconnect(conn) {
+      const s = requireSecret('shopify', conn.secret, isSecret)
+      if (s.appClientId || !s.refreshToken) return { notRevoked: 'In Shopify, go to Settings → Apps → Delete the app or its token.' }
+      if (conn.config.liveElsewhere === true) return { notRevoked: 'Another workspace still uses this store, so Aggregate stays installed. To remove it everywhere, disconnect it there too, or in Shopify, go to Settings → Apps → Uninstall Aggregate.' }
+      const shop = configOf(conn).shop
+      try {
+        const { secret } = await usableSecret(conn, shop)
+        await client.uninstall(shop, secret.accessToken)
+      } catch (e) {
+        // Already uninstalled, or the store is gone: nothing left to end.
+        if (isConnectorError(e) && (e.kind === 'auth' || e.status === 404)) return
+        return { notRevoked: 'In Shopify, go to Settings → Apps → Uninstall Aggregate.' }
+      }
+    },
+
     async begin(ctx) {
       // The authorize URL is shop-specific. On re-auth the shop is known from the connection; for a new store the UI
       // first collects the shop domain plus a custom-app token (OAuth installs normally start from the Shopify admin /

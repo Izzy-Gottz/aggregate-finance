@@ -2,22 +2,28 @@
  * Operator alerts. Everything is logged to the console; when ALERT_WEBHOOK_URL is set, problems are also POSTed there
  * as `{ text }` (works with Slack and Discord incoming webhooks, ntfy, or any endpoint of your own), and when
  * ALERT_TELEGRAM_BOT_TOKEN and ALERT_TELEGRAM_CHAT_ID are set, sent to that Telegram chat. The same alert is
- * sent at most once per 10 minutes (per connector, job and workspace). Alerts never carry secrets or financial data: only the message and a few ids.
+ * sent at most once per 10 minutes (per connector, job, kind and workspace). Alerts never carry secrets or financial data:
+ * only the message and a few ids, and all of it goes through the log scrubber here, so no caller can forget (a job's or
+ * provider's error text can hold an amount, an email or a key).
  */
+import { scrubLogText } from './log-safe.ts'
+
 export type AlertLevel = 'info' | 'warn' | 'error'
 export type Alert = (level: AlertLevel, message: string, fields?: Record<string, unknown>) => void
 
-const SAFE_FIELD = /^(connectionId|connector|workspaceId|job|kind|status|error|count|revoked|files|rows|connectionsRevoked)$/
+const SAFE_FIELD = /^(connectionId|connector|workspaceId|job|kind|status|error|count|revoked|files|rows|connectionsRevoked|route)$/
 
 export function createAlerter(opts: { webhookUrl?: string; telegram?: { botToken: string; chatId: string }; fetch?: typeof fetch; now?: () => number; label?: string } = {}): Alert & { flush(): Promise<void> } {
   const send = opts.fetch ?? fetch
   const now = opts.now ?? Date.now
   const lastSent = new Map<string, number>()
   const inflight = new Set<Promise<unknown>>()
-  const alert = ((level, message, fields = {}) => {
+  const alert = ((level, rawMessage, rawFields = {}) => {
+    const message = scrubLogText(rawMessage)
+    const fields = Object.fromEntries(Object.entries(rawFields).map(([k, v]) => [k, typeof v === 'string' ? scrubLogText(v) : v]))
     console.warn(`[agfn] ${message}`, Object.keys(fields).length ? fields : '')
     if ((!opts.webhookUrl && !opts.telegram) || level === 'info') return
-    const key = `${message}|${String(fields.connector ?? '')}|${String(fields.job ?? '')}|${String(fields.workspaceId ?? '')}`
+    const key = `${message}|${String(fields.connector ?? '')}|${String(fields.job ?? '')}|${String(fields.kind ?? '')}|${String(fields.workspaceId ?? '')}`
     const t = now()
     if ((lastSent.get(key) ?? -Infinity) > t - 10 * 60_000) return
     lastSent.set(key, t)

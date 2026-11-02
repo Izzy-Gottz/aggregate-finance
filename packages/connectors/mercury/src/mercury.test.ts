@@ -326,3 +326,35 @@ describe('mercury one-click sign-in (OAuth)', () => {
     expect(g.saved).toHaveLength(0)
   })
 })
+
+describe('mercury disconnect', () => {
+  const app: MercuryConnectorOptions = { pageSize: 2, oauthClientId: 'merc_client', oauthClientSecret: 'merc_csecret' }
+  const oauthConn: ConnectionRef = { ...conn, secret: { token: 'at_1', kind: 'oauth', refreshToken: 'rt_1', expiresAt: 0 } }
+  const revoke = (status: number, json: unknown): FixtureRoute => ({ method: 'POST', match: (u) => u.host === 'oauth2.mercury.com' && u.pathname === '/oauth2/revoke', respond: { status, json } })
+
+  it('revokes the refresh token with the app credentials', async () => {
+    const { connector, calls } = make([revoke(200, {})], app)
+    await expect(connector.disconnect!(oauthConn)).resolves.toBeUndefined()
+    const call = calls.find((c) => c.url.endsWith('/oauth2/revoke'))
+    expect(call?.headers.authorization).toBe(`Basic ${btoa('merc_client:merc_csecret')}`)
+    expect(call?.body).toEqual({ token: 'rt_1', token_type_hint: 'refresh_token' })
+  })
+
+  it('a token Mercury no longer knows is already gone', async () => {
+    const { connector } = make([revoke(400, { error: 'invalid_token' })], app)
+    await expect(connector.disconnect!(oauthConn)).resolves.toBeUndefined()
+  })
+
+  it('any other refusal says what to finish at Mercury', async () => {
+    for (const r of [revoke(400, { error: 'invalid_request' }), revoke(401, { error: 'invalid_client' }), revoke(500, {})]) {
+      const { connector } = make([r], app)
+      await expect(connector.disconnect!(oauthConn)).resolves.toEqual({ notRevoked: expect.stringContaining('Remove Aggregate') })
+    }
+  })
+
+  it('a pasted token can only be deleted in Mercury, and nothing is sent', async () => {
+    const { connector, calls } = make([revoke(200, {})], app)
+    await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Settings → Tokens') })
+    expect(calls.filter((c) => c.url.endsWith('/oauth2/revoke'))).toHaveLength(0)
+  })
+})

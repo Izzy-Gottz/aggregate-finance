@@ -327,6 +327,29 @@ export function createMercuryConnector(opts: MercuryConnectorOptions, deps: Conn
       return renewed ? { ...page, updatedSecret: renewed } : page
     },
 
+    /**
+     * RFC 7009 at the revocation_endpoint in Mercury's discovery doc: revoking the refresh token ends the whole grant.
+     * An invalid_token answer means it's already gone. A pasted token can only be deleted in Mercury.
+     */
+    async disconnect(conn) {
+      const sec = requireSecret('mercury', conn.secret, isSecret)
+      if (sec.kind !== 'oauth') return { notRevoked: 'In Mercury, go to Settings → Tokens → Delete the token.' }
+      if (!sec.refreshToken) return
+      const refused = { notRevoked: 'In Mercury, go to Settings → Remove Aggregate.' }
+      try {
+        const res = await (deps.fetch ?? fetch)(`${oauthBase}/oauth2/revoke`, {
+          method: 'POST',
+          headers: { authorization: 'Basic ' + Buffer.from(`${encodeURIComponent(opts.oauthClientId ?? '')}:${encodeURIComponent(opts.oauthClientSecret ?? '')}`).toString('base64'), 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ token: sec.refreshToken, token_type_hint: 'refresh_token' }).toString(),
+        })
+        if (res.ok) return
+        const body: unknown = res.status === 400 ? await res.json().catch(() => null) : null
+        if (!isRecord(body) || body.error !== 'invalid_token') return refused
+      } catch {
+        return refused
+      }
+    },
+
     async health(conn0): Promise<ConnectorHealth> {
       try {
         // Never refreshes: a refresh rotates the refresh token, and health has nowhere to keep the new one. An expired

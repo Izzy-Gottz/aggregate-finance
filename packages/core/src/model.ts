@@ -259,6 +259,22 @@ export interface BucketSchedule {
   toleranceMinor?: number
 }
 
+/** One holding: an amount, a percent of the balance, or a percent of each inflow since a day. */
+export type SetAsideAllocation =
+  | { accountId: Id; kind: 'fixed'; minor: number }
+  | { accountId: Id; kind: 'percent'; percent: number }
+  | { accountId: Id; kind: 'inflow'; percent: number; since: IsoDate }
+
+/** Money a bucket holds back in accounts (set-aside.ts). */
+export interface SetAside {
+  allocations: SetAsideAllocation[]
+  /** False: left out of available_cash (taxes). True: only a label (a college fund). */
+  countsInCash: boolean
+  goal?: { minor: number; currency: string; by?: IsoDate }
+  /** The owner's plain words for edge cases, for the AI. */
+  note?: string
+}
+
 export interface Bucket {
   id: Id
   workspaceId: WorkspaceId
@@ -267,6 +283,7 @@ export interface Bucket {
   fields: BucketField[]
   values: Record<string, unknown>
   schedule: BucketSchedule | null
+  setAside?: SetAside | null
   createdBy: string | null
   origin: WriteOrigin
   createdAt: IsoTimestamp

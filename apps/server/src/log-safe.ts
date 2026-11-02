@@ -5,7 +5,7 @@
 
 const MAX_MESSAGE = 300
 
-/** Key-, token- and personal-looking text out of a message: keys and tokens redacted, emails and long numbers masked. */
+/** Key-, token- and personal-looking text out of a message: keys and tokens redacted; emails, long numbers and amounts masked. */
 export function scrubLogText(s: string): string {
   return s
     .replace(/\b(sk|rk|pk|whsec)_(test_|live_)?[A-Za-z0-9*_]+/g, '$1_***')
@@ -15,6 +15,8 @@ export function scrubLogText(s: string): string {
     .replace(/\b(postgres(?:ql)?|https?):\/\/[^\s@/]+@/gi, '$1://[redacted]@')
     .replace(/([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '$1•••@$2')
     .replace(/\d{9,}/g, (d) => `[${d.length} digits]`)
+    .replace(/-?[$€£]\s?-?\d[\d,]*(\.\d+)?/g, '[amount]')
+    .replace(/(?<![\d.])-?\d[\d,]*\.\d{2}(?![\d.])/g, '[amount]')
 }
 
 export interface LoggedError {

@@ -16,7 +16,9 @@ describe('older unexplained money is one question per account', () => {
   it('recent rows stay single; older ones collapse; one answer explains them all; undo brings them back', async () => {
     k = await makeKit('memory', { now: '2026-10-11T12:00:00.000Z' })
     const acme = await k.company('Acme')
-    const bank = await k.account({ entityId: acme, name: 'Checking', mask: '4242' })
+    // Connected long ago, so none of this is from before the connection (that is one opening-balance question).
+    const conn = await k.connection({ entityId: acme, key: 'test', createdAt: '2025-01-01T00:00:00.000Z' })
+    const bank = await k.account({ entityId: acme, name: 'Checking', mask: '4242', connectionId: conn })
     await k.engine.postBatch(k.ws, [
       txn(bank, '2026-06-03', 872, { rawText: 'SBSI' }),
       txn(bank, '2026-07-03', 1_200, { rawText: 'SBSI' }),

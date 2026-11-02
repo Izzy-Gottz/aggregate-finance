@@ -12,6 +12,7 @@ import { listReviewItems } from './review.ts'
 import { coverage } from './coverage.ts'
 import { dataHealth } from './health.ts'
 import { recurringSpend } from './buckets.ts'
+import { heldRows } from './set-aside.ts'
 import type { LineRow } from './store.ts'
 import { syncedLongAgo } from './store.ts'
 
@@ -83,6 +84,8 @@ export async function computeMetric(name: MetricName, scope: MetricScope, rc: Me
     case 'card_balances':
     case 'net_cash':
       return balanceMetric(name, await makeScope(rc, scope, 'cash'))
+    case 'available_cash':
+      return availableCashMetric(await makeScope(rc, scope, 'cash'))
     case 'gross_burn':
     case 'net_burn':
       return burnMetric(name, await makeScope(rc, scope, 'cash'), scope.from !== undefined)
@@ -211,7 +214,7 @@ const STALE_DAYS_MONTHLY = 35
 /** A period ending today or yesterday counts as synced through if the source synced in the last few days. */
 const RECENT_SYNC_DAYS = 3
 
-const BALANCE_METRICS: readonly MetricName[] = ['cash', 'card_balances', 'net_cash']
+const BALANCE_METRICS: readonly MetricName[] = ['cash', 'card_balances', 'net_cash', 'available_cash']
 const FLOW_METRICS: readonly MetricName[] = ['gross_burn', 'net_burn', 'revenue', 'runway', 'payroll_cost', 'recurring_spend']
 
 /** Kept by hand in the app (cash on hand, money paid personally): the ledger is its only source, so always known. */
@@ -398,7 +401,7 @@ async function newestDay(rc: MetricContext, accountId: Id, types: SourceRecord['
   return all.get(accountId) ?? []
 }
 
-async function accountBalance(s: Scope, a: SourceAccountInfo): Promise<{ minor: number; currency: string; rowId: Id | null; rowIds: Id[]; source: 'provider' | 'ledger' }> {
+export async function accountBalance(s: Pick<Scope, 'rc' | 'asOf'>, a: SourceAccountInfo): Promise<{ minor: number; currency: string; rowId: Id | null; rowIds: Id[]; source: 'provider' | 'ledger' }> {
   // Newest day's snapshots only (a few per day at most); the latest `at` wins.
   const snaps = (await newestDay(s.rc, a.id, ['balance.snapshot'], s.asOf)).filter((r) => r.status === 'recorded' && r.event.type === 'balance.snapshot')
   const latest = snaps.reduce<SourceRecord | null>((m, r) => (m === null || (r.event as { at: string }).at > (m.event as { at: string }).at ? r : m), null)
@@ -655,9 +658,42 @@ async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPer
   )
 }
 
+/**
+ * What set-asides that don't count take out of these cash accounts, in the reporting currency. Per account, never more
+ * than the account holds: an underfunded set-aside can't push cash below what's really there (review warns about it).
+ */
+async function setAsideOut(s: Scope, included: readonly Id[]): Promise<{ total: number; lines: string[] }> {
+  const rows = (await heldRows(s.rc, s.asOf)).filter((r) => !r.countsInCash && included.includes(r.accountId))
+  if (!rows.length) return { total: 0, lines: [] }
+  const accounts = new Map((await s.rc.directory.listSourceAccounts(s.rc.ws)).map((a) => [a.id, a]))
+  let total = 0
+  const lines: string[] = []
+  for (const id of new Set(rows.map((r) => r.accountId))) {
+    const here = rows.filter((r) => r.accountId === id)
+    const bal = await accountBalance(s, accounts.get(id) as SourceAccountInfo)
+    const out = Math.min(here.reduce((t, r) => t + r.minor, 0), Math.max(0, bal.minor))
+    total += (await s.rc.toCurrency({ minor: out, currency: bal.currency }, s.currency, s.asOf)).minor
+    lines.push(`${formatMoney(out, bal.currency)} from ${here[0]?.accountName} (${[...new Set(here.map((r) => r.bucketName))].join(', ')})`)
+  }
+  return { total, lines }
+}
+
+async function availableCashMetric(s: Scope): Promise<CoreMetricAnswer> {
+  const cash = await balanceMetric('cash', s)
+  const f = await cashFigures(s)
+  const out = await setAsideOut(s, f.included)
+  const today = await todayFor(s.rc)
+  const past = s.asOf < today ? ' Set-asides are today\'s: they have no history.' : ''
+  const formula = out.lines.length ? `Cash ${formatMoney(f.cash, s.currency)} (the bank's total) − set-asides that don't count in cash: ${out.lines.join('; ')}.${past}` : `Same as cash: no set-aside is left out of it.${past}`
+  return { ...cash, name: 'available_cash', value: f.included.length ? money(f.cash - out.total, s.currency) : null, formula }
+}
+
 async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
   const months = trailingMonths(s.asOf, 3)
-  const cash = await cashFigures(s)
+  const figures = await cashFigures(s)
+  const out = await setAsideOut(s, figures.included)
+  const cash = { ...figures, cash: figures.cash - out.total }
+  const cashWord = out.lines.length ? 'Available cash (after set-asides)' : 'Cash'
   const nets: number[] = []
   const rows: Id[] = [...cash.rows]
   const span = await linesFor(s, (months[0] as { from: IsoDate }).from, (months[months.length - 1] as { to: IsoDate }).to, 'cash')
@@ -676,7 +712,7 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
   let value: number | null = null
   let state: MetricAnswer['state'] = 'ok'
   const spanText = covered === 3 ? '3 complete months' : `${covered} months of history in the last 3 complete months`
-  let formula = `Cash ÷ average net burn over ${months[0]?.from} to ${months[2]?.to} (${spanText}), cash basis.`
+  let formula = `${cashWord} ÷ average net burn over ${months[0]?.from} to ${months[2]?.to} (${spanText}), cash basis.`
   let unknownReason: string | undefined
   if (!cash.included.length) {
     state = 'unknown'
@@ -686,7 +722,7 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
   else {
     value = Math.round((cash.cash / avg) * 10) / 10
     const runOut = addDays(s.asOf, Math.floor(value * 30.4375))
-    formula += ` Cash ${formatMoney(cash.cash, s.currency)} ÷ ${formatMoney(Math.round(avg), s.currency)} per month = ${value} months (around ${runOut}).`
+    formula += ` ${cashWord} ${formatMoney(cash.cash, s.currency)} ÷ ${formatMoney(Math.round(avg), s.currency)} per month = ${value} months (around ${runOut}).`
   }
   return finish(
     s,

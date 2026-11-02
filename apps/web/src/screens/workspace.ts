@@ -5,7 +5,7 @@ import { isFilling, isManager, isReviewer, isUpdating, useApp, useLoad } from '.
 import { grantLine, listWords } from '../lib/grant.ts'
 import { fmt } from '../lib/money.ts'
 import { ago } from '../lib/time.ts'
-import { Button, CopyButton, PlusAction, Pluses, Row, Rows, Section, Tile } from '../ui/components.ts'
+import { Button, CopyButton, PlusAction, Pluses, Row, Rows, Section, Tile, type BrandTile } from '../ui/components.ts'
 import { Drawer } from '../ui/drawer.ts'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { WhichAccount } from './add.ts'
@@ -16,13 +16,14 @@ const LETTER: Record<string, string> = { stripe: 'S', quickbooks: 'Q', xero: 'X'
 
 const BUILT_IN = new Set(['equity', 'manual'])
 
-export function SourceTile({ connectorKey }: { connectorKey: string }) {
-  if (connectorKey === 'plaid') return html`<${Tile} icon="bank" />`
+/** Brand icons allowed in the app, with why and the source of each: ui/brand/README.md. Every other source keeps its letter. */
+const BRANDED = new Set<BrandTile>(['carta', 'mercury', 'shopify', 'square', 'deel', 'ramp', 'simplefin'])
+
+/** `plaidMark`: Plaid's own mark, for the row that offers Plaid. A connected bank is the bank, not Plaid, so it keeps the bank icon. */
+export function SourceTile({ connectorKey, plaidMark }: { connectorKey: string; plaidMark?: boolean }) {
+  if (connectorKey === 'plaid') return plaidMark ? html`<${Tile} brand="plaid" />` : html`<${Tile} icon="bank" />`
   if (connectorKey === 'files') return html`<${Tile} icon="file" />`
-  // Carta's production review: its approved mark wherever a Carta connection is shown (Mercury's too, below; no other provider logos).
-  if (connectorKey === 'carta') return html`<${Tile} brand="carta" />`
-  // Mercury's design review: its Media Kit mark on Mercury rows instead of a letter.
-  if (connectorKey === 'mercury') return html`<${Tile} brand="mercury" />`
+  if (BRANDED.has(connectorKey as BrandTile)) return html`<${Tile} brand=${connectorKey as BrandTile} />`
   return html`<${Tile} letter=${LETTER[connectorKey] ?? connectorKey[0]?.toUpperCase()} />`
 }
 
@@ -51,7 +52,7 @@ export function WorkspacePage() {
   // Built-in sources (the cap table, cash added by hand) aren't connections to manage or sync.
   const connections = ws.connections.filter((c) => !BUILT_IN.has(c.connectorKey) && (inScope(c.entityNames) || c.entityNames.length === 0))
   const inbound = ws.inbound.filter((i) => !app.scope || i.entityId === app.scope)
-  // One suggestion, never the whole catalog (that's behind "+ More connections"): a bank first, then the server's pick.
+  // One suggestion, never the whole catalog (that's behind "+ Add a connection"): a bank first, then the server's pick.
   const hasBank = ws.connections.some((c) => c.connectorKey === 'plaid' || c.connectorKey === 'simplefin')
   const offered = useOffered()
   const limited = isReviewer(app)
@@ -95,7 +96,7 @@ export function WorkspacePage() {
       ${nothingYet && entities.length ? html`<p class="sub" style="margin-top:12px">Nothing connected yet.</p>` : null}
       ${!app.scope && ws.health && !filling && !nothingYet ? html`<${HealthLine} health=${ws.health} />` : null}
       ${filling ? null : html`<${WaitingStatements} />`}
-      ${limited || !isManager(app) ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'company-new' })}>Add a company</${PlusAction}>`}
+      ${limited || !isManager(app) || entities.length ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'company-new' })}>Add a company</${PlusAction}>`}
     </${Section}>
 
     <${Section} title="Connections" sub="Where your money lives">
@@ -111,20 +112,12 @@ export function WorkspacePage() {
             onClick=${() => app.open({ kind: 'connection', id: c.id })}
           />`
         })}
-        ${suggestion === 'bank' && bank
-          ? html`<${Row}
-              icon=${html`<${SourceTile} connectorKey=${bank.key} />`}
-              name=${entities.some((e) => e.kind === 'company') || bank.key !== 'plaid' ? 'Bank or card' : 'Bank, card or brokerage'}
-              line=${bank.key === 'plaid' ? 'Any US bank or brokerage, through Plaid' : bank.key === 'simplefin' ? `Through SimpleFIN Bridge · ${PLAID_SOON}` : `Upload a statement · ${PLAID_SOON}`}
-              right=${html`<${Button} onClick=${bank.open(app)} label="Connect a bank or card">${bank.key === 'files' ? 'Upload' : 'Connect'}</${Button}>`}
-            />`
-          : null}
       </${Rows}>
       ${suggestion && suggestion !== 'bank'
         ? // A suggestion, not a connection: a quiet line under the list, so it never reads as one that's broken.
           html`<p class="meta" style="margin-top:12px">Suggested · <button type="button" class="link" onClick=${() => app.open({ kind: 'connect', key: suggestion.key })}>${suggestion.name}${suggestion.provides.length ? ` for ${listWords(suggestion.provides.slice(0, 3))}` : ''}. Connect →</button></p>`
         : null}
-      ${limited ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'connect' })}>More connections</${PlusAction}>`}
+      ${limited ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'connect' })}>Add a connection</${PlusAction}>`}
     </${Section}>
 
     <${AiSection} ws=${ws} now=${now} />

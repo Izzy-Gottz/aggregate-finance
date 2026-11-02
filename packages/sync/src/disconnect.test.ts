@@ -31,6 +31,31 @@ function engine(disconnect?: (ref: ConnectionRef) => Promise<void>, logs: string
 }
 
 describe('SyncEngine.disconnect', () => {
+  it('tells a connector with an accountKey whether that account is live elsewhere, in any workspace', async () => {
+    const other = newId()
+    await h.db.insertInto('workspaces').values({ id: other, name: 'Other', base_currency: 'USD', created_at: nowIso() }).execute()
+    const seen: ConnectionRef[] = []
+    const registry = new ConnectorRegistry()
+    registry.register(
+      (() =>
+        ({
+          describe: () => ({ key: 'fake', name: 'Fake', group: 'banks', provides: [], freshness: 'instant', auth: 'api_key' }),
+          accountKey: (c: Record<string, unknown>) => c.shop,
+          disconnect: async (ref: ConnectionRef) => void seen.push(ref),
+        }) as unknown as Connector) as never,
+      { raw: { put: async () => 'x' } },
+    )
+    const sync = new SyncEngine({ db: h.db, keys, registry, ledger, queue: new JobQueue(h.db) })
+    const add = (workspaceId: string, shop: string) => createConnection(h.db, keys, { workspaceId, connectorKey: 'fake', displayName: shop, secret: { accessToken: 'tok' }, config: { shop }, createdBy: null })
+    const a = await add(ws, 'one')
+    const b = await add(other, 'one')
+    const c = await add(ws, 'two')
+    await sync.disconnect(a)
+    await sync.disconnect(b)
+    await sync.disconnect(c)
+    expect(seen.map((r) => r.config.liveElsewhere)).toEqual([true, false, false])
+  })
+
   it('revokes at the provider with the unsealed secret, then forgets it', async () => {
     const id = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'Bank', secret: { accessToken: 'tok' }, config: { a: 1 }, createdBy: null })
     const seen: ConnectionRef[] = []
@@ -43,10 +68,11 @@ describe('SyncEngine.disconnect', () => {
   it('still disconnects locally when the provider call fails or is not supported', async () => {
     const logs: string[] = []
     const a = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'A', secret: { t: 1 }, config: {}, createdBy: null })
-    expect(await engine(async () => Promise.reject(new Error('plaid down')), logs).disconnect(a)).toEqual({ revoked: false })
+    expect(await engine(async () => Promise.reject(new Error('plaid down')), logs).disconnect(a)).toEqual({ revoked: false, warning: expect.stringContaining('remove Aggregate if it’s still listed') })
     expect(logs).toContain('provider disconnect failed')
     const b = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'B', secret: { t: 1 }, config: {}, createdBy: null })
-    expect(await engine().disconnect(b)).toEqual({ revoked: false })
+    // Nothing to call at the provider: never silent, or the access stays live there and nobody knows.
+    expect(await engine().disconnect(b)).toEqual({ revoked: false, warning: expect.stringContaining('In B, remove Aggregate or delete the key') })
     const rows = await h.db.selectFrom('connections').select('status').execute()
     expect(rows.every((r) => r.status === 'disconnected')).toBe(true)
   })

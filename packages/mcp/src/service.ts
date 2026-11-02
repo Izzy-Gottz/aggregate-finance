@@ -14,15 +14,18 @@ import { Access, ToolError, type Principal } from './scope.ts'
 import { ControlStore, type McpDb } from './store/store.ts'
 import type { AgentKeysTable } from './store/schema.ts'
 import type { ToolContext, ToolDef, ToolOutput } from './tools/common.ts'
-import { READ_TOOLS } from './tools/read.ts'
+import { READ_TOOLS, READ_WITH_SET_ASIDES } from './tools/read.ts'
 import { LIVE_TOOLS } from './tools/live.ts'
-import { WRITE_TOOLS } from './tools/write.ts'
+import { WRITE_TOOLS, WRITE_WITH_SET_ASIDES } from './tools/write.ts'
 import { SHARE_TOOLS } from './tools/share.ts'
 import { WritePipeline } from './writes.ts'
 import { AiUi } from './ui.ts'
 
 /** Fixed order (cache-friendly for clients, MCP 2026-07-28). */
 export const ALL_TOOLS: readonly ToolDef[] = [...READ_TOOLS, ...LIVE_TOOLS, ...WRITE_TOOLS, ...SHARE_TOOLS]
+const SET_ASIDE_OVERLAY = new Map([...READ_WITH_SET_ASIDES, ...WRITE_WITH_SET_ASIDES].map((t) => [t.name, t]))
+/** The same tools with set-asides on (AGFN_SET_ASIDES): same names and order, wider inputs. */
+export const TOOLS_WITH_SET_ASIDES: readonly ToolDef[] = ALL_TOOLS.map((t) => SET_ASIDE_OVERLAY.get(t.name) ?? t)
 
 /** The public no-sign-up demo's one connection (apps/server/src/public-demo.ts). Read-only, and never reaches outside. */
 export { PUBLIC_DEMO_CLIENT }
@@ -63,6 +66,8 @@ export interface AgfnMcpDeps {
   promptPacks?: boolean
   /** get_investments (AGFN_TOOL_INVESTMENTS=1); also names equity "the cap table and investments". Off until both directory reviews close. */
   investments?: boolean
+  /** Set-asides in the bucket tools, and available_cash (AGFN_SET_ASIDES=1). Off until the directory reviews close: it changes tools/list. */
+  setAsides?: boolean
   /** The app's address, for approval links in held writes (BASE_URL). */
   appUrl?: string
 }
@@ -104,6 +109,8 @@ export class AgfnMcp {
   /** The prompt packs are listed (AGFN_MCP_PROMPTS=1). */
   readonly offersPromptPacks: boolean
   readonly offersInvestments: boolean
+  readonly offersSetAsides: boolean
+  readonly tools: readonly ToolDef[]
   private readonly limiter: RateLimiter
   private readonly limits: RateLimits
   private readonly touched = new Map<string, number>()
@@ -120,10 +127,12 @@ export class AgfnMcp {
     this.appUrl = deps.appUrl?.replace(/\/+$/, '')
     this.offersPromptPacks = deps.promptPacks === true
     this.offersInvestments = deps.investments === true
+    this.offersSetAsides = deps.setAsides === true
+    this.tools = this.offersSetAsides ? TOOLS_WITH_SET_ASIDES : ALL_TOOLS
     this.access = new Access(deps.reader, deps.people, this.clock)
     this.pipeline = new WritePipeline({ store: this.store, reader: deps.reader, writer: deps.writer, people: deps.people, clock: this.clock, hooks: deps.hooks })
     this.control = new ControlApi({ store: this.store, reader: deps.reader, people: deps.people, pipeline: this.pipeline, clock: this.clock, hooks: deps.hooks, ...(this.offersInvestments ? { investments: true } : {}) })
-    this.ui = new AiUi({ store: this.store, control: this.control, pipeline: this.pipeline, reader: deps.reader, people: deps.people })
+    this.ui = new AiUi({ store: this.store, control: this.control, pipeline: this.pipeline, reader: deps.reader, people: deps.people, ...(this.offersSetAsides ? { setAsides: true } : {}) })
     this.limiter = deps.rateLimiter ?? new MemoryRateLimiter()
     this.limits = { ...DEFAULT_RATE_LIMITS, ...deps.rateLimits }
   }
@@ -220,7 +229,7 @@ export class AgfnMcp {
    * Access is decided per call (allowedTools, re-read on every call); a tool outside the grant is refused with why.
    */
   async listTools(_p?: Principal): Promise<ToolDef[]> {
-    return ALL_TOOLS.filter((t) => this.serverCan(t))
+    return this.tools.filter((t) => this.serverCan(t))
   }
 
   /** Tools that need a capability this server lacks (live balance, coverage…) can't run for anyone. */
@@ -244,7 +253,7 @@ export class AgfnMcp {
       const ents = await this.access.anyVisible(p)
       available = new Set(ents.length ? await this.reader.dataAvailability({ workspaceId: p.workspaceId, entityIds: ents.map((e) => e.id) }) : [])
     }
-    return ALL_TOOLS.filter((t) => {
+    return this.tools.filter((t) => {
       if (t.requires === 'liveBalance' && !this.liveBalance) return false
     if (t.requires === 'share' && !this.share) return false
       if (t.requires === 'investments' && !(this.offersInvestments && typeof this.reader.investments === 'function')) return false
@@ -292,7 +301,7 @@ export class AgfnMcp {
     const p: Principal = { ...principal, grant: fresh }
     // The public demo: no write and nothing that reaches outside Aggregate runs, whatever its grant says.
     if (isPublicDemo(p)) {
-      const def = ALL_TOOLS.find((t) => t.name === name)
+      const def = this.tools.find((t) => t.name === name)
       if (def && (def.kind === 'write' || PUBLIC_DEMO_REFUSED.has(def.name) || def.hints?.openWorldHint)) {
         await this.log(p, name, undefined, started, { status: 'denied' })
         return { ok: false, error: new ToolError('forbidden', PUBLIC_DEMO_READ_ONLY) }
@@ -304,7 +313,7 @@ export class AgfnMcp {
       return { ok: false, error }
     }
     if (!tool) {
-      const def = ALL_TOOLS.find((t) => t.name === name)
+      const def = this.tools.find((t) => t.name === name)
       if (!def || !this.serverCan(def)) return fail(new ToolError('not_found', `Unknown tool ${name}.`))
       return fail(new ToolError('forbidden', this.whyNot(p, def), 'Tell the user; the owner can change what this connection may do in Aggregate under Connect your AI.'))
     }
@@ -335,7 +344,7 @@ export class AgfnMcp {
     const parsed = tool.input.safeParse(rawArgs ?? {})
     if (!parsed.success) return fail(new ToolError('invalid', `Invalid arguments: ${formatIssues(parsed.error)}`), rawArgs)
 
-    const ctx: ToolContext = { principal: p, access: this.access, reader: this.reader, pipeline: this.pipeline, store: this.store, clock: this.clock, ...(this.liveBalance ? { liveBalance: this.liveBalance } : {}), ...(this.share ? { share: this.share } : {}), ...(this.offersInvestments ? { investments: true } : {}), ...(this.appUrl ? { appUrl: this.appUrl } : {}) }
+    const ctx: ToolContext = { principal: p, ...(this.offersSetAsides ? { setAsides: true } : {}), access: this.access, reader: this.reader, pipeline: this.pipeline, store: this.store, clock: this.clock, ...(this.liveBalance ? { liveBalance: this.liveBalance } : {}), ...(this.share ? { share: this.share } : {}), ...(this.offersInvestments ? { investments: true } : {}), ...(this.appUrl ? { appUrl: this.appUrl } : {}) }
     try {
       const output = isPublicDemo(p) && tool.kind === 'read' ? await this.#demoRead(p, name, parsed.data, () => tool.run(ctx, parsed.data)) : await tool.run(ctx, parsed.data)
       // Writes log themselves in the pipeline (with the outcome); reads log here.

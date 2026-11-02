@@ -117,13 +117,24 @@ export function PreferencesPage() {
     ${canShare(app) ? html`<${SharedLinks} />` : null}
 
     <${Section} title="Your data" sub="It’s yours. Take all of it, any time.">
-      <div class="links"><${LinkButton} onClick=${async () => { const r = await app.api.exportAll(); location.assign(r.url) }}>Export everything</${LinkButton}><${LinkButton} onClick=${async () => { const r = await app.api.exportAll('beancount'); location.assign(r.url) }}>Beancount</${LinkButton}><${LinkButton} onClick=${async () => { const r = await app.api.exportAll('hledger'); location.assign(r.url) }}>hledger</${LinkButton}><a class="link" href="/security">Security</a><a class="link" href="/privacy">Privacy</a><a class="link" href="/terms">Terms</a>${isOwner && !app.ws?.me.demo ? html`<${LinkButton} danger onClick=${() => app.open({ kind: 'delete-workspace' })}>Delete workspace</${LinkButton}>` : null}${!isReviewer(app) ? html`<${LinkButton} danger onClick=${() => app.open({ kind: 'delete-me' })}>Delete my account</${LinkButton}>` : null}</div>
+      <div class="links"><${LinkButton} onClick=${async () => { const r = await app.api.exportAll(); location.assign(r.url) }}>Export everything</${LinkButton}><${LinkButton} onClick=${async () => { const r = await app.api.exportAll('beancount'); location.assign(r.url) }}>Beancount</${LinkButton}><${LinkButton} onClick=${async () => { const r = await app.api.exportAll('hledger'); location.assign(r.url) }}>hledger</${LinkButton}><a class="link" href="/security">Security</a><a class="link" href="/privacy">Privacy</a><a class="link" href="/terms">Terms</a></div>
     </${Section}>
 
     ${p.recovery.applicable
       ? html`<${Section} title="Recovery code" sub="Your server encrypts bank tokens. Without this code, a lost key means reconnecting everything.">
           <p class="sub" style="margin-top:12px">${p.recovery.savedAt ? `Saved ${shortDate(p.recovery.savedAt, true)}.` : 'Not saved yet.'}</p>
           <${PlusAction} onClick=${() => app.toast({ text: 'Your recovery code downloads once. Keep it offline.' })}>Download recovery code</${PlusAction}>
+        </${Section}>`
+      : null}
+
+    ${(isOwner && !app.ws?.me.demo) || !isReviewer(app)
+      ? html`<${Section} title="Delete" sub="To remove one company, open it and use Delete company.">
+          ${isOwner && !app.ws?.me.demo
+            ? html`<div style="margin-top:12px"><${LinkButton} danger onClick=${() => app.open({ kind: 'delete-workspace' })}>Delete workspace</${LinkButton}><p class="meta">Every company, including Personal, all connections and AI links. You keep your sign-in.</p></div>`
+            : null}
+          ${!isReviewer(app)
+            ? html`<div style="margin-top:24px"><${LinkButton} danger onClick=${() => app.open({ kind: 'delete-me' })}>Delete your Aggregate account</${LinkButton}><p class="meta">Your sign-in and passkeys, and every workspace where you’re the only member.</p></div>`
+            : null}
         </${Section}>`
       : null}
   </div>`
@@ -320,16 +331,19 @@ export function alsoLine(people: Array<{ name: string; email: string; personalCo
 /** Owner only. Type DELETE; the server asks for a passkey re-check first. Afterwards onboarding starts fresh. */
 export function DeleteWorkspaceView({ onClose, onBack }: { onClose: () => void; onBack: (() => void) | null }) {
   const app = useApp()
-  // Say which one: with more than one workspace, "Delete workspace" alone is a guess.
-  const name = app.me?.workspaces?.find((w) => w.id === app.me?.workspaceId)?.name
+  // Always "workspace", never its name: it's often named after the first company, and "Delete AGFN" deleted everything
+  // for someone removing one company (11-01). The name appears only to tell several workspaces apart, and says what it is.
+  const all = app.me?.workspaces ?? []
+  const name = all.length > 1 ? all.find((w) => w.id === app.me?.workspaceId)?.name : undefined
   // Other members' Personal connections go too: say whose, and how many (not which: Personal stays private).
   const { data: preview } = useLoad(() => app.api.deleteWorkspacePreview().catch(() => null), [])
   const also = preview?.affected.length ? alsoLine(preview.affected) : null
   return html`<${TypeToDelete}
-    title=${name ? `Delete ${name}` : 'Delete workspace'}
+    title="Delete workspace"
+    holdLeft
     also=${also}
-    sub=${`Every company, connection, document and AI link in ${name ?? 'it'} goes, for everyone in it. This can’t be undone.`}
-    note="Export everything first if you want a copy."
+    sub="This deletes everything: every company, including Personal, all connections and all AI links. To remove one company, use Delete company in that company’s drawer."
+    note=${`${name ? `This is the workspace named ${name}. ` : ''}It goes for everyone in it, and this can’t be undone. Export everything first if you want a copy.`}
     onClose=${onClose}
     onBack=${onBack}
     run=${(confirm: string) => app.api.deleteWorkspace(confirm)}
@@ -337,7 +351,7 @@ export function DeleteWorkspaceView({ onClose, onBack }: { onClose: () => void; 
       // Still in another workspace: open that one. Onboarding only when none is left (the app routes there itself).
       await app.reload()
       app.go({ page: 'workspace', step: 0, stack: [] })
-      app.toast({ text: `${name ?? 'The workspace'} and everything in it is deleted. Your banks aren’t affected.` })
+      app.toast({ text: 'The workspace and everything in it is deleted. Your banks aren’t affected.' })
     }}
   />`
 }
@@ -346,24 +360,32 @@ export function DeleteWorkspaceView({ onClose, onBack }: { onClose: () => void; 
 export function DeleteMeView({ onClose, onBack }: { onClose: () => void; onBack: (() => void) | null }) {
   const app = useApp()
   return html`<${TypeToDelete}
-    title="Delete my account"
-    sub="This deletes your sign-in and removes you from every workspace. Workspaces where you’re the only member, including the demo, are deleted with all their data. Workspaces you share stay with their other owners. AI access you set up is revoked and banks in your Personal space are disconnected."
-    note="This can’t be undone. Export everything first if you want a copy."
+    title="Delete your Aggregate account"
+    sub="You’ll be signed out everywhere and your sign-in, passkeys and every workspace where you’re the only member are erased."
+    note="That includes the demo. Workspaces you share stay with their other owners. AI access you set up is revoked and banks in your Personal space are disconnected. This can’t be undone. Export everything first if you want a copy."
     onClose=${onClose}
     onBack=${onBack}
     run=${(confirm: string) => app.api.deleteMe(confirm)}
-    after=${async () => app.leave('Your account and its data are deleted.')}
+    after=${async (left: string[]) => app.leave(left.length ? `Your account and its data are deleted. ${STILL_CONNECTED} ${left.join(' ')}` : 'Your account and its data are deleted.')}
   />`
 }
 
-/** Type DELETE, then the irreversible thing. The server asks for a passkey re-check first (the client retries). */
-function TypeToDelete(p: { title: string; sub: string; note: string; also?: string | null; onClose: () => void; onBack: (() => void) | null; run: (confirm: string) => Promise<unknown>; after: () => Promise<void> }) {
+/** Once the secret is wiped nobody can end this access later, so the steps stay on screen until the person is done. */
+const STILL_CONNECTED = 'Still connected at the provider. Remove these yourself:'
+
+/**
+ * Type DELETE, then the irreversible thing. The server asks for a passkey re-check first (the client retries).
+ * `holdLeft`: stay here listing what's still connected at a provider, until Done (an account's deletion signs out, so it
+ * says them on the sign-in page instead).
+ */
+function TypeToDelete(p: { title: string; sub: string; note: string; also?: string | null; holdLeft?: boolean; onClose: () => void; onBack: (() => void) | null; run: (confirm: string) => Promise<{ notRevoked?: string[] }>; after: (left: string[]) => Promise<void> }) {
   const app = useApp()
   // Back from the emailed check: DELETE was already typed, so it isn't asked twice.
   const [text, setText] = useState(() => (app.route.params.typed === '1' ? 'DELETE' : ''))
   const [err, setErr] = useState('')
   const [soleOwner, setSoleOwner] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [left, setLeft] = useState<string[] | null>(null)
   /** The passkey check didn't happen (none, cancelled, or not on this device): confirm with an emailed link instead. */
   const [emailCheck, setEmailCheck] = useState<{ step: 'ask' } | { step: 'sent'; to: string } | null>(null)
   const sendLink = async () => {
@@ -381,9 +403,10 @@ function TypeToDelete(p: { title: string; sub: string; note: string; also?: stri
     setBusy(true)
     setSoleOwner(false)
     try {
-      await p.run(text.trim())
+      const still = (await p.run(text.trim()))?.notRevoked ?? []
+      if (p.holdLeft && still.length) return setLeft(still)
       p.onClose()
-      await p.after()
+      await p.after(still)
     } catch (x) {
       if (x instanceof HttpError && x.code === 'recheck') {
         setEmailCheck({ step: 'ask' })
@@ -394,6 +417,13 @@ function TypeToDelete(p: { title: string; sub: string; note: string; also?: stri
     } finally {
       setBusy(false)
     }
+  }
+  if (left) {
+    const done = async () => (p.onClose(), await p.after(left))
+    return html`<${Drawer} title="Deleted" sub=${STILL_CONNECTED} onClose=${done} onBack=${null}>
+      <ul class="perms">${left.map((x) => html`<li>${x}</li>`)}</ul>
+      <div class="formrow"><${Button} onClick=${done}>Done</${Button}></div>
+    </${Drawer}>`
   }
   return html`<${Drawer} title=${p.title} sub=${p.sub} onClose=${p.onClose} onBack=${p.onBack}>
     ${p.also ? html`<p style="margin-top:16px">${p.also}</p>` : null}

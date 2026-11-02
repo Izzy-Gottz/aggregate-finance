@@ -403,7 +403,8 @@ describe('demo review tidy', () => {
     const ws = await createDemoWorkspace({ db, keys, sync, now: () => NOW, extras: { buckets: ledger } }, { personId, historyDays: 60 })
     const before = await ledger.reviewItems(ws.workspaceId)
     const count = (items: Array<{ kind: string }>, k: string) => items.filter((i) => i.kind === k).length
-    expect(count(before, 'unexplained_money')).toBeGreaterThan(1)
+    // Old Personal deposits are already filed by the ledger, so the tidy may have little left to do.
+    expect(count(before, 'unexplained_money')).toBeGreaterThanOrEqual(1)
     await tidyDemoReview(ledger as never, ws.workspaceId)
     const after = await ledger.reviewItems(ws.workspaceId)
     expect(count(after, 'unexplained_money')).toBe(1)

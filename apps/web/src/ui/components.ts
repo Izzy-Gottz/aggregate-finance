@@ -54,7 +54,8 @@ export function PlusAction({ children, onClick, href }: { children: ComponentChi
 export const Pluses = ({ children }: { children: ComponentChildren }) => html`<div class="pluses">${children}</div>`
 
 // ---------- Tile: 28px square for a source logo letter or a line icon ----------
-export function Tile({ letter, icon, serif, brand }: { letter?: string; icon?: IconName; serif?: boolean; brand?: 'carta' | 'mercury' }) {
+export type BrandTile = 'carta' | 'mercury' | 'shopify' | 'square' | 'plaid' | 'deel' | 'ramp' | 'simplefin'
+export function Tile({ letter, icon, serif, brand }: { letter?: string; icon?: IconName; serif?: boolean; brand?: BrandTile }) {
   if (brand) return html`<span class=${'tile brand-' + brand} aria-hidden="true"></span>`
   return html`<span class=${'tile' + (serif ? ' serif' : '')} aria-hidden="true">${icon ? html`<${Icon} name=${icon} />` : letter}</span>`
 }

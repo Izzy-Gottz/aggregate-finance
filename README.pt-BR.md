@@ -120,10 +120,10 @@ Você entra e escolhe exatamente o que essa IA pode ver, em uma frase simples. T
 | **Todo o resto** | Extratos (CSV, OFX, QFX, QBO), PDFs e fotos de recibos, contas enviadas por e-mail, ou é só contar para sua IA |
 | **Em breve** | BILL, Rippling e Justworks: já desenvolvidos, em testes com contas reais |
 
-O Aggregate só lê dos seus provedores e não tem como movimentar dinheiro. Todas as suas empresas ficam lado a lado, mais um espaço **Pessoal** privado.
+O Aggregate só lê dos seus provedores e não tem como movimentar dinheiro. Na versão hospedada, o acesso à Stripe e à Square também é somente leitura na origem. QuickBooks, BILL, Lemon Squeezy e Expensify não oferecem acesso somente leitura, então o que eles concedem poderia permitir mais do que ler; o Aggregate só lê dos quatro. Todas as suas empresas ficam lado a lado, mais um espaço **Pessoal** privado.
 
 > [!NOTE]
-> O Aggregate está no começo. Na versão hospedada, o Plaid, o login com Stripe e o app da Shopify aguardam a aprovação de cada provedor; até lá, conecte bancos pelo SimpleFIN Bridge ou por extratos, e a Shopify com as chaves do seu próprio app. Os outros conectores seguem a documentação de cada provedor e estão sendo verificados com contas reais. Issues e correções são muito bem-vindos.
+> O Aggregate está no começo. Na versão hospedada, a Stripe está no Stripe App Marketplace desde 26/10/2026 e a Shopify na Shopify App Store desde 22/10/2026. O Xero conecta até 5 organizações na versão hospedada até que a Xero certifique o app. Os outros conectores seguem a documentação de cada provedor e estão sendo verificados com contas reais. Issues e correções são muito bem-vindos.
 
 <a id="safety"></a>
 ## Segurança

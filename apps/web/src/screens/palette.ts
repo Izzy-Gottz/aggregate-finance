@@ -43,7 +43,7 @@ export function commands(app: App, close: () => void): Command[] {
     { id: 'add-cash', group: 'Actions', label: 'Add cash or a receipt', hint: 'A', run: go(() => app.open({ kind: 'add', what: 'cash' })) },
     { id: 'upload', group: 'Actions', label: 'Upload a file', run: go(() => app.open({ kind: 'add', what: 'upload' })) },
     { id: 'connect-bank', group: 'Actions', label: 'Connect a bank or card', run: go(() => app.open({ kind: 'connect', key: 'plaid' })) },
-    { id: 'more', group: 'Actions', label: 'More connections', run: go(() => app.open({ kind: 'connect' })) },
+    { id: 'more', group: 'Actions', label: 'Add a connection', run: go(() => app.open({ kind: 'connect' })) },
     { id: 'copy-link', group: 'Actions', label: 'Copy AI link', run: go(() => { navigator.clipboard?.writeText(ws.me.mcpUrl).catch(() => {}); app.toast({ text: 'AI link copied.' }) }) },
     { id: 'connect-ai', group: 'Actions', label: 'Connect another AI', run: go(() => app.open({ kind: 'connect-ai' })) },
     ...(isManager(app)
@@ -52,7 +52,7 @@ export function commands(app: App, close: () => void): Command[] {
           { id: 'invite', group: 'Actions' as const, label: 'Invite someone', run: go(() => app.open({ kind: 'invite' })) },
         ]
       : []),
-    { id: 'email-in', group: 'Actions', label: 'Email addresses for bills and receipts', run: go(() => app.open({ kind: 'add', what: 'email' })) },
+    ...(ws.inbound.length ? [{ id: 'email-in', group: 'Actions' as const, label: 'Email addresses for bills and receipts', run: go(() => app.open({ kind: 'add', what: 'email' })) }] : []),
     { id: 'pause', group: 'Actions', label: ws.aiPaused ? 'Resume all AI' : 'Pause all AI', run: go(async () => (await app.api.pauseAll(!ws.aiPaused), app.reload())) },
     { id: 'review', group: 'Actions', label: 'Go to Review', run: go(() => app.go({ page: 'review', stack: [] })) },
     { id: 'prefs', group: 'Actions', label: 'Go to Preferences', run: go(() => app.go({ page: 'preferences', stack: [] })) },

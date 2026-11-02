@@ -1,6 +1,6 @@
-// Bucket view (inside the company drawer): fields (+ add field), schedule, rules, payments, provenance + undo.
+// Bucket view (inside the company drawer): money set aside, fields (+ add field), schedule, rules, payments, provenance + undo.
 import { useState } from 'preact/hooks'
-import type { BucketDetail, BucketField, FieldType } from '../api/types.ts'
+import type { BucketDetail, BucketField, FieldType, SetAside, SetAsideInput } from '../api/types.ts'
 import { useApp, useLoad } from '../app/context.ts'
 import { fmt, parseAmount } from '../lib/money.ts'
 import { shortDate } from '../lib/time.ts'
@@ -37,6 +37,8 @@ export function BucketView({ id, onClose, onBack }: { id: string; onClose: () =>
   }
 
   return html`<${Drawer} title=${b.name} sub=${b.schedule ? scheduleText(b.schedule) : 'No schedule'} onClose=${onClose} onBack=${onBack} backLabel=${company}>
+    <${SetAsideSection} b=${b} reload=${reload} />
+
     <${Section} compact title="Details" sub="Your own fields">
       <dl class="dl">${b.fields.map((f) => html`<dt>${f.label}</dt><dd class=${f.type === 'money' || f.type === 'number' ? 'tn' : ''}>${f.type === 'date' ? shortDate(f.value, true) : f.value}</dd>`)}</dl>
       ${adding
@@ -66,6 +68,107 @@ export function BucketView({ id, onClose, onBack }: { id: string; onClose: () =>
       ${b.undoUntil && Date.parse(b.undoUntil) > now ? html` · <${LinkButton} onClick=${undo}>Undo</${LinkButton}>` : null}
     </p>
   </${Drawer}>`
+}
+
+/** "$4,000 of $10,000 by Dec 2026 · on pace". */
+export function goalLine(held: SetAside['held'], g: NonNullable<SetAside['goal']>): string {
+  const by = g.by ? ` by ${new Date(`${g.by}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : ''
+  const pace = g.onPace === undefined ? '' : g.onPace ? ' · on pace' : ' · behind'
+  return `${fmt(held)} of ${fmt(g.target)}${by}${pace}`
+}
+
+/** Money held for this bucket: what's held and where, a goal, and one quiet way to set or remove it. */
+function SetAsideSection({ b, reload }: { b: BucketDetail; reload: () => void }) {
+  const app = useApp()
+  const [editing, setEditing] = useState(false)
+  const [err, setErr] = useState('')
+  const s = b.setAside
+  if (!b.canSetAside) return null
+  const save = async (setAside: SetAsideInput | null) => {
+    await app.api.updateBucket(b.id, { setAside })
+    setEditing(false)
+    reload()
+    await app.reload()
+  }
+  const remove = async () => {
+    setErr('')
+    await save(null).catch((e: unknown) => setErr(e instanceof Error ? e.message : 'That didn’t work. Try again.'))
+  }
+  const form = html`<${SetAsideForm} b=${b} onSave=${save} onCancel=${() => setEditing(false)} />`
+  if (!s) return html`<div style="margin-top:16px">${editing ? form : html`<${PlusAction} onClick=${() => setEditing(true)}>Set money aside</${PlusAction}>`}</div>`
+  return html`<${Section} compact title="Set aside" sub=${s.countsInCash ? 'Still counted in cash' : 'Not counted in cash'}>
+    <${Rows}>${s.perAccount.map((p) => html`<${Row} name=${p.accountName} right=${html`<span class="value">${fmt(p.held)}</span>`} />`)}</${Rows}>
+    ${s.goal ? html`<p class="sub" style="margin-top:12px">${goalLine(s.held, s.goal)}</p>` : null}
+    ${s.note ? html`<p class="meta" style="margin-top:8px">${s.note}</p>` : null}
+    ${err ? html`<p class="err" role="alert">${err}</p>` : null}
+    ${editing
+      ? form
+      : html`<div class="links" style="margin-top:12px"><${LinkButton} onClick=${() => setEditing(true)}>Change</${LinkButton}><${LinkButton} onClick=${remove}>Stop setting aside</${LinkButton}></div>`}
+  </${Section}>`
+}
+
+type How = 'amount' | 'percent' | 'percentOfInflows'
+
+/** One account, one way of setting aside. More than that is for the AI; saving replaces what's set aside now. */
+function SetAsideForm({ b, onSave, onCancel }: { b: BucketDetail; onSave: (s: SetAsideInput) => Promise<void>; onCancel: () => void }) {
+  const app = useApp()
+  const { data: co } = useLoad(() => app.api.company(b.entityId), [b.entityId])
+  // Only money you hold: nothing can be set aside from a card or a loan.
+  const accounts = (co?.accounts ?? []).filter((a) => a.kind !== 'card' && a.kind !== 'loan')
+  // Change starts from what's set now: saving replaces it, so anything left blank here would be lost.
+  const now = b.setAside
+  const [picked, setPicked] = useState(now?.perAccount[0]?.accountId ?? '')
+  const [how, setHow] = useState<How>('amount')
+  const [value, setValue] = useState('')
+  const [apart, setApart] = useState(now ? !now.countsInCash : false)
+  const [goal, setGoal] = useState(now?.goal ? fmt(now.goal.target) : '')
+  const [by, setBy] = useState(now?.goal?.by ?? '')
+  const [note, setNote] = useState(now?.note ?? '')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const account = accounts.find((a) => a.id === picked) ?? accounts[0]
+  const base = co?.entity.currency ?? 'USD'
+  const submit = async (e: Event) => {
+    e.preventDefault()
+    if (!account) return
+    setErr('')
+    const n = Number(value.replace('%', '').trim())
+    const amount = how === 'amount' ? parseAmount(value, account.balance?.currency ?? base) : null
+    if (how === 'amount' ? !amount : !value.trim() || !Number.isFinite(n) || n <= 0 || n > 100) return setErr(how === 'amount' ? 'That amount isn’t a number.' : 'Give a percent from 1 to 100.')
+    const target = goal.trim() ? parseAmount(goal, base) : null
+    if (goal.trim() && !target) return setErr('That goal isn’t a number.')
+    setBusy(true)
+    try {
+      await onSave({
+        allocations: [{ accountId: account.id, ...(amount ? { amount } : { [how]: n }) }],
+        countsInCash: !apart,
+        ...(target ? { goal: { amount: target, ...(by ? { by } : {}) } } : now?.goal ? { goal: null } : {}),
+        ...(note.trim() ? { note: note.trim() } : now?.note ? { note: null } : {}),
+      })
+    } catch (x) {
+      setBusy(false)
+      setErr(x instanceof Error && x.message ? x.message : 'That didn’t save. Try again.')
+    }
+  }
+  if (co && !accounts.length) return html`<p class="sub" style="margin-top:12px">Connect an account here first. <${LinkButton} onClick=${onCancel}>Cancel</${LinkButton}></p>`
+  return html`<form onSubmit=${submit} novalidate style="margin-top:12px">
+    ${now ? html`<p class="sub">${now.perAccount.length > 1 ? `This replaces what’s set aside in all ${now.perAccount.length} accounts.` : 'This replaces what’s set aside now.'}</p>` : null}
+    <label class="field"><span>From</span>
+      <select class="input" value=${account?.id ?? ''} onChange=${(e: Event) => setPicked((e.target as HTMLSelectElement).value)}>
+        ${accounts.map((a) => html`<option value=${a.id}>${a.name}</option>`)}
+      </select></label>
+    <label class="field"><span>How much</span>
+      <select class="input" value=${how} onChange=${(e: Event) => setHow((e.target as HTMLSelectElement).value as How)}>
+        <option value="amount">An amount</option><option value="percent">A percent of the balance</option><option value="percentOfInflows">A percent of new deposits</option>
+      </select></label>
+    <label class="field"><span>${how === 'amount' ? 'Amount' : 'Percent'}</span><input class="input" inputmode="decimal" value=${value} onInput=${(e: Event) => setValue((e.target as HTMLInputElement).value)} placeholder=${how === 'amount' ? '$5,000' : '25'} /></label>
+    <label class="field"><span>Goal (optional)</span><input class="input" inputmode="decimal" value=${goal} onInput=${(e: Event) => setGoal((e.target as HTMLInputElement).value)} placeholder="$10,000" /></label>
+    ${goal.trim() ? html`<label class="field"><span>By (optional)</span><input class="input" type="date" value=${by} onInput=${(e: Event) => setBy((e.target as HTMLInputElement).value)} /></label>` : null}
+    <label class="field"><span>Note (optional)</span><input class="input" maxlength="500" value=${note} onInput=${(e: Event) => setNote((e.target as HTMLInputElement).value)} /></label>
+    <label class="sub" style="display:flex;gap:8px;align-items:center;margin-top:12px;min-height:44px"><input type="checkbox" checked=${apart} onChange=${(e: Event) => setApart((e.target as HTMLInputElement).checked)} /> Don’t count in cash</label>
+    ${err ? html`<p class="err" role="alert">${err}</p>` : null}
+    <div class="formrow"><${Button} type="submit" disabled=${busy || !account}>${busy ? 'Saving…' : 'Save'}</${Button}><${LinkButton} onClick=${onCancel}>Cancel</${LinkButton}></div>
+  </form>`
 }
 
 function AddField({ onSave, onCancel }: { onSave: (f: BucketField) => void; onCancel: () => void }) {

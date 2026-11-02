@@ -68,6 +68,6 @@ describe('error states', () => {
     expect((await screen.findByRole('alert')).textContent).toMatch(/Can’t reach Aggregate/)
     api.review = real
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
-    await screen.findByText(/waiting|Nothing waiting/)
+    await screen.findByText(/question|Nothing waiting/)
   })
 })

@@ -157,6 +157,31 @@ export function createJustworksConnector(opts: JustworksOptions): Connector & { 
   return {
     describe: () => description,
 
+    /**
+     * Revoke both tokens at Justworks: its docs don't say that ending one ends the other. Unverified: no sandbox yet,
+     * so /v1/oauth/revoke (the docs' path; our token path has no /v1) hasn't been tried. 401 and 404 count as already gone.
+     */
+    async disconnect(conn) {
+      const { tokens } = requireSecret(PROVIDER, conn.secret, isSecret)
+      const f = deps.fetch ?? fetch
+      const pairs: Array<[string | undefined, 'refresh_token' | 'access_token']> = [[tokens.refreshToken, 'refresh_token'], [tokens.accessToken, 'access_token']]
+      let refused = false
+      for (const [token, hint] of pairs) {
+        if (!token) continue
+        try {
+          const res = await f(`${BASE}/v1/oauth/revoke`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ client_id: opts.oauth.clientId, client_secret: opts.oauth.clientSecret, token, token_type_hint: hint }).toString(),
+          })
+          if (!res.ok && res.status !== 401 && res.status !== 404) refused = true
+        } catch {
+          refused = true
+        }
+      }
+      if (refused) return { notRevoked: 'In Justworks, remove Aggregate.' }
+    },
+
     authorizationUrl(state) {
       return oauth.authorizationUrl({ state })
     },

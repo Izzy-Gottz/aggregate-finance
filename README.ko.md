@@ -120,10 +120,10 @@ https://app.aggregate.finance/mcp
 | **그 밖의 모든 것** | 거래 내역서(CSV, OFX, QFX, QBO), 영수증 PDF와 사진, 이메일로 받은 청구서, 또는 AI에게 말하기만 하면 됨 |
 | **곧 지원** | BILL, Rippling, Justworks: 개발 완료, 실제 계정으로 테스트 중 |
 
-Aggregate는 연결된 서비스에서 데이터를 읽기만 하며, 돈을 옮길 방법이 전혀 없습니다. 소유한 모든 회사가 나란히 있고, 비공개 **개인** 공간도 있습니다.
+Aggregate는 연결된 서비스에서 데이터를 읽기만 하며, 돈을 옮길 방법이 전혀 없습니다. 호스팅 버전에서 Stripe와 Square 접근은 원본에서도 읽기 전용입니다. QuickBooks, BILL, Lemon Squeezy, Expensify는 읽기 전용 접근을 제공하지 않아 부여된 권한이 읽기 이상을 허용할 수 있지만, Aggregate는 이 네 곳에서도 읽기만 합니다. 소유한 모든 회사가 나란히 있고, 비공개 **개인** 공간도 있습니다.
 
 > [!NOTE]
-> Aggregate는 아직 초기 단계입니다. 호스팅 버전에서는 Plaid, Stripe 로그인, Shopify 앱이 각 제공자의 승인을 기다리고 있습니다. 그때까지 은행은 SimpleFIN Bridge나 거래 내역서로, Shopify는 내 앱의 키로 연결하세요. 다른 커넥터는 각 제공자의 문서에 맞춰 만들어 실제 계정으로 검증하고 있습니다. 이슈와 수정 제안을 환영합니다.
+> Aggregate는 아직 초기 단계입니다. 호스팅 버전에서 Stripe는 2026-10-26부터 Stripe App Marketplace에, Shopify는 2026-10-22부터 Shopify App Store에 올라 있습니다. Xero는 인증을 받기 전까지 호스팅 버전에서 최대 5개 조직을 연결합니다. 다른 커넥터는 각 제공자의 문서에 맞춰 만들어 실제 계정으로 검증하고 있습니다. 이슈와 수정 제안을 환영합니다.
 
 <a id="safety"></a>
 ## 안전

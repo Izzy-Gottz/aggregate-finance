@@ -27,6 +27,13 @@ describe('Creator perk', () => {
     expect(screen.queryByText(/3 months free/)).toBeNull()
   })
 
+  it('from Get started the page says so, and doesn’t assume an account', async () => {
+    start(new MockApi({ signedIn: false }), '?start=1', '')
+    await screen.findByRole('heading', { name: 'Get started' })
+    expect(screen.getByText('New or returning, continue with your passkey or email.')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Sign in' })).toBeNull()
+  })
+
   it('Preferences has a Plan section: free during beta, with notice before paid plans, never "free forever"', async () => {
     start(new MockApi(), '', '#/preferences')
     await screen.findByRole('heading', { name: 'Plan' })

@@ -388,7 +388,7 @@ export class MockApi implements AgfnApi {
     const c = this.s.connections.find((x) => x.id === id)
     if (!c) throw new Error(`No connection ${id}`)
     const accounts = Object.entries(this.s.companies).flatMap(([entityId, co]) => co.accounts.filter((a) => a.institution === c.name).map((a) => ({ ...a, entityId })))
-    return this.ok({ ...c, accounts, provides: CONNECTORS.find((x) => x.key === c.connectorKey)?.provides ?? [], canRefreshBalance: c.connectorKey === 'plaid' })
+    return this.ok({ ...c, accounts, provides: CONNECTORS.find((x) => x.key === c.connectorKey)?.provides ?? [], canRefreshBalance: c.connectorKey === 'plaid', ...(c.connectorKey === 'quickbooks' || c.connectorKey === 'wefunder' ? { erasesOnDisconnect: 'always' as const } : c.connectorKey === 'shopify' ? { erasesOnDisconnect: 'maybe' as const } : {}) })
   }
   /** Xero organisations shared with Aggregate before but not in this workspace yet. */
   xeroShared = [{ id: 'org-demo-us', name: 'Demo Company (US)' }]
@@ -438,7 +438,7 @@ export class MockApi implements AgfnApi {
   bucket(id: string) {
     const b = this.s.buckets[id]
     if (!b) throw new Error(`No bucket ${id}`)
-    return this.ok(b)
+    return this.ok({ canSetAside: true, ...b })
   }
   createBucket(entityId: string, b: Parameters<AgfnApi['createBucket']>[1]) {
     const id = this.id('b')
@@ -451,7 +451,20 @@ export class MockApi implements AgfnApi {
   updateBucket(id: string, patch: Parameters<AgfnApi['updateBucket']>[1]) {
     const b = this.s.buckets[id]
     if (!b) throw new Error(`No bucket ${id}`)
-    Object.assign(b, clone(patch))
+    const { setAside, ...rest } = clone(patch)
+    Object.assign(b, rest)
+    if (setAside === null) delete b.setAside
+    else if (setAside) {
+      const held = setAside.allocations.reduce((t, a) => t + (a.amount?.minor ?? 0), 0)
+      const money = { minor: held, currency: 'USD' }
+      const named = Object.values(this.s.companies).flatMap((c) => c.accounts)
+      b.setAside = {
+        countsInCash: setAside.countsInCash ?? true,
+        held: money,
+        perAccount: setAside.allocations.map((a) => ({ accountId: a.accountId, accountName: named.find((x) => x.id === a.accountId)?.name ?? 'Account', entityId: b.entityId, held: a.amount ?? money, heldBase: a.amount ?? money })),
+        ...(setAside.goal ? { goal: { target: setAside.goal.amount, ...(setAside.goal.by ? { by: setAside.goal.by } : {}), progressPercent: Math.round((100 * held) / setAside.goal.amount.minor) } } : {}),
+      }
+    }
     for (const c of Object.values(this.s.companies)) {
       const row = c.buckets.find((x) => x.id === id)
       if (row && patch.name) row.name = patch.name
@@ -514,7 +527,21 @@ export class MockApi implements AgfnApi {
     return this.ok(this.s.review)
   }
   async resolve(id: string): Promise<{ recordId?: string; summary?: string } | void> {
-    this.s.review = this.s.review.filter((x) => x.id !== id)
+    this.s.review = this.s.review.filter((x) => x.id !== id && !x.alternatives?.some((a) => a.id === id))
+  }
+  /** Tests set this: what Aggregate filed by itself. */
+  filed: Array<{ id: string; text: string; filedAt: string }> = []
+  async reviewFiled() {
+    return { count: this.filed.length, items: this.filed }
+  }
+  async undoFiled(id: string) {
+    this.filed = this.filed.filter((x) => x.id !== id)
+    return { ok: true as const }
+  }
+  async confirmGroup(key: string, ids: string[]) {
+    const gone = this.s.review.filter((x) => x.group?.key === key && ids.includes(x.id))
+    this.s.review = this.s.review.filter((x) => !gone.includes(x))
+    return { ok: true as const, count: gone.length }
   }
 
   async preparePasskey() {

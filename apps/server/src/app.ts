@@ -49,7 +49,8 @@ import { peopleFromAuth } from '@agfn/mcp'
 import { financeFor } from './finance.ts'
 import { confirmPage, dropPending, embeddedPage, SHOPIFY_LINK_COOKIE, shopifyEmbeddedRoutes, takePendingByLink } from './shopify-embedded.ts'
 import { deleteUploadedFile, FileDeleteError } from './delete-file.ts'
-import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, eraseConnectionData, logConnectionChange, noteConnection, providerOrgOf, retireDeleted, retireReplaced } from './retire.ts'
+import { docsHost } from './docs-host.ts'
+import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, ERASE_WHEN_REVOKED, eraseConnectionData, SHOPIFY_ERASE_WARNING, logConnectionChange, noteConnection, providerOrgOf, retireDeleted, retireReplaced } from './retire.ts'
 import { personalHidden } from './personal.ts'
 import { termsByAccount } from './account-terms.ts'
 import { connectionRoutes, plaidDuplicateMessage } from './routes/connections.ts'
@@ -124,6 +125,20 @@ export function createApp(s: Services): Hono<Env> {
   }
 
   app.use('*', securityHeaders(config))
+  // The docs on their own host, and the old /docs URLs moved there (docs-host.ts). The lists are read per request: they
+  // fill in further down.
+  if (config.docsHost) {
+    app.use(
+      '*',
+      docsHost({
+        host: config.docsHost,
+        baseUrl: config.baseUrl,
+        isDoc: (p) => p === SETUP_DOCS_PATH || listedDocs().includes(p),
+        sitemap: () => sitemapXml(`https://${config.docsHost}`, listedDocs().map((p) => p.replace(/^\/docs\/?/, '/').replace(/^\/guides$/, '/'))),
+        render: (p, c) => Promise.resolve(app.fetch(new Request(new URL(p, config.baseUrl), { method: c.req.method }), { docsInner: true } as never)),
+      }),
+    )
+  }
   // initialize and tools/list: method, ms and status only (mcp-timing.ts).
   for (const path of ['/mcp', '/demo/mcp']) app.use(path, mcpTiming())
   // Forwarded emails carry several attachments: their webhook gets 30 MB (each file still has the 8 MB document cap).
@@ -132,6 +147,7 @@ export function createApp(s: Services): Hono<Env> {
   app.use('/api/*', (c, next) => (c.req.path.startsWith('/api/inbound/email/') ? inboundLimit(c, next) : apiLimit(c, next)))
   app.use('/api/*', sameOriginForWrites(config.baseUrl, ['/api/auth/', '/api/webhooks/', '/api/inbound/email/']))
 
+  const lastUnhandledAlert = new Map<string, number>()
   app.onError(async (err, c) => {
     if (err instanceof HTTPException) return err.getResponse()
     if (err instanceof ToolError) {
@@ -141,7 +157,17 @@ export function createApp(s: Services): Hono<Env> {
     }
     // The pool stayed full past the checkout timeout (logged where it happened): busy, not broken.
     if (err instanceof PoolBusyError) return c.json({ error: 'busy', message: err.message }, 503, { 'retry-after': '5' })
-    console.error('[agfn] unhandled error', JSON.stringify(errorForLog(err)))
+    // c.req.json() on a body that isn't JSON: the sender's mistake, so no error log and no alert.
+    if (err instanceof SyntaxError && /JSON/.test(err.message) && c.req.method !== 'GET') return c.json({ message: 'Send a JSON object.' }, 400)
+    const logged = errorForLog(err)
+    console.error('[agfn] unhandled error', JSON.stringify(logged))
+    // A 500 nobody sees is how a bug stays live: tell the founder, once an hour per kind of error.
+    const kind = logged.code ? `${logged.name}:${logged.code}` : logged.name
+    const at = Date.now()
+    if ((lastUnhandledAlert.get(kind) ?? -Infinity) <= at - 3600_000) {
+      lastUnhandledAlert.set(kind, at)
+      s.alert?.('error', 'unhandled error', { kind, error: logged.message, route: c.req.routePath })
+    }
     return c.json({ message: 'Something went wrong on our side. Try again in a moment.' }, 500)
   })
 
@@ -1470,7 +1496,9 @@ export function createApp(s: Services): Hono<Env> {
     const records = accounts.length
       ? undefined
       : Number((await db.selectFrom('raw_records').select((eb) => eb.fn.countAll<number>().as('n')).where('workspace_id', '=', ws).where('connection_id', '=', id).executeTakeFirst())?.n ?? 0)
-    return c.json({ ...summary, accounts, unassigned, provides, canRefreshBalance, ...(records !== undefined ? { records } : {}) })
+    // The disconnect drawer can't promise "it stays" where the rule (retire.ts) deletes the data anyway.
+    const erasesOnDisconnect = ERASE_ON_DISCONNECT.has(summary.connectorKey) ? ('always' as const) : ERASE_WHEN_REVOKED.has(summary.connectorKey) ? ('maybe' as const) : undefined
+    return c.json({ ...summary, accounts, unassigned, provides, canRefreshBalance, ...(records !== undefined ? { records } : {}), ...(erasesOnDisconnect ? { erasesOnDisconnect } : {}) })
   })
 
   app.post('/api/connections/:id/sync', async (c) => {
@@ -1561,9 +1589,9 @@ export function createApp(s: Services): Hono<Env> {
     const conn = await db.selectFrom('connections').select(['id', 'display_name', 'connector_key']).where('id', '=', id).where('workspace_id', '=', ws).executeTakeFirst()
     if (!conn) fail(404, 'That connection no longer exists.')
     // Some providers' terms require their data deleted when the person disconnects: deleted, not only retired.
-    const erase = ERASE_ON_DISCONNECT.has(conn.connector_key)
-    const deleteData = asked.deleteData === true || erase
     const out = await s.sync.disconnect(id)
+    const erase = ERASE_ON_DISCONNECT.has(conn.connector_key) || (ERASE_WHEN_REVOKED.has(conn.connector_key) && out.revoked)
+    const deleteData = asked.deleteData === true || erase
     await logConnectionChange(s, ws, id, c.get('person').personId, 'connection.disconnected', `Disconnected ${conn.display_name}${erase ? ', and its data deleted' : deleteData ? ', and its data no longer counts' : '; its data until now still counts'}`)
     if (erase) {
       await eraseConnectionData(s, ws, id)
@@ -1725,7 +1753,7 @@ export function createApp(s: Services): Hono<Env> {
   app.route('/api', settingsRoutes(s))
   app.route('/api', connectionRoutes(s))
   app.route('/api', inboundRoutes(s))
-  app.route('/api', financeRoutes(s))
+  app.route('/api', financeRoutes(s, { setAsides: !!config.setAsides }))
   app.route('/api', equityRoutes(s))
   // AGFN_INVESTMENTS: the Investments page's routes; off, these paths 404 like any unknown /api path.
   if (investmentsOn()) app.route('/api', investmentRoutes(s))
@@ -1762,6 +1790,7 @@ export function createApp(s: Services): Hono<Env> {
   }
   app.get('/docs/guides', guidePage('', '/docs/guides'))
   app.get('/docs/guides/:slug{[a-z0-9-]+}', (c) => guidePage(c.req.param('slug'), `/docs/guides/${c.req.param('slug')}`)(c))
+  const listedDocs = () => [...Object.keys(docs).map((d) => `/docs/${d}`), '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
   // After a disconnect made inside QuickBooks or Xero, they send the person here (the app's Disconnect URL in their portals):
   // a plain page saying what happened and how to reconnect. Static and public, like the legal pages.
   const PROVIDER_PAGES = { quickbooks: 'QuickBooks', xero: 'Xero' } as const
@@ -1778,10 +1807,11 @@ export function createApp(s: Services): Hono<Env> {
     const page = disconnectedPages.get(c.req.param('key'))!
     return c.html(withBaseUrl(page.html, config.baseUrl, `/disconnected/${c.req.param('key')}`), 200, { 'cache-control': 'public, max-age=300' })
   })
-  // Search engines get the public pages of the hosted service; a self-hosted server lists nothing.
+  // Search engines get the public pages of the hosted service; a self-hosted server lists nothing. Docs on their own host
+  // are listed there.
   if (config.hosted) {
-    const pages = ['/', '/privacy', '/terms', '/security', '/support', '/docs/connectors', '/docs/connect-your-ai', '/docs/recipes', '/docs/api', ...[...guideDocs.keys()].map((g) => (g ? `/docs/guides/${g}` : '/docs/guides'))]
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((p) => `  <url><loc>${config.baseUrl}${p}</loc></url>`).join('\n')}\n</urlset>\n`
+    const pages = ['/', '/privacy', '/terms', '/security', '/support', ...(config.docsHost ? [] : listedDocs())]
+    const sitemap = sitemapXml(config.baseUrl, pages)
     app.get('/sitemap.xml', (c) => c.body(sitemap, 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }))
   }
   // Connector setup for self-hosters, built from the same guides as the app and `agfn doctor` (registry setup.ts). On a
@@ -1928,6 +1958,15 @@ async function investmentsOf(s: Services, workspaceId: string, entityId: string)
   return holdingsOf(rows).holdingsTotal.filter((x) => x.minor !== 0)
 }
 
+/** "Stripe · Aggregate". Banks keep their name, and so does a name that already says the provider. */
+function providerFirst(key: string, provider: string | undefined, name: string): string {
+  return !provider || key === 'plaid' || key === 'simplefin' || name.toLowerCase().startsWith(provider.toLowerCase()) ? name : `${provider} · ${name}`
+}
+
+function sitemapXml(origin: string, pages: string[]): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join('\n')}\n</urlset>\n`
+}
+
 async function connectionSummaries(s: Services, workspaceId: string) {
   const rows = await s.db.selectFrom('connections').selectAll().where('workspace_id', '=', workspaceId).where('status', '!=', 'disconnected').orderBy('created_at').execute()
   const accts = await s.db
@@ -1972,8 +2011,9 @@ async function connectionSummaries(s: Services, workspaceId: string) {
     return {
       id: r.id,
       connectorKey: r.connector_key,
-      // A name the connector chose ("Xero · Demo Company") beats the institution; the generic provider name doesn't.
-      name: r.connector_key === 'manual' ? 'Added by hand' : r.display_name !== genericName.get(r.connector_key) ? r.display_name : (institution ?? r.display_name),
+      // A name the connector chose ("Xero · Demo Company") beats the institution; the generic provider name doesn't. Provider
+      // first, always: a Stripe account called Aggregate must not read as Aggregate itself. A bank is called by its own name.
+      name: r.connector_key === 'manual' ? 'Added by hand' : r.display_name !== genericName.get(r.connector_key) ? providerFirst(r.connector_key, genericName.get(r.connector_key), r.display_name) : (institution ?? r.display_name),
       entityNames: names,
       ...(needsCompany ? { needsCompany } : {}),
       status: r.status === 'active' ? (busy.has(r.id) || demoImporting(r.connector_key, r.cursor, today) ? 'syncing' : 'ok') : r.status,
@@ -2001,9 +2041,7 @@ export function safeAppRoute(v: unknown): string | undefined {
   return typeof v === 'string' && /^\/(?!\/)[A-Za-z0-9/_-]{0,80}$/.test(v) ? v : undefined
 }
 
-/** Shown in the activity log when a store uninstalls the Shopify app. */
-export const SHOPIFY_ERASE_WARNING =
-  'The Aggregate app was removed from this Shopify store. In 48 hours Shopify asks us to erase the store’s data: its payouts will then be removed from your books. Export your books before then if you need them.'
+export { SHOPIFY_ERASE_WARNING }
 
 /** How long a finished connect answers a repeated callback with the same connection. */
 const CONNECT_DONE_MS = 10 * 60_000

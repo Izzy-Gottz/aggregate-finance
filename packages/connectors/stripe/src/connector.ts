@@ -267,6 +267,7 @@ export function createStripeConnector(opts: StripeConnectorOptions, deps: Connec
       return new ConnectorError(code === 'invalid_grant' || status === 401 ? 'auth' : status >= 500 ? 'transient' : 'invalid_input', msg, { provider: 'stripe', status, ...(code ? { code } : {}) })
     },
   })
+  const deauthHttp = new HttpClient({ provider: 'stripe', baseUrl: 'https://connect.stripe.com', ...(deps.fetch ? { fetch: deps.fetch } : {}), clock })
   const notConfigured = () => new ConnectorError('invalid_input', 'Stripe sign-in is not configured on this server', { provider: 'stripe' })
   /** POST /v1/oauth/token, authenticated with one of our own Stripe keys (Stripe Apps). Not retried: codes are single-use. */
   async function oauthToken(form: Record<string, string>, key: string | undefined): Promise<StripeSecret & { accountId?: string }> {
@@ -318,6 +319,27 @@ export function createStripeConnector(opts: StripeConnectorOptions, deps: Connec
     const { accountId: _a, ...next } = await oauthToken({ grant_type: 'refresh_token', refresh_token: sec.refreshToken }, appKeyFor(sec.livemode))
     const livemode = next.livemode ?? sec.livemode
     return { ...next, ...(next.refreshToken ? {} : { refreshToken: sec.refreshToken }), ...(livemode === undefined ? {} : { livemode }) }
+  }
+
+  /**
+   * End a sign-in at Stripe. POST /oauth/deauthorize is documented for Connect OAuth; Stripe's docs give no revoke call
+   * for Stripe Apps installs, so a refusal isn't an error here: the person is told to uninstall the app.
+   */
+  async function deauthorize(conn: ConnectionRef, sec: StripeSecret): Promise<boolean> {
+    const key = appKeyFor(sec.livemode)
+    const account = str(conn.config.accountId)
+    if (!key || !opts.appClientId || !account) {
+      console.warn(`[agfn] stripe deauthorize not tried: key ${!!key}, client id ${!!opts.appClientId}, account ${!!account}`)
+      return false
+    }
+    try {
+      await deauthHttp.request({ method: 'POST', path: '/oauth/deauthorize', form: { client_id: opts.appClientId, stripe_user_id: account }, headers: { authorization: `Basic ${Buffer.from(`${key}:`).toString('base64')}` }, idempotent: false })
+      return true
+    } catch (e) {
+      const err = e as { status?: number; kind?: string; code?: string }
+      console.warn(`[agfn] stripe deauthorize refused: status ${err.status ?? 'none'}, kind ${err.kind ?? 'unknown'}, code ${err.code ?? 'none'}`)
+      return false
+    }
   }
 
   const secretOf = (conn: ConnectionRef) => requireSecret('stripe', conn.secret, isStripeSecret)
@@ -676,6 +698,16 @@ export function createStripeConnector(opts: StripeConnectorOptions, deps: Connec
   const connector: StripeConnector = {
     client,
     describe: () => description,
+
+    /** A sign-in: ended at Stripe if Stripe lets us. A pasted key or an app install only the owner can end: says how. */
+    async disconnect(conn) {
+      const sec = secretOf(conn)
+      if (conn.config.keyType === 'oauth' || sec.kind === 'oauth') {
+        if (await deauthorize(conn, sec)) return
+        return { notRevoked: 'In Stripe, open Installed apps → ⋯ next to Aggregate → View app details → Uninstall app.' }
+      }
+      return { notRevoked: 'In Stripe, go to Developers → API keys → Roll or delete the key.' }
+    },
 
     async begin(ctx) {
       if (oauthReady) {

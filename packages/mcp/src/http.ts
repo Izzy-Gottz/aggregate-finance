@@ -10,7 +10,7 @@ import type { PersonActor } from './control.ts'
 import { buildMcpServer } from './mcp-server.ts'
 import { buildOpenApi } from './openapi.ts'
 import { ToolError, type Principal, type ToolErrorCode } from './scope.ts'
-import { ALL_TOOLS, SCOPES, type AgfnMcp } from './service.ts'
+import { SCOPES, type AgfnMcp } from './service.ts'
 import type { ToolDef } from './tools/common.ts'
 
 export interface HttpOptions {
@@ -98,7 +98,7 @@ export class AgfnHttp {
     this.service = service
     this.opts = opts
     this.resourcePath = new URL(opts.resourceUrl).pathname
-    this.routes = compile(ALL_TOOLS)
+    this.routes = compile(service.tools)
     this.mcp = createMcpHandler(
       async (ctx) => {
         const principal = ctx.authInfo?.extra?.principal as Principal | undefined
@@ -127,7 +127,7 @@ export class AgfnHttp {
       if (path === '/.well-known/oauth-protected-resource' || path === `/.well-known/oauth-protected-resource${this.resourcePath}`) return this.protectedResourceMetadata()
       if (!this.originAllowed(req)) return json({ error: 'forbidden', message: 'origin not allowed' }, 403)
       if (path === this.resourcePath) return await this.handleMcp(req)
-      if (path === '/v1/openapi.json' && req.method === 'GET') return json((this.openapi ??= buildOpenApi(this.opts.resourceUrl, { share: this.service.offersShare, investments: this.service.offersInvestments })))
+      if (path === '/v1/openapi.json' && req.method === 'GET') return json((this.openapi ??= buildOpenApi(this.opts.resourceUrl, { setAsides: this.service.offersSetAsides, share: this.service.offersShare, investments: this.service.offersInvestments })))
       if (path.startsWith('/v1/control/')) return await this.handleControl(req, path.slice('/v1/control'.length), url)
       if (path.startsWith('/v1/')) return await this.handleRest(req, path, url)
       return json({ error: 'not_found', message: 'not found' }, 404)

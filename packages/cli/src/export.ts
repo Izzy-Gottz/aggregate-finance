@@ -1,17 +1,18 @@
-// agfn export --format beancount|hledger [--workspace ID] [--company ID]... [--basis cash|accrual] [--out FILE]
+// agfn export --format beancount|hledger [--workspace ID] [--company ID]... [--basis cash|accrual] [--out FILE] [--reason WHY]
 // The books as a plain-text journal for Fava or hledger-web. Companies only (Personal spaces stay private).
 
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { plainTextExport } from '@agfn/server/plaintext'
 import { UsageError, parseArgs, rejectUnknown, type Io } from './io.ts'
+import { operatorAccess, recordOperatorAccess } from './operator.ts'
 import { bootFromEnv, settleAuth, type BootFn } from './sync.ts'
 
-const USAGE = 'usage: agfn export --format beancount|hledger [--workspace ID] [--company ID,ID] [--basis cash|accrual] [--out FILE]'
+const USAGE = 'usage: agfn export --format beancount|hledger [--workspace ID] [--company ID,ID] [--basis cash|accrual] [--out FILE] [--reason WHY]'
 
 export async function exportCommand(argv: string[], io: Io, bootFn: BootFn = bootFromEnv): Promise<number> {
   const args = parseArgs(argv)
-  rejectUnknown(args, ['format', 'workspace', 'company', 'basis', 'out'])
+  rejectUnknown(args, ['format', 'workspace', 'company', 'basis', 'out', 'reason'])
   if (args.positionals.length) throw new UsageError(USAGE)
   const format = args.flags.get('format')
   if (format !== 'beancount' && format !== 'hledger') throw new UsageError(`--format must be beancount or hledger. ${USAGE}`)
@@ -23,6 +24,7 @@ export async function exportCommand(argv: string[], io: Io, bootFn: BootFn = boo
   if (out === true) throw new UsageError('--out needs a file name')
   const only = args.flags.get('workspace')
   if (only === true) throw new UsageError('--workspace needs an id')
+  const access = operatorAccess(args, io)
 
   const booted = await bootFn(io)
   await settleAuth(booted)
@@ -30,6 +32,7 @@ export async function exportCommand(argv: string[], io: Io, bootFn: BootFn = boo
     const wss = await booted.services.db.selectFrom('workspaces').select(['id', 'name']).execute()
     const ws = only ? wss.find((w) => w.id === only) : wss.length === 1 ? wss[0] : undefined
     if (!ws) throw new UsageError(only ? `no workspace ${only}` : `${wss.length} workspaces here: pick one with --workspace (${wss.map((w) => `${w.id} ${w.name}`).join('; ')})`)
+    await recordOperatorAccess(booted.services.db, access, 'export', ws.id)
     const text = await plainTextExport(booted.services, ws.id, { format, basis, ...(company ? { entityIds: company.split(',').map((x) => x.trim()).filter(Boolean) } : {}) })
     if (out) {
       const file = resolve(io.cwd, out)

@@ -1,5 +1,5 @@
 // Connections: one connection's drawer (accounts, what it reads, sync, disconnect vs delete), the catalog behind
-// "+ More connections", and the connect flow (provider popup → "which company is each account?").
+// "+ Add a connection", and the connect flow (provider popup → "which company is each account?").
 import { EmailCode } from '../ui/email-code.ts'
 import { AI_DISCLOSURE, type ConnectorDescription, type ConnectorGroup } from '@agfn/contracts'
 import { useEffect, useRef, useState } from 'preact/hooks'
@@ -84,9 +84,13 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
     }
   }, [status])
   const [confirm, setConfirm] = useState<null | 'keep' | 'delete'>(null)
+  /** What's left to do at the provider, after disconnecting. */
+  const [left, setLeft] = useState<string | null>(null)
+  // Disconnected, the connection may no longer load: the step above still needs its name.
+  const c0 = useRef<typeof c>(null)
   // The link that opened the confirm is gone while it shows: focus goes to Cancel, and back to that link after Cancel
   // (the last two in the row: Disconnect, then Disconnect and delete its data), never lost to the page.
-  const confirmBox = useRef<HTMLSpanElement>(null)
+  const confirmBox = useRef<HTMLDivElement>(null)
   const linksBox = useRef<HTMLDivElement>(null)
   const wasConfirm = useRef<null | 'keep' | 'delete'>(null)
   useEffect(() => {
@@ -98,18 +102,30 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
   const [checkedAt, setCheckedAt] = useState<string | null>(null)
   const [note, setNote] = useState<{ text: string; tone?: 'red'; connect?: boolean } | null>(null)
   const [moving, setMoving] = useState<string | null>(null)
+  if (left !== null) {
+    const url = PROVIDER_DASHBOARD[c0.current?.connectorKey ?? '']
+    return html`<${Drawer} title=${`${c0.current?.name.split(' · ')[0] ?? 'It’s'} disconnected`} onClose=${onClose} onBack=${null}>
+      <p style="margin-top:16px">One more step: ${left.replace(/^In /, 'in ')}${url ? html` <a class="link" href=${url.href} target="_blank" rel="noopener noreferrer">${url.label} ↗</a>` : null}</p>
+      <div class="formrow"><${Button} onClick=${onClose}>Done</${Button}></div>
+    </${Drawer}>`
+  }
   if (error) return html`<${LoadFailed} title="This connection is gone" error=${error} reload=${reload} onClose=${onClose} onBack=${onBack} />`
   if (!c) return html`<${Drawer} title="Loading…" onClose=${onClose} onBack=${onBack} />`
   const now = app.now()
   const l = connectionLine(c, now)
+  c0.current = c
+  // "Stripe · Aggregate" → Stripe: what you're disconnecting is the provider, whatever the account there is called.
+  const provider = c.name.split(' · ')[0] ?? c.name
   const disconnect = async (deleteData: boolean) => {
     const r = await app.api.disconnect(c.id, deleteData)
     // The provider's own note about what to finish on their side, said plainly (it's removed here either way).
-    const warning = r && typeof r === 'object' && 'warning' in r && r.warning ? ` ${r.warning}` : ''
+    const warning = r && typeof r === 'object' && 'warning' in r && r.warning ? r.warning : ''
     // The server may delete the data anyway (a provider's terms require it); say what actually happened.
     const deleted = r && typeof r === 'object' && 'dataDeleted' in r && typeof r.dataDeleted === 'boolean' ? r.dataDeleted : deleteData
-    app.toast({ text: (deleted ? `${c.name} and its data are removed. Your bank isn’t affected.` : `${c.name} is disconnected. Its history stays.`) + warning })
     await app.reload()
+    // A step only they can take stays on screen until they're done with it; it can't be left to a toast.
+    if (warning) return setLeft(warning)
+    app.toast({ text: deleted ? `${provider} and its data are removed. Your bank isn’t affected.` : `${provider} disconnected.` })
     onClose()
   }
   // Repairs this connection in place (Plaid update mode), never a second copy of the same bank.
@@ -205,18 +221,32 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
       ${limited || !manages
         ? null
         : confirm === null
-        ? html`<${LinkButton} onClick=${() => setConfirm('keep')}>${DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect'}</${LinkButton}><${LinkButton} danger onClick=${() => setConfirm('delete')}>Disconnect and delete its data</${LinkButton}>`
-        : html`<span class="sub" role="alert" ref=${confirmBox}>${confirm === 'keep' ? `Stop syncing ${c.name}? Everything already here stays.` : `Delete ${c.accountCount} ${c.accountCount === 1 ? 'account' : 'accounts'} and all their transactions from Aggregate? Your bank isn’t affected.`}
-            <${LinkButton} danger onClick=${() => disconnect(confirm === 'delete')}>${confirm === 'keep' ? (DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect') : 'Delete'}</${LinkButton}> · <${LinkButton} onClick=${() => setConfirm(null)}>Cancel</${LinkButton}></span>`}
+        ? html`<${LinkButton} onClick=${() => setConfirm('keep')}>${DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect'}</${LinkButton}>${c.erasesOnDisconnect ? null : html`<${LinkButton} danger onClick=${() => setConfirm('delete')}>Disconnect and delete its data</${LinkButton}>`}`
+        : html`<div class="confirm" role="alert" ref=${confirmBox}>
+            <p class="name">${confirm === 'keep' ? `Disconnect ${provider}?` : `Delete ${provider}’s data?`}</p>
+            <p class="sub">${confirm === 'keep' ? (c.erasesOnDisconnect === 'always' ? 'Its data will be deleted.' : c.erasesOnDisconnect === 'maybe' ? 'Its data may be deleted when you do.' : 'We stop syncing. What already synced stays.') : `This deletes ${c.accountCount} ${c.accountCount === 1 ? 'account' : 'accounts'} and all their transactions from Aggregate. Your bank isn’t affected.`}</p>
+            <div class="formrow"><${Button} danger onClick=${() => disconnect(confirm === 'delete')}>${confirm === 'keep' ? (DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect') : 'Delete'}</${Button}><${Button} quiet onClick=${() => setConfirm(null)}>Cancel</${Button}></div>
+          </div>`}
     </div>
   </${Drawer}>`
+}
+
+/** Where the last step happens, when there's one place to send people. */
+const PROVIDER_DASHBOARD: Record<string, { href: string; label: string }> = {
+  stripe: { href: 'https://dashboard.stripe.com/settings/apps', label: 'Open Stripe' },
 }
 
 /** One line before a provider's sign-in, where its page asks something people should know about. */
 const SIGN_IN_NOTE: Record<string, string> = {
   // Polar's consent page starts on "all current and future organizations".
   polar: 'Polar asks which organizations to share. It starts on all of them; you can pick just one there.',
+  // The providers whose access can't be limited to reading: say so before anyone goes there. Our own code only reads.
+  quickbooks: 'QuickBooks only offers one accounting permission, which covers reading and writing. Aggregate only reads.',
+  billcom: 'BILL’s sync token can edit records in your BILL account but can’t pay anyone or move money. Aggregate only reads.',
 }
+
+/** Their keys can't be limited to reading, so the list under the steps is a statement, not "all read-only". */
+const NOT_READ_ONLY = new Set(['lemonsqueezy', 'expensify'])
 
 /** Mercury's partner terms: "Powered by Mercury" plus its not-a-bank disclosure, word for word from the Mercury Partner Media Kit. */
 const MERCURY_DISCLOSURE = 'Powered by Mercury. Mercury is a fintech company, not an FDIC-insured bank. Banking services provided through Choice Financial Group and Column N.A., Members FDIC.'
@@ -238,6 +268,8 @@ const GROUPS: Array<{ group: ConnectorGroup; title: string; sub: string }> = [
 export function ConnectView({ connectorKey, entityId, onClose, onBack }: { connectorKey?: string; entityId?: string; onClose: () => void; onBack: (() => void) | null }) {
   const app = useApp()
   const { data: all, error, reload } = useLoad(() => app.api.connectors(), [])
+  // Nothing connected yet: the bank is the one to do first, so it's the one dark button.
+  const connected = !!app.ws?.connections.length
   if (error) return html`<${LoadFailed} title="Couldn’t load connections" error=${error} reload=${reload} onClose=${onClose} onBack=${onBack} />`
   if (connectorKey && all) {
     // Self-hosted with no Plaid keys: a bank is SimpleFIN or a statement first, Plaid with your own account second.
@@ -252,7 +284,7 @@ export function ConnectView({ connectorKey, entityId, onClose, onBack }: { conne
   }
   // A link straight to one connector (back from an emailed check, a shortcut): wait for the list, never flash the menu.
   if (connectorKey && !all) return html`<${Drawer} title="Connect" onClose=${onClose} onBack=${onBack}><p class="sub" aria-busy="true" style="margin-top:12px">One moment…</p></${Drawer}>`
-  return html`<${Drawer} title="More connections" sub="Most take under a minute. Aggregate only reads." onClose=${onClose} onBack=${onBack}>
+  return html`<${Drawer} title="Add a connection" sub="Most take under a minute. Aggregate only reads." onClose=${onClose} onBack=${onBack}>
     ${GROUPS.map(({ group, title, sub }) => {
       const items = (all ?? []).filter((c) => c.group === group)
       if (!items.length) return null
@@ -260,10 +292,11 @@ export function ConnectView({ connectorKey, entityId, onClose, onBack }: { conne
         <${Rows}>${[...items.filter((c) => !needsSetup(c)), ...items.filter(needsSetup)].map((c) =>
           needsSetup(c)
             ? html`<${Row} icon=${html`<${SourceTile} connectorKey=${c.key} />`} name=${c.name} line=${needsLine(c)} right=${html`<${Button} quiet onClick=${() => app.push({ kind: 'connect', key: c.key })} label=${'Set up ' + c.name}>Set up</${Button}>`} />`
-            : html`<${Row} icon=${html`<${SourceTile} connectorKey=${c.key} />`} name=${c.beta ? html`${c.name} <span class="pill">Beta</span>` : c.name} line=${c.freshness} right=${html`<${Button} onClick=${() => app.push(c.key === 'files' ? { kind: 'add', what: 'upload' } : { kind: 'connect', key: c.key })} label=${'Connect ' + c.name}>${c.auth === 'file' ? 'Upload' : 'Connect'}</${Button}>`} />`,
+            : html`<${Row} icon=${html`<${SourceTile} connectorKey=${c.key} plaidMark />`} name=${c.beta ? html`${c.name} <span class="pill">Beta</span>` : c.key === 'plaid' ? 'Bank, card or brokerage' : c.name} line=${c.freshness} right=${html`<${Button} quiet=${!connected && c.key !== 'plaid'} onClick=${() => app.push(c.key === 'files' ? { kind: 'add', what: 'upload' } : { kind: 'connect', key: c.key })} label=${'Connect ' + c.name}>${c.auth === 'file' ? 'Upload' : 'Connect'}</${Button}>`} />`,
         )}</${Rows}>
       </${Section}>`
     })}
+    ${all ? html`<p class="meta" style="margin-top:24px">Logos belong to their owners and are shown only to identify services you can connect. No endorsement implied.</p>` : null}
   </${Drawer}>`
 }
 
@@ -559,7 +592,7 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
             ? html`<ol class="steps">${start.steps.map((t, i) => html`<li>${t}${i === 0 && start.helpUrl ? html` <a class="link" href=${start.helpUrl} target="_blank" rel="noopener noreferrer">Open ${c.name} ↗</a>` : null}</li>`)}</ol>`
             : html`<ol class="steps"><li>Open ${c.name} and make read-only credentials.${start.helpUrl ? html` <a class="link" href=${start.helpUrl} target="_blank" rel="noopener noreferrer">Open ${c.name} ↗</a>` : null}</li><li>Paste ${start.fields?.length ? 'them' : 'it'} here.</li></ol>`}
           ${start.permissions?.length
-            ? html`<p class="sub" style="margin-top:12px">Only these, all read-only:</p><ul class="perms">${start.permissions.map((p) => html`<li>${p}</li>`)}</ul>`
+            ? html`<p class="sub" style="margin-top:12px">${NOT_READ_ONLY.has(c.key) ? 'What this key can do:' : 'Only these, all read-only:'}</p><ul class="perms">${start.permissions.map((p) => html`<li>${p}</li>`)}</ul>`
             : null}
           ${start.fields?.length
             ? start.fields.map((f) => {

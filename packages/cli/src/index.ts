@@ -10,6 +10,7 @@ import { UsageError, type Io } from './io.ts'
 import { mcpCommand } from './mcp.ts'
 import { setupCommand } from './setup.ts'
 import { syncCommand } from './sync.ts'
+import { keysCommand } from './keys.ts'
 import { usageCommand } from './usage.ts'
 import { backupCommand } from './backup.ts'
 import { exportCommand } from './export.ts'
@@ -35,11 +36,13 @@ export const HELP = `agfn: Aggregate, the open-source finance MCP
   agfn migrate                 Apply pending database migrations.
   agfn doctor [--online]       Check settings, master key, database, connectors and connections.
   agfn sync <connectionId>     Sync one connection now (or --all).
-  agfn usage [--workspace ID] [--days N] [--json]
+  agfn usage [--workspace ID] [--days N] [--json] [--reason WHY]
                                What each workspace costs to run: Plaid Items, syncs, storage, MCP calls.
+  agfn keys reseal [--apply --confirm RESEAL] [--reason WHY]
+                               Stored secrets per master key; --apply moves them to the current key (dry run by default).
   agfn backup now | list | restore <key> [--to FILE]
                                Encrypted off-site backups (BACKUP_S3_*). Restore into an empty database.
-  agfn export --format beancount|hledger [--workspace ID] [--company ID,ID] [--basis cash|accrual] [--out FILE]
+  agfn export --format beancount|hledger [--workspace ID] [--company ID,ID] [--basis cash|accrual] [--out FILE] [--reason WHY]
                                The books as a plain-text journal, for Fava or hledger-web.
   agfn creator-link create --label TEXT [--code C] [--cap N] [--expires DATE] | list
   agfn glass-ledger create --from YYYY-MM-DD
@@ -53,7 +56,7 @@ export const HELP = `agfn: Aggregate, the open-source finance MCP
                                Challenge deployment only: a QA player with made-up books and an MCP key (shown once).
   agfn challenge-reset --confirm RESET | challenge-check-flag VALUE
                                Challenge deployment only: run the nightly reset now; check a reported flag.
-  agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD]
+  agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD] [--reason WHY]
                                Re-post every entry from its records after a posting-rule change; checks totals.
   agfn demo --email EMAIL      Fill a demo workspace (3 made-up companies + Personal) for someone who signed in.
   agfn setup [--url URL] [--client cursor,vscode,…] [--yes] [--force]
@@ -84,6 +87,8 @@ export async function run(argv: string[], io: Io): Promise<number | null> {
         return await withBypass('cli:sync', () => syncCommand(rest, io))
       case 'backup':
         return await withBypass('cli:backup', () => backupCommand(rest, io))
+      case 'keys':
+        return await withBypass('cli:keys', () => keysCommand(rest, io))
       case 'usage':
         return await withBypass('cli:usage', () => usageCommand(rest, io))
       case 'export':

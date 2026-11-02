@@ -1,8 +1,11 @@
+import { sql } from 'kysely'
 import { describe, expect, it } from 'vitest'
 import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { boot } from '@agfn/server/boot'
 import { loadConfig } from '@agfn/server/config'
 import type { Io } from './io.ts'
+import { exportCommand } from './export.ts'
+import { rebuildCommand } from './rebuild.ts'
 import { usageCommand } from './usage.ts'
 
 function io(): Io & { lines: string[]; errors: string[] } {
@@ -36,5 +39,60 @@ describe('agfn usage', () => {
   it('rejects bad options', async () => {
     await expect(usageCommand(['--days', '0'], io(), bootFn)).rejects.toThrow(/--days/)
     await expect(usageCommand(['--frobnicate'], io(), bootFn)).rejects.toThrow()
+  })
+})
+
+describe('operator access on the hosted service', () => {
+  const hosted = (env: Record<string, string>) => ({ ...io(), env: { AGFN_HOSTED: '1', ...env } })
+
+  it('needs a name and a reason before it boots anything', async () => {
+    const never = async () => { throw new Error('booted') }
+    await expect(usageCommand([], hosted({ AGFN_OPERATOR: 'f5' }), never as never)).rejects.toThrow(/--reason/)
+    await expect(usageCommand(['--reason', '  '], hosted({ AGFN_OPERATOR: 'f5' }), never as never)).rejects.toThrow(/--reason/)
+    await expect(usageCommand(['--reason', 'cost check'], hosted({}), never as never)).rejects.toThrow(/AGFN_OPERATOR/)
+  })
+
+  it('records one workspace in its own activity log, and all of them in operator_access', async () => {
+    let db: any
+    const keep = async () => { const b = await bootFn(); db = b.handle.db; const down = b.shutdown; b.shutdown = async () => { rows = await read(); await down() }; return b }
+    let rows: { activity: any[]; platform: any[] } = { activity: [], platform: [] }
+    const read = async () => ({ activity: await db.selectFrom('activity_log').selectAll().execute(), platform: await db.selectFrom('operator_access').selectAll().execute() })
+
+    expect(await usageCommand(['--workspace', 'w1', '--reason', 'support ticket 12'], hosted({ AGFN_OPERATOR: 'f5' }), keep)).toBe(0)
+    expect(rows.platform).toHaveLength(0)
+    expect(rows.activity).toHaveLength(1)
+    expect(rows.activity[0]).toMatchObject({ actor_kind: 'operator', actor_label: 'Aggregate support', action: 'operator.access', target_id: 'usage', detail: 'support ticket 12' })
+    expect(JSON.parse(rows.activity[0].args_json)).toEqual({ operator: 'f5' })
+
+    expect(await usageCommand(['--reason', 'cost check'], hosted({ AGFN_OPERATOR: 'f5' }), keep)).toBe(0)
+    expect(rows.activity).toHaveLength(0)
+    expect(rows.platform).toHaveLength(1)
+    expect(rows.platform[0]).toMatchObject({ operator: 'f5', command: 'usage', reason: 'cost check' })
+  })
+
+  it('covers export before it runs, and rebuild needs a reason too', async () => {
+    let db: any
+    let activity: any[] = []
+    const keep = async () => { const b = await bootFn(); db = b.handle.db; const down = b.shutdown; b.shutdown = async () => { activity = await db.selectFrom('activity_log').selectAll().execute(); await down() }; return b }
+    const t = hosted({ AGFN_OPERATOR: 'f5' })
+    await expect(exportCommand(['--format', 'hledger'], t, keep)).rejects.toThrow(/--reason/)
+    await expect(rebuildCommand([], t, keep)).rejects.toThrow(/--reason/)
+
+    // This server has no ledger, so the export itself fails: the record is already written by then.
+    await expect(exportCommand(['--format', 'hledger', '--workspace', 'w1', '--reason', 'their request'], t, keep)).rejects.toThrow(/ledger/)
+    expect(activity.map((r) => [r.action, r.target_id])).toEqual([['operator.access', 'export']])
+  })
+
+  it('refuses to run when the record cannot be written', async () => {
+    const broken = async () => { const b = await bootFn(); await b.handle.db.schema.dropTable('operator_access').execute(); return b }
+    const t = hosted({ AGFN_OPERATOR: 'f5' })
+    await expect(usageCommand(['--reason', 'cost check'], t, broken)).rejects.toThrow(/operator_access/)
+    const noLog = async () => { const b = await bootFn(); await sql`alter table activity_log rename to activity_log_gone`.execute(b.handle.db); return b }
+    await expect(usageCommand(['--workspace', 'w1', '--reason', 'support'], t, noLog)).rejects.toThrow(/activity_log/)
+    expect(t.lines).toEqual([])
+  })
+
+  it('stays out of the way when self-hosted', async () => {
+    expect(await usageCommand([], io(), bootFn)).toBe(0)
   })
 })

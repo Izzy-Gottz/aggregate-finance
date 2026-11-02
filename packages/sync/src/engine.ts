@@ -1,6 +1,7 @@
+import { notRevokedWarning } from './revoke-help.ts'
 import { PostgresAdapter, type Kysely } from 'kysely'
 import type { AccountUpsert, ConnectBegin, ConnectBeginContext, ConnectionId, ConnectionRef, Connector, Ledger, NormalizedEvent, PostResult, SharedOffer, WorkspaceId } from '@agfn/contracts'
-import { newId, nowIso, perfEnabled, perfLine, withPerf, type CoreTables, type JobQueue } from '@agfn/db'
+import { newId, nowIso, perfEnabled, perfLine, withBypass, withPerf, type CoreTables, type JobQueue } from '@agfn/db'
 import { seal, unseal, type KeyRing } from '@agfn/security'
 import { dedupeEvents, healthFromError, isConnectorError, plainError, runSync, type ConnectorDeps } from '@agfn/connector-sdk'
 import { DbRawSink } from './raw-sink.ts'
@@ -153,20 +154,27 @@ export class SyncEngine {
           if (id !== row.id) throw new Error('connector saved a secret for another connection')
           await this.keepSecret(row, next)
         }
-        const connector = registry.create(row.connector_key, { ...this.d.connectorDeps, raw: new DbRawSink(db, row.workspace_id), saveSecret }) as { disconnect?: (ref: ConnectionRef) => Promise<void> }
+        const connector = registry.create(row.connector_key, { ...this.d.connectorDeps, raw: new DbRawSink(db, row.workspace_id), saveSecret }) as { accountKey?: (config: Record<string, unknown>) => string | undefined; disconnect?: (ref: ConnectionRef) => Promise<void | { notRevoked: string }> }
         if (connector.disconnect) {
           const config = JSON.parse(row.config_json) as Record<string, unknown>
           // Shared token: the connector removes only this one; it revokes the token only if no sibling still uses it.
           const grant = sharedSecretKeyOf(row.config_json)
           if (grant) config.lastOfGrant = (await siblingsOf(db, row, grant)).length === 0
-          await connector.disconnect({ id: row.id, workspaceId: row.workspace_id, connectorKey: row.connector_key, secret, config })
-          revoked = true
+          const account = connector.accountKey?.(config)
+          if (account) config.liveElsewhere = await liveElsewhere(db, row, (c) => connector.accountKey?.(c) === account)
+          const out = await connector.disconnect({ id: row.id, workspaceId: row.workspace_id, connectorKey: row.connector_key, secret, config })
+          if (out?.notRevoked) warning = out.notRevoked.slice(0, 300)
+          else revoked = true
+        } else {
+          // No way to end it from here: say so, or the access quietly stays live at the provider.
+          warning = notRevokedWarning(row.connector_key, row.display_name)
         }
       } catch (err) {
         this.d.log?.('provider disconnect failed', { connectionId: row.id, connector: row.connector_key, error: err instanceof Error ? err.message.slice(0, 200) : 'unknown' })
         // A connector's own message says what to do at the provider; anything else stays in the log.
+        warning = `In ${row.display_name}, remove Aggregate if it’s still listed.`
         if (isConnectorError(err)) {
-          warning = err.forUser ? err.message.slice(0, 300) : `Aggregate couldn’t remove its access in ${row.display_name}. If it’s still listed there, remove it in ${row.display_name}’s settings.`
+          warning = err.forUser ? err.message.slice(0, 300) : `In ${row.display_name}, go to Settings → Remove Aggregate if it’s still listed.`
         }
       }
     }
@@ -679,6 +687,14 @@ function sharedSecretKeyOf(configJson: string): string | undefined {
   } catch {
     return undefined
   }
+}
+
+/** Any other live connection of this provider account, in any workspace (only the account key leaves the query). */
+async function liveElsewhere(db: Kysely<CoreTables>, row: { id: string; connector_key: string }, same: (config: Record<string, unknown>) => boolean): Promise<boolean> {
+  const rows = await withBypass('disconnect:same-account', () =>
+    db.selectFrom('connections').select(['config_json']).where('connector_key', '=', row.connector_key).where('status', '!=', 'disconnected').where('id', '!=', row.id).execute(),
+  )
+  return rows.some((r) => same(JSON.parse(r.config_json) as Record<string, unknown>))
 }
 
 /** The other live connections of the same workspace and connector that share this token. */

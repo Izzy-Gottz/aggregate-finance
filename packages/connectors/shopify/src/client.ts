@@ -91,6 +91,11 @@ export class ShopifyClient {
     return c
   }
 
+  /** Removes Aggregate from the store: the only way to end its access. Irreversible, and it ends every token. */
+  async uninstall(shop: string, accessToken: string): Promise<void> {
+    await this.http(shop).request({ method: 'DELETE', path: `https://${shop}/admin/api_permissions/current.json`, headers: { 'x-shopify-access-token': accessToken }, idempotent: true })
+  }
+
   async graphql<T>(shop: string, accessToken: string, query: string, variables: Record<string, unknown> = {}): Promise<T> {
     const maxAttempts = 5
     for (let attempt = 1; ; attempt++) {

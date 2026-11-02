@@ -1,4 +1,4 @@
-// agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD]
+// agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD] [--reason WHY]
 // Re-posts every workspace's entries from its source records (the ledger engine's rebuild), after a posting-rule change
 // such as wages_income. Without --apply it only lists the workspaces. With --apply, per workspace: totals per ledger
 // account role before and after, the roles that moved, and a check that each account type's total (asset, liability,
@@ -7,9 +7,10 @@
 
 import { sql, type Kysely } from 'kysely'
 import { UsageError, flagString, parseArgs, rejectUnknown, type Io } from './io.ts'
+import { operatorAccess, recordOperatorAccess } from './operator.ts'
 import { bootFromEnv, settleAuth, type BootFn } from './sync.ts'
 
-const USAGE = 'usage: agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD]'
+const USAGE = 'usage: agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD] [--reason WHY]'
 
 type Totals = Map<string, number>
 
@@ -46,11 +47,12 @@ function byType(t: Totals): Totals {
 
 export async function rebuildCommand(argv: string[], io: Io, bootFn: BootFn = bootFromEnv): Promise<number> {
   const args = parseArgs(argv, ['apply'])
-  rejectUnknown(args, ['workspace', 'apply', 'confirm'])
+  rejectUnknown(args, ['workspace', 'apply', 'confirm', 'reason'])
   if (args.positionals.length) throw new UsageError(USAGE)
   const apply = args.flags.has('apply')
   if (apply && flagString(args, 'confirm') !== 'REBUILD') throw new UsageError('--apply re-posts every entry: add --confirm REBUILD (take a backup first: agfn backup now)')
   const only = flagString(args, 'workspace')
+  const access = operatorAccess(args, io)
 
   const booted = await bootFn(io)
   await settleAuth(booted)
@@ -64,6 +66,7 @@ export async function rebuildCommand(argv: string[], io: Io, bootFn: BootFn = bo
     const workspaces = await q.execute()
     if (only && !workspaces.length) throw new UsageError(`no workspace ${only}`)
     if (!apply) {
+      await recordOperatorAccess(db, access, 'ledger-rebuild', only)
       for (const w of workspaces) io.out(`  ${w.id}  ${w.name}`)
       io.out(`${workspaces.length} workspaces. Dry run: nothing changed. Run again with --apply --confirm REBUILD.`)
       return 0
@@ -72,6 +75,7 @@ export async function rebuildCommand(argv: string[], io: Io, bootFn: BootFn = bo
     let moved = 0
     for (const w of workspaces) {
       try {
+        await recordOperatorAccess(db, access, 'ledger-rebuild --apply', w.id)
         const before = await totals(db, w.id)
         await engine.rebuild(w.id)
         const after = await totals(db, w.id)

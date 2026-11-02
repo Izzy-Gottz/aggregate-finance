@@ -41,7 +41,7 @@ describe('Actions by role', () => {
   it('a member sees no name and year start on a company', async () => {
     start(as('employee'), '#/?d=company:e_acme')
     await screen.findByRole('heading', { name: 'Acme' })
-    expect(screen.queryByRole('button', { name: /Name and year start/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Rename company/ })).toBeNull()
   })
 })
 
@@ -49,7 +49,7 @@ describe('Company name and year start', () => {
   it('an owner renames a company and moves its year start', async () => {
     const api = as('owner')
     start(api, '#/?d=company:e_acme')
-    fireEvent.click(await screen.findByRole('button', { name: /Name and year start/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Rename company/ }))
     const year = await screen.findByLabelText('Year starts')
     await waitFor(() => expect((year as HTMLSelectElement).disabled).toBe(false))
     fireEvent.input(screen.getByLabelText('Name'), { target: { value: '  Acme   Labs ' } })
@@ -64,7 +64,7 @@ describe('Company name and year start', () => {
 
   it('an empty name is refused before saving', async () => {
     start(as('owner'), '#/?d=company:e_acme')
-    fireEvent.click(await screen.findByRole('button', { name: /Name and year start/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Rename company/ }))
     await waitFor(() => expect((screen.getByLabelText('Year starts') as HTMLSelectElement).disabled).toBe(false))
     fireEvent.input(screen.getByLabelText('Name'), { target: { value: '   ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))

@@ -60,6 +60,8 @@ COPY docs/connect-your-ai.md ./docs/connect-your-ai.md
 COPY docs/recipes.md ./docs/recipes.md
 COPY docs/connectors.md ./docs/connectors.md
 COPY docs/guides ./docs/guides
+# AGFN_MASTER_KEY_COMMAND runs this at boot. The rest of scripts/ stays out of the image.
+COPY scripts/kms-master-key.mjs ./scripts/kms-master-key.mjs
 RUN mkdir -p /data && chown -R node:node /data && chmod 700 /data
 USER node
 VOLUME ["/data"]

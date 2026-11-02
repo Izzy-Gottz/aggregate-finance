@@ -23,7 +23,8 @@ import { defineRole, FIXED_ROLES, isFixedRole } from './coa.ts'
 import { openItems } from './checks.ts'
 import { formatMoney } from './money.ts'
 import { LinkError, type LedgerEngine } from './engine.ts'
-import type { Bucket, BucketField, BucketSchedule, EntityInfo, RecordOverride, RuleConditions, SourceAccountInfo, SourceRecord, WriteLogEntry } from './model.ts'
+import { keepUnseenAllocations } from './set-aside.ts'
+import type { Bucket, BucketField, BucketSchedule, EntityInfo, SetAside, RecordOverride, RuleConditions, SourceAccountInfo, SourceRecord, WriteLogEntry } from './model.ts'
 import { MoneyError } from './money.ts'
 import { PostingError, positionOrder } from './posting.ts'
 import { today } from './queries.ts'
@@ -497,6 +498,7 @@ export class LedgerRecordWriter implements RecordWriter {
       fields: (P['fields'] as BucketField[] | undefined) ?? [],
       values: (P['values'] as Record<string, unknown> | undefined) ?? {},
       schedule: this.#schedule(P['schedule'] as Payload | null),
+      ...(P['setAside'] ? { setAside: P['setAside'] as SetAside } : {}),
       origin: this.#origin(p),
       createdBy: this.#by(p),
     })
@@ -520,6 +522,7 @@ export class LedgerRecordWriter implements RecordWriter {
     if (Array.isArray(ch['fields'])) patch.fields = ch['fields'] as BucketField[]
     if (ch['values'] && typeof ch['values'] === 'object') patch.values = ch['values'] as Record<string, unknown>
     if ('schedule' in ch) patch.schedule = this.#schedule(ch['schedule'] as Payload | null)
+    if ('setAside' in ch) patch.setAside = Array.isArray(ch['setAsideAccounts']) ? keepUnseenAllocations(before.setAside, ch['setAside'] as SetAside | null, ch['setAsideAccounts'] as Id[]) : (ch['setAside'] as SetAside | null)
     const b = await this.engine.updateBucket(ws, id, patch)
     await this.#log(ws, p, 'update_bucket', [id], before)
     return { recordId: b.id, recordType: 'bucket', cashImpact: [], suggestedLinks: [], possibleDuplicates: [], summary: `Bucket "${b.name}" updated` }
@@ -665,6 +668,11 @@ export class LedgerRecordWriter implements RecordWriter {
     const edits = (P['edits'] ?? {}) as Payload
     const [kind, subject] = [itemId.slice(0, itemId.indexOf(':')), itemId.slice(itemId.indexOf(':') + 1)]
     const by = this.#by(p)
+    if (kind === 'filed') {
+      const { recordId } = await this.engine.undoFiled(ws, subject)
+      await this.#log(ws, p, 'resolve_review_item', [recordId], { filed: subject })
+      return { recordId, recordType: 'transaction', cashImpact: [], suggestedLinks: [], possibleDuplicates: [], summary: 'Back in Review' }
+    }
     if (kind === 'suggested_match') {
       if (decision !== 'confirm' && decision !== 'reject') throw new WriteRejected('A suggested match is confirmed or rejected', 'invalid')
       const link = await this.engine.store.getLink(ws, subject)
@@ -863,7 +871,7 @@ export class LedgerRecordWriter implements RecordWriter {
         break
       case 'update_bucket': {
         const b = w.before as Bucket
-        await this.engine.updateBucket(ws, b.id, { name: b.name, fields: b.fields, values: b.values, schedule: b.schedule })
+        await this.engine.updateBucket(ws, b.id, { name: b.name, fields: b.fields, values: b.values, schedule: b.schedule, setAside: b.setAside ?? null })
         break
       }
       case 'create_rule':

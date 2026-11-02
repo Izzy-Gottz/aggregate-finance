@@ -232,6 +232,8 @@ export class DemoBooks implements FinanceReader, RecordWriter {
     switch (name) {
       case 'cash':
         return { ...base, value: usd(sum(['depository', 'cash_on_hand', 'processor_balance'])), includedAccounts: accounts.filter((a) => a.type !== 'credit_card').map((a) => a.id), formula: 'sum(balance of cash accounts)' }
+      case 'available_cash':
+        return { ...(await this.metric('cash', scope)), name }
       case 'card_balances':
         return { ...base, value: usd(-sum(['credit_card'])), includedAccounts: accounts.filter((a) => a.type === 'credit_card').map((a) => a.id), formula: 'sum(card balances owed)' }
       case 'net_cash':

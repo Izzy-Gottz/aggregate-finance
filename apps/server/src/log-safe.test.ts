@@ -58,5 +58,43 @@ describe('errors in the log', () => {
       expect(logged).toContain('[agfn] unhandled error')
       for (const s of SECRETS) expect(logged).not.toContain(s)
     })
+
+    it('a body that is not JSON answers 400 with no error log, so junk posts raise no alert', async () => {
+      const app = createApp(booted.services)
+      app.post('/json-echo', async (c) => c.json(await c.req.json()))
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      try {
+        const res = await app.request('/json-echo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: 'not json' })
+        expect(res.status).toBe(400)
+        expect(await res.json()).toEqual({ message: 'Send a JSON object.' })
+        expect(spy).not.toHaveBeenCalled()
+      } finally {
+        spy.mockRestore()
+      }
+    })
+
+    it('an unhandled error alerts the founder once an hour per kind, scrubbed', async () => {
+      const sent: Array<[string, Record<string, unknown>]> = []
+      let error: Error = providerError()
+      const app = createApp({ ...booted.services, alert: (_l: string, m: string, f: Record<string, unknown>) => void sent.push([m, f]), health: { ok: () => { throw error }, busy: () => {} } } as unknown as typeof booted.services)
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      vi.useFakeTimers({ toFake: ['Date'] })
+      try {
+        await app.request('/healthz')
+        await app.request('/healthz')
+        expect(sent).toHaveLength(1)
+        error = new URIError('URI malformed')
+        await app.request('/healthz')
+        expect(sent.map(([, f]) => f.kind)).toEqual(['Error', 'URIError'])
+        vi.setSystemTime(Date.now() + 3601_000)
+        await app.request('/healthz')
+        expect(sent).toHaveLength(3)
+      } finally {
+        vi.useRealTimers()
+        spy.mockRestore()
+      }
+      expect(sent[0]![0]).toBe('unhandled error')
+      for (const s of SECRETS) expect(JSON.stringify(sent)).not.toContain(s)
+    })
   })
 })

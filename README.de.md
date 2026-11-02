@@ -120,10 +120,10 @@ Du meldest dich an und legst in einem einfachen Satz genau fest, was diese KI se
 | **Alles andere** | Kontoauszüge (CSV, OFX, QFX, QBO), PDFs und Fotos von Belegen, per E-Mail geschickte Rechnungen, oder sag es einfach deiner KI |
 | **Demnächst** | BILL, Rippling und Justworks: fertig gebaut und im Test mit echten Konten |
 
-Aggregate liest nur bei deinen Anbietern und hat keine Möglichkeit, Geld zu bewegen. Jedes deiner Unternehmen steht nebeneinander, dazu ein privater Bereich **Persönlich**.
+Aggregate liest nur bei deinen Anbietern und hat keine Möglichkeit, Geld zu bewegen. In der gehosteten Version ist der Zugriff auf Stripe und Square auch an der Quelle schreibgeschützt. QuickBooks, BILL, Lemon Squeezy und Expensify bieten keinen schreibgeschützten Zugriff, ihre Freigabe könnte also mehr als Lesen erlauben; Aggregate liest bei allen vier nur. Jedes deiner Unternehmen steht nebeneinander, dazu ein privater Bereich **Persönlich**.
 
 > [!NOTE]
-> Aggregate ist noch früh dran. In der gehosteten Version warten Plaid, die Stripe-Anmeldung und die Shopify-App noch auf die Freigabe des jeweiligen Anbieters; bis dahin verbindest du Banken über SimpleFIN Bridge oder Kontoauszüge und Shopify mit den Schlüsseln deiner eigenen App. Die übrigen Connectoren folgen der Dokumentation des jeweiligen Anbieters und werden mit echten Konten geprüft. Issues und Fixes sind sehr willkommen.
+> Aggregate ist noch früh dran. In der gehosteten Version ist Stripe seit dem 26.10.2026 im Stripe App Marketplace und Shopify seit dem 22.10.2026 im Shopify App Store. Xero verbindet in der gehosteten Version bis zu 5 Organisationen, bis Xero die App zertifiziert. Die übrigen Connectoren folgen der Dokumentation des jeweiligen Anbieters und werden mit echten Konten geprüft. Issues und Fixes sind sehr willkommen.
 
 <a id="safety"></a>
 ## Sicherheit

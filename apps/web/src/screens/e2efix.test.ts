@@ -57,8 +57,8 @@ describe('After deleting an account', () => {
     const api = new MockApi()
     ;(api.s.me as { demo: boolean }).demo = false
     start(api, '#/preferences')
-    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }))
-    await screen.findByRole('heading', { name: 'Delete my account' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete your Aggregate account' }))
+    await screen.findByRole('heading', { name: 'Delete your Aggregate account' })
     // A refresh starts while still signed in and answers after the account is gone (slow server).
     const old = (await api.me())
     let release: () => void = () => {}
@@ -68,7 +68,7 @@ describe('After deleting an account', () => {
     Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
     document.dispatchEvent(new Event('visibilitychange'))
     fireEvent.input(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } })
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete my account' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete your Aggregate account' }).at(-1)!)
     await screen.findByText(/Your account and its data are deleted/)
     api.me = base
     release()

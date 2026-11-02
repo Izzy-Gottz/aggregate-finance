@@ -34,8 +34,8 @@ h1, h2, h3 { margin: 0; font-weight: 300; }
   gap: 2px; font-size: var(--fs-body);
 }
 .wordmark { font: 500 var(--fs-wordmark)/28px var(--font-serif); letter-spacing: -.01em; padding: 0 8px; }
-.switcher { color: var(--grey); padding: 2px 8px; margin: 2px 0 28px; border-radius: var(--r-btn); display: inline-flex; gap: 4px; align-items: center; align-self: flex-start; }
-.switcher:hover { color: var(--ink); }
+.switcher { color: var(--ink); border: 1px solid var(--rule); padding: 2px 8px; margin: 2px 0 28px; border-radius: var(--r-btn); display: inline-flex; gap: 4px; align-items: center; align-self: flex-start; }
+.switcher:hover { border-color: var(--grey); }
 .nav a, .nav .navbtn { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 0 8px; border-radius: var(--r-btn); }
 .nav a:hover, .nav .navbtn:hover { background: var(--hover); }
 .nav a[aria-current='page'] { background: var(--hover); font-weight: 400; }
@@ -94,6 +94,9 @@ button.row:hover, a.row:hover { background: var(--hover); }
 .dbody .row .line { white-space: normal; overflow-wrap: break-word; }
 .row .right { display: flex; align-items: center; gap: var(--s2); color: var(--ink); white-space: nowrap; }
 .row .value { font-variant-numeric: tabular-nums; }
+.confirm { flex-basis: 100%; }
+.confirm .name { margin: 0; font-weight: 500; }
+.confirm .sub { margin: 4px 0 0; }
 .row .values { display: flex; flex-direction: column; align-items: flex-end; }
 .row .value-sub { font-size: var(--fs-meta); line-height: 18px; color: var(--grey); font-variant-numeric: tabular-nums; }
 .row .chev { color: var(--grey); width: 16px; height: 16px; flex: none; }
@@ -111,6 +114,14 @@ button.row:hover, a.row:hover { background: var(--hover); }
 /* Mercury's mark from its Partner Media Kit (ui/brand/mercury, Mercury's own file, unchanged). It's navy on transparent,
    so it sits on a white tile in both themes to stay visible on dark pages. */
 .tile.brand-mercury { background: #fff url('./brand/mercury/mercury-icon.png') center / 22px 22px no-repeat; overflow: hidden; }
+/* The same for the other brand icons (ui/brand/README.md: each brand's own file, unchanged, white tile in both themes). */
+.tile.brand-shopify, .tile.brand-square, .tile.brand-plaid, .tile.brand-deel, .tile.brand-ramp, .tile.brand-simplefin { background: #fff center / 22px 22px no-repeat; overflow: hidden; }
+.tile.brand-shopify { background-image: url('./brand/shopify/shopify-bag-monotone-black.svg'); }
+.tile.brand-square { background-image: url('./brand/square/square-icon.png'); }
+.tile.brand-plaid { background-image: url('./brand/plaid/plaid-icon.png'); }
+.tile.brand-deel { background-image: url('./brand/deel/deel-icon.png'); }
+.tile.brand-ramp { background-image: url('./brand/ramp/ramp-icon.png'); }
+.tile.brand-simplefin { background-image: url('./brand/simplefin/simplefin-logo.svg'); }
 /* "Powered by Carta" (Carta's 126×22 badge) under data that came from Carta. */
 .powered-carta { display: block; width: 126px; height: 22px; margin-top: var(--s4); background: url('./brand/carta/powered-by-carta-black.svg') left center / contain no-repeat; }
 :root[data-theme='dark'] .powered-carta { background-image: url('./brand/carta/powered-by-carta-white.svg'); }

@@ -9,7 +9,8 @@ const skill = readFileSync(new URL('../../../skills/aggregate/SKILL.md', import.
 
 describe('skills/aggregate/SKILL.md', () => {
   it('has every metric with the definition the server gives', () => {
-    for (const [name, m] of Object.entries(METRICS)) expect(skill).toContain(`| \`${name}\` | ${m.definition} |`)
+    // available_cash joins the skill when AGFN_SET_ASIDES goes on: the skill is public and it isn't offered yet.
+    for (const [name, m] of Object.entries(METRICS).filter(([n]) => n !== 'available_cash')) expect(skill).toContain(`| \`${name}\` | ${m.definition} |`)
   })
 
   it('names only tools that exist', () => {

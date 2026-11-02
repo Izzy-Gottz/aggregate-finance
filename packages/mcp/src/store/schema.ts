@@ -92,7 +92,7 @@ export interface ActivityLogTable {
   /** 1, 2, 3… per workspace. Unique with workspace_id; the hash chain follows it. */
   seq: number
   at: string
-  actor_kind: 'person' | 'agent' | 'system'
+  actor_kind: 'person' | 'agent' | 'system' | 'operator'
   person_id: string | null
   grant_id: string | null
   actor_label: string

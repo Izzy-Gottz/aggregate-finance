@@ -56,8 +56,12 @@ export interface ServerConfig {
   investments?: boolean
   /** AGFN_TOOL_INVESTMENTS=1: the get_investments MCP tool. Off while a directory review pins the tool set. */
   toolInvestments?: boolean
+  /** AGFN_SET_ASIDES=1: `set_aside` on the bucket tools, the available_cash metric, and set-asides in the app. Changes tools/list, so off while a directory review pins it. The ledger and the app don't depend on it. */
+  setAsides?: boolean
   /** AGFN_MCP_PROMPTS=1: the prompt packs (packages/mcp/src/packs.ts). Off while a directory review pins the prompt list. */
   mcpPrompts?: boolean
+  /** AGFN_DOCS_HOST (docs.aggregate.finance): this server also answers for the docs on that host (docs-host.ts). Unset: only /docs. */
+  docsHost?: string
   /** AGFN_BADGES=1: "Verified by Aggregate" badges (badge.ts): /b/<id>, its .svg and /how-we-verify. Off by default. */
   badges?: boolean
   /**
@@ -191,6 +195,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(env.AGFN_MCP_SHARE === '1' ? { mcpShare: true } : {}),
     ...(env.AGFN_INVESTMENTS === '1' ? { investments: true } : {}),
     ...(env.AGFN_TOOL_INVESTMENTS === '1' ? { toolInvestments: true } : {}),
+    ...(env.AGFN_SET_ASIDES === '1' ? { setAsides: true } : {}),
+    ...(env.AGFN_DOCS_HOST ? { docsHost: env.AGFN_DOCS_HOST.trim().toLowerCase() } : {}),
     ...(env.AGFN_MCP_PROMPTS === '1' ? { mcpPrompts: true } : {}),
     ...(env.AGFN_OAUTH_CIMD === '1' ? { oauthCimd: true } : {}),
     ...(env.AGFN_BADGES === '1' ? { badges: true } : {}),

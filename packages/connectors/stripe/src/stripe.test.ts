@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type {
   AccountUpsert,
   BalanceSnapshot,
@@ -841,6 +841,48 @@ describe('stripe webhooks', () => {
 describe('stripe sign-in (Stripe Apps OAuth)', () => {
   const APP: StripeConnectorOptions = { appClientId: 'ca_test_app', appSecretKey: 'sk_test_platformExample1' }
   const token = (n: number) => ({ json: { access_token: `sk_test_oauthAccess${n}`, refresh_token: `rt_test_refresh${n}`, stripe_user_id: 'acct_test_1', livemode: false, expires_in: 3600 } })
+
+  describe('disconnect', () => {
+    const sign = (over: Record<string, unknown> = {}) => ({ ...conn, secret: { kind: 'oauth', apiKey: 'sk_test_oauthAccess1', refreshToken: 'rt_test_refresh1', livemode: true }, config: { ...conn.config, keyType: 'oauth', accountId: 'acct_test_1', ...over } })
+    const at = (u: URL) => u.origin + u.pathname === 'https://connect.stripe.com/oauth/deauthorize'
+
+    it('a sign-in is deauthorized at Stripe with our key for its mode', async () => {
+      const { connector, calls } = make([{ match: at, respond: () => ({ json: { stripe_user_id: 'acct_test_1' } }) }], APP)
+      expect(await connector.disconnect!(sign() as never)).toBeUndefined()
+      const call = calls.find((c) => String(c.url).includes('/oauth/deauthorize'))!
+      expect(call.body).toEqual({ client_id: 'ca_test_app', stripe_user_id: 'acct_test_1' })
+    })
+
+    it('an app install Stripe won\'t deauthorize says to uninstall it, never silently', async () => {
+      const { connector } = make([{ match: at, respond: () => ({ status: 400, json: { error: 'invalid_client', error_description: 'not connected' } }) }], APP)
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      try {
+        expect(await connector.disconnect!(sign() as never)).toEqual({ notRevoked: expect.stringContaining('View app details → Uninstall app') })
+        const logged = warn.mock.calls.flat().join(' ')
+        expect(logged).toContain('status 400')
+        expect(logged).not.toMatch(/sk_|rt_|acct_|ca_test/)
+      } finally {
+        warn.mockRestore()
+      }
+    })
+
+    it('says why no call was made', async () => {
+      const { connector, calls } = make([], APP)
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      try {
+        expect(await connector.disconnect!(sign({ accountId: undefined }) as never)).toEqual({ notRevoked: expect.stringContaining('View app details → Uninstall app') })
+        expect(warn.mock.calls.flat().join(' ')).toContain('account false')
+        expect(calls.some((c) => String(c.url).includes('/oauth/deauthorize'))).toBe(false)
+      } finally {
+        warn.mockRestore()
+      }
+    })
+
+    it('a pasted key says to roll it', async () => {
+      const { connector, conn: c } = make()
+      expect(await connector.disconnect!(c as never)).toEqual({ notRevoked: expect.stringContaining('Roll or delete the key') })
+    })
+  })
 
   it('offers the guided key paste without an app, and a sign-in link with one', async () => {
     const paste = await make().connector.begin({ workspaceId: 'ws1', redirectUri: 'https://app.example.com/api/connectors/stripe/callback', state: 's1', userRef: 'u' })

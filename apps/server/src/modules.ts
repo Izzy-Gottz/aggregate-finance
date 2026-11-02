@@ -132,6 +132,7 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
       ...(config.mcpPrompts ? { promptPacks: true } : {}),
       // get_investments only when turned on (AGFN_TOOL_INVESTMENTS=1): a new tool, so after both directory reviews close.
       ...(config.toolInvestments ? { investments: true } : {}),
+      ...(config.setAsides ? { setAsides: true } : {}),
       appUrl: config.baseUrl,
       // Postgres means hosted, possibly several instances: share the limits through the database.
       ...(config.databaseUrl.startsWith('postgres') ? { rateLimiter: new DbRateLimiter(db) } : {}),

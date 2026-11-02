@@ -344,7 +344,7 @@ export function createRampConnector(opts: RampConnectorOptions, deps: ConnectorD
     /** Sign-in connections: revoke the refresh token so Ramp drops the grant. A customer's own app is theirs to delete. */
     async disconnect(conn) {
       const s = requireSecret('ramp', conn.secret, isSecret)
-      if (!isOAuth(s) || !oauthApp) return
+      if (!isOAuth(s) || !oauthApp) return { notRevoked: 'In Ramp, go to your developer settings → Delete the token.' }
       try {
         await revokeRampToken(oauthApp, s.refreshToken, deps, hostOpts)
       } catch (e) {

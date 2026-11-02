@@ -71,6 +71,10 @@ export function SignInPage({ onSignedIn, methods, note, email: prefill }: { onSi
   // An app-directory reviewer's address (reviewer.ts on the server; its mail is never delivered): sign in with the
   // password they were given (the access code), the plain username/password login review forms expect.
   const reviewerLogin = has('reviewer') && isReviewerAddress(email)
+  // From the homepage's Get started (?start=1): someone may be new, so the page doesn't assume an account.
+  const starting = new URLSearchParams(location.search).get('start') === '1'
+  const named = [has('passkey') ? 'your passkey' : null, has('google') ? 'Google' : null, has('apple') ? 'Apple' : null, has('email') ? 'email' : null].filter(Boolean) as string[]
+  const ways = named.length > 1 ? `${named.slice(0, -1).join(', ')} or ${named.at(-1)}` : (named[0] ?? 'any way below')
   const signInReviewer = async () => {
     if (!password.trim()) return setErr('Enter the password you were given.')
     setErr('')
@@ -100,10 +104,10 @@ export function SignInPage({ onSignedIn, methods, note, email: prefill }: { onSi
       <${EmailCode} kind="signin" onDone=${onSignedIn} onResend=${() => go('email')} />
       <p style="margin-top:24px"><button type="button" class="link" onClick=${() => (setSent(false), setEmail(''), setErr(''))}>Use a different email</button></p></${Shell}>`
   return html`<${Shell}>
-    <h1>Sign in</h1>
-    <p class="sub lead">${note ?? `Your money in one place, every company and your own, ready for any AI. New here? ${has('email') ? 'Enter your email' : 'Sign in any way below'} and we’ll set you up.`}</p>
+    <h1>${starting ? 'Get started' : 'Sign in'}</h1>
+    <p class="sub lead">${note ?? (starting ? `New or returning, continue with ${ways}.` : `Your money in one place, every company and your own, ready for any AI. New here? ${has('email') ? 'Enter your email' : 'Sign in any way below'} and we’ll set you up.`)}</p>
     <div class="stack" style="margin-top:32px">
-      ${has('passkey') ? html`<${Button} big disabled=${busy} onClick=${() => go('passkey')}>Sign in with a passkey</${Button}>` : null}
+      ${has('passkey') ? html`<${Button} big disabled=${busy} onClick=${() => go('passkey')}>${starting ? 'Continue with a passkey' : 'Sign in with a passkey'}</${Button}>` : null}
       ${has('apple') ? html`<${Button} big quiet disabled=${busy} onClick=${() => go('apple')}>Continue with Apple</${Button}>` : null}
       ${has('google') ? html`<${Button} big quiet disabled=${busy} onClick=${() => go('google')}>Continue with Google</${Button}>` : null}
       ${has('github') ? html`<${Button} big quiet disabled=${busy} onClick=${() => go('github')}>Continue with GitHub</${Button}>` : null}

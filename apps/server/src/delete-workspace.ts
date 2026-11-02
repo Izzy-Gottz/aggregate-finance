@@ -35,14 +35,20 @@ export async function personalAffected(db: Kysely<CoreTables>, workspaceId: stri
  * connection, delete stored files, then delete every row that belongs to the workspace. Sign-in accounts stay, so
  * people in other workspaces keep working. Safe to run again if it stops halfway.
  */
-export async function deleteWorkspace(deps: { db: Kysely<CoreTables>; files: FileStore; sync: SyncEngine; log?: (m: string, f?: Record<string, unknown>) => void }, workspaceId: string): Promise<{ connectionsRevoked: number; files: number; rows: number }> {
+export async function deleteWorkspace(deps: { db: Kysely<CoreTables>; files: FileStore; sync: SyncEngine; log?: (m: string, f?: Record<string, unknown>) => void }, workspaceId: string): Promise<{ connectionsRevoked: number; notRevoked: string[]; files: number; rows: number }> {
   const { db, files, sync } = deps
   const anyDb = db as unknown as Kysely<Record<string, Record<string, unknown>>>
 
   // 1. Provider access first, so nothing stays live (or billed) at Plaid and others.
   let connectionsRevoked = 0
   const conns = await db.selectFrom('connections').select('id').where('workspace_id', '=', workspaceId).where('secret_enc', 'is not', null).execute()
-  for (const c of conns) if ((await sync.disconnect(c.id)).revoked) connectionsRevoked++
+  // What's still live at a provider, and what the person must do there: nobody else can tell them.
+  const notRevoked: string[] = []
+  for (const c of conns) {
+    const out = await sync.disconnect(c.id)
+    if (out.revoked) connectionsRevoked++
+    else if (out.warning) notRevoked.push(out.warning)
+  }
 
   // Nothing new is queued for it from here on, by this server or another one still running an older release.
   await db.updateTable('connections').set({ status: 'disconnected' }).where('workspace_id', '=', workspaceId).execute()
@@ -78,10 +84,19 @@ export async function deleteWorkspace(deps: { db: Kysely<CoreTables>; files: Fil
         why.set(t, err instanceof Error ? err.message.slice(0, 200) : String(err))
       }
     }
-    if (!failed.length) break
+    // The workspace itself goes in the round too: a background write (a warm's ledger_derived row) can land after its
+    // table was cleared, and then this fails on that row until the next round takes it.
+    if (!failed.length) {
+      try {
+        await db.deleteFrom('workspaces').where('id', '=', workspaceId).execute()
+        break
+      } catch (err) {
+        failed.push('workspaces')
+        why.set('workspaces', err instanceof Error ? err.message.slice(0, 200) : String(err))
+      }
+    }
     if (round > 2) await new Promise((r) => setTimeout(r, 250 * round)) // give a writer elsewhere time to finish
   }
   if (failed.length) throw new Error(`could not delete rows from: ${failed.map((t) => `${t} (${why.get(t)})`).join('; ')}`)
-  await db.deleteFrom('workspaces').where('id', '=', workspaceId).execute()
-  return { connectionsRevoked, files: fileCount, rows: rows + 1 }
+  return { connectionsRevoked, notRevoked, files: fileCount, rows: rows + 1 }
 }

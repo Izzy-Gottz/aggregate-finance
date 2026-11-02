@@ -94,6 +94,8 @@ export interface EntitySummary {
   cashCaveat?: { state: 'unknown' | 'stale'; reason: string }
   /** Personal shows "private" on the overview; the amount appears only inside its drawer. */
   hidden: boolean
+  /** Company detail only, when a set-aside comes out of cash. `cash` stays the bank's total. */
+  setAside?: { available: Money; held: Money }
   /** Market value of its holdings per currency (the company page's Holdings total); absent when it has none. Never cash. */
   investments?: Money[]
 }
@@ -329,6 +331,28 @@ export interface BucketDetail {
   payments: Array<{ id: Id; date: IsoDate; amount: Money; status: 'paid' | 'upcoming' | 'missed'; detail: string }>
   createdBy: { name: string; isAi: boolean; at: IsoTimestamp }
   undoUntil: IsoTimestamp | null
+  setAside?: SetAside
+  /** This server offers set-asides; off, the drawer shows nothing about them. */
+  canSetAside?: boolean
+}
+
+/** Money held in a bucket, already cut to the accounts this person can see. */
+export interface SetAside {
+  countsInCash: boolean
+  held: Money
+  perAccount: Array<{ accountId: Id; accountName: string; entityId: EntityId | null; held: Money; heldBase: Money }>
+  goal?: { target: Money; by?: IsoDate; progressPercent: number; onPace?: boolean }
+  note?: string
+}
+
+/** What to set aside; a full replace of what the bucket holds now. Exactly one of amount, percent or percentOfInflows. */
+export interface SetAsideInput {
+  allocations: Array<{ accountId: Id; amount?: Money; percent?: number; percentOfInflows?: number; since?: IsoDate }>
+  countsInCash?: boolean
+  /** Left out keeps it; null removes it. */
+  goal?: { amount: Money; by?: IsoDate } | null
+  /** Left out keeps it; null removes it. */
+  note?: string | null
 }
 
 // ---------- Connect your AI ----------
@@ -366,7 +390,7 @@ export type AiClient = 'claude' | 'chatgpt' | 'cursor' | 'claude_code' | 'other'
 
 // ---------- Review ----------
 
-export type ReviewKind = 'ai_write' | 'match' | 'duplicate' | 'rule' | 'whose_money' | 'document'
+export type ReviewKind = 'ai_write' | 'match' | 'duplicate' | 'rule' | 'whose_money' | 'document' | 'set_aside_short'
 
 export interface ReviewItem {
   id: Id
@@ -385,6 +409,20 @@ export interface ReviewItem {
   answers?: Array<{ label: string; values: Record<string, string> }>
   /** "Which company?" items the server can answer together: same connection, same suggested answer. */
   batch?: { key: string; label: string; values: Record<string, string> }
+  /** The plain question; title when there isn't one. */
+  question?: string
+  /** Same-kind items answered together; label is the plural line ("5 moves between your own accounts"). */
+  group?: { key: string; label: string }
+  /** Other matches for the same money, best first. Each is a review id of its own; answering one clears the rest. */
+  alternatives?: Array<{ id: Id; question: string; detail: string }>
+  /** On a 'set_aside_short' (nothing to answer, it clears itself): the company it's about. */
+  entityId?: EntityId
+}
+
+/** What Aggregate filed by itself, with undo. */
+export interface FiledSummary {
+  count: number
+  items: Array<{ id: Id; text: string; filedAt: IsoTimestamp }>
 }
 
 export type ReviewDecision = { action: 'confirm' } | { action: 'reject' } | { action: 'edit'; values: Record<string, string> }
@@ -643,7 +681,8 @@ export interface AgfnApi {
   /** Switch which workspace every following call is about (sent as x-agfn-workspace). */
   setWorkspace(id: Id): void
   /** Delete the signed-in person's account. 409 'sole_owner' while they're the only owner of a shared workspace. */
-  deleteMe(confirm: string): Promise<unknown>
+  /** `notRevoked`: what's still live at a provider, each a step the person must take there. */
+  deleteMe(confirm: string): Promise<{ ok: true; notRevoked?: string[] }>
   /** People without a passkey confirm it's them with an emailed link that brings them back to `returnTo`. */
   recheckByEmail(returnTo: string): Promise<{ ok: true; sentTo: string; expiresInMinutes?: number }>
   /** The 6-digit code from a sign-in email, typed in the browser that asked (the link may open elsewhere). */
@@ -653,7 +692,7 @@ export interface AgfnApi {
   /** Owner only. Everything goes: companies, connections, documents, AI access. A passkey re-check comes first. */
   /** Owner only: the other members whose Personal connections go with the workspace (counts; Personal stays private). */
   deleteWorkspacePreview(): Promise<{ affected: Array<{ personId: Id; name: string; email: string; personalConnections: number }> }>
-  deleteWorkspace(confirm: string): Promise<unknown>
+  deleteWorkspace(confirm: string): Promise<{ ok: true; notRevoked?: string[] }>
   /** Leave the demo: onboarding starts fresh. */
   leaveDemo(): Promise<unknown>
 
@@ -665,7 +704,7 @@ export interface AgfnApi {
   finishConnect(connectorKey: string, input: Record<string, unknown> & { state: string }): Promise<{ connectionId: Id; accounts: NewAccount[] }>
   assignAccounts(assignments: Array<{ accountId: Id; entityId: EntityId | 'personal' | 'skip' }>): Promise<void>
   /** records: how many records it has brought in (invoices, bills…), for connections without bank accounts (Xero, QuickBooks). */
-  connection(id: Id): Promise<ConnectionSummary & { accounts: AccountRow[]; unassigned?: Array<{ id: Id; name: string; mask?: string }>; provides: DataType[]; canRefreshBalance?: boolean; records?: number }>
+  connection(id: Id): Promise<ConnectionSummary & { /** Disconnecting deletes its data: always, or it may (the server decides then). */ erasesOnDisconnect?: 'always' | 'maybe'; accounts: AccountRow[]; unassigned?: Array<{ id: Id; name: string; mask?: string }>; provides: DataType[]; canRefreshBalance?: boolean; records?: number }>
   /** Xero organisations this connection's sign-in can reach that the workspace doesn't have yet (shared before, so Xero won't offer them again). Empty for other connectors and non-admins. */
   sharedOffers(id: Id): Promise<Array<{ id: string; name: string }>>
   /** Add one of those organisations as its own connection on the same sign-in; it starts syncing. 409 when it's no longer available. */
@@ -685,7 +724,7 @@ export interface AgfnApi {
 
   // buckets
   bucket(id: Id): Promise<BucketDetail>
-  updateBucket(id: Id, patch: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>>): Promise<BucketDetail>
+  updateBucket(id: Id, patch: Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>> & { setAside?: SetAsideInput | null }): Promise<BucketDetail>
   /** A new bucket by hand (a stake in a company, say); the AI makes most of them with create_bucket. */
   createBucket(entityId: EntityId, b: { name: string; fields: BucketField[] }): Promise<BucketDetail>
   undo(recordId: Id): Promise<WriteResult>
@@ -705,6 +744,10 @@ export interface AgfnApi {
 
   // review
   review(): Promise<ReviewItem[]>
+  reviewFiled(): Promise<FiledSummary>
+  undoFiled(id: Id): Promise<unknown>
+  /** Confirms only those of `ids` still in the group (a stale screen can't confirm something new). `count`: how many. */
+  confirmGroup(key: string, ids: Id[]): Promise<{ count: number }>
   /** What the answer did, when the server says: its summary, and the record an Undo reverts. */
   resolve(id: Id, decision: ReviewDecision): Promise<{ recordId?: Id; summary?: string } | void>
 

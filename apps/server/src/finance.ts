@@ -221,6 +221,7 @@ export function composeFinance(parts: FinanceParts): { reader: FinanceReader; wr
     ...(core.mrrMovements ? { mrrMovements: core.mrrMovements.bind(core) } : {}),
     payroll: books ? books.reader.payroll : (core.payroll?.bind(core) ?? (async () => unavailable('Payroll'))),
     reviewItems: fromCore('reviewItems'),
+    filedItems: fromCore('filedItems'),
     documents: fromCore('documents'),
     document: fromCore('document'),
     reports: fromCore('reports'),

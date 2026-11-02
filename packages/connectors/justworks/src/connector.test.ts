@@ -141,4 +141,25 @@ describe('justworks connector (partner API, doc-shaped fixtures)', () => {
     expect(await connector.health(conn)).toMatchObject({ status: 'ok', message: expect.stringMatching(/next sync/) })
     expect(ff.calls).toHaveLength(0)
   })
+
+  it('disconnect revokes both tokens at Justworks, form-encoded with a type hint', async () => {
+    const { connector, conn, ff } = make([{ method: 'POST', match: '/v1/oauth/revoke', respond: { json: {} } }])
+    await expect(connector.disconnect!(conn)).resolves.toBeUndefined()
+    const revokes = ff.calls.filter((c) => c.url.endsWith('/v1/oauth/revoke'))
+    expect(revokes.map((c) => c.headers['content-type'])).toEqual(['application/x-www-form-urlencoded', 'application/x-www-form-urlencoded'])
+    expect(revokes[0]?.body).toEqual({ client_id: 'client-test', client_secret: 'secret-test', token: 'rt-test', token_type_hint: 'refresh_token' })
+    expect(revokes[1]?.body).toMatchObject({ token: 'at-test', token_type_hint: 'access_token' })
+  })
+
+  it('a token Justworks no longer knows is already gone', async () => {
+    for (const status of [401, 404]) {
+      const { connector, conn } = make([{ method: 'POST', match: '/v1/oauth/revoke', respond: { status, json: {} } }])
+      await expect(connector.disconnect!(conn)).resolves.toBeUndefined()
+    }
+  })
+
+  it('a refused revoke tells the person what to finish at Justworks', async () => {
+    const { connector, conn } = make([{ method: 'POST', match: '/v1/oauth/revoke', respond: { status: 500, json: {} } }])
+    await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Justworks') })
+  })
 })

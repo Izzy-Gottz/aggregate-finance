@@ -8,6 +8,7 @@ import type { Kysely } from 'kysely'
 import { seal, unseal } from '@agfn/security'
 import { appendActivity } from '@agfn/mcp'
 import { withBypass, withWorkspace } from '@agfn/db'
+import { noteConnection, SHOPIFY_ERASE_WARNING } from './retire.ts'
 import type { Services } from './services.ts'
 
 type ShopifyEmbedded = {
@@ -119,7 +120,7 @@ h2{font-size:15px;margin:28px 0 6px}.scroll{overflow-x:auto}table{border-collaps
 <div id="list"></div>
 <div id="payouts" hidden><h2>Recent payouts</h2><p id="next"></p><div class="scroll"><table><thead><tr><th>Date</th><th>Status</th><th class="n">Gross</th><th class="n">Fees</th><th class="n">Refunds</th><th class="n">Net</th></tr></thead><tbody id="rows"></tbody></table></div><p id="none" hidden>No payouts yet; they'll appear after Shopify's next payout.</p></div>
 <div class="actions"><a id="open" class="btn" href="${esc(base)}/" target="_blank" rel="noopener">Open Aggregate</a><button id="disconnect" class="danger" type="button" hidden>Disconnect</button></div>
-<div class="actions" id="confirm" hidden><span>Disconnect this store? What already synced stays in Aggregate.</span><button id="yes" class="danger" type="button">Disconnect</button><button id="no" type="button">Cancel</button></div>
+<div class="actions" id="confirm" hidden><span>Disconnect this store? Aggregate is uninstalled, and what synced is deleted within 48 hours.</span><button id="yes" class="danger" type="button">Disconnect</button><button id="no" type="button">Cancel</button></div>
 </main>
 <script nonce="${nonce}">
 (function () {
@@ -309,19 +310,22 @@ export function shopifyEmbeddedRoutes(app: Hono<any>, s: Services): void {
     return c.redirect(email ? `/#/?signin_email=${encodeURIComponent(email)}&signin_for=shopify` : '/#/?signin_for=shopify')
   })
 
-  // A store admin in Shopify can remove the connection (rule 5.7.12). What already synced stays (like "keep the
-  // history" in Aggregate); the person can delete it there.
+  // A store admin in Shopify can remove the connection (rule 5.7.12). That uninstalls Aggregate once the store's last
+  // connection goes, and shop/redact deletes what synced 48 hours later, so each workspace's log says so now.
   app.post('/api/connectors/shopify/embedded/disconnect', async (c) => {
     const shop = shopOf(c)
     if (!shop) return c.json({ message: 'Open this page from Shopify admin.' }, 401)
     return c.json(
       await (async () => {
-        for (const r of await connectionsFor(shop)) {
+        const rows = await connectionsFor(shop)
+        let uninstalled = false
+        for (const r of rows) {
           await withWorkspace(r.workspace_id, async () => {
-            await s.sync.disconnect(r.id)
+            if ((await s.sync.disconnect(r.id)).revoked) uninstalled = true
             await appendActivity(s.db as never, { workspaceId: r.workspace_id, actorKind: 'system', actorLabel: 'Shopify admin', action: 'connection.disconnected', targetType: 'connection', targetId: r.id, status: 'ok', detail: `Disconnected ${r.display_name} from Shopify admin; its data until now still counts` }, new Date())
           })
         }
+        if (uninstalled) for (const r of rows) await withWorkspace(r.workspace_id, () => noteConnection(s, r.workspace_id, r.id, SHOPIFY_ERASE_WARNING))
         return view(shop)
       })(),
     )

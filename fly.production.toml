@@ -51,7 +51,6 @@ kill_timeout = "30s"
   # Not used for data (Postgres + R2), only scratch space.
   DATA_DIR = "/tmp/agfn"
   MAIL_FROM = "Aggregate <no-reply@aggregate.finance>"
-  INBOUND_EMAIL_DOMAIN = "in.aggregate.finance"
   FILES_S3_BUCKET = "aggregate-files"
   FILES_S3_ENDPOINT = "https://<account-id>.r2.cloudflarestorage.com"
   FILES_S3_REGION = "auto"

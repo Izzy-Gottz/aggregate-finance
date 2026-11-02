@@ -69,7 +69,7 @@ export function fmtMoney(m: Money): string {
   }
 }
 
-export function financeRoutes(s: S): Hono<Env> {
+export function financeRoutes(s: S, o: { setAsides?: boolean } = {}): Hono<Env> {
   const app = new Hono<Env>()
   const reader = (): FinanceReader => financeFor(s).reader
 
@@ -105,6 +105,7 @@ export function financeRoutes(s: S): Hono<Env> {
       available: safe(() => r.dataAvailability(scope)),
       accounts: seeBalances ? safe(() => r.accounts(scope, {})) : Promise.resolve(null),
       cash: seeBalances ? safe(() => r.metric('cash', { workspaceId: ws, entityIds: [entity.id] })) : Promise.resolve(null),
+      availableCash: seeBalances && o.setAsides ? safe(() => r.metric('available_cash', { workspaceId: ws, entityIds: [entity.id] })) : Promise.resolve(null),
       terms: seeBalances ? termsByAccount(r, scope) : Promise.resolve(new Map()),
       runway: seeBalances ? safe(() => r.metric('runway', { workspaceId: ws, entityIds: [entity.id] })) : Promise.resolve(null),
       trend: seeBalances ? cashTrend(s, r, ws, entity.id, now) : Promise.resolve([] as number[]),
@@ -160,6 +161,10 @@ export function financeRoutes(s: S): Hono<Env> {
         .map((a) => ({ id: a.id, label: a.name, ...(a.institution ? { detail: a.institution } : {}), amount: a.balance as Money })),
     })
     const runwayAnswer = await started.runway
+    // Set-asides that don't count: only when there are some. cash stays the bank's total; the app shows both.
+    const availableAnswer = await started.availableCash
+    const availableValue = availableAnswer?.value && typeof availableAnswer.value === 'object' ? availableAnswer.value : null
+    const setAside = cashValue && availableValue && availableValue.minor !== cashValue.minor ? { available: availableValue, held: { minor: cashValue.minor - availableValue.minor, currency: cashValue.currency } } : null
     const trend = cashValue ? await started.trend : []
 
     // Books, payroll and equity sections.
@@ -257,7 +262,7 @@ export function financeRoutes(s: S): Hono<Env> {
     const mrr = await started.mrr
     const lock = ((await started.locks) ?? []).find((l) => l.entityId === entity.id)
     return c.json({
-      entity: { id: entity.id, kind: entity.kind, name: entity.name, currency, cash: cashValue, hidden: await personalHidden(s.db, ws, entity, p.personId) },
+      entity: { id: entity.id, kind: entity.kind, name: entity.name, currency, cash: cashValue, ...(setAside ? { setAside } : {}), hidden: await personalHidden(s.db, ws, entity, p.personId) },
       asOf: now.toISOString(),
       cash: cashAnswer ? explained('Cash', cashAnswer) : null,
       runway: runwayAnswer ? { months: runwayAnswer.state !== 'unknown' && typeof runwayAnswer.value === 'number' ? runwayAnswer.value : null, state: ov?.runwayState ?? runwayAnswer.state ?? 'no_data', explained: explained('Runway', runwayAnswer) } : null,

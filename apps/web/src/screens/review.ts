@@ -1,11 +1,13 @@
-// Review: one row type for everything waiting on you. Confirm / reject / edit, or the keys Y / N / E on the focused row.
+// Review: a plain question for everything waiting on you, the most important first (the server's order). Same-kind items
+// are one line with Confirm all; what Aggregate filed by itself sits behind +, with undo. Keys Y / N / E on the focused row.
+import type { ComponentChildren } from 'preact'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { OFFLINE } from '../api/http.ts'
 import type { ReviewItem, ReviewKind } from '../api/types.ts'
 import { useApp, useLoad } from '../app/context.ts'
 import { fmt } from '../lib/money.ts'
-import { ago } from '../lib/time.ts'
-import { Button, LinkButton, Section, Tile } from '../ui/components.ts'
+import { ago, shortDate } from '../lib/time.ts'
+import { Button, LinkButton, PlusAction, Row, Rows, Section, Tile } from '../ui/components.ts'
 import { html } from '../ui/html.ts'
 import type { IconName } from '../ui/icons.ts'
 
@@ -16,11 +18,16 @@ const KIND: Record<ReviewKind, { icon: IconName; word: string }> = {
   rule: { icon: 'bucket', word: 'Suggested rule' },
   whose_money: { icon: 'person', word: 'Whose money?' },
   document: { icon: 'file', word: 'Unread document' },
+  set_aside_short: { icon: 'alert', word: 'Set-aside is short' },
 }
+// Nothing to answer: it clears itself when the balance or the set-aside changes.
+const answerable = (i: ReviewItem) => i.kind !== 'set_aside_short'
 
 export function ReviewPage() {
   const app = useApp()
   const { data, error, reload } = useLoad(() => app.api.review(), [])
+  // Not everyone can see this (and it's only a count): without it the page reads the same, minus that part.
+  const { data: filed, reload: reloadFiled } = useLoad(() => app.api.reviewFiled().catch(() => null), [])
   const [editing, setEditing] = useState<string | null>(null)
   const listRef = useRef<HTMLUListElement>(null)
   // The key handler is registered once and reads the latest items and actions through this ref.
@@ -56,7 +63,7 @@ export function ReviewPage() {
       const row = t.closest<HTMLElement>('[data-review]')
       const { data, decide, setEditing } = latest.current
       const item = data?.find((x) => x.id === row?.dataset.review)
-      if (!item) return
+      if (!item || !answerable(item)) return
       const k = e.key.toLowerCase()
       // Items with answers take a number (1, 2, 3…) instead of Y / N.
       const answer = item.answers?.[Number(k) - 1]
@@ -86,6 +93,26 @@ export function ReviewPage() {
     await app.reload()
     app.toast({ text: `${group.length} accounts put in ${b.label}. Change any one in its connection.` })
   }
+  // Same-kind items are one line, where the first of them would be. A lone one is just its question.
+  const members = (key: string) => items.filter((x) => x.group?.key === key)
+  const confirmAll = async (group: ReviewItem[]) => {
+    const r = await app.api.confirmGroup(group[0]!.group!.key, group.map((x) => x.id)).catch((e: unknown) => {
+      app.toast({ text: e instanceof Error ? e.message : 'That didn’t save.' })
+      return null
+    })
+    reload()
+    if (!r) return
+    await app.reload()
+    app.toast({ text: r.count === group.length ? `Confirmed ${r.count}.` : `Confirmed ${r.count} of ${group.length}. The others had already changed.` })
+  }
+  const undoFiled = async (id: string) => {
+    await app.api.undoFiled(id).catch(() => undefined)
+    reload()
+    reloadFiled()
+    await app.reload()
+    app.toast({ text: 'Undone. It’s back in Review if it needs an answer.' })
+  }
+  const row = (it: ReviewItem) => (editing === it.id ? html`<${EditRow} item=${it} onSave=${(v: Record<string, string>) => decide(it, 'confirm', v)} onCancel=${() => setEditing(null)} />` : html`<${ReviewRow} item=${it} onDecide=${decide} onEdit=${() => setEditing(it.id)} now=${app.now()} highlight=${it.id === target?.id} />`)
   // Arrived from an AI's approval link (#/review?w=<write id>): go to that item, or say it was already decided.
   const wanted = app.route.params.w
   const target = wanted ? items.find((x) => x.id === `write:${wanted}` || x.id === wanted) : undefined
@@ -97,12 +124,18 @@ export function ReviewPage() {
   }, [target?.id])
   return html`<div class="column">
     ${wanted && data && !target ? html`<p class="sub" role="status" style="margin-bottom:16px">That change was already decided, or it’s no longer waiting.</p>` : null}
-    <${Section} title="Review" sub=${items.length ? html`${items.length} waiting.<span class="keyshint"> Keys: <span class="kbd">Y</span> confirm · <span class="kbd">N</span> reject${items.some((i) => i.editable?.length) ? html` · <span class="kbd">E</span> edit` : null}${items.some((i) => i.answers?.length) ? html` · <span class="kbd">1</span> <span class="kbd">2</span> … answer` : null}</span>` : data ? 'Nothing waiting.' : error ? html`<span role="alert">${error === OFFLINE ? 'Can’t reach Aggregate. Check your connection.' : error}</span> <button type="button" class="link" onClick=${reload}>Try again</button>` : html`<span aria-busy="true">Loading…</span>`}>
+    <${Section} title="Review" sub=${items.length || filed?.count ? html`${topLine(items.filter(answerable).length, filed?.count ?? 0, items.length)}<span class="keyshint"> Keys: <span class="kbd">Y</span> confirm · <span class="kbd">N</span> reject${items.some((i) => i.editable?.length) ? html` · <span class="kbd">E</span> edit` : null}${items.some((i) => i.answers?.length) ? html` · <span class="kbd">1</span> <span class="kbd">2</span> … answer` : null}</span>` : data ? 'Nothing waiting.' : error ? html`<span role="alert">${error === OFFLINE ? 'Can’t reach Aggregate. Check your connection.' : error}</span> <button type="button" class="link" onClick=${reload}>Try again</button>` : html`<span aria-busy="true">Loading…</span>`}>
       ${batches.map((g) => html`<div class="row batchrow"><span class="txt"><span class="name">These ${g.length} accounts look ${g[0]!.batch!.label === 'Personal' ? 'personal' : `like ${g[0]!.batch!.label}`}</span><span class="line">${namesLine(g.map((x) => x.title.replace(/^Which company is (.*)\?$/, '$1')))}</span></span><span class="right"><${Button} onClick=${() => answerAll(g)}>Put all in ${g[0]!.batch!.label}</${Button}></span></div>`)}
       <ul class="rows" ref=${listRef} aria-label="Waiting for review">
-        ${items.map((it) => (editing === it.id ? html`<${EditRow} item=${it} onSave=${(v: Record<string, string>) => decide(it, 'confirm', v)} onCancel=${() => setEditing(null)} />` : html`<${ReviewRow} item=${it} onDecide=${decide} onEdit=${() => setEditing(it.id)} now=${app.now()} highlight=${it.id === target?.id} />`))}
+        ${items.map((it, i) => {
+          const g = it.group ? members(it.group.key) : []
+          if (g.length < 2) return row(it)
+          return g[0] === it ? html`<${GroupRow} key=${it.group!.key} label=${it.group!.label} onConfirm=${() => confirmAll(g)}>${g.map(row)}</${GroupRow}>` : null
+        })}
       </ul>
       ${data && !items.length ? html`<p class="empty">When your AI adds something while review is on, or Aggregate spots a possible match or duplicate, it waits here.</p>` : null}
+      ${items.length ? html`<p class="meta" style="margin-top:16px">Or ask your AI to go through these.</p>` : null}
+      ${filed?.items.length ? html`<${FiledList} items=${filed.items} onUndo=${undoFiled} />` : null}
     </${Section}>
   </div>`
 }
@@ -110,24 +143,59 @@ export function ReviewPage() {
 /** "2026-09-30 Northwind Labs" → "Sep 30, 2026 Northwind Labs": dates read the same as everywhere else. */
 const plainDates = (s: string) => s.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (m) => { const d = new Date(m + 'T12:00:00Z'); return isNaN(+d) ? m : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) })
 
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+
+/** "3 questions · 12 filed for you". */
+export function topLine(questions: number, filed: number, notices = 0): string {
+  return [questions ? plural(questions, 'question') : notices ? 'Nothing to answer' : 'Nothing waiting', filed ? `${filed} filed for you` : null].filter(Boolean).join(' · ')
+}
+
+/** "5 moves between your own accounts · Confirm all", each one behind +. */
+function GroupRow({ label, onConfirm, children }: { label: string; onConfirm: () => void; children: ComponentChildren }) {
+  const [open, setOpen] = useState(false)
+  return html`<li>
+    <div class="row noicon"><span class="txt"><span class="name" style="white-space:normal">${label}</span></span><span class="right"><${Button} onClick=${onConfirm}>Confirm all</${Button}></span></div>
+    ${open ? html`<ul class="rows">${children}</ul>` : html`<${PlusAction} onClick=${() => setOpen(true)}>See each one</${PlusAction}>`}
+  </li>`
+}
+
+/** What Aggregate filed by itself: quiet until asked for, and each can be undone. */
+function FiledList({ items, onUndo }: { items: Array<{ id: string; text: string; filedAt: string }>; onUndo: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  if (!open) return html`<${PlusAction} onClick=${() => setOpen(true)}>See what was filed</${PlusAction}>`
+  return html`<${Rows} wrap label="Filed for you">${items.map((f) => html`<${Row} name=${f.text} line=${shortDate(f.filedAt, true)} right=${html`<${LinkButton} onClick=${() => onUndo(f.id)}>Undo<span class="sr"> ${f.text}</span></${LinkButton}>`} />`)}</${Rows}>`
+}
+
 function ReviewRow({ item, onDecide, onEdit, now, highlight }: { item: ReviewItem; onDecide: (i: ReviewItem, a: 'confirm' | 'reject', v?: Record<string, string>, l?: string) => void; onEdit: () => void; now: number; highlight?: boolean }) {
+  const app = useApp()
   const k = KIND[item.kind]
+  const [others, setOthers] = useState(false)
+  const notice = !answerable(item)
+  // A plain question says it all: no icon, no kind, and the amount is already in it.
+  const plain = !!item.question
   return html`<li class=${highlight ? 'linked' : undefined}>
-    <div class="row" tabindex="0" data-review=${item.id} aria-label=${`${k.word}: ${item.title}. ${item.detail}`} style="align-items:start;padding-top:12px;padding-bottom:12px">
-      <${Tile} icon=${k.icon} />
+    <div class=${plain ? 'row noicon' : 'row'} tabindex="0" data-review=${item.id} aria-label=${plain ? `${item.question} ${item.detail}` : `${k.word}: ${item.title}. ${item.detail}`} style="align-items:start;padding-top:12px;padding-bottom:12px">
+      ${plain ? null : html`<${Tile} icon=${k.icon} />`}
       <span class="txt">
-        <span class="name" style="white-space:normal">${item.title}</span>
-        <span class="line" style="white-space:normal">${plainDates(item.detail)}</span>
-        <span class="line">${k.word} · ${item.entityName} · ${ago(item.createdAt, now)}</span>
+        <span class="name" style="white-space:normal">${item.question ?? item.title}</span>
+        ${item.detail ? html`<span class="line" style="white-space:normal">${plainDates(item.detail)}</span>` : null}
+        ${plain ? null : html`<span class="line">${k.word} · ${item.entityName} · ${ago(item.createdAt, now)}</span>`}
         <span style="display:flex;gap:16px;align-items:center;margin-top:10px;flex-wrap:wrap">
-          ${item.answers?.length
-            ? item.answers.map((a) => html`<${Button} quiet onClick=${() => onDecide(item, 'confirm', a.values, a.label)}>${a.label}</${Button}>`)
-            : html`<${Button} onClick=${() => onDecide(item, 'confirm')}>${item.confirmLabel ?? 'Confirm'}</${Button}>
+          ${notice
+            ? item.entityId ? html`<${LinkButton} onClick=${() => app.open({ kind: 'company', id: item.entityId! })}>Open ${item.entityName}</${LinkButton}>` : null
+            : item.answers?.length
+              ? item.answers.map((a) => html`<${Button} quiet onClick=${() => onDecide(item, 'confirm', a.values, a.label)}>${a.label}</${Button}>`)
+              : html`<${Button} onClick=${() => onDecide(item, 'confirm')}>${item.confirmLabel ?? 'Confirm'}</${Button}>
                 <${LinkButton} onClick=${() => onDecide(item, 'reject')}>${item.rejectLabel ?? 'Reject'}</${LinkButton}>`}
           ${item.editable ? html`<${LinkButton} onClick=${onEdit}>Edit</${LinkButton}>` : null}
         </span>
+        ${item.alternatives?.length
+          ? others
+            ? item.alternatives.map((a) => html`<span class="line" style="white-space:normal;margin-top:10px">${a.question}${a.detail ? ` ${plainDates(a.detail)}` : ''} <${LinkButton} onClick=${() => onDecide({ ...item, id: a.id, title: a.question }, 'confirm')}>Yes</${LinkButton}></span>`)
+            : html`<${PlusAction} onClick=${() => setOthers(true)}>${plural(item.alternatives.length, 'other possible match').replace('matchs', 'matches')}</${PlusAction}>`
+          : null}
       </span>
-      <span class="right"><span class="value">${item.amount ? fmt(item.amount) : ''}</span></span>
+      ${plain || notice ? null : html`<span class="right"><span class="value">${item.amount ? fmt(item.amount) : ''}</span></span>`}
     </div>
   </li>`
 }

@@ -216,9 +216,15 @@ export interface Connector {
   health(conn: ConnectionRef): Promise<ConnectorHealth>
   /**
    * Optional: revoke our access at the provider when the person disconnects (Plaid /item/remove, OAuth token revoke).
-   * Called with the still-decrypted secret before it is wiped. Must be safe to call twice.
+   * Called with the still-decrypted secret before it is wiped. Must be safe to call twice. `notRevoked`: the access
+   * can't be ended from here (a pasted key, or a provider with no such call): what the person must do at the provider.
    */
-  disconnect?(conn: ConnectionRef): Promise<void>
+  disconnect?(conn: ConnectionRef): Promise<void | { notRevoked: string }>
+  /**
+   * Set when revoking ends the provider account for everyone, and that account can be connected in several workspaces
+   * (a Shopify store). The engine then sets `config.liveElsewhere` on the ref given to `disconnect`.
+   */
+  accountKey?(config: Record<string, unknown>): string | undefined
   /**
    * Optional: what else this connection's grant can reach (each Xero organisation the person ever shared with
    * Aggregate). `match` names the config field that identifies one, so the caller can leave out ones it has.
@@ -695,6 +701,7 @@ export type MetricName =
   | 'cash'
   | 'card_balances'
   | 'net_cash'
+  | 'available_cash'
   | 'gross_burn'
   | 'net_burn'
   | 'runway'
@@ -1194,6 +1201,39 @@ export interface OwnerBalanceView {
   rowIds: Id[]
 }
 
+/** What a bucket holds back. Cut to the accounts a reader may see before it's shown (core scopedSetAside). */
+export interface SetAsideView {
+  countsInCash: boolean
+  /** Total held, in the bucket's company currency, over the accounts listed. */
+  held: Money
+  perAccount: Array<{ accountId: Id; accountName: string; entityId: EntityId | null; held: Money; heldBase: Money }>
+  goal?: { target: Money; by?: IsoDate; progressPercent: number; onPace?: boolean }
+  note?: string
+}
+
+/**
+ * The view limited to accounts in these companies (null: all), with totals and goal progress worked out from what's
+ * left, so a held total or a progress line can't reveal an account the reader can't see.
+ */
+export function scopedSetAside(v: SetAsideView, entityIds: readonly EntityId[] | null, startedOn: IsoDate, asOf: IsoDate): SetAsideView {
+  const perAccount = entityIds ? v.perAccount.filter((p) => p.entityId !== null && entityIds.includes(p.entityId)) : v.perAccount
+  const held = { minor: perAccount.reduce((t, p) => t + p.heldBase.minor, 0), currency: v.held.currency }
+  const out: SetAsideView = { ...v, perAccount, held }
+  if (v.goal) {
+    const day = (d: IsoDate) => Date.parse(`${d}T00:00:00Z`)
+    const progressPercent = Math.min(100, Math.floor((held.minor / v.goal.target.minor) * 100))
+    const { onPace: _old, ...goal } = v.goal
+    out.goal = { ...goal, progressPercent }
+    if (v.goal.by && v.goal.by > startedOn) out.goal.onPace = held.minor >= Math.floor(v.goal.target.minor * Math.min(1, Math.max(0, (day(asOf) - day(startedOn)) / (day(v.goal.by) - day(startedOn)))))
+  }
+  return out
+}
+
+/** One plain sentence for tools and screens, so nobody is told to subtract by hand. */
+export function setAsideSentence(v: Pick<SetAsideView, 'countsInCash'>): string {
+  return v.countsInCash ? 'This still counts in cash: nothing is subtracted.' : "Already left out of available_cash and the overview, so don't subtract it by hand. The cash figure stays the bank's total."
+}
+
 export interface BucketView {
   id: Id
   entityId: EntityId
@@ -1204,6 +1244,9 @@ export interface BucketView {
   rules: Array<{ id: Id; description: string }>
   status: { paid: number; upcoming: number; missed: number }
   payments?: Array<{ date: IsoDate; amount: Money; state: 'paid' | 'upcoming' | 'missed'; txnId?: Id }>
+  setAside?: SetAsideView
+  /** Day the bucket was made: where a goal's straight line starts. */
+  createdOn?: IsoDate
   addedBy: AddedBy
 }
 
@@ -1240,20 +1283,40 @@ export interface ReviewItemView {
   entityId: EntityId | null
   /** The account a "which company?" item asks about. */
   accountId?: Id
-  kind: 'agent_write' | 'suggested_match' | 'possible_duplicate' | 'suggested_rule' | 'whose_money' | 'unread_document' | 'suspicious_text' | 'which_company'
+  kind: 'agent_write' | 'suggested_match' | 'possible_duplicate' | 'suggested_rule' | 'whose_money' | 'unread_document' | 'suspicious_text' | 'which_company' | 'underfunded_set_aside'
   title: string
   detail?: string
   createdAt: IsoTimestamp
   recordIds: Id[]
   /** Allowed resolutions for resolve_review_item. */
   options: Array<'confirm' | 'reject' | 'edit'>
-  /** What Confirm does, in words: "Confirm: a card payment". Present wherever 'confirm' is an option. */
+  /** The plain question ("Did you move $500 from Capital One to Ally on Oct 22?"). Falls back to title. */
+  question?: string
+  /** The names from outside that question quotes; the rest of it is our own words. */
+  questionNames?: string[]
+  /** What Confirm does, in words: "Confirm: a card payment", or "Yes" where the question says it. Present wherever 'confirm' is an option. */
   confirmLabel?: string
+  /** "No" where the question is a yes-or-no one. */
+  rejectLabel?: string
+  /** Other matches for the same money, behind this one, best first. Each resolves by its own id. */
+  alternatives?: ReviewItemView[]
+  /** Items that can be confirmed together; label is the plural line ("5 moves between your own accounts"). */
+  group?: { key: string; label: string }
   /** For items with no single proposal ("What is this money?"): the answers that can apply, each resolved as an edit. */
   choices?: Array<{ label: string; edits: Record<string, string> }>
   /** "Which company?" items: what the provider's account type suggests (never applied without a person), and the connection it came with, so several can be answered at once. */
   suggested?: EntityId | 'personal'
   connectionId?: Id
+}
+
+/** Any item with this id: a card, or one of the alternatives behind a card. */
+export function findReviewItem<T extends { id: string; alternatives?: T[] }>(items: readonly T[], id: string): T | undefined {
+  for (const i of items) {
+    if (i.id === id) return i
+    const alt = i.alternatives?.find((a) => a.id === id)
+    if (alt) return alt
+  }
+  return undefined
 }
 
 export interface DocumentView {
@@ -1316,6 +1379,8 @@ export interface FinanceReader {
   capTable(scope: ReadScope): Promise<CapTableView[]>
   payroll(scope: ReadScope, opts: { from?: IsoDate; to?: IsoDate; people: boolean }): Promise<PayrollView[]>
   reviewItems(scope: ReadScope, kinds?: ReviewItemView['kind'][]): Promise<ReviewItemView[]>
+  /** What was filed for the person, newest first (undo with resolve_review_item on "filed:<id>"). */
+  filedItems?(scope: ReadScope): Promise<Array<{ id: string; entityId: EntityId | null; text: string; filedAt: IsoTimestamp }>>
   documents(scope: ReadScope, status?: DocumentView['status']): Promise<DocumentView[]>
   document(workspaceId: WorkspaceId, id: Id): Promise<DocumentView | null>
   reports(scope: ReadScope, kind: ReportView['kind'], from: IsoDate, to: IsoDate, basis: 'cash' | 'accrual'): Promise<ReportView[]>

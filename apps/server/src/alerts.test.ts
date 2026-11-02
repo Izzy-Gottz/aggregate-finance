@@ -20,6 +20,19 @@ describe('alerts', () => {
     expect(bodies[0]).not.toContain('amount')
   })
 
+  it('scrubs every alert: a job or sync error can hold an amount, an email, a key or a card number', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const bodies: string[] = []
+    const a = createAlerter({ telegram: { botToken: 't', chatId: 'c' }, now: () => 0, fetch: (async (_u: string, init: RequestInit) => (bodies.push(String(init.body)), new Response('{}'))) as never })
+    a('error', 'job failed', { job: 'sync.all', error: 'charge of $1,234.56 for alice.smith@example.com failed: rk_live_abc123, card 4111111111111111, balance 987.65' })
+    a('error', 'failed for bob.jones@example.com', { connector: 'stripe' })
+    await a.flush()
+    const all = bodies.join('\n')
+    for (const s of ['1,234.56', '987.65', 'alice.smith', 'bob.jones', 'rk_live_abc123', '4111111111111111']) expect(all).not.toContain(s)
+    expect(all).toContain('job failed')
+    expect(all).toContain('[amount]')
+  })
+
   it('a burst sends one alert per kind per workspace per 10 minutes', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const bodies: string[] = []

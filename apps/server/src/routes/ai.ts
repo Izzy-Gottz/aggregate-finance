@@ -85,6 +85,11 @@ function bucketPatch(b: Record<string, unknown>): BucketPatch {
       return { key: x.key, label: x.label, type: x.type as 'text', value: typeof x.value === 'string' ? x.value : String(x.value ?? '') }
     })
   }
+  // Checked in full by the write path (mcp set-aside-input, core validateSetAside).
+  if (b.setAside !== undefined) {
+    if (b.setAside !== null && !Array.isArray((b.setAside as { allocations?: unknown }).allocations)) reply(400, { message: 'A set-aside needs at least one account.' })
+    patch.setAside = b.setAside as BucketPatch['setAside']
+  }
   if (b.schedule !== undefined) {
     if (b.schedule === null) patch.schedule = null
     else {
@@ -149,6 +154,18 @@ export function aiRoutes(s: Pick<Services, 'mcp'>): Hono<Env> {
   })
 
   app.get('/review', async (c) => c.json(await run(() => uiOf(s).review(actorOf(c)))))
+  // Before /review/:id: these two words aren't item ids.
+  app.get('/review/filed', async (c) => c.json(await run(() => uiOf(s).filed(actorOf(c)))))
+  app.post('/review/filed/:id/undo', async (c) => {
+    await run(() => uiOf(s).undoFiled(actorOf(c), c.req.param('id')))
+    return c.json({ ok: true })
+  })
+  app.post('/review/group/:key', async (c) => {
+    const b = (await body(c)) as { action?: unknown; ids?: unknown }
+    if (b.action !== 'confirm' || !Array.isArray(b.ids) || !b.ids.every((i) => typeof i === 'string')) throw new HTTPException(400, { message: 'Send action "confirm" and the ids shown.' })
+    const r = await run(() => uiOf(s).confirmGroup(actorOf(c), c.req.param('key'), b.ids as string[]))
+    return c.json({ ok: true, ...r })
+  })
   app.post('/review/:id', async (c) => {
     const d = decision(await body(c))
     const r = await run(() => uiOf(s).resolve(actorOf(c), c.req.param('id'), d))

@@ -2,15 +2,15 @@
 
 import * as z from 'zod/v4'
 import { SERVER_INFO } from './mcp-server.ts'
-import { ALL_TOOLS, SCOPES } from './service.ts'
+import { ALL_TOOLS, SCOPES, TOOLS_WITH_SET_ASIDES } from './service.ts'
 
 type JsonSchema = { type?: string | string[]; properties?: Record<string, JsonSchema>; required?: string[]; description?: string; [k: string]: unknown }
 
 /** `opts.share` / `opts.investments`: whether share_answer / get_investments are on for this server (off while a directory review pins the tool set). */
-export function buildOpenApi(resourceUrl: string, opts: { share?: boolean; investments?: boolean } = {}): Record<string, unknown> {
+export function buildOpenApi(resourceUrl: string, opts: { share?: boolean; investments?: boolean; setAsides?: boolean } = {}): Record<string, unknown> {
   const origin = new URL(resourceUrl).origin
   const paths: Record<string, Record<string, unknown>> = {}
-  for (const t of ALL_TOOLS) {
+  for (const t of opts.setAsides ? TOOLS_WITH_SET_ASIDES : ALL_TOOLS) {
     if (t.requires === 'share' && !opts.share) continue
     if (t.requires === 'investments' && !opts.investments) continue
     const schema = z.toJSONSchema(t.input, { io: 'input', unrepresentable: 'any', target: 'draft-2020-12' }) as JsonSchema

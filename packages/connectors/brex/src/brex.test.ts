@@ -320,6 +320,12 @@ describe('brex partner sign-in (OAuth)', () => {
     expect(calls.filter((c) => c.url.endsWith('/v1/revoke'))).toHaveLength(2)
   })
 
+  it('disconnect tells the person to delete a pasted token at Brex', async () => {
+    const { connector, calls } = make([], oauthOpts)
+    await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Delete the token') })
+    expect(calls.filter((c) => c.url.endsWith('/v1/revoke'))).toHaveLength(0)
+  })
+
   it('a refused or unreachable revoke is recorded and logged, never thrown', async () => {
     const f = fixtureFetch([{ method: 'POST', match: (u) => u.pathname.endsWith('/v1/revoke'), respond: { status: 401, json: { error: 'invalid_client' } } }])
     const logs: Array<[string, Record<string, unknown> | undefined]> = []
@@ -331,9 +337,9 @@ describe('brex partner sign-in (OAuth)', () => {
     // Network failure, no logger: still resolves.
     const down = createBrexConnector(oauthOpts, { raw: new MemoryRawSink(), fetch: async () => { throw new TypeError('fetch failed') }, clock: fakeClock() })
     expect(await down.revoke({ ...conn, secret: sec })).toEqual({ revoked: false, failures: ['refresh_token network error', 'access_token network error'] })
-    // disconnect itself resolves either way, so the engine always goes on to wipe the secret.
-    await expect(connector.disconnect!({ ...conn, secret: sec })).resolves.toBeUndefined()
-    await expect(down.disconnect!({ ...conn, secret: sec })).resolves.toBeUndefined()
+    // disconnect never throws, so the engine always goes on to wipe the secret, and it says what to finish at Brex.
+    await expect(connector.disconnect!({ ...conn, secret: sec })).resolves.toEqual({ notRevoked: expect.stringContaining('Developer page') })
+    await expect(down.disconnect!({ ...conn, secret: sec })).resolves.toEqual({ notRevoked: expect.stringContaining('Developer page') })
   })
 
   it('keeps the rotated refresh token: the next refresh sends the new one', async () => {

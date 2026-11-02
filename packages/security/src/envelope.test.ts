@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { randomUUID } from 'node:crypto'
 import { existsSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { generateMasterKey, isStreamSealed, keyIdFor, loadKeyRing, reseal, seal, sealBytes, sealStream, unseal, unsealBytes, unsealStream, safeEqual, splitArgv } from './index.ts'
+import { generateMasterKey, isStreamSealed, keyIdFor, loadKeyRing, reseal, seal, sealBytes, sealedKeyId, sealStream, unseal, unsealBytes, unsealStream, safeEqual, splitArgv } from './index.ts'
 
 const ctx = { workspaceId: 'ws1', recordId: 'conn1', purpose: 'connection.secret' }
 
@@ -112,6 +113,37 @@ describe('master key from a command (KMS, 1Password)', () => {
     expect(splitArgv(`op read 'op://Prod/Aggregate/master key'`)).toEqual(['op', 'read', 'op://Prod/Aggregate/master key'])
     expect(splitArgv(`a\\ b "" c`)).toEqual(['a b', '', 'c'])
     expect(() => splitArgv(`op read "unclosed`)).toThrow(/unclosed quote/)
+  })
+})
+
+describe('old keys from a command', () => {
+  const node = JSON.stringify(process.execPath)
+  const printing = (text: string) => {
+    const script = join(tmpdir(), `agfn-old-keys-${randomUUID()}.mjs`)
+    writeFileSync(script, `process.stdout.write(${JSON.stringify(text)})`)
+    return `${node} ${JSON.stringify(script)}`
+  }
+
+  it('decrypts what an old key sealed, and reseal moves it to the current key', () => {
+    const [oldA, oldB] = [generateMasterKey(), generateMasterKey()]
+    const ctx = { workspaceId: 'w', recordId: 'r', purpose: 'p' }
+    const sealed = seal(loadKeyRing({ AGFN_MASTER_KEY: oldB }), { a: 1 }, ctx)
+    const ring = loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey(), AGFN_OLD_MASTER_KEYS_COMMAND: printing(`${oldA},${oldB}\n`) })
+    expect(unseal(ring, sealed, ctx)).toEqual({ a: 1 })
+    expect(sealedKeyId(sealed)).not.toBe(ring.current.id)
+    expect(sealedKeyId(reseal(ring, sealed, ctx))).toBe(ring.current.id)
+  })
+
+  it('refuses two sources, an empty answer, and never shows the output', () => {
+    const k = generateMasterKey()
+    expect(() => loadKeyRing({ AGFN_MASTER_KEY: k, AGFN_OLD_MASTER_KEYS: k, AGFN_OLD_MASTER_KEYS_COMMAND: 'x' })).toThrow(/only one old key source/)
+    expect(() => loadKeyRing({ AGFN_MASTER_KEY: k, AGFN_OLD_MASTER_KEYS_COMMAND: printing('  ') })).toThrow(/printed nothing/)
+    expect(() => loadKeyRing({ AGFN_MASTER_KEY: k, AGFN_OLD_MASTER_KEYS_COMMAND: '/definitely/not/here' })).toThrow(/AGFN_OLD_MASTER_KEYS_COMMAND failed/)
+    expect(() => loadKeyRing({ AGFN_MASTER_KEY: k, AGFN_OLD_MASTER_KEYS_COMMAND: printing('not-a-key') })).toThrow(/^master key must be 32 bytes/)
+  })
+
+  it('names no key in sealedKeyId for something that is not sealed', () => {
+    expect(sealedKeyId('plain')).toBeNull()
   })
 })
 

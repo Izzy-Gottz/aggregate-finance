@@ -83,6 +83,14 @@ describe('HttpApi', () => {
       expect(err).toMatchObject({ status: 403, code: 'recheck', message: 'Check it’s you.', data: { method } })
     })
   }
+  it('a passkey this server doesn\'t have says so and uses email, and nobody gets signed out', async () => {
+    const { f } = fakeFetch([{ status: 401, body: { code: 'PASSKEY_NOT_FOUND', message: 'Passkey not found' } }])
+    const onSignedOut = vi.fn()
+    const api = new HttpApi({ fetch: f, onSignedOut })
+    await expect(api.call('POST /api/auth/passkey/verify-authentication', {}, { response: {} }, true)).rejects.toMatchObject({ status: 401, code: 'passkey_unknown', message: 'This passkey isn’t recognized here. Use your email instead, then add a new passkey in Settings.' })
+    expect(onSignedOut).not.toHaveBeenCalled()
+  })
+
   it('sets up a first passkey when connecting needs one, then retries', async () => {
     const { f, calls } = fakeFetch([{ status: 403, body: { error: 'passkey_required', message: 'Add a passkey' } }, { status: 200, body: { grantId: 'g', key: 'k' } }])
     const setupPasskey = vi.fn(async () => true)

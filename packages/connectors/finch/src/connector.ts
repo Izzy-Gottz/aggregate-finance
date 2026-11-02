@@ -135,6 +135,28 @@ export function createFinchConnector(opts: FinchOptions): Connector {
     describe: () => description,
     begin,
 
+    accountKey: (config) => {
+      const company = str(config.companyId)
+      const provider = str(config.providerId)
+      return company && provider ? `${company}:${provider}` : undefined
+    },
+
+    /**
+     * POST /disconnect ends the connection and its token at Finch, and it's the only thing that stops Finch billing
+     * for it. Every token for this employer and provider goes with it, so it waits for the last connection of that
+     * pair in any workspace (the engine sets liveElsewhere). A refused token is already gone.
+     */
+    async disconnect(conn) {
+      const secret = requireSecret(PROVIDER, conn.secret, isSecret)
+      if (conn.config.liveElsewhere === true) return { notRevoked: 'Another workspace still uses this payroll account at Finch. To end it, disconnect it there too.' }
+      try {
+        await http(secret.accessToken).request({ method: 'POST', path: '/disconnect', idempotent: true })
+      } catch (e) {
+        if (isConnectorError(e) && e.kind === 'auth') return
+        return { notRevoked: 'In your payroll provider, disconnect Aggregate.' }
+      }
+    },
+
     async connect(input) {
       const code = str(input.code)
       if (!code || !opts.oauth) throw new ConnectorError('invalid_input', 'Finch Connect did not return a code', { provider: PROVIDER })

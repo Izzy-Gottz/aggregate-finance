@@ -60,6 +60,16 @@ export async function retireDeleted(s: Deps, ws: string, connectionId: string): 
  */
 export const ERASE_ON_DISCONNECT: ReadonlySet<string> = new Set(['wefunder', 'quickbooks'])
 
+/** Shown in the activity log when a store uninstalls the Shopify app. */
+export const SHOPIFY_ERASE_WARNING =
+  'The Aggregate app was removed from this Shopify store. In 48 hours Shopify asks us to erase the store’s data: its payouts will then be removed from your books. Export your books before then if you need them.'
+
+/**
+ * Providers where ending access at the source erases too. Shopify: disconnect uninstalls, and shop/redact arrives 48
+ * hours later and deletes the store's data anyway, so it goes now and the person is told, whatever they picked.
+ */
+export const ERASE_WHEN_REVOKED: ReadonlySet<string> = new Set(['shopify'])
+
 /**
  * The provider says the person revoked Aggregate there (a sync failed with code 'revoked'): for ERASE_ON_DISCONNECT
  * providers that ends the connection exactly like disconnecting here, data deleted, and the activity log says why.

@@ -282,8 +282,8 @@ export function createBrexConnector(opts: BrexConnectorOptions, deps: ConnectorD
   /**
    * Partner sign-in only: revoke the refresh token so Brex shows the app as disconnected. Pasted user tokens are
    * revoked by the person in Brex (Developer page). Best effort, and it never throws: the secret is wiped either way
-   * and Brex expires unused refresh tokens after 90 days. A refused revoke still isn't success, so it's returned and
-   * logged when the caller passed a logger.
+   * and Brex expires unused refresh tokens after 90 days. A refused revoke isn't success: it's returned, logged when
+   * the caller passed a logger, and disconnect tells the person.
    */
   async function revoke(conn: ConnectionRef): Promise<BrexRevokeResult> {
     const sec = requireSecret('brex', conn.secret, isSecret)
@@ -380,7 +380,9 @@ export function createBrexConnector(opts: BrexConnectorOptions, deps: ConnectorD
     },
 
     async disconnect(conn) {
-      await revoke(conn)
+      const sec = requireSecret('brex', conn.secret, isSecret)
+      if (sec.kind !== 'oauth') return { notRevoked: 'In Brex, go to the Developer page → Delete the token.' }
+      if (!(await revoke(conn)).revoked) return { notRevoked: 'In Brex, go to the Developer page → Remove Aggregate.' }
     },
     revoke,
 

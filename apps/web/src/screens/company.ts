@@ -41,10 +41,10 @@ export function CompanyView({ id, onClose, onBack }: { id: string; onClose: () =
     aside=${html`<${Sparkline} points=${c.trend} label=${`${c.entity.name} cash over the last 12 months`} />`}
   >
     <${Header} c=${c} sub=${sub} />
-    <${CompanySections} c=${c} />
-    ${c.entity.kind === 'company' && canShare(app) ? html`<div class="links" style="margin-top:32px"><${ShareLink} entityId=${c.entity.id} kind="roast" label="Roast these books" /><${ShareLink} entityId=${c.entity.id} kind="hype" label="Hype these books" />${app.me?.badges ? html`<${ShareLink} entityId=${c.entity.id} kind="badge" label="Get a verified badge" />` : null}</div>` : null}
     ${c.entity.kind === 'company' && isManager(app) && !isPublicDemo(app) && !isReviewer(app) ? html`<${CompanySettings} c=${c} />` : null}
     ${c.entity.kind === 'company' && isOwnerHere(app) && !isPublicDemo(app) && !isReviewer(app) ? html`<${DeleteCompany} c=${c} onClose=${onClose} />` : null}
+    <${CompanySections} c=${c} />
+    ${c.entity.kind === 'company' && canShare(app) ? html`<div class="links" style="margin-top:32px"><${ShareLink} entityId=${c.entity.id} kind="roast" label="Roast these books" /><${ShareLink} entityId=${c.entity.id} kind="hype" label="Hype these books" />${app.me?.badges ? html`<${ShareLink} entityId=${c.entity.id} kind="badge" label="Get a verified badge" />` : null}</div>` : null}
   </${Drawer}>`
 }
 
@@ -92,7 +92,7 @@ function CompanySettings({ c }: { c: CompanyDetail }) {
     app.toast({ text: 'Saved.' })
     await app.reload()
   }
-  if (!open) return html`<div ref=${wrap}><${PlusAction} onClick=${start}>Name and year start</${PlusAction}></div>`
+  if (!open) return html`<div ref=${wrap}><${PlusAction} onClick=${start}>Rename company</${PlusAction}></div>`
   return html`<div ref=${wrap}><form onSubmit=${save} novalidate style="margin-top:24px">
     <label class="field"><span>Name</span><input class="input" value=${name} maxLength=${80} onInput=${(e: Event) => setName((e.target as HTMLInputElement).value)} /></label>
     <label class="field"><span>Year starts</span>
@@ -137,7 +137,7 @@ function DeleteCompany({ c, onClose }: { c: CompanyDetail; onClose: () => void }
       app.go({ page: 'workspace', step: 0, stack: [] })
     } else onClose()
   }
-  return html`<div class="links" style="margin-top:32px" ref=${row}>
+  return html`<div class="links" style="margin-top:8px" ref=${row}>
     ${confirm && blocked
       ? html`<span class="sub" role="alert" ref=${box}>${c.entity.name} can’t be deleted yet. ${blocked}
           <${LinkButton} onClick=${() => setConfirm(false)}>Cancel</${LinkButton}></span>`
@@ -161,6 +161,7 @@ function Header({ c, sub }: { c: CompanyDetail; sub: string }) {
       ${shown}
     </button>
     ${caveat ? html`<p class="sub amber">${caveat}</p>` : null}
+    ${c.entity.setAside ? html`<p class="sub">Cash ${fmt(c.entity.setAside.available)} · ${fmt(c.entity.setAside.held)} set aside</p>` : null}
     ${c.entity.kind === 'personal' && !c.entity.hidden ? html`<p class="sub">${isPublicDemo(app) ? 'Made-up, like the rest of the demo.' : 'Only you see this.'}</p>` : null}
     <${MrrLine} c=${c} />
     <p class="sub">

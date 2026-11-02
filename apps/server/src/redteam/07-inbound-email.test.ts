@@ -24,6 +24,17 @@ function mail(to: string, o: { from?: string; fromName?: string; ar?: string; sp
 }
 
 describe('red team: inbound email spoofing', () => {
+  it('with no email-in domain, nobody is given an address and the routes say so', async () => {
+    const srv = await startServer({})
+    try {
+      const v = await victimWorld(srv)
+      expect((await v.s.get<{ inbound: unknown[] }>('/api/workspace')).body.inbound).toEqual([])
+      expect((await v.s.get(`/api/inbound/${v.entityId}`)).status).toBe(503)
+    } finally {
+      await srv.close()
+    }
+  })
+
   it('stores nothing from forged, unauthenticated, unlisted or disguised mail', async () => {
     const srv = await startServer({ env: { INBOUND_EMAIL_DOMAIN: 'in.example.com', INBOUND_WEBHOOK_SECRET: SECRET } })
     try {

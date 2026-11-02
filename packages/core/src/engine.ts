@@ -39,12 +39,14 @@ import { bucketView, validateFields, validateSchedule, validateValues, type Buck
 import { runChecks, type CheckOptions, type CheckResult } from './checks.ts'
 import { balanceSheet, cashFlow, profitAndLoss, type BalanceSheet, type CashFlow, type ProfitAndLoss } from './reports.ts'
 import { listReviewItems, type ReviewItem } from './review.ts'
+import { AUTO_FILED, AUTO_STALE, AUTO_UNDONE, filedItems, planAutoFile, type FiledItem } from './autofile.ts'
 import { dataHealth, type DataHealth } from './health.ts'
 import { findAnomalies, type Anomaly, type AnomalyOptions } from './anomalies.ts'
 import { weeklyDigest as buildDigest, type WeeklyDigest } from './digest.ts'
 import { coverage, type AccountCoverage, type CoverageOptions } from './coverage.ts'
 import { addDays, forgetZone, today, todayFor, localDate, zoneOf } from './queries.ts'
-import type { Bucket, BucketField, BucketSchedule } from './model.ts'
+import type { Bucket, BucketField, BucketSchedule, SetAside } from './model.ts'
+import { validateSetAside } from './set-aside.ts'
 import { YIELD_EVERY, yieldNow } from './yield.ts'
 
 /** How far apart (days) bank rows can be and still be read together when matching a sync page. */
@@ -670,7 +672,8 @@ export class LedgerEngine implements Ledger {
       // An import just landed and outruns the planner's statistics: refresh them once the burst goes quiet.
       this.#statsSoon()
     }
-    return this.#exclusive(ws, () =>
+    const standalone = !this.#tx.getStore()
+    await this.#exclusive(ws, () =>
       this.store.transaction(async () => {
         const since = await this.store.unsettledSince(ws, connectionId)
         const rematch = await this.#matcherBehind(ws)
@@ -693,6 +696,57 @@ export class LedgerEngine implements Ledger {
         if (moved.size) await this.#repostEquity(ctx, [...moved])
         await this.store.clearUnsettled(ws, connectionId)
         if (rematch) await this.#rematchAll(ctx)
+      }),
+    )
+    if (standalone) await this.autoFile(ws).catch((e) => console.warn('[agfn] auto-file failed', e instanceof Error ? e.message : String(e)))
+  }
+
+  /** File what Review needn't ask (autofile.ts). A failure leaves the questions in Review; it never fails a sync. */
+  async autoFile(ws: WorkspaceId): Promise<{ filed: number }> {
+    let filed = 0
+    const plan = await planAutoFile(this.metricContext(ws))
+    for (const id of plan.stale) await this.decideLink(ws, id, 'rejected', AUTO_STALE).catch(() => undefined)
+    // One row that can't be filed stays a question; it doesn't stop the rest.
+    const file = async (id: Id, write: () => Promise<unknown>): Promise<void> => {
+      try {
+        await write()
+        filed++
+      } catch (e) {
+        if (!(e instanceof LinkError)) console.warn(`[agfn] auto-file skipped ${id}:`, e instanceof Error ? e.message : String(e))
+      }
+    }
+    for (const id of plan.links) await file(id, () => this.decideLink(ws, id, 'confirmed', AUTO_FILED))
+    for (const id of plan.small) await file(id, () => this.#setOverride(ws, id, { kind: 'other', category: 'other_income' }, AUTO_FILED))
+    for (const id of plan.opening) await file(id, () => this.#setOverride(ws, id, { kind: 'other', category: 'opening_balance_equity' }, AUTO_FILED))
+    return { filed }
+  }
+
+  async filedItems(ws: WorkspaceId, opts: { entityIds?: EntityId[] } = {}): Promise<FiledItem[]> {
+    return filedItems(this.metricContext(ws), opts)
+  }
+
+  /** Put a filing back as a question ("link:<id>" or "record:<id>"); it won't be filed again. */
+  async undoFiled(ws: WorkspaceId, id: string): Promise<{ recordId: Id }> {
+    const [kind, subject] = [id.slice(0, id.indexOf(':')), id.slice(id.indexOf(':') + 1)]
+    return this.#exclusive(ws, () =>
+      this.store.transaction(async () => {
+        const ctx = await this.#ctx(ws)
+        if (kind === 'link') {
+          const link = await this.store.getLink(ws, subject)
+          if (!link || link.status !== 'confirmed' || link.decidedBy !== AUTO_FILED) throw new LinkError('That was not filed automatically')
+          await this.#decide(ctx, link, 'proposed', null)
+          const back = await this.store.getLink(ws, subject)
+          await this.store.saveLink({ ...(back as Link), scores: { ...(back?.scores ?? {}), noAuto: 1 } })
+          return { recordId: link.toId }
+        }
+        const o = await this.store.getOverride(ws, subject)
+        const record = await this.store.getRecord(ws, subject)
+        if (kind !== 'record' || !o || o.updatedBy !== AUTO_FILED || !record) throw new LinkError('That was not filed automatically')
+        const { kind: _k, category: _c, ...rest } = o
+        await this.store.saveOverride({ ...rest, updatedBy: AUTO_UNDONE, updatedAt: this.now() })
+        await this.#repost(ctx, record)
+        await this.#repostLinked(ctx, record.id)
+        return { recordId: record.id }
       }),
     )
   }
@@ -1533,6 +1587,12 @@ export class LedgerEngine implements Ledger {
         const link = await this.store.getLink(ws, linkId)
         if (!link) throw new LinkError(`Link ${linkId} not found`)
         const r = await this.#decide(ctx, link, decision, decidedBy)
+        // No to a move is no for these two rows, whichever type an older proposal gave them.
+        if (decision === 'rejected' && (link.type === 'transfer' || link.type === 'card_payment' || link.type === 'intercompany')) {
+          for (const other of await this.store.listLinks(ws, { recordId: link.fromId, statuses: ['proposed'] })) {
+            if (other.id !== link.id && other.fromId === link.fromId && other.toId === link.toId) await this.#decide(ctx, other, 'rejected', decidedBy)
+          }
+        }
         // One payment of two invoices is one answer: its other half follows.
         if (link.scores?.['pair'] === 1) {
           for (const other of await this.store.listLinks(ws, { recordId: link.toId })) {
@@ -2083,7 +2143,7 @@ export class LedgerEngine implements Ledger {
 
   async createBucket(
     ws: WorkspaceId,
-    input: { entityId: EntityId; name: string; fields?: BucketField[]; values?: Record<string, unknown>; schedule?: BucketSchedule | null; origin?: WriteOrigin; createdBy?: string | null },
+    input: { entityId: EntityId; name: string; fields?: BucketField[]; values?: Record<string, unknown>; schedule?: BucketSchedule | null; setAside?: SetAside | null; origin?: WriteOrigin; createdBy?: string | null },
   ): Promise<Bucket> {
     const name = input.name.trim()
     if (!name || name.length > 100) throw new PostingError('Bucket name must be 1-100 characters')
@@ -2095,6 +2155,7 @@ export class LedgerEngine implements Ledger {
       this.store.transaction(async () => {
         const entity = await this.directory.getEntity(ws, input.entityId)
         if (!entity) throw new PostingError(`Unknown entity ${input.entityId}`)
+        if (input.setAside) validateSetAside(input.setAside, await this.directory.listSourceAccounts(ws), await this.store.listBuckets(ws))
         const now = this.now()
         const bucket: Bucket = {
           id: newId(),
@@ -2104,6 +2165,7 @@ export class LedgerEngine implements Ledger {
           fields,
           values,
           schedule: input.schedule ?? null,
+          ...(input.setAside ? { setAside: input.setAside } : {}),
           createdBy: input.createdBy ?? null,
           origin: input.origin ?? 'ui',
           createdAt: now,
@@ -2116,7 +2178,7 @@ export class LedgerEngine implements Ledger {
     )
   }
 
-  async updateBucket(ws: WorkspaceId, bucketId: Id, patch: { name?: string; fields?: BucketField[]; values?: Record<string, unknown>; schedule?: BucketSchedule | null; archived?: boolean }): Promise<Bucket> {
+  async updateBucket(ws: WorkspaceId, bucketId: Id, patch: { name?: string; fields?: BucketField[]; values?: Record<string, unknown>; schedule?: BucketSchedule | null; setAside?: SetAside | null; archived?: boolean }): Promise<Bucket> {
     return this.#exclusive(ws, () =>
       this.store.transaction(async () => {
         const b = await this.store.getBucket(ws, bucketId)
@@ -2127,12 +2189,14 @@ export class LedgerEngine implements Ledger {
         if (patch.schedule) validateSchedule(patch.schedule)
         const name = patch.name?.trim() ?? b.name
         if (!name || name.length > 100) throw new PostingError('Bucket name must be 1-100 characters')
+        if (patch.setAside) validateSetAside(patch.setAside, await this.directory.listSourceAccounts(ws), (await this.store.listBuckets(ws)).filter((o) => o.id !== b.id))
         const updated: Bucket = {
           ...b,
           name,
           fields,
           values,
           schedule: patch.schedule === undefined ? b.schedule : patch.schedule,
+          setAside: patch.setAside === undefined ? (b.setAside ?? null) : patch.setAside,
           archivedAt: patch.archived === undefined ? b.archivedAt : patch.archived ? (b.archivedAt ?? this.now()) : null,
           updatedAt: this.now(),
         }

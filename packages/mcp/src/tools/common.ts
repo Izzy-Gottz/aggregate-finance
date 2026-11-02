@@ -20,6 +20,8 @@ export interface ToolContext {
   share?: SharePort
   /** get_investments is on (AGFN_TOOL_INVESTMENTS). */
   investments?: boolean
+  /** Set-asides in the bucket tools and available_cash (AGFN_SET_ASIDES). */
+  setAsides?: boolean
   /** The app's address (e.g. https://app.aggregate.finance), for links a person opens. */
   appUrl?: string
 }

@@ -13,12 +13,12 @@ Aggregate is operated by Yisrael Gottlieb, doing business as Aggregate ("we"), 1
 ## What we collect and why
 
 - **Your sign-in details.** Email address, name, and passkeys or Google/Apple sign-in if you use them. We use them to sign you in and to send sign-in links, invites and the notices you turn on.
-- **Financial data you connect.** When you connect a bank, card, payment processor, payroll or accounting service (through Plaid or a direct connection), we receive accounts, balances, transactions, invoices, payroll totals and similar records. We use them to show you your numbers, and for nothing else.
-- **What you add.** Entries, notes, buckets, rules, the cap table, and documents you upload or email in (receipts, bills, statements), including the text we read from them.
+- **Financial data you connect.** When you connect a bank, card, payment processor, payroll or accounting service (through Plaid or a direct connection), we receive accounts, balances, transactions, invoices, payroll totals and similar records. We use them to show you your numbers, and for nothing else. We handle QuickBooks data for you, at your direction. We don't process it on Intuit's behalf.
+- **What you add.** Entries, notes, buckets, rules, the cap table, and documents you upload (or email in, on a self-hosted copy) (receipts, bills, statements), including the text we read from them.
 - **AI activity.** When you connect an AI (Claude, ChatGPT or an agent key), we log every call it makes: which tool, when, which companies, whether it worked, plus the network address and app name it called from. Writes keep a record of who made them, so you can review and undo them.
 - **Security records.** Sign-in sessions keep the network address and browser they came from. Invites, exports and permission changes are logged with who made them and when. These protect your account.
 
-We don't collect anything beyond this. There are no ads, no analytics or tracking scripts, and no third-party cookies. Cookies are used only to keep you signed in.
+We don't collect anything beyond this. The marketing site (aggregate.finance) counts visits with Cloudflare Web Analytics, which sets no cookies and doesn't identify individual visitors. The app itself has no ads, analytics or tracking scripts. Plaid's sign-in window, when you open it, is run by Plaid. We use cookies only to keep you signed in.
 
 ## What we never do
 
@@ -45,6 +45,8 @@ An AI you connect sees only what you grant it: which companies, which kinds of d
 
 We use Plaid to connect many banks and cards. When you connect an account through Plaid, Plaid's End User Privacy Policy applies to the data Plaid collects: https://plaid.com/legal/#end-user-privacy-policy
 
+You sign in with your bank on Plaid's screen, never on ours, and we never see your bank password.
+
 ## Who processes data for us
 
 | Provider | What for |
@@ -55,13 +57,16 @@ We use Plaid to connect many banks and cards. When you connect an account throug
 | Fly.io, Neon, Cloudflare (R2 and DNS) | Running the service, the database, storing files and backups, and routing traffic |
 | Frankfurter (frankfurter.dev) | Currency exchange rates. Only currency codes and dates are sent, never your data. |
 
+BILL's sync token can technically edit records in your BILL account but can't pay anyone or move money. Aggregate only reads; our code makes no changes in BILL.
+
 ## Keeping and deleting your data
 
-- **Disconnect** a connection and we revoke our access at the provider and stop syncing.
-- For QuickBooks and Wefunder, disconnecting (or removing Aggregate inside that service) also deletes what that connection brought in.
+- **Disconnect** a connection and we stop syncing. When you disconnect, we revoke our access at the provider where it allows that, and tell you if there's a step for you to do there.
+- For QuickBooks, Wefunder and Shopify (when it's the store's last connection in Aggregate), disconnecting (or removing Aggregate inside that service) also deletes what that connection brought in.
 - **Export** everything in Preferences → Export, as one file.
-- **Delete your workspace** in Preferences (owners only). This revokes every connection at the provider and erases all of the workspace's records, documents and AI activity. Your sign-in account stays so you can keep using other workspaces. You can also delete your sign-in account entirely in Preferences; if you are the only owner of a workspace, you first make someone else an owner or delete the workspace.
+- **Delete your workspace** in Preferences (owners only). This revokes our access at each provider where it allows that, tells you of any step left for you there, and erases all of the workspace's records, documents and AI activity. Your sign-in account stays so you can keep using other workspaces. You can also delete your sign-in account entirely in Preferences; if you are the only owner of a workspace, you first make someone else an owner or delete the workspace.
 - Encrypted backups are kept for 25 days, so deleted data is gone from backups within 30 days.
+- If we confirm that someone got into your data without permission, we'll email the owners of the affected workspaces promptly, and as the law requires: what happened, what data was involved and what to do next. We'll keep you updated until it's resolved. Questions about an incident go to security@aggregate.finance.
 - We keep your data while your workspace exists. We don't delete inactive workspaces automatically; if a workspace hasn't been used for 90 days, we email its owners in case they want to disconnect or delete it.
 
 ## Your rights

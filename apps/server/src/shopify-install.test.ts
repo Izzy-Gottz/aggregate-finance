@@ -16,6 +16,7 @@ let app: ReturnType<typeof createApp>
 let outbox: string[]
 let connects: Array<Record<string, unknown>>
 let revoked: string[]
+let notRevoked: string | undefined
 let exchanges: Array<{ shop: string; token: string }>
 let staffEmail: string | undefined
 
@@ -41,7 +42,10 @@ const fakeShopify = (deps: ConnectorDeps): Connector & Record<string, unknown> =
     const shop = typeof input.shop === 'string' ? input.shop : SHOP
     return { secret: input.adopt ?? { accessToken: 'shpua_x' }, config: { shop, displayName: `Shopify · ${shop.split('.')[0]}` } }
   },
-  disconnect: async (conn: ConnectionRef) => void revoked.push(conn.id),
+  disconnect: async (conn: ConnectionRef) => {
+    if (notRevoked) return { notRevoked }
+    revoked.push(conn.id)
+  },
   health: async () => ({ status: 'ok' }),
   sync: async (conn: ConnectionRef) => {
     const m = (amount: string) => ({ amount, currencyCode: 'USD' })
@@ -63,6 +67,7 @@ beforeEach(async () => {
   outbox = []
   connects = []
   revoked = []
+  notRevoked = undefined
   exchanges = []
   staffEmail = 'owner@example.com'
   const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: BASE, WEB_DIST: '/nonexistent' }), runWorker: false }
@@ -147,6 +152,26 @@ describe('Shopify managed install (Shopify installs; the embedded page exchanges
       expect((await app.request('/api/connectors/shopify/install/resume', { headers: { origin: BASE, cookie } })).headers.get('location')).toMatch(/connect_error=/)
     }
     expect(connects).toEqual([])
+  })
+
+  it('disconnecting in Aggregate deletes the data once the store is uninstalled, whatever was picked, and says so', async () => {
+    const session = await signIn('owner4@example.com')
+    await app.request('/api/workspaces', post(session, { companyName: 'Harbor Coffee' }))
+    const connectionId = await installFromAdmin(session, SHOP, 'owner4@example.com')
+    const res = await app.request(`/api/connections/${connectionId}/disconnect`, post(session, { deleteData: false }))
+    expect(await res.json()).toMatchObject({ ok: true, dataDeleted: true })
+    expect(revoked).toEqual([connectionId])
+    expect(await booted.services.db.selectFrom('raw_records').select('id').where('connection_id', '=', connectionId).execute()).toEqual([])
+  })
+
+  it('a store that stays installed (another workspace uses it) keeps what was picked and says what to finish', async () => {
+    notRevoked = 'Aggregate stays installed on this store because another workspace still uses it.'
+    const session = await signIn('owner5@example.com')
+    await app.request('/api/workspaces', post(session, { companyName: 'Harbor Coffee' }))
+    const connectionId = await installFromAdmin(session, SHOP, 'owner5@example.com')
+    const res = await app.request(`/api/connections/${connectionId}/disconnect`, post(session, { deleteData: false }))
+    expect(await res.json()).toMatchObject({ ok: true, dataDeleted: false, warning: notRevoked })
+    expect((await booted.services.db.selectFrom('raw_records').select('id').where('connection_id', '=', connectionId).execute()).length).toBeGreaterThan(0)
   })
 
   it('shop/redact erases the store: access stops and its raw records go; customer requests are answered', async () => {
@@ -263,8 +288,11 @@ describe('the embedded page in Shopify admin (App Bridge, session tokens, no coo
     expect(out.status).toBe(200)
     expect(await out.json()).toMatchObject({ shop: SHOP, connections: [] })
     expect(revoked).toHaveLength(1)
-    const row = await booted.handle.db.selectFrom('connections').select('status').executeTakeFirstOrThrow()
+    const row = await booted.handle.db.selectFrom('connections').select(['id', 'status']).executeTakeFirstOrThrow()
     expect(row.status).toBe('disconnected')
+    // The uninstall's erasure comes 48 hours later: the log says so now.
+    const notes = await booted.handle.db.selectFrom('activity_log' as never).select(['detail' as never]).where('target_id' as never, '=', row.id as never).execute()
+    expect(notes.map((n) => (n as { detail: string }).detail)).toContain(SHOPIFY_ERASE_WARNING)
   })
 })
 

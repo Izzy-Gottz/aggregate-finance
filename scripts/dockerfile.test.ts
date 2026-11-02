@@ -15,3 +15,9 @@ it('the image carries every public doc the server renders (a missing one shows "
   const { PUBLIC_DOCS } = await import('../apps/server/src/legal.ts')
   for (const { file } of Object.values(PUBLIC_DOCS)) expect(docker, file).toContain(`COPY docs/${file} ./docs/${file}`)
 })
+
+it('the image carries the key command the runtime runs as node', () => {
+  const docker = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8')
+  const runtime = docker.slice(docker.indexOf('AS runtime'))
+  expect(runtime).toContain('COPY scripts/kms-master-key.mjs ./scripts/kms-master-key.mjs')
+})

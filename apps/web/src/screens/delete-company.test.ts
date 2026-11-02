@@ -73,4 +73,17 @@ describe('Delete an empty company', () => {
     await screen.findByRole('heading', { name: 'Test Co' })
     expect(screen.queryByRole('button', { name: 'Delete company' })).toBeNull()
   })
+
+  it('Rename company and Delete company sit at the top of the drawer, above the figures', async () => {
+    const api = new MockApi()
+    api.s.me.demo = false
+    const id = api.s.entities.find((e) => e.kind === 'company')!.id
+    location.hash = `#/?d=company:${id}`
+    render(html`<${Root} api=${api} />`)
+    const del = await screen.findByRole('button', { name: 'Delete company' })
+    const rename = screen.getByRole('button', { name: /Rename company/ })
+    expect(rename.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const figures = screen.getAllByRole('heading').filter((h) => !h.classList.contains('dtitle') && h.closest('.dbody'))[0]!
+    expect(del.compareDocumentPosition(figures) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

@@ -165,11 +165,12 @@ The same tools are available as a REST API, described at [`/v1/openapi.json`](ht
 | **Coming soon** | Finch and Rippling: built, and being tested with real accounts |
 
 Aggregate only ever reads from your providers and has no way to move money. On hosted, Stripe and Square access is
-read-only at the source too; QuickBooks offers no read-only option, so Aggregate only calls its read endpoints. Every company you own lives side by side, plus a private **Personal** space.
+read-only at the source too. QuickBooks, BILL, Lemon Squeezy and Expensify don't offer read-only access, so what they
+grant could do more than read; Aggregate only reads from all four. Every company you own lives side by side, plus a private **Personal** space.
 
 > [!NOTE]
-> Aggregate is early. On hosted, Stripe sign-in and the Shopify app are waiting on each provider’s approval; until
-> then, connect Shopify with your own app’s keys. Xero connects up to 5 organizations on hosted until Xero certifies
+> Aggregate is early. On hosted, Stripe has been on the Stripe App Marketplace since 2026-10-26 and Shopify on the
+> Shopify App Store since 2026-10-22. Xero connects up to 5 organizations on hosted until Xero certifies
 > the app. The other
 > connectors are built to each provider’s documentation and are being verified with real accounts. Issues and fixes
 > are very welcome.

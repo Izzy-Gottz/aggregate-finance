@@ -1,7 +1,8 @@
 // View models for the web UI (S8's apps/web/src/api/types.ts): Connect your AI, Review, cash entries, bucket edits, undo.
 // Shapes are copied structurally so packages/mcp doesn't import from an app. Every call is made by a signed-in person.
 
-import type { BucketView, EntityId, GrantShape, Id, IsoDate, IsoTimestamp, Money, ReviewItemView, WriteResult } from '@agfn/contracts'
+import { findReviewItem, scopedSetAside, type BucketView, type EntityId, type GrantShape, type Id, type IsoDate, type IsoTimestamp, type Money, type ReviewItemView, type SetAsideView, type WriteResult } from '@agfn/contracts'
+import { setAsidePayload, type SetAsideIn, type SetAsideKept } from './set-aside-input.ts'
 import type { ActivityRow } from './activity.ts'
 import { listActivity } from './activity.ts'
 import type { ConsentShown, ControlApi, PersonActor } from './control.ts'
@@ -11,7 +12,7 @@ import type { FinanceReader, PeopleDirectory } from './ports.ts'
 import { ToolError } from './scope.ts'
 import type { ControlStore } from './store/store.ts'
 import type { WriteRequestsTable } from './store/schema.ts'
-import { safeLabel } from './untrusted.ts'
+import { safeLabel, safeSentence } from './untrusted.ts'
 import type { PipelineResult, WritePipeline } from './writes.ts'
 
 // ---------- Shapes (mirror apps/web/src/api/types.ts) ----------
@@ -44,7 +45,7 @@ export interface AiDetail extends AiSummary {
   activity: AiActivity[]
 }
 
-export type ReviewKind = 'ai_write' | 'match' | 'duplicate' | 'rule' | 'whose_money' | 'document'
+export type ReviewKind = 'ai_write' | 'match' | 'duplicate' | 'rule' | 'whose_money' | 'document' | 'set_aside_short'
 
 export interface UiReviewItem {
   id: Id
@@ -54,8 +55,16 @@ export interface UiReviewItem {
   entityName: string
   amount?: Money
   createdAt: IsoTimestamp
+  /** On a 'set_aside_short': the company it's about. */
+  entityId?: EntityId
+  /** The plain question; clients fall back to title. */
+  question?: string
   confirmLabel?: string
   rejectLabel?: string
+  /** Other matches for the same money, behind this one, best first. Each resolves by its own id. */
+  alternatives?: Array<{ id: Id; question: string; detail: string }>
+  /** Items that can be confirmed together; label is the plural line. */
+  group?: { key: string; label: string }
   editable?: Array<{ key: string; label: string; value: string }>
   /** "Which company is this account?": the account and the answers allowed (resolve with edit { companyId }). */
   pick?: { accountId: Id | null; choices: Array<{ id: EntityId | 'personal'; name: string }>; suggested?: EntityId | 'personal'; connectionId?: Id }
@@ -97,13 +106,17 @@ export interface BucketDetail {
   name: string
   fields: BucketField[]
   schedule: { amount: Money; cadence: 'weekly' | 'monthly' | 'quarterly' | 'yearly'; dueDay: number; endDate: IsoDate | null } | null
+  /** Cut to the accounts this person may see. */
+  setAside?: SetAsideView
+  /** This server offers set-asides (AGFN_SET_ASIDES). Off: none are shown, stored ones included. */
+  canSetAside?: boolean
   rules: Array<{ id: Id; text: string }>
   payments: Array<{ id: Id; date: IsoDate; amount: Money; status: 'paid' | 'upcoming' | 'missed'; detail: string }>
   createdBy: { name: string; isAi: boolean; at: IsoTimestamp }
   undoUntil: IsoTimestamp | null
 }
 
-export type BucketPatch = Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>>
+export type BucketPatch = Partial<Pick<BucketDetail, 'name' | 'fields' | 'schedule'>> & { setAside?: SetAsideIn | null }
 
 // ---------- Plain-words activity ----------
 
@@ -206,6 +219,8 @@ export interface UiDeps {
   pipeline: WritePipeline
   reader: FinanceReader
   people: PeopleDirectory
+  /** AGFN_SET_ASIDES: only then does Review show a short set-aside. */
+  setAsides?: boolean
 }
 
 export class AiUi {
@@ -361,7 +376,7 @@ export class AiUi {
     if (allowed.length) {
       for (const it of await this.reviewItemsOrNone({ workspaceId: actor.workspaceId, entityIds: allowed })) {
         const kind = REVIEW_KIND[it.kind]
-        if (!kind || it.entityId === null) continue
+        if (!kind || it.entityId === null || (kind === 'set_aside_short' && !this.deps.setAsides)) continue
         out.push({
           id: it.id,
           kind,
@@ -370,7 +385,13 @@ export class AiUi {
           entityName: names.get(it.entityId) ?? '',
           createdAt: it.createdAt,
           // Say what Confirm does ("Confirm: a card payment"); items without one proposal get their answers instead.
+          ...(it.question ? { question: questionOf(it.question, it.questionNames) } : {}),
+          // Nothing to answer: it clears itself, and the app links to the company.
+          ...(kind === 'set_aside_short' ? { entityId: it.entityId } : {}),
           ...(it.confirmLabel ? { confirmLabel: it.confirmLabel } : {}),
+          ...(it.rejectLabel ? { rejectLabel: it.rejectLabel } : {}),
+          ...(it.group ? { group: it.group } : {}),
+          ...(it.alternatives ? { alternatives: it.alternatives.map((a) => ({ id: a.id, question: a.question ? questionOf(a.question, a.questionNames) : (safeLabel(a.title, 'processor_description') ?? ''), detail: safeLabel(a.detail, 'processor_description') ?? '' })) } : {}),
           ...(it.choices?.length ? { answers: it.choices.map((c) => ({ label: safeLabel(c.label, 'processor_description') ?? '', values: c.edits })) } : {}),
         })
       }
@@ -384,7 +405,9 @@ export class AiUi {
         out.push({ id: it.id, kind: REVIEW_KIND.which_company!, title: safeLabel(it.title, 'processor_description') ?? '', detail: safeLabel(it.detail, 'processor_description') ?? '', entityName: '', createdAt: it.createdAt, confirmLabel: 'Assign', pick: { accountId: it.accountId ?? null, choices, ...(it.suggested ? { suggested: it.suggested } : {}), ...(it.connectionId ? { connectionId: it.connectionId } : {}) } })
       }
     }
-    return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    // The ledger's items come in the order they matter (core review.ts); an AI's held writes, newest first, go on top.
+    const held = out.filter((i) => i.kind === 'ai_write').sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    return [...held, ...out.filter((i) => i.pick), ...out.filter((i) => i.kind !== 'ai_write' && !i.pick)]
   }
 
   /** The ledger's own review items; an install without the ledger yet just has none. */
@@ -395,6 +418,42 @@ export class AiUi {
       if (err instanceof ToolError && err.code === 'unavailable') return []
       throw err
     }
+  }
+
+  /** What was filed for the person: the count, and the list behind it. */
+  async filed(actor: PersonActor): Promise<{ count: number; items: Array<{ id: string; text: string; filedAt: string }> }> {
+    const names = await this.names(actor)
+    const items = (await this.deps.reader.filedItems?.({ workspaceId: actor.workspaceId, entityIds: [...names.keys()] })) ?? []
+    return { count: items.length, items: items.map((i) => ({ id: i.id, text: safeLabel(i.text, 'processor_description') ?? '', filedAt: i.filedAt })) }
+  }
+
+  /** Put something filed back in Review. It isn't filed again. */
+  async undoFiled(actor: PersonActor, id: string): Promise<void> {
+    const names = await this.names(actor)
+    const item = (await this.deps.reader.filedItems?.({ workspaceId: actor.workspaceId, entityIds: [...names.keys()] }))?.find((i) => i.id === id)
+    if (!item || item.entityId === null) throw new ToolError('not_found', 'That was already put back.')
+    const r = await this.deps.pipeline.submit({
+      actor: await this.personActor(actor),
+      origin: 'ui',
+      op: 'resolve_review_item',
+      entityId: item.entityId,
+      dataType: 'transactions',
+      payload: { reviewItemId: `filed:${id}`, kind: 'filed', decision: 'reject', edits: null },
+      idempotencyKey: await this.reviewKey(actor, `filed:${id}:undo`),
+    })
+    if (r.status === 'rejected') throw new ToolError('invalid', r.message ?? 'That could not be undone.')
+  }
+
+  /** Confirm a group together: only the ids the screen showed that are still in the group. */
+  async confirmGroup(actor: PersonActor, key: string, ids: string[]): Promise<{ count: number }> {
+    const asked = new Set(ids)
+    const items = (await this.review(actor)).filter((i) => i.group?.key === key && asked.has(i.id))
+    let count = 0
+    for (const i of items) {
+      await this.resolve(actor, i.id, { action: 'confirm' })
+      count++
+    }
+    return { count }
   }
 
   /** What the answer did, for the toast: the writer's own summary and the record Undo reverts (when there is one). */
@@ -409,7 +468,7 @@ export class AiUi {
     }
     const names = await this.names(actor)
     const items = await this.deps.reader.reviewItems({ workspaceId: actor.workspaceId, entityIds: [...names.keys()] })
-    const item = items.find((i) => i.id === id)
+    const item = findReviewItem(items, id)
     if (item?.kind === 'which_company' && item.entityId === null) return this.assignAccount(actor, item, decision)
     if (!item || item.entityId === null) throw new ToolError('not_found', 'That item is no longer waiting.')
     const r = await this.deps.pipeline.submit({
@@ -543,11 +602,36 @@ export class AiUi {
     const actorP = { kind: 'person' as const, personId: actor.personId, workspaceId: actor.workspaceId }
     if (!b || !(await this.deps.people.can(actorP, 'view', b.entityId, 'buckets'))) throw new ToolError('not_found', 'No such bucket.')
     const w = await this.deps.store.findWriteByRecord(actor.workspaceId, id)
-    return bucketDetail(b, w)
+    const detail = bucketDetail(b, w)
+    if (!this.deps.setAsides) return detail
+    if (!b.setAside) return { ...detail, canSetAside: true }
+    const seen = await this.#balanceCompanies(actor)
+    const today = new Date().toISOString().slice(0, 10)
+    return { ...detail, canSetAside: true, setAside: scopedSetAside(b.setAside, seen, b.createdOn ?? today, today) }
+  }
+
+  /** Companies whose balances this person sees: a set-aside may name or show only their accounts. */
+  async #balanceCompanies(actor: PersonActor): Promise<EntityId[]> {
+    const actorP = { kind: 'person' as const, personId: actor.personId, workspaceId: actor.workspaceId }
+    const out: EntityId[] = []
+    for (const e of await this.deps.reader.entities(actor.workspaceId)) if (await this.deps.people.can(actorP, 'view', e.id, 'balances')) out.push(e.id)
+    return out
+  }
+
+  async #setAside(actor: PersonActor, entityId: EntityId, input: SetAsideIn, kept?: SetAsideKept): Promise<Record<string, unknown>> {
+    const entityIds = await this.#balanceCompanies(actor)
+    const accounts = await this.deps.reader.accounts({ workspaceId: actor.workspaceId, entityIds }, {})
+    const base = (await this.deps.reader.entities(actor.workspaceId)).find((e) => e.id === entityId)?.currency ?? 'USD'
+    return setAsidePayload(input, accounts, base, new Date().toISOString().slice(0, 10), kept)
   }
 
   /** "+ Add" a bucket from the app (e.g. a stake in a private company under Personal): the create_bucket write path. */
+  #offerSetAsides(patch: BucketPatch): void {
+    if (patch.setAside !== undefined && !this.deps.setAsides) throw new ToolError('invalid', 'Setting money aside isn’t available yet.')
+  }
+
   async createBucket(actor: PersonActor, entityId: EntityId, input: BucketPatch, idempotencyKey: string): Promise<BucketDetail> {
+    this.#offerSetAsides(input)
     const name = (input.name ?? '').trim().slice(0, 60)
     if (!name) throw new ToolError('invalid', 'Give the bucket a name.')
     const fields = input.fields ?? []
@@ -559,6 +643,7 @@ export class AiUi {
       values: Object.fromEntries(fields.map((f) => [f.key, storedValue(f)])),
       schedule: s ? { amountMinor: s.amount.minor, currency: s.amount.currency, cadence: s.cadence, dueDay: s.dueDay, endDate: s.endDate } : null,
       rule: null,
+      ...(input.setAside ? { setAside: await this.#setAside(actor, entityId, input.setAside) } : {}),
     }
     const r = await this.deps.pipeline.submit({ actor: await this.personActor(actor), origin: 'ui', op: 'create_bucket', entityId, dataType: 'buckets', payload, idempotencyKey })
     if (r.status === 'rejected' || !r.recordId) throw new ToolError(r.status === 'rejected' ? 'forbidden' : 'invalid', r.message ?? 'That bucket could not be saved.')
@@ -566,6 +651,7 @@ export class AiUi {
   }
 
   async updateBucket(actor: PersonActor, id: Id, patch: BucketPatch, idempotencyKey: string): Promise<BucketDetail> {
+    this.#offerSetAsides(patch)
     const b = await this.deps.reader.bucket(actor.workspaceId, id)
     if (!b) throw new ToolError('not_found', 'No such bucket.')
     const changes: Record<string, unknown> = {}
@@ -583,12 +669,18 @@ export class AiUi {
       const s = patch.schedule
       changes.schedule = s ? { amountMinor: s.amount.minor, currency: s.amount.currency, cadence: s.cadence, dueDay: s.dueDay, endDate: s.endDate } : null
     }
+    if (patch.setAside !== undefined) {
+      changes.setAside = patch.setAside && (await this.#setAside(actor, b.entityId, patch.setAside, b.setAside))
+      changes.setAsideAccounts = (await this.deps.reader.accounts({ workspaceId: actor.workspaceId, entityIds: await this.#balanceCompanies(actor) }, {})).map((a) => a.id)
+    }
     if (!Object.keys(changes).length) return this.bucket(actor, id)
     const r = await this.deps.pipeline.submit({ actor: await this.personActor(actor), origin: 'ui', op: 'update_bucket', entityId: b.entityId, dataType: 'buckets', payload: { bucketId: id, changes }, idempotencyKey })
     if (r.status === 'rejected') throw new ToolError('invalid', r.message ?? 'That change could not be saved.')
     return this.bucket(actor, id)
   }
 }
+
+const questionOf = (question: string, names?: string[]): string => (names ? safeSentence(question, names) : (safeLabel(question, 'processor_description') ?? ''))
 
 const REVIEW_KIND: Partial<Record<ReviewItemView['kind'], ReviewKind>> = {
   suggested_match: 'match',
@@ -598,6 +690,7 @@ const REVIEW_KIND: Partial<Record<ReviewItemView['kind'], ReviewKind>> = {
   which_company: 'whose_money',
   unread_document: 'document',
   suspicious_text: 'document',
+  underfunded_set_aside: 'set_aside_short',
 }
 
 /** Fields a reviewer can correct before applying a held AI write. */
