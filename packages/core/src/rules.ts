@@ -161,11 +161,13 @@ export function suggestRules(
   threshold = 3,
 ): RuleSuggestion[] {
   if (threshold < 2) throw new RuleValidationError('Suggestion threshold must be at least 2')
-  const groups = new Map<string, { key: string; direction: 'in' | 'out'; actions: RuleActions; evidence: string[]; label: string }>()
+  const groups = new Map<string, { key: string; direction: 'in' | 'out'; actions: RuleActions; evidence: string[]; label: string; entityIds: Set<string> }>()
   for (const r of records) {
     if (r.event.type !== 'txn.upsert') continue
     const o = overrides.get(r.id)
     if (!o) continue
+    // An opening balance happens once for an account: a repeat of it isn't a habit to learn.
+    if (o.category === 'opening_balance_equity') continue
     const actions: RuleActions = {}
     if (o.forEntityId) actions.forEntityId = o.forEntityId
     if (o.kind) actions.kind = o.kind
@@ -177,14 +179,15 @@ export function suggestRules(
     if (key.length < 3) continue
     const direction = r.event.amount.minor < 0 ? 'out' : 'in'
     const gk = JSON.stringify([key, direction, actions.forEntityId ?? null, actions.kind ?? null, actions.category ?? null, actions.bucketId ?? null])
-    const g = groups.get(gk) ?? { key, direction, actions, evidence: [], label }
+    const g = groups.get(gk) ?? { key, direction, actions, evidence: [], label, entityIds: new Set<string>() }
     g.evidence.push(r.id)
+    if (r.entityId) g.entityIds.add(r.entityId)
     groups.set(gk, g)
   }
   const out: RuleSuggestion[] = []
   for (const g of groups.values()) {
     if (g.evidence.length < threshold) continue
-    const conditions: RuleConditions = { textPatterns: [`*${g.key}*`], direction: g.direction }
+    const conditions: RuleConditions = { textPatterns: [`*${g.key}*`], direction: g.direction, ...(g.entityIds.size ? { entityIds: [...g.entityIds].sort() } : {}) }
     const covered = existing.some(
       (rule) =>
         rule.conditions.direction === g.direction &&
@@ -202,7 +205,5 @@ function sortKeys(a: RuleActions): RuleActions {
 }
 
 function describeActions(a: RuleActions): string {
-  return [a.category, a.kind, a.bucketId ? `bucket ${a.bucketId}` : undefined, a.forEntityId ? `company ${a.forEntityId}` : undefined]
-    .filter(Boolean)
-    .join(', ')
+  return [a.category ? defineRole(a.category).name : a.kind?.replace(/_/g, ' '), a.bucketId ? 'a bucket' : undefined, a.forEntityId ? 'another company' : undefined].filter(Boolean).join(', ')
 }

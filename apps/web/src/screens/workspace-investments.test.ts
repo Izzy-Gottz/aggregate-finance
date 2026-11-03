@@ -23,7 +23,7 @@ describe('Investments under cash on the Workspace', () => {
     const row = await moneyRow('Personal')
     expect(within(row).getByText('Investments $8,725')).toBeTruthy()
     expect(within(row).getByText('$18,904')).toBeTruthy()
-    expect(row.getAttribute('aria-label')).toBe('Personal, $18,904, Investments $8,725. Open details')
+    expect(row.getAttribute('aria-label')).toBe('Personal, only you see this, $18,904, Investments $8,725. Open details')
   })
 
   it('no line for a company without investments', async () => {

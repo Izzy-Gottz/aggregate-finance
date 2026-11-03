@@ -20,7 +20,7 @@ describe('connect links', () => {
   it('only connect:<known connector>, never any other route', () => {
     expect(connectIntent('#/?d=connect:stripe')).toBe('stripe')
     expect(connectIntent('#/welcome/2?d=connect:xero')).toBe('xero')
-    for (const k of ['coinbase', 'expensify', 'gumroad', 'polar']) expect(connectIntent(`#/?d=connect:${k}`)).toBe(k)
+    for (const k of ['coinbase', 'expensify', 'gumroad', 'patreon', 'polar']) expect(connectIntent(`#/?d=connect:${k}`)).toBe(k)
     for (const h of ['#/?d=connect:evil', '#/?d=connect', '#/?d=connect:stripe/connect:xero', '#/?d=delete-me', '#/preferences?d=invite', '#/?d=add:cash'])
       expect(connectIntent(h)).toBeNull()
   })

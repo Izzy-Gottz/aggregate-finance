@@ -128,7 +128,7 @@ export function SignInPage({ onSignedIn, methods, note, email: prefill }: { onSi
     <p class="meta" style="margin-top:32px">Aggregate only reads your money. It can’t move it.</p>
     <p class="meta">${referred() ? `${PLAN}, then 3 months free` : PLAN}</p>
     ${has('reviewer') ? html`<${ReviewerCode} onSignedIn=${onSignedIn} />` : null}
-    <p class="meta legal"><a href="/security">Security</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
+    <p class="meta legal"><a href="/security">Security</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · © 2026 Aggregate Finance LLC</p>
   </${Shell}>`
 }
 

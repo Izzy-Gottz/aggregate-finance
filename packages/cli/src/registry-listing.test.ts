@@ -24,10 +24,14 @@ describe('MCP Registry listing (server.json)', () => {
     expect(read('scripts/build-cli-package.ts')).toContain(`mcpName: '${listing.name}'`)
   })
 
-  it('keeps one version: listing, npm package, CLI and the MCP server', () => {
-    expect(npm.version).toBe(listing.version)
-    expect(cli.version).toBe(listing.version)
-    expect(read('packages/mcp/src/mcp-server.ts')).toContain(`version: '${listing.version}'`)
+  it('keeps one version: npm package, CLI and the MCP server', () => {
+    expect(cli.version).toBe(npm.version)
+    expect(read('packages/mcp/src/mcp-server.ts')).toContain(`version: '${npm.version}'`)
+  })
+
+  // Published registry versions can't change, so a listing-only update bumps the listing alone.
+  it('lists a version at or ahead of the package', () => {
+    expect(listing.version.localeCompare(npm.version, undefined, { numeric: true })).toBeGreaterThanOrEqual(0)
   })
 
   it('runs the stdio bridge to the hosted remote, key from a secret variable', () => {

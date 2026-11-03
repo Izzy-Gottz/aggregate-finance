@@ -45,7 +45,8 @@ def sources():
     return page("""
 <div style="position:absolute;left:56px;top:118px;width:1160px"><h1>Every source. <i>One ledger.</i></h1>
 <p class=sub style="max-width:900px">Banks, cards, payment apps, accounting, invoices, payroll and your cap table, kept in one double-entry ledger your AI can read through one link.</p></div>
-<img src="how-it-works-ink.png" style="position:absolute;left:105px;top:290px;width:1060px">""")
+<img src="how-it-works-ink.png" style="position:absolute;left:105px;top:290px;width:1060px">
+<div style="position:absolute;left:170px;top:432px;width:174px;height:30px;background:#0F0E0D;text-align:right;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;line-height:30px;color:#E9E2D4">Accounting</div>""")
 
 def transfer():
     row = lambda a, b, c, col='#E9E2D4': f'<div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #2A2724;font-size:17px"><span>{a}</span><span style="color:#8A847A">{b}</span><span class=mono style="color:{col}">{c}</span></div>'
@@ -83,7 +84,7 @@ def setup():
     return page(f"""
 <div style="position:absolute;left:56px;top:118px"><h1>Set up in <i>two minutes.</i></h1></div>
 <div style="position:absolute;left:56px;right:56px;top:290px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
- {step('01', 'Sign up', 'Hosted at app.aggregate.finance, free during early access. Or self-host it with Docker.')}
+ {step('01', 'Sign up', 'Hosted at app.aggregate.finance, free during beta. Or self-host it with Docker.')}
  {step('02', 'Connect accounts', 'Banks, cards, payment apps, accounting and payroll. Aggregate only reads from them.')}
  {step('03', 'Add it to your AI', 'Paste one link into Claude, ChatGPT or Cursor:<div class=mono style="color:#E9E2D4;font-size:14px;margin-top:12px;background:#0F0E0D;border:1px solid #2A2724;border-radius:8px;padding:10px 12px">app.aggregate.finance/mcp</div>')}
 </div>
@@ -95,9 +96,9 @@ def trust():
 <div class=left style="width:430px"><h1>It can read your bank. <i>It can’t move a dollar.</i></h1></div>
 <div class="right" style="top:96px;width:660px">
  {item('Never moves money', 'No payments, no bills paid, no invoices or emails sent.')}
- {item('It only reads', 'Aggregate only calls read endpoints. Bank logins go through Plaid and are never seen by Aggregate.')}
- {item('Each AI gets its own permission', 'Which companies, which data, read or add, and when it expires. Checked on every call.')}
- {item('Everything is logged', 'Every question and every record an AI adds. Undo for 30 days, pause or revoke in one click.')}
+ {item('Read-only on your accounts', 'Aggregate only calls read endpoints on your banks and apps. Bank logins go through Plaid and are never seen by Aggregate.')}
+ {item('Each AI gets its own permission', 'Which companies, which data, whether it can add records inside Aggregate, and when it expires.')}
+ {item('Everything is logged', 'Every question and every record an AI adds inside Aggregate. Undo changes for 30 days. Pause in one click, revoke anytime.')}
  {item('Open source, self-hostable', 'AGPL-3.0. The hosted version runs the same code.')}
 </div>""")
 

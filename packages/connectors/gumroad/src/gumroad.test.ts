@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { mapSaleCharge } from './map.ts'
 import type { AccountUpsert, ConnectionRef, NormalizedEvent, ProcessorBalanceTxn } from '@agfn/contracts'
 import { ConnectorError, MemoryRawSink, runSync } from '@agfn/connector-sdk'
 import { assertRedacted, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
@@ -104,6 +105,13 @@ describe('gumroad mapping', () => {
     expect(calls.every((c) => c.method === 'GET')).toBe(true)
     expect(calls[0]!.headers.authorization).toBe('Bearer gr_test_token_redacted_0001')
     expect(calls.some((c) => c.url.includes('gr_test_token'))).toBe(false)
+  })
+
+  it('takes seller tax out of a sale only when Gumroad says it is inside the price', () => {
+    const sale = (extra: object) => mapSaleCharge({ id: 's1', created_at: '2026-09-01T10:00:00Z', price: 1_080, gumroad_fee: 100, ...extra } as never, 'seller', 'c', 'r')
+    expect(sale({ tax_cents: 80, tax_included_in_price: true })?.taxIncluded).toEqual({ minor: 80, currency: 'USD' })
+    expect(sale({ tax_cents: 80, tax_included_in_price: false })?.taxIncluded).toBeUndefined()
+    expect(sale({ tax_cents: 80 })?.taxIncluded).toBeUndefined()
   })
 
   it('records USD payouts leaving the balance; failed ones move nothing; other currencies and upcoming are skipped', async () => {

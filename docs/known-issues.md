@@ -10,8 +10,6 @@ Small, understood behaviors we've chosen to leave as they are. Each says why it'
   (tokens are bound to the resource they were issued for); Claude and ChatGPT both send it.
 - **`share_answer` is built but stays off** (`AGFN_MCP_SHARE`). Decided 2026-10-12: no new tools, even after the
   directory reviews close. Sharing stays in the web app's cards.
-- **Stripe App installs: tiered prices are left out of MRR until App v1.0.1** (2026-10-15). Reading a price's tiers
-  (`expand[]=data.price.tiers`) needs the App's `plan_read` permission, which v0.0.2 (in review) doesn't have. Sync
-  doesn't fail: tiered items are left out of MRR with a warning. Restricted keys with Prices read are unaffected.
-  v1.0.1 adds `plan_read` (branch `slice/stripe-app-v101`, not merged) and is submitted right after the current review
-  is approved; installs then grant it on update.
+- **Stripe tiered prices need `plan_read` or Prices read** (updated 2026-11-02). The Stripe App has had `plan_read` since
+  v1.0.1 (published as 1.0.3 on 2026-10-26). A key without that access still syncs: tiered items are left out of MRR
+  with a warning.

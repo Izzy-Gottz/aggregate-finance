@@ -19,13 +19,23 @@ import { createPolarConnector } from '@agfn/connector-polar'
 import { createLemonSqueezyConnector } from '@agfn/connector-lemonsqueezy'
 import { createChargebeeConnector } from '@agfn/connector-chargebee'
 import { createWooCommerceConnector } from '@agfn/connector-woocommerce'
+import { createHarvestConnector } from '@agfn/connector-harvest'
+import { createLightspeedConnector } from '@agfn/connector-lightspeed'
+import { createSumUpConnector } from '@agfn/connector-sumup'
+import { createAdSenseConnector } from '@agfn/connector-adsense'
+import { createYouTubeConnector } from '@agfn/connector-youtube'
+import { createPinterestConnector } from '@agfn/connector-pinterest'
+import { createSquarespaceConnector } from '@agfn/connector-squarespace'
+import { createWixConnector } from '@agfn/connector-wix'
 import { createRevenueCatConnector } from '@agfn/connector-revenuecat'
 import { createAppStoreConnector } from '@agfn/connector-appstore'
 import { createGooglePlayConnector } from '@agfn/connector-googleplay'
 import { createGumroadConnector } from '@agfn/connector-gumroad'
+import { createPatreonConnector } from '@agfn/connector-patreon'
 import { createDemoConnector } from '@agfn/connector-demo'
 import { createQuickBooksConnector } from '@agfn/connector-quickbooks'
 import { createXeroConnector } from '@agfn/connector-xero'
+import { createFreshBooksConnector } from '@agfn/connector-freshbooks'
 import { createCartaConnector } from '@agfn/connector-carta'
 import { createWefunderConnector } from '@agfn/connector-wefunder'
 import { createCoinbaseConnector } from '@agfn/connector-coinbase'
@@ -124,7 +134,7 @@ const deelEnvironment = (env: Env): ConnectField =>
 
 export { FINCH_PRODUCTS } from '@agfn/connector-finch'
 
-/** QuickBooks, Xero, Finch, Justworks and Carta: each appears only when its OAuth app keys are set. */
+/** QuickBooks, Xero, FreshBooks, Finch, Justworks and Carta: each appears only when its OAuth app keys are set. */
 function oauthConnectors(env: Env): Array<[string, ConnectorFactory | undefined]> {
   const qb = env.QUICKBOOKS_CLIENT_ID && env.QUICKBOOKS_CLIENT_SECRET ? { clientId: env.QUICKBOOKS_CLIENT_ID, clientSecret: env.QUICKBOOKS_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'quickbooks') } : undefined
   // Intuit's development keys only work against sandbox companies, so production must be asked for by name.
@@ -132,6 +142,7 @@ function oauthConnectors(env: Env): Array<[string, ConnectorFactory | undefined]
   const xero = env.XERO_CLIENT_ID && env.XERO_CLIENT_SECRET
     ? { clientId: env.XERO_CLIENT_ID, clientSecret: env.XERO_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'xero'), ...(env.XERO_SCOPES ? { scopes: env.XERO_SCOPES.split(/[\s,]+/).filter(Boolean) } : {}) }
     : undefined
+  const freshbooks = env.FRESHBOOKS_CLIENT_ID && env.FRESHBOOKS_CLIENT_SECRET ? { clientId: env.FRESHBOOKS_CLIENT_ID, clientSecret: env.FRESHBOOKS_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'freshbooks') } : undefined
   const finch = env.FINCH_CLIENT_ID && env.FINCH_CLIENT_SECRET ? { clientId: env.FINCH_CLIENT_ID, clientSecret: env.FINCH_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'finch') } : undefined
   const carta = env.CARTA_CLIENT_ID && env.CARTA_CLIENT_SECRET ? { clientId: env.CARTA_CLIENT_ID, clientSecret: env.CARTA_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'carta') } : undefined
   const wefunder = env.WEFUNDER_CLIENT_ID && env.WEFUNDER_CLIENT_SECRET ? { clientId: env.WEFUNDER_CLIENT_ID, clientSecret: env.WEFUNDER_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'wefunder') } : undefined
@@ -148,6 +159,10 @@ function oauthConnectors(env: Env): Array<[string, ConnectorFactory | undefined]
     ],
     ['xero', xero && ((deps) => {
       const c = createXeroConnector({ deps, oauth: xero, ...(env.XERO_WEBHOOK_KEY ? { webhookKey: env.XERO_WEBHOOK_KEY } : {}) })
+      return withBegin(c, (state) => ({ kind: 'oauth', url: c.authorizationUrl(state) }))
+    })],
+    ['freshbooks', freshbooks && ((deps) => {
+      const c = createFreshBooksConnector({ deps, oauth: freshbooks })
       return withBegin(c, (state) => ({ kind: 'oauth', url: c.authorizationUrl(state) }))
     })],
     // Finch Connect sessions (the connector's begin); FINCH_SANDBOX=1 opens Finch's own test payroll systems.
@@ -296,6 +311,25 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
   // WooCommerce: a Read key on the store's own address, for sales reported by the store (never posted). Hosted refuses a
   // key it can't show is Read only, and holds it back until it's run on a real store (config.ts).
   add('woocommerce', (deps) => createWooCommerceConnector(env.AGFN_HOSTED === '1' ? { hosted: true } : {}, deps))
+  // Harvest: sign-in first, once Aggregate's app is set. Harvest has no read-only scope, so the connector's client refuses
+  // anything but GET. Only self-hosters may paste a personal token; hosted waits for the app, then for config.ts.
+  const harvestOAuth = env.HARVEST_CLIENT_ID && env.HARVEST_CLIENT_SECRET ? { clientId: env.HARVEST_CLIENT_ID, clientSecret: env.HARVEST_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'harvest') } : undefined
+  if (harvestOAuth || env.AGFN_HOSTED !== '1') {
+    add('harvest', (deps) => createHarvestConnector({ ...(harvestOAuth ? { oauth: harvestOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }, deps))
+  }
+
+  // Lightspeed Retail X-Series: sign-in first, once Aggregate's app is set (read scopes only). Only self-hosters may paste a
+  // personal token; hosted waits for the app, then for config.ts.
+  const lightspeedOAuth = env.LIGHTSPEED_CLIENT_ID && env.LIGHTSPEED_CLIENT_SECRET ? { clientId: env.LIGHTSPEED_CLIENT_ID, clientSecret: env.LIGHTSPEED_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'lightspeed') } : undefined
+  if (lightspeedOAuth || env.AGFN_HOSTED !== '1') {
+    add('lightspeed', (deps) => createLightspeedConnector({ ...(lightspeedOAuth ? { oauth: lightspeedOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }, deps))
+  }
+  // SumUp: sign-in first, once Aggregate's app is set (read scopes only, always sent). Only self-hosters may paste an API key,
+  // which has full access, so the connector's client refuses anything but GET; hosted waits for the app, then for config.ts.
+  const sumupOAuth = env.SUMUP_CLIENT_ID && env.SUMUP_CLIENT_SECRET ? { clientId: env.SUMUP_CLIENT_ID, clientSecret: env.SUMUP_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'sumup') } : undefined
+  if (sumupOAuth || env.AGFN_HOSTED !== '1') {
+    add('sumup', (deps) => createSumUpConnector({ ...(sumupOAuth ? { oauth: sumupOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }, deps))
+  }
   // RevenueCat: a read-only key (subscriptions only, for MRR and churn). Hosted holds it back until it's run on a real project (config.ts).
   add('revenuecat', (deps) => createRevenueCatConnector({}, deps))
   // Expensify's partner credentials act as the person with the whole API (writes included): self-hosted only, like
@@ -370,12 +404,33 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
   if (coinbaseOAuth || env.AGFN_HOSTED !== '1') {
     add('coinbase', (deps) => createCoinbaseConnector({ deps, ...(coinbaseOAuth ? { oauth: coinbaseOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }))
   }
+  // Patreon: sign-in with Aggregate's Patreon client (identity, campaigns, campaigns.members; no names or emails). Without
+  // one, self-hosters paste a Creator's Access Token, and hosted waits for the client.
+  const patreonOAuth = env.PATREON_CLIENT_ID && env.PATREON_CLIENT_SECRET ? { clientId: env.PATREON_CLIENT_ID, clientSecret: env.PATREON_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'patreon') } : undefined
+  if (patreonOAuth || env.AGFN_HOSTED !== '1') {
+    add('patreon', (deps) => createPatreonConnector({ ...(patreonOAuth ? { oauth: patreonOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }, deps))
+  }
   // Gumroad: sign-in with Aggregate's Gumroad app (view_sales + view_payouts, read-only). A token generated on the
   // seller's own Gumroad application carries every scope, so only self-hosters get that, and hosted waits for the app.
   const gumroadOAuth = env.GUMROAD_CLIENT_ID && env.GUMROAD_CLIENT_SECRET ? { clientId: env.GUMROAD_CLIENT_ID, clientSecret: env.GUMROAD_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'gumroad') } : undefined
   if (gumroadOAuth || env.AGFN_HOSTED !== '1') {
     add('gumroad', (deps) => createGumroadConnector({ deps, ...(gumroadOAuth ? { oauth: gumroadOAuth } : {}), ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}) }))
   }
+  // AdSense: Google sign-in with Aggregate's app and the one read-only scope. There's no key to paste, so no app means no connector.
+  const adsenseOAuth = env.ADSENSE_CLIENT_ID && env.ADSENSE_CLIENT_SECRET ? { clientId: env.ADSENSE_CLIENT_ID, clientSecret: env.ADSENSE_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'adsense') } : undefined
+  if (adsenseOAuth) add('adsense', (deps) => createAdSenseConnector({ oauth: adsenseOAuth }, deps))
+  // YouTube: Google sign-in with Aggregate's app and two read-only scopes. There's no key to paste, so no app means no connector.
+  const youtubeOAuth = env.YOUTUBE_CLIENT_ID && env.YOUTUBE_CLIENT_SECRET ? { clientId: env.YOUTUBE_CLIENT_ID, clientSecret: env.YOUTUBE_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'youtube') } : undefined
+  if (youtubeOAuth) add('youtube', (deps) => createYouTubeConnector({ oauth: youtubeOAuth }, deps))
+  // Pinterest: sign-in with Aggregate's app and the one read-only scope. There's no key to paste, so no app means no connector.
+  const pinterestOAuth = env.PINTEREST_CLIENT_ID && env.PINTEREST_CLIENT_SECRET ? { clientId: env.PINTEREST_CLIENT_ID, clientSecret: env.PINTEREST_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'pinterest') } : undefined
+  if (pinterestOAuth) add('pinterest', (deps) => createPinterestConnector({ oauth: pinterestOAuth }, deps))
+  // Squarespace: sign-in with Aggregate's app and the one read-only permission. Nothing shows what a site's API key can write, so keys aren't taken and no app means no connector.
+  const squarespaceOAuth = env.SQUARESPACE_CLIENT_ID && env.SQUARESPACE_CLIENT_SECRET ? { clientId: env.SQUARESPACE_CLIENT_ID, clientSecret: env.SQUARESPACE_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'squarespace') } : undefined
+  if (squarespaceOAuth) add('squarespace', (deps) => createSquarespaceConnector({ oauth: squarespaceOAuth }, deps))
+  // Wix: the site owner installs Aggregate's app. Keys aren't open to third-party apps, so no app means no connector.
+  const wixApp = env.WIX_CLIENT_ID && env.WIX_CLIENT_SECRET ? { clientId: env.WIX_CLIENT_ID, clientSecret: env.WIX_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'wix'), ...(env.WIX_SHARE_URL_ID ? { shareUrlId: env.WIX_SHARE_URL_ID } : {}) } : undefined
+  if (wixApp) add('wix', (deps) => createWixConnector({ app: wixApp }, deps))
   add('appstore', (deps) => createAppStoreConnector({}, deps))
   add('googleplay', (deps) => createGooglePlayConnector({}, deps))
   // Demo data: always installed so a demo workspace can sync; the server refuses it outside demo workspaces.

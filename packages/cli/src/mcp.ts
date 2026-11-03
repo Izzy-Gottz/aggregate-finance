@@ -11,7 +11,9 @@ import { looksLikeAgentKey } from '@agfn/mcp/keys'
 import { runBridge } from '@agfn/mcp/stdio'
 import { UsageError, flagString, parseArgs, rejectUnknown, type Io } from './io.ts'
 
-export const MCP_USAGE = 'usage: agfn mcp --url https://you.example/mcp   (key in AGFN_KEY, or --key-file <path>)'
+export const MCP_USAGE = `usage: agfn mcp --url https://you.example/mcp   (key in AGFN_KEY, or --key-file <path>)
+Using Claude or ChatGPT? Add https://app.aggregate.finance/mcp as a connector: you sign in, no key needed.
+Other AI apps on this machine: npx aggregate-finance setup`
 
 export interface McpDeps {
   bridge: (opts: { url: string; key: string }) => Promise<unknown>

@@ -129,7 +129,7 @@ describe('directory review rehearsal', () => {
     const health = await tool('get_metric', { metric: 'data_health' })
     expect(ws.health?.line).toBeTruthy()
     expect(health.sc.line).toBe(ws.health!.line)
-    expect(health.sc.value).toBe(ws.health!.line === 'All reconciled' ? 0 : Number(/^(\d+) thing/.exec(ws.health!.line)![1]))
+    expect(health.sc.value).toBe(Number(/^(\d+) thing/.exec(ws.health!.line)?.[1] ?? 0))
     expect(health.text).toContain(ws.health!.line)
     // Money in summaries reads like the app: "$756,470.81"; data keeps the plain decimal.
     expect(overview.text).toMatch(/cash \$[\d,]+\.\d{2}/)

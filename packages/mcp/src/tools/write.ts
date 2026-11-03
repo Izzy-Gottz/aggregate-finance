@@ -247,7 +247,7 @@ const addEntry = defineTool({
   rest: { method: 'POST', path: '/v1/entries' },
   async run(ctx, args) {
     const entity = await oneEntity(ctx, args.company, 'transactions')
-    await requireVisible(ctx, { accounts: [args.account_id, args.to_account_id], buckets: [args.bucket_id] })
+    await requireVisible(ctx, { accounts: [args.account_id === 'cash_on_hand' ? undefined : args.account_id, args.to_account_id], buckets: [args.bucket_id] })
     const money = toMinor(args.amount)
     if (args.kind === 'transfer' && (!args.account_id || !args.to_account_id)) throw new ToolError('invalid', 'A transfer needs account_id and to_account_id.', 'Ask the user which two accounts; use list_accounts for ids.')
     if (args.kind === 'transfer' && args.account_id === args.to_account_id) throw new ToolError('invalid', 'A transfer needs two different accounts.')

@@ -1,0 +1,15 @@
+{
+  "_note": "Hand-built from Google's API reference, not recorded from a real account.",
+  "channels": {
+    "kind": "youtube#channelListResponse",
+    "items": [{ "kind": "youtube#channel", "id": "UCaaaaaaaaaaaaaaaaaaaaaa", "snippet": { "title": "Sample Channel", "description": "NOT-READ" } }]
+  },
+  "report": {
+    "kind": "youtubeAnalytics#resultTable",
+    "columnHeaders": [
+      { "name": "month", "columnType": "DIMENSION", "dataType": "STRING" },
+      { "name": "estimatedRevenue", "columnType": "METRIC", "dataType": "FLOAT" }
+    ],
+    "rows": [["2026-08", 120.104], ["2026-09", 0.0], ["2026-10", 34.556]]
+  }
+}

@@ -373,7 +373,7 @@ describe('Filling the demo', () => {
     const c = api.s.connections.find((x) => x.entityNames.length)!
     c.status = 'syncing'
     start(api, '#/')
-    expect(await screen.findByRole('button', { name: new RegExp(`^${c.entityNames[0]}, .*, updating\\. Open details`) })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: new RegExp(`^${c.entityNames[0]}, updating, .*\\. Open details`) })).toBeTruthy()
     expect(screen.queryByText(/^Filling the demo/)).toBeNull()
   })
 })

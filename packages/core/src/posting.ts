@@ -598,7 +598,10 @@ async function planProcessor(ctx: PlanContext, ev: ProcessorBalanceTxn, view: Ba
     }
     const [role, k]: [string, TxnKind] = ev.balanceRole ? [ev.balanceRole, 'other'] : byKind[ev.kind]
     kind = k
-    lines.push(line(ctx.override?.category ?? role, -gross, cur, { memo, bucketId: ctx.override?.bucketId ?? null }))
+    const tax = (ev.kind === 'charge' || ev.kind === 'refund') && ev.taxIncluded?.currency === cur ? ev.taxIncluded.minor : 0
+    if (Math.abs(tax) > Math.abs(gross) || tax * gross < 0) throw new PostingError(`Processor txn ${ev.externalId}: tax ${tax} outside gross ${gross}`)
+    lines.push(line(ctx.override?.category ?? role, -(gross - tax), cur, { memo, bucketId: ctx.override?.bucketId ?? null }))
+    if (tax) lines.push(line('sales_tax_payable', -tax, cur, { memo }))
   }
   return entries(ctx, date, kind, memo, [{ entityId: ctx.entity.id, lines }])
 }

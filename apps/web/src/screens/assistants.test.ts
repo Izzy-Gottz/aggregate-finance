@@ -56,7 +56,7 @@ describe('the list', () => {
     expect(screen.getByText((_, el) => el?.tagName === 'CODE' && el.textContent === 'claude mcp add --transport http --scope user aggregate https://agfn.example/mcp')).toBeTruthy()
     // A flag never splits at its hyphens on a narrow screen: each word is kept whole.
     expect(screen.getByText('--scope').className).toBe('nowrap')
-    expect(screen.getByText(/from launch day/)).toBeTruthy()
+    expect(screen.queryByText(/from launch day/)).toBeNull()
     for (const name of ['ChatGPT', 'Grok', 'Other apps']) expect(screen.getByRole('button', { name: new RegExp(`^${name}`) })).toBeTruthy()
   })
 })

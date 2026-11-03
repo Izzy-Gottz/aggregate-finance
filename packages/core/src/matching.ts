@@ -187,6 +187,7 @@ function matchPasses(input: MatchInput): { out: Proposal[]; passes: Array<() => 
     () => cashDepositPass(txns, idx, push, acct),
     () => paymentPass(live, txns, idx, push),
     () => processorInvoicePass(live, idx, push),
+    () => bookedRefundPass(live, idx, push),
     () => invoicePass(live, txns, idx, push),
     () => payrollPass(live, txns, idx, push),
     () => equityPass(live, txns, idx, push),
@@ -212,15 +213,17 @@ type Push = (p: Proposal) => void
 function sameAccountPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, push: Push): void {
   const accountOf = (r: SourceRecord): SourceAccountInfo | undefined => (r.sourceAccountId ? input.accounts.get(r.sourceAccountId) : undefined)
   const uploaded = (r: SourceRecord): boolean => Boolean(r.sourceAccountId && input.uploadedAccounts?.has(r.sourceAccountId))
+  // Spending typed in as cash can be the bank's own row arriving later: asked about, like an upload.
+  const typedIn = (r: SourceRecord): boolean => r.origin !== 'connector' && accountOf(r)?.accountType === 'cash_on_hand' && (r.amount?.minor ?? 0) < 0
   const byAccount = new Map<Id, SourceRecord[]>()
   const byEntity = new Map<string, SourceRecord[]>()
   const copies: SourceRecord[] = []
   for (const t of txns) {
     if (!t.sourceAccountId) continue
-    if (accountOf(t)?.duplicateOf || uploaded(t)) copies.push(t)
+    if (accountOf(t)?.duplicateOf || uploaded(t) || typedIn(t)) copies.push(t)
     if (accountOf(t)?.duplicateOf) continue
     byAccount.set(t.sourceAccountId, [...(byAccount.get(t.sourceAccountId) ?? []), t])
-    if (!uploaded(t)) byEntity.set(`${t.entityId}`, [...(byEntity.get(`${t.entityId}`) ?? []), t])
+    if (!uploaded(t) && !typedIn(t)) byEntity.set(`${t.entityId}`, [...(byEntity.get(`${t.entityId}`) ?? []), t])
   }
   if (copies.length === 0) return
   const matched = new Set<Id>()
@@ -235,7 +238,8 @@ function sameAccountPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex
   const declared = (c: SourceRecord): boolean => Boolean(accountOf(c)?.duplicateOf)
   const pool = (c: SourceRecord): SourceRecord[] =>
     (declared(c) ? (byAccount.get(accountOf(c)?.duplicateOf as Id) ?? []) : (byEntity.get(`${c.entityId}`) ?? [])).filter(
-      (p) => p.id !== c.id && !matched.has(p.id) && idx.used(p.id) === 0 && (p.amount as Money).currency === (c.amount as Money).currency,
+      // A primary already linked is fine: a duplicate voids the copy and leaves the primary's links alone.
+      (p) => p.id !== c.id && !matched.has(p.id) && (p.amount as Money).currency === (c.amount as Money).currency,
     )
   const near = (c: SourceRecord, ps: SourceRecord[], days: number): SourceRecord[] =>
     ps
@@ -253,7 +257,7 @@ function sameAccountPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex
       confidence: sure ? confidence : Math.min(confidence, 0.9),
       method: sure ? method : 'fuzzy',
       scores: { pass, days: Math.abs(daysBetween(c.date, p.date)) },
-      reason: sure ? reason : 'an uploaded statement repeats a synced row',
+      reason: sure ? reason : typedIn(c) ? 'an entry repeats a synced row' : 'an uploaded statement repeats a synced row',
     })
   }
   const open = () => copies.filter((c) => !matched.has(c.id) && idx.used(c.id) === 0)
@@ -263,9 +267,9 @@ function sameAccountPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex
     const hit = pool(c).find((p) => (p.amount as Money).minor === (c.amount as Money).minor && refs(p).some((r) => ids.has(r)))
     if (hit) pair(c, hit, 1, 'exact_id', 1, 'the same bank id from two sources for one account')
   }
-  // 2. Amount within 7 days, same payee (both blank counts as the same). Undeclared uploads: same day only.
+  // 2. Amount within 7 days, same payee (both blank counts as the same). Undeclared uploads: 2 days, and only ever proposed.
   for (const c of open()) {
-    const hit = near(c, pool(c), declared(c) ? 7 : 0).find((p) => samePayee(c, p))
+    const hit = near(c, pool(c), declared(c) ? 7 : 2).find((p) => samePayee(c, p))
     if (!hit) continue
     const sameDay = hit.date === c.date
     pair(c, hit, sameDay ? 0.97 : 0.85, sameDay ? 'rule' : 'fuzzy', 2, sameDay ? 'same day, amount and payee from two sources for one account' : 'same amount and payee within a week, from two sources for one account')
@@ -639,7 +643,7 @@ function paymentPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex,
  * A processor charge that pays an invoice from the same provider (Stripe invoices paid by card): settles AR there
  * instead of being revenue a second time. Exact by the invoice id on the charge (linkRefs.invoice); otherwise the
  * one invoice of that connection with the same amount, issued shortly before (several alike: a question). A sale also
- * in other books (QuickBooks, Xero) is proposed by amount and customer name, never confirmed on its own.
+ * in other books (QuickBooks, Xero, FreshBooks) is proposed by amount and customer name, never confirmed on its own.
  */
 function processorInvoicePass(live: SourceRecord[], idx: LinkIndex, push: Push): void {
   const invoices = live.filter((r) => r.event.type === 'invoice.upsert' && r.event.direction === 'receivable' && ['open', 'partially_paid', 'paid', 'disputed'].includes(r.event.status))
@@ -677,6 +681,27 @@ function processorInvoicePass(live: SourceRecord[], idx: LinkIndex, push: Push):
       return remaining(i) === gross.minor && days >= -1 && days <= 45 && nameSimilarity(i.event.counterparty, who) >= SAME_CUSTOMER
     })
     for (const r of [...payments, ...open]) push({ type: 'invoice_payment', fromId: r.id, toId: c.id, amount: gross, confidence: 0.8, method: 'fuzzy', scores: { amount: 1, name: 1 }, reason: 'same amount and customer in your books and your processor' })
+  }
+}
+
+/**
+ * A refund in a processor that the books also recorded as a refund credit note: both take the money off revenue on the
+ * accrual side. Proposed on amount and customer name, never confirmed on its own.
+ */
+function bookedRefundPass(live: SourceRecord[], idx: LinkIndex, push: Push): void {
+  const notes = live.filter((r) => r.event.type === 'credit_note.upsert' && r.event.direction === 'receivable' && r.event.appliedTo === 'refund' && r.event.status !== 'void')
+  if (notes.length === 0) return
+  for (const c of live) {
+    if (c.event.type !== 'processor.balance_txn' || c.event.kind !== 'refund' || idx.used(c.id) > 0 || c.event.gross.minor >= 0) continue
+    const who = c.event.counterparty
+    if (!who) continue
+    const gross = c.event.gross
+    for (const n of notes) {
+      if (n.event.type !== 'credit_note.upsert' || n.connectionId === c.connectionId || n.entityId !== c.entityId || idx.used(n.id) > 0) continue
+      const days = daysBetween(n.event.date, c.date)
+      if (n.event.amount.currency !== gross.currency || Math.abs(n.event.amount.minor) !== -gross.minor || days < -2 || days > 14) continue
+      if (nameSimilarity(n.event.counterparty ?? '', who) >= SAME_CUSTOMER) push({ type: 'refund', fromId: n.id, toId: c.id, amount: money(-gross.minor, gross.currency), confidence: 0.8, method: 'fuzzy', scores: { amount: 1, name: 1 }, reason: 'same amount and customer in your books' })
+    }
   }
 }
 

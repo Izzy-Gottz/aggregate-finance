@@ -23,6 +23,7 @@ function inline(raw: string): string {
   let s = esc(raw)
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>')
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  s = s.replace(/(^|[\s(])\*([^\s*](?:[^*]*[^\s*])?)\*(?=$|[\s).,;:!?])/g, '$1<em>$2</em>')
   s = s.replace(/\[CONFIRM\]/g, '<mark>[CONFIRM]</mark>')
   // One pass for [text](url) and bare URLs, so a link's own href is never re-scanned (a bare URL inside an href would
   // otherwise get a second <a href="…"> written into the attribute and break out of it). URLs never contain " < >.
@@ -240,14 +241,17 @@ export function renderLegal(md: string, fonts: LegalFonts = {}): LegalPage {
 <body><main>
 <div class="top"><a href="/">Aggregate</a><nav><a href="/docs/connectors">Connectors</a><a href="/docs/connect-your-ai">Connect your AI</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
 ${draft ? '<div class="draft" role="note"><strong>Draft — not yet in effect.</strong> This page is being reviewed and may change.</div>' : ''}
-${meta.updated ? `<div class="updated">Last updated ${esc(meta.updated)}</div>` : ''}
+${meta.updated ? `<div class="updated">Last updated ${esc(shownDate(meta.updated))}</div>` : ''}
 ${renderMarkdown(body)}
+<p style="margin-top:40px;font-size:12px;color:#74736E">© 2026 Aggregate Finance LLC</p>
 </main></body></html>`
   return { title, draft, html }
 }
 
+const shownDate = (date: string) => (/^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : date)
+
 const updatedLine = (date: string) => {
-  const shown = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+  const shown = shownDate(date)
   return `<p class="dupdated" itemscope itemtype="https://schema.org/TechArticle">Last updated <time itemprop="dateModified" datetime="${date}">${shown}</time></p>`
 }
 

@@ -58,7 +58,7 @@ export async function retireDeleted(s: Deps, ws: string, connectionId: string): 
  * Developer Terms 8.2(f), within 30 days of a disconnect): on disconnect everything the connection brought is deleted,
  * not just retired. Raw payloads too (the route).
  */
-export const ERASE_ON_DISCONNECT: ReadonlySet<string> = new Set(['wefunder', 'quickbooks'])
+export const ERASE_ON_DISCONNECT: ReadonlySet<string> = new Set(['wefunder', 'quickbooks', 'freshbooks', 'squarespace', 'youtube', 'pinterest'])
 
 /** Shown in the activity log when a store uninstalls the Shopify app. */
 export const SHOPIFY_ERASE_WARNING =

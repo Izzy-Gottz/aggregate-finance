@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Invite someone (their own account) and Add a teammate (this workspace) stay two different things.
-import { fireEvent, render, screen, waitFor } from '@testing-library/preact'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/preact'
 import { describe, expect, it } from 'vitest'
 import { HttpError } from '../api/http.ts'
 import { MockApi } from '../api/mock.ts'
@@ -63,11 +63,14 @@ describe('Invite someone', () => {
     expect((await screen.findByRole('alert')).textContent).toBe('That’s 10 invites today. You can send more tomorrow.')
   })
 
-  it('the Workspace page offers it, and the member invite is called Add a teammate', async () => {
+  it('the sidebar offers it once; Add a teammate sits on the Workspace page', async () => {
     const api = new MockApi()
     api.s.me.demo = false
     start(api, '#/')
-    await screen.findByRole('button', { name: /Invite someone/ })
-    expect(screen.getAllByRole('button', { name: /Add a teammate/ }).length).toBeGreaterThan(0)
+    const nav = await screen.findByRole('navigation', { name: 'Main' })
+    expect(within(nav).getAllByRole('button', { name: /Invite someone/ })).toHaveLength(1)
+    expect(within(nav).queryByRole('button', { name: /Add a teammate/ })).toBeNull()
+    expect(screen.queryAllByRole('button', { name: /Invite someone/ })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: /Add a teammate/ })).toHaveLength(1)
   })
 })

@@ -43,7 +43,7 @@ burning cash; zero or below means it isn't burning ("not burning").
 Never in burn, either way: transfers between your own accounts, credit card payments (the purchases were already counted
 when you swiped), processor payouts, owner money, investor money, loan principal and sales tax paid over to the state.
 
-The overview shows net burn as a **monthly average over the last three complete months**. The month you're in isn't
+The overview shows net burn as a **monthly average over the last three complete months**. If your records start part-way through a month, that month is left out of the average. If one account's records start later than the rest, the answer says so. The month you're in isn't
 counted, because a half month would understate it.
 
 Code: `burnMetric` and `flows` in
@@ -54,6 +54,7 @@ Code: `burnMetric` and `flows` in
 **Cash ÷ average monthly net burn over the last three complete months**, cash basis. Shown in months, to one decimal,
 with the approximate date the cash would run out.
 
+- **Partial first month:** a first month that starts after the 1st is left out, as it is for burn.
 - **Not enough history:** with fewer than two complete months of transactions, runway is "not enough history", not a
   guess.
 - **Not burning:** if average net burn is zero or less, runway is "not burning", not infinity.
@@ -67,7 +68,7 @@ Code: `runwayMetric` in
 ## Revenue
 
 **Cash basis:** money in from customers in the period. Processor charges count at the gross amount the customer paid,
-minus refunds. Bank deposits count when they're categorized as revenue. Processor fees are a separate expense
+minus refunds, and a charge with no invoice can include the sales tax in it, because the processor's row doesn't split it out. Bank deposits count when they're categorized as revenue. Processor fees are a separate expense
 ("Processor fees"), so revenue is *gross* of fees. That's why it adds up to more than the payouts you see at the bank.
 
 **Accrual basis:** invoiced revenue recognized by issue date, minus credit notes and refunds, net of sales tax. It's
@@ -88,7 +89,7 @@ Code: `revenueMetric` in
 - **Investor money:** SAFEs, convertible notes and share purchases go to equity (SAFEs, convertible notes, paid-in
   capital) and wait in "investment money in transit" until the wire is seen at the bank.
 - **Refunds:** a refund you *receive* from a vendor reduces that expense. A refund you *give* a customer reduces revenue.
-- **Sales tax collected:** owed to the state, not yours.
+- **Sales tax collected:** owed to the state, not yours. One exception: tax inside a Shopify, Stripe, Square or Gumroad sale with no invoice stays in revenue, because those rows don't split it out, and the answer says how many sales that covers.
 - **Interest and other income:** counted as money in for net burn, but not as revenue.
 - **Money nobody has explained yet:** a deposit Aggregate can't place is held as "What is this money?" and asked about.
   It isn't guessed into revenue.
@@ -150,9 +151,10 @@ aging in `searchInvoices`,
 ## "All reconciled"
 
 The Workspace shows **All reconciled** only when nothing below is outstanding. Otherwise it counts what is, for example
-"3 things need a look: 2 to review, 1 balance doesn't match".
+"3 things need a look: 2 to review, 1 balance doesn't match". An account with one balance or none has nothing to compare
+yet, so the line says "Reconciled except 1 account not tied out yet" until a second balance or a statement arrives.
 
-- **Every balance matches.** For each account, the change in the bank's reported balance between two days equals the
+- **Every balance matches.** For each bank, card and processor account, the change in the bank's reported balance between two days equals the
   sum of the transactions posted between them, to the cent. The newest day can lag a day while the bank settles; that
   only warns.
 - **The ledger balances.** Every journal entry's debits equal its credits.

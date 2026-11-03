@@ -96,17 +96,27 @@ export function balanceRoleForEventCode(code: string): ProcessorBalanceTxn['bala
   return undefined
 }
 
-/** Denied rows (status D) never moved money, and display-only rows (T98xx) don't touch the balance; we skip them. Returns undefined for rows without an amount. */
+/**
+ * Denied rows (status D) never moved money, pending ones (P) haven't yet, and display-only rows (T98xx) don't touch the
+ * balance; we skip them. A pending row keeps its id when it completes, inside the connector's re-read. Returns undefined
+ * for rows without an amount.
+ */
 export function mapTxn(d: PayPalTransactionDetail, accountId: string, connectionId: string, rawRef: string): ProcessorBalanceTxn | undefined {
   const t = d.transaction_info
-  if (!t.transaction_amount || t.transaction_status === 'D' || t.transaction_event_code?.startsWith('T98')) return undefined
+  if (!t.transaction_amount || t.transaction_status === 'D' || t.transaction_status === 'P' || t.transaction_event_code?.startsWith('T98')) return undefined
   const cur = normalizeCurrency(t.transaction_amount.currency_code)
   const gross = money(t.transaction_amount.value, cur)
   const feeRaw = t.fee_amount ? money(t.fee_amount.value, cur) : { minor: 0, currency: cur }
   const fee: Money = { minor: feeRaw.minor === 0 ? 0 : -feeRaw.minor, currency: cur }
   const net: Money = { minor: gross.minor - fee.minor, currency: cur }
-  const kind = kindForEventCode(t.transaction_event_code)
+  // T00xx is money received or sent. Sent isn't negative revenue; T0015 and T0016 are payouts and recoupments.
+  const code = t.transaction_event_code ?? ''
+  const outgoing = code.startsWith('T00') && (gross.minor < 0 || code === 'T0015' || code === 'T0016')
+  const kind = outgoing ? 'other' : kindForEventCode(code)
   const role = balanceRoleForEventCode(t.transaction_event_code ?? '')
+  // Only what PayPal states, and only on a sale or refund inside the gross.
+  const taxMinor = (kind === 'charge' || kind === 'refund') && t.sales_tax_amount && t.tax_inclusive !== false && t.sales_tax_amount.currency_code === t.transaction_amount.currency_code ? Math.abs(money(t.sales_tax_amount.value, cur).minor) : 0
+  const taxIncluded = taxMinor && taxMinor <= Math.abs(gross.minor) ? { minor: gross.minor < 0 ? -taxMinor : taxMinor, currency: cur } : undefined
   const at = isoTimestamp(t.transaction_initiation_date ?? t.transaction_updated_date ?? '')
   const customer = kind === 'charge' || kind === 'refund' || kind === 'dispute' ? payerName(d.payer_info) : undefined
   return {
@@ -125,6 +135,7 @@ export function mapTxn(d: PayPalTransactionDetail, accountId: string, connection
     ...(t.paypal_reference_id && t.paypal_reference_id !== t.transaction_id ? { sourceExternalId: t.paypal_reference_id } : {}),
     ...(customer ? { customer } : {}),
     ...(role ? { balanceRole: role } : {}),
+    ...(taxIncluded ? { taxIncluded } : {}),
   }
 }
 

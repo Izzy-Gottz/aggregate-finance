@@ -50,6 +50,14 @@ identify services you can connect. No endorsement implied." In US law, using a l
 | Brex | Prior written approval (§5.1). | [Developer terms](https://www.brex.com/legal/developer-portal) |
 | Gumroad | Marks need permission (§13.2). | [Terms](https://gumroad.com/terms) |
 | Wise | Prior written consent (§11.4). | [API terms](https://wise.com/us/legal/send-money-api) |
+| Harvest | No logo grant for integrators found; letter tile until terms are checked. | [Terms](https://www.getharvest.com/terms) |
+| Squarespace | Its Developer Terms don't grant an integrator its logo for this use. Letter tile. | [Developer Terms](https://www.squarespace.com/developer-terms) |
+| YouTube | The API Services terms don't grant an integrator its logo for this use. Letter tile. | [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service) |
+| Pinterest Ads | Publicity needs Pinterest's permission and the Brand guidelines weren't read. Letter tile. | Pinterest developer guidelines |
+| Wix | No logo licence for this use is confirmed. Letter tile. | [Terms of Use](https://www.wix.com/about/terms-of-use) |
+| Google AdSense | Google's API terms don't grant an integrator its logo for this use. Letter tile. | [Google APIs Terms](https://developers.google.com/terms) |
+| SumUp | API terms read for the licence only; no logo grant for integrators found. Letter tile until terms are checked. | [API terms](https://www.sumup.com/en-gb/terms/api/) |
+| Lightspeed | No logo grant for integrators found; letter tile until terms are checked. | [API terms](https://developers.lightspeedhq.com/terms) |
 | Banks | Plaid doesn't own bank logos from `/institutions/get`, and we'd need each bank's permission. | [Plaid docs](https://plaid.com/docs/api/institutions/) |
 
 Statement files keep the document icon.

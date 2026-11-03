@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { AccountUpsert, BalanceSnapshot, ConnectionRef, NormalizedEvent, TxnUpsert } from '@agfn/contracts'
 import { ConnectorError, MemoryRawSink, runSync } from '@agfn/connector-sdk'
+import { splitHeader } from './csv.ts'
 import { assertRedacted, assertValidEvents, runConnectorContract } from '@agfn/connector-sdk/testing'
 import {
   FILE_ACCEPT,
@@ -582,6 +583,8 @@ describe('dates', () => {
     ['5.1.26', 'D.M.YY', '2026-01-05'],
     ['05 Jan 2026', 'DD MMM YYYY', '2026-01-05'],
     ['05-Mär-2026', 'DD MMM YYYY', '2026-03-05'],
+    ['Jan 14, 2026', 'MMM D, YYYY', '2026-01-14'],
+    ['September 3, 2026', 'MMM D, YYYY', '2026-09-03'],
     ['31.02.2026', 'DD.MM.YYYY', undefined],
     ['13/01/2026', 'MM/DD/YYYY', undefined],
   ] as const)('%s as %s', (raw, fmt, want) => {
@@ -986,5 +989,26 @@ describe('an ambiguous CSV asks one question at a time', () => {
     expect('mapping' in plan).toBe(true)
     const r = await importFile(card1, 'c.csv', card({ mapping: 'mapping' in plan ? plan.mapping : undefined }))
     expect(txns(r.events).map((t) => t.amount.minor)).toEqual([-1200, -450])
+  })
+})
+
+describe('earnings and wallet exports', () => {
+  const plan = (text: string) => {
+    const table = parseCsv(text)
+    const { headers, data } = splitHeader(table, {})
+    const s = suggestMapping(headers, data.slice(0, 50).map((r) => r.cells))
+    return { s, rows: s.mapping ? csvRows(table, s.mapping, 'USD').rows : [] }
+  }
+
+  it('reads a Datetime column, spaced signs and a title line above the header', () => {
+    const { s, rows } = plan('Account Statement,,,\nID,Datetime,Note,Amount (total)\n1,2026-01-14T18:22:01,Lunch,+ $25.00\n2,2026-01-15T09:00:00,Rent,- $40.00\n')
+    expect(s.mapping?.dateFormat).toBe('YYYY-MM-DD')
+    expect(rows.map((r) => [r.date, r.amount.minor])).toEqual([['2026-01-14', 2_500], ['2026-01-15', -4_000]])
+  })
+
+  it('reads dates written out with the month first', () => {
+    const { s, rows } = plan('Date,Description,Amount\n"Jan 14, 2026",Earnings,120.50\n"Feb 2, 2026",Service fee,-12.05\n')
+    expect(s.mapping?.dateFormat).toBe('MMM D, YYYY')
+    expect(rows.map((r) => r.date)).toEqual(['2026-01-14', '2026-02-02'])
   })
 })

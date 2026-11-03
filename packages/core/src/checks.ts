@@ -149,14 +149,22 @@ async function balanceIdentity(rc: ReadContext, entities: EntityInfo[], asOf: Is
   const ids = new Set(entities.map((e) => e.id))
   // Points or crypto with no ISO code are never posted, so there are no rows to check its balance against. A brokerage
   // balance includes the market value of its holdings, which no posted row explains: holdings carry their own values.
+  // A loan's balance grows by interest the same way, and many lenders send no rows at all.
   const accounts = (await rc.directory.listSourceAccounts(rc.ws)).filter(
-    (a) => a.entityId && ids.has(a.entityId) && !a.duplicateOf && a.currency !== NOT_MONEY && a.accountType !== 'investment',
+    (a) => a.entityId && ids.has(a.entityId) && !a.duplicateOf && a.currency !== NOT_MONEY && a.accountType !== 'investment' && a.accountType !== 'loan',
   )
+  const pinned = new Set((await rc.store.listAssertions(rc.ws, accounts.map((a) => a.id))).map((x) => x.accountId))
   for (const acc of accounts) {
     const snaps = latestPerDay(
       (await snapshotsOf(rc, acc.id)).filter((r) => r.date <= asOf),
     )
-    if (snaps.length === 0) continue
+    if (snaps.length === 0) {
+      // A bank or card with rows and no balance at all: its figure is only the ledger's. Processors never send one.
+      if ((acc.accountType === 'depository' || acc.accountType === 'credit_card') && !pinned.has(acc.id) && (await rc.store.listRecords(rc.ws, { sourceAccountId: acc.id, eventTypes: ['txn.upsert'], statuses: ['posted'], limit: 1 })).length) {
+        out.push({ name: 'balance_identity', status: 'warn', entityId: acc.entityId, subjectId: acc.id, expectedMinor: null, actualMinor: null, differenceMinor: null, currency: acc.currency, message: `${acc.name}: not tied out yet, it has no balance to compare with` })
+      }
+      continue
+    }
     const ledger = await ledgerAccountFor(rc, acc.entityId as EntityId, cashRole(acc.id, acc.accountType))
     const lines = ledger ? await walkedLines(rc, ledger.id, asOf) : []
     const cur = snapCurrent(snaps[0] as SourceRecord).currency
@@ -246,6 +254,9 @@ async function balanceIdentity(rc: ReadContext, entities: EntityInfo[], asOf: Is
         currency: cur,
         message: `${acc.name}: provider says ${formatMoney(snapCurrent(last).minor, cur)}, the ledger says ${formatMoney(balanceAt(last), cur)} on ${last.date}`,
       })
+    } else if (snaps.length === 1 && !pinned.has(acc.id)) {
+      // The opening balance is worked out from this one snapshot, so it matches by construction. That proves nothing yet.
+      out.push({ name: 'balance_identity', status: 'warn', entityId: acc.entityId, subjectId: acc.id, expectedMinor: null, actualMinor: null, differenceMinor: null, currency: cur, message: `${acc.name}: not tied out yet, it needs a second balance or a statement to compare` })
     } else {
       out.push(ok('balance_identity', acc.entityId, `${acc.name}: matches the provider balance`, acc.id))
     }
@@ -527,10 +538,10 @@ async function clearingAndSuspense(rc: ReadContext, entities: EntityInfo[], asOf
 }
 
 
-const PROVIDER_NAMES: Record<string, string> = { quickbooks: 'QuickBooks', xero: 'Xero' }
+const PROVIDER_NAMES: Record<string, string> = { quickbooks: 'QuickBooks', xero: 'Xero', freshbooks: 'FreshBooks' }
 
-/** Sales a store reports, stored as report snapshots: not a company's books, so never compared with the ledger's P&L. */
-const NOT_BOOKS = new Set(['woocommerce'])
+/** Figures a store or invoicing tool reports, stored as report snapshots: not a company's books, so never compared with the ledger's P&L. */
+const NOT_BOOKS = new Set(['woocommerce', 'harvest', 'lightspeed', 'sumup', 'adsense', 'youtube', 'pinterest', 'squarespace', 'wix'])
 
 /** Records that put amounts on a P&L outside bank feeds (books, billing and payroll sources). */
 const BOOKED_TYPES = ['invoice.upsert', 'credit_note.upsert', 'payment.applied', 'payroll.run', 'journal.upsert', 'equity.event']
@@ -659,8 +670,9 @@ async function providerReports(rc: ReadContext, entities: EntityInfo[], asOf: Is
     const recent = await rc.store.listRecords(rc.ws, { entityIds: [e.id], statuses: ['posted'], fromDate: addDays(ev.from, -400), toDate: ev.to, eventTypes: BOOKED_TYPES })
     const mine = recent.filter((x) => x.connectionId === r.connectionId).map((x) => x.id)
     if (ev.basis === 'cash' && recent.some((x) => x.connectionId !== r.connectionId)) continue
-    const pnl = await profitAndLoss(rc, { entityIds: [e.id], from: ev.from, to: ev.to, basis: ev.basis, ...(ev.basis === 'accrual' ? { sourceIds: mine } : {}) })
-    const ourMinor = (await rc.toCurrency(pnl.netIncome, e.baseCurrency, ev.to)).minor
+    // In the company's own currency, as the provider reports it: no rate to disagree on.
+    const pnl = await profitAndLoss(rc, { entityIds: [e.id], from: ev.from, to: ev.to, basis: ev.basis, currency: e.baseCurrency, ...(ev.basis === 'accrual' ? { sourceIds: mine } : {}) })
+    const ourMinor = pnl.netIncome.minor
     const diff = theirs.minor - ourMinor
     const fmt = (m: number) => formatMoney(m, e.baseCurrency)
     const where = providerName(conns.get(r.connectionId))

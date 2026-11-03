@@ -12,6 +12,25 @@ import { connectProvider, entities, signIn, startServer } from './harness.ts'
 const usd = (m: number) => ({ minor: m, currency: 'USD' })
 
 describe('scenario 11: card and loan terms, investment holdings', () => {
+  it('positions from an evening sync belong to the workspace\'s own day', async () => {
+    const srv = await startServer()
+    try {
+      const s = await signIn(srv, 'founder11b@example.com', 'Acme')
+      const E = await entities(s)
+      await withBypass('test:zone', () => (srv.booted.services.db as never as { updateTable(t: string): { set(v: object): { where(a: string, b: string, c: string): { execute(): Promise<unknown> } } } }).updateTable('workspaces').set({ time_zone: 'America/New_York' }).where('id', '=', s.workspaceId).execute())
+      const bank = await connectProvider(srv, s, 'plaid', { entityId: E.Acme, name: 'Chase' })
+      bank.push((c) => [
+        { type: 'account.upsert', externalId: 'brk', connectionId: c, name: 'Acme Brokerage', accountType: 'investment', currency: 'USD', institution: 'Chase' },
+        { type: 'balance.snapshot', externalId: 'brk@1', connectionId: c, accountExternalId: 'brk', at: '2026-10-10T01:00:00Z', current: usd(72_500), holdings: [{ securityExternalId: 'sec_vti', ticker: 'VTI', name: 'VTI', quantity: '2.5', value: usd(72_500) }] },
+      ] as NormalizedEvent[])
+      expect((await bank.sync()).status).toBe('ok')
+      const held = await withWorkspace(s.workspaceId, () => financeFor(srv.booted.services).reader.holdings!({ workspaceId: s.workspaceId, entityIds: [E.Acme!] }, { asOf: '2026-10-09' }))
+      expect(held.map((h) => [h.ticker, h.asOf])).toEqual([['VTI', '2026-10-09']])
+    } finally {
+      await srv.close()
+    }
+  })
+
   it('terms and positions stored from sync, payments due counted once, updates in place', async () => {
     const srv = await startServer()
     try {
@@ -32,6 +51,7 @@ describe('scenario 11: card and loan terms, investment holdings', () => {
         page(c, [
           { type: 'account.upsert', externalId: 'chk', name: 'Acme Checking', accountType: 'depository', currency: 'USD', institution: 'Chase' },
           card(3_500, '24.9'),
+          { type: 'account.upsert', externalId: 'blank', name: 'Acme Mercury Card', accountType: 'credit_card', currency: 'USD', institution: 'Mercury', liability: { kind: 'credit' } },
           { type: 'account.upsert', externalId: 'loan', name: 'Acme Student Loan', accountType: 'loan', currency: 'USD', institution: 'Navient', liability: { kind: 'student', apr: '5.25', minimumPayment: usd(25_000), nextPaymentDueDate: '2026-10-28', originationPrincipal: usd(4_000_000), maturityDate: '2032-06-01' } },
           { type: 'account.upsert', externalId: 'brk', name: 'Acme Brokerage', accountType: 'investment', currency: 'USD', institution: 'Chase' },
           { type: 'balance.snapshot', externalId: 'chk@1', accountExternalId: 'chk', at: '2026-10-09T08:00:00Z', current: usd(5_000_000) },
@@ -48,6 +68,7 @@ describe('scenario 11: card and loan terms, investment holdings', () => {
       const asWs = <T>(f: () => Promise<T>) => withWorkspace(s.workspaceId, f)
 
       const terms = await asWs(() => reader.liabilities!(scope))
+      expect(terms.map((t) => t.accountName)).not.toContain('Acme Mercury Card')
       expect(terms.map((t) => [t.accountName, t.kind, t.apr, t.minimumPayment?.minor, t.nextPaymentDueDate])).toEqual([
         ['Acme Card', 'credit', '24.9', 3_500, '2026-10-14'],
         ['Acme Student Loan', 'student', '5.25', 25_000, '2026-10-28'],

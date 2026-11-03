@@ -85,7 +85,7 @@ Plaid transactions are requested with up to 24 months of history (`days_requeste
 - Self-host guidance today: back up `DATA_DIR`, or use the usual Postgres dumps. The master key is never in a
   backup, by design (`docs/self-hosting.md`, `loadKeyRing` in `packages/security/src/envelope.ts`). So a stolen
   backup cannot decrypt provider secrets.
-- Hosted: Neon point-in-time restore (history window 1 day), plus the built-in nightly
+- Hosted: Neon point-in-time restore (history window 7 days), plus the built-in nightly
   encrypted backup to Cloudflare R2, kept 25 days. That backup runs as the `backup.nightly` worker job when `BACKUP_S3_*` is set
   (`apps/server/src/backup.ts`):
   - Postgres gets a logical dump made by the app; SQLite gets `VACUUM INTO`.

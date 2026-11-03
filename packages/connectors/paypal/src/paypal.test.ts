@@ -78,7 +78,7 @@ describe('paypal contract', () => {
     await runConnectorContract({
       make: () => make(),
       signs: { CHARGE0001AAAAAAA: '+', REFUND0001AAAAAAA: '-', WITHDRAW001AAAAAA: '-', CBFEE0001AAAAAAAA: '-', CHARGEBACK01AAAAA: '-', CONVEUR001AAAAAAA: '+' },
-      minEvents: 17,
+      minEvents: 16,
     })
   })
 
@@ -114,7 +114,7 @@ describe('paypal mapping', () => {
     expect(txn(events, 'CONVUSD001AAAAAAA')).toMatchObject({ kind: 'transfer', net: { minor: -11000, currency: 'USD' } })
     expect(txn(events, 'CONVEUR001AAAAAAA')).toMatchObject({ kind: 'transfer', net: { minor: 10000, currency: 'EUR' }, accountExternalId: 'MERCHANTSBX01:EUR' })
     expect(txn(events, 'JPYCHARGE01AAAAAA')).toMatchObject({ gross: { minor: 5000, currency: 'JPY' }, fee: { minor: 250 }, net: { minor: 4750 } })
-    expect(txn(events, 'PENDING001AAAAAAA')).toMatchObject({ net: { minor: 3830 } })
+    expect(txn(events, 'PENDING001AAAAAAA')).toBeUndefined()
     expect(txn(events, 'OLDCHARGE2024AAAA')).toMatchObject({ net: { minor: 921 } })
     expect(txn(events, 'DENIED0001AAAAAAA')).toBeUndefined()
   })
@@ -130,6 +130,23 @@ describe('paypal mapping', () => {
       'fee', 'fee', 'transfer', 'transfer', 'transfer', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'adjustment', 'dispute', 'dispute',
     ])
     expect(['T1105', 'T1110', 'T1111', 'T1104', 'T2103', 'T2109', 'T2110', 'T1107'].map(balanceRoleForEventCode)).toEqual(['other_assets', 'other_assets', 'other_assets', 'clearing_payouts', 'other_assets', undefined, undefined, undefined])
+  })
+
+  it('takes the sales tax PayPal states out of a sale, and leaves it when the amount excludes it', () => {
+    const row = (extra: object, value = '108.00') => ({ transaction_info: { transaction_id: 'T1', transaction_event_code: 'T0006', transaction_status: 'S', transaction_amount: { currency_code: 'USD', value }, transaction_initiation_date: '2026-09-01T10:00:00+0000', ...extra } }) as never
+    const tax = { sales_tax_amount: { currency_code: 'USD', value: '8.00' } }
+    expect(mapTxn(row(tax), 'acct', 'c', 'r')?.taxIncluded).toEqual({ minor: 800, currency: 'USD' })
+    expect(mapTxn(row({ ...tax, tax_inclusive: false }), 'acct', 'c', 'r')?.taxIncluded).toBeUndefined()
+    expect(mapTxn(row({}), 'acct', 'c', 'r')?.taxIncluded).toBeUndefined()
+    expect(mapTxn(row(tax, '5.00'), 'acct', 'c', 'r')?.taxIncluded).toBeUndefined()
+  })
+
+  it('money sent is spending, not negative revenue, and a pending row waits until it completes', () => {
+    const row = (code: string, value: string, status = 'S') => ({ transaction_info: { transaction_id: code, transaction_event_code: code, transaction_status: status, transaction_amount: { currency_code: 'USD', value }, transaction_initiation_date: '2026-09-01T10:00:00+0000' } }) as never
+    expect(mapTxn(row('T0006', '10.00'), 'acct', 'c', 'r')?.kind).toBe('charge')
+    expect(mapTxn(row('T0006', '-10.00'), 'acct', 'c', 'r')?.kind).toBe('other')
+    expect(mapTxn(row('T0016', '10.00'), 'acct', 'c', 'r')?.kind).toBe('other')
+    expect(mapTxn(row('T0006', '10.00', 'P'), 'acct', 'c', 'r')).toBeUndefined()
   })
 
   it('skips display-only rows, which never touch the balance', () => {
@@ -162,14 +179,13 @@ describe('paypal mapping', () => {
     expect(calls.find((c) => c.url.includes('/v1/reporting/balances'))?.headers.authorization).toBe('Bearer A21AA-redacted-token-1')
   })
 
-  it('next cycle is incremental with a 3-day overlap', async () => {
+  it('next cycle is incremental with a 14-day overlap', async () => {
     const { connector, calls } = make()
     const first = await runSync(connector, conn, null)
     const n = calls.length
     await runSync(connector, conn, first.cursor)
     const searches = calls.slice(n).filter((c) => c.url.includes('/v1/reporting/transactions')).map((c) => new URL(c.url).searchParams)
-    expect(searches).toHaveLength(1)
-    expect(searches[0]?.get('start_date')).toBe('2026-10-06T12:00:00Z')
+    expect(searches[0]?.get('start_date')).toBe('2026-09-25T12:00:00Z')
   })
 
   it('skips invoices when Invoicing is not enabled', async () => {

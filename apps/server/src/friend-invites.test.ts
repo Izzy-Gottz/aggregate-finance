@@ -12,6 +12,8 @@ const invites = (outbox: string[]) => outbox.filter((m) => m.includes('invited y
 describe('the email', () => {
   it('is fixed words with a first name, a link and no promise of free months', () => {
     const m = friendEmail(firstName('Dana Reyes'), friendLink('https://app.aggregate.finance/', '0123456789abcdef'), 'https://app.aggregate.finance/invites/stop?h=a&s=b')
+    expect(m.text).toContain('1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA')
+    expect(m.html).toContain('1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA')
     expect(m.subject).toBe('Dana invited you to try Aggregate')
     expect(m.text).toContain('Ask your AI about your finances. It can’t move money. Free during beta.')
     expect(m.text).toContain('https://app.aggregate.finance/?start=1&from=0123456789abcdef')

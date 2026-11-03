@@ -29,6 +29,10 @@ export function llmsTxt(origin: string, pages: CrawlPage[]): string {
 ## Docs
 
 ${pages.map((p) => `- [${p.title}](${urlOf(origin, p.path)}): ${p.description}`).join('\n')}
+
+## Templates
+
+- [n8n: weekly cash and runway summary to Slack](https://n8n.io/workflows/20881)
 `
 }
 

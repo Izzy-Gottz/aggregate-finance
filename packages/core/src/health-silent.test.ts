@@ -20,9 +20,23 @@ describe.each(backends)('data health: balances never reported (%s)', (backend) =
     let h = await k.engine.dataHealth(k.ws, [acme])
     expect(h.line).toBe('1 thing needs a look: 1 balance not reported yet')
     expect(h.items).toEqual([{ kind: 'stale_source', entityId: acme, text: "Mercury hasn't reported a balance yet", refId: acc.id }])
+    await k.engine.post(k.ws, snapshot(acc, '2026-10-10T10:00:00.000Z', 12_000))
+    h = await k.engine.dataHealth(k.ws, [acme])
+    // One balance proves nothing yet, so the line stops short of "All reconciled", with nothing for anyone to do.
+    expect([h.status, h.line, h.counts.notTiedOut]).toEqual(['ok', 'Reconciled except 1 account not tied out yet', 1])
     await k.engine.post(k.ws, snapshot(acc, '2026-10-11T10:00:00.000Z', 12_000))
     h = await k.engine.dataHealth(k.ws, [acme])
     expect(h.line).toBe('All reconciled')
+  })
+
+  it('still says what is waiting when other things need a look', async () => {
+    k = await makeKit(backend, { now: '2026-10-11T12:00:00.000Z' })
+    const acme = await k.company('Acme')
+    const bank = await k.connection({ entityId: acme, key: 'mercury' })
+    const acc = await k.account({ entityId: acme, connectionId: bank, name: 'Mercury' })
+    await k.account({ entityId: acme, connectionId: bank, name: 'Savings' })
+    await k.engine.post(k.ws, snapshot(acc, '2026-10-11T10:00:00.000Z', 12_000))
+    expect((await k.engine.dataHealth(k.ws, [acme])).line).toBe('1 thing needs a look: 1 balance not reported yet. 1 account not tied out yet')
   })
 
   it('a synced processor balance with no sales yet is $0, not silent (Gumroad never sends a balance)', async () => {

@@ -5,8 +5,8 @@ import { useState } from 'preact/hooks'
 import { CopyButton } from '../ui/components.ts'
 import { html } from '../ui/html.ts'
 
-/** `agfn` is published to npm on launch day (launch-day.md step 8); until then the setup command says so. */
-export const AGFN_ON_NPM = false
+/** `agfn` is on npm (launch-day.md step 8); while false the setup command says it isn't yet. */
+export const AGFN_ON_NPM = true
 
 /** A step's words: `{url}` is this server's MCP link, `{cursor}` its Cursor install link, `[text](href)` a link. */
 type Step = string

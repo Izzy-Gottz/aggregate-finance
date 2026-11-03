@@ -4,6 +4,7 @@
 
 import type { ConnectorDescription, ConnectorSetup } from '@agfn/contracts'
 import { redirectUriFor, type Env } from './index.ts'
+import { DEFAULT_SCOPES as FRESHBOOKS_SCOPES } from '@agfn/connector-freshbooks'
 
 const base = (env: Env) => (env.BASE_URL ?? `http://localhost:${env.PORT ?? 8787}`).replace(/\/+$/, '')
 const restart = 'Restart Aggregate after setting them.'
@@ -53,6 +54,27 @@ function guides(env: Env): Guide[] {
           'Under Keys & credentials, add the redirect URI shown here.',
           'Set QUICKBOOKS_CLIENT_ID and QUICKBOOKS_CLIENT_SECRET from that page.',
           'Development keys only reach sandbox companies: for your real books use the production keys and set QUICKBOOKS_ENV=production.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'freshbooks',
+      name: 'FreshBooks',
+      group: 'accounting',
+      provides: ['invoices', 'bills', 'reports'],
+      freshness: 'syncs every few hours',
+      auth: 'oauth',
+      setup: {
+        kind: 'app',
+        register: { name: 'FreshBooks Developers', url: 'https://my.freshbooks.com/#/developer' },
+        redirectUri: redirectUriFor(env, 'freshbooks'),
+        env: ['FRESHBOOKS_CLIENT_ID', 'FRESHBOOKS_CLIENT_SECRET'],
+        steps: [
+          'Sign in to FreshBooks, open the developer page and create an app.',
+          'Use the redirect URI shown here. FreshBooks requires https and no query string, so a server on http can’t use it.',
+          `Tick these scopes on the app: ${FRESHBOOKS_SCOPES.join(', ')}.`,
+          'Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_CLIENT_SECRET from the app.',
           restart,
         ],
       },
@@ -207,6 +229,102 @@ function optionalApps(env: Env): Array<{ key: string; name: string; setup: Omit<
           'Without these, people paste a Polar organization access token with read scopes, which works fine.',
           'For one-click sign-in, create an OAuth application in Polar (Settings → Developers), add the redirect URI shown here and allow the read scopes organizations, orders, refunds, disputes, subscriptions and discounts. Set POLAR_ENV=sandbox for an app made on sandbox.polar.sh.',
           'Set POLAR_CLIENT_ID and POLAR_CLIENT_SECRET from the application.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'squarespace',
+      name: 'Squarespace',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Squarespace Developers', url: 'https://developers.squarespace.com' },
+        redirectUri: redirectUriFor(env, 'squarespace'),
+        env: ['SQUARESPACE_CLIENT_ID', 'SQUARESPACE_CLIENT_SECRET'],
+        steps: [
+          'In Squarespace, open Developer Apps and create an OAuth app. New apps start in Demo Mode.',
+          'Add the redirect URI shown here.',
+          'Set SQUARESPACE_CLIENT_ID and SQUARESPACE_CLIENT_SECRET from the app.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'wix',
+      name: 'Wix',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Wix Dev Center', url: 'https://dev.wix.com' },
+        redirectUri: redirectUriFor(env, 'wix'),
+        env: ['WIX_CLIENT_ID', 'WIX_CLIENT_SECRET'],
+        steps: [
+          'In the Wix Dev Center, create an app. Under Permissions add Read Orders and nothing else.',
+          'Use the redirect URI shown here as the app’s install redirect.',
+          'Set WIX_CLIENT_ID to the app ID and WIX_CLIENT_SECRET to the app secret.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'pinterest',
+      name: 'Pinterest Ads',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Pinterest Developers', url: 'https://developers.pinterest.com/apps/' },
+        redirectUri: redirectUriFor(env, 'pinterest'),
+        env: ['PINTEREST_CLIENT_ID', 'PINTEREST_CLIENT_SECRET'],
+        steps: [
+          'In Pinterest Developers, create an app and get it approved for access.',
+          'Add the redirect URI shown here. Aggregate asks for the ads:read scope only.',
+          'Set PINTEREST_CLIENT_ID and PINTEREST_CLIENT_SECRET from the app.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'adsense',
+      name: 'Google AdSense',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Google Cloud Credentials', url: 'https://console.cloud.google.com/apis/credentials' },
+        redirectUri: redirectUriFor(env, 'adsense'),
+        env: ['ADSENSE_CLIENT_ID', 'ADSENSE_CLIENT_SECRET'],
+        steps: [
+          'In Google Cloud, enable the AdSense Management API and create an OAuth client of type Web application.',
+          'Add the redirect URI shown here, and the adsense.readonly scope on the consent screen.',
+          'Set ADSENSE_CLIENT_ID and ADSENSE_CLIENT_SECRET from the client.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'youtube',
+      name: 'YouTube',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Google Cloud Credentials', url: 'https://console.cloud.google.com/apis/credentials' },
+        redirectUri: redirectUriFor(env, 'youtube'),
+        env: ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET'],
+        steps: [
+          'In Google Cloud, enable the YouTube Data API v3 and YouTube Analytics API, and create an OAuth client of type Web application.',
+          'Add the redirect URI shown here, and the youtube.readonly and yt-analytics-monetary.readonly scopes on the consent screen.',
+          'Set YOUTUBE_CLIENT_ID and YOUTUBE_CLIENT_SECRET from the client.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'patreon',
+      name: 'Patreon (one-click sign-in)',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Patreon Clients & API Keys', url: 'https://www.patreon.com/portal/registration/register-clients' },
+        redirectUri: redirectUriFor(env, 'patreon'),
+        env: ['PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'],
+        steps: [
+          'Without these, a creator pastes their own Creator’s Access Token, which works until it expires.',
+          'For one-click sign-in, create a client on Patreon’s Clients & API Keys page with API version 2, and add the redirect URI shown here.',
+          'Set PATREON_CLIENT_ID and PATREON_CLIENT_SECRET from the client.',
           restart,
         ],
       },

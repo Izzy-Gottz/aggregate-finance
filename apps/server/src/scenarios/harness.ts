@@ -52,9 +52,18 @@ const DESCRIPTIONS: Record<string, ConnectorDescription> = {
   stripe: { key: 'stripe', name: 'Stripe', group: 'payments', provides: ['balances', 'transactions', 'invoices'], freshness: 'scripted', auth: 'api_key' },
   quickbooks: { key: 'quickbooks', name: 'QuickBooks', group: 'accounting', provides: ['invoices', 'bills', 'reports'], freshness: 'scripted', auth: 'oauth' },
   xero: { key: 'xero', name: 'Xero', group: 'accounting', provides: ['invoices', 'bills', 'reports'], freshness: 'scripted', auth: 'oauth' },
+  freshbooks: { key: 'freshbooks', name: 'FreshBooks', group: 'accounting', provides: ['invoices', 'bills', 'reports'], freshness: 'scripted', auth: 'oauth' },
   simplefin: { key: 'simplefin', name: 'SimpleFIN Bridge', group: 'banks', provides: ['balances', 'transactions'], freshness: 'scripted', auth: 'api_key' },
   square: { key: 'square', name: 'Square', group: 'payments', provides: ['balances', 'transactions', 'invoices'], freshness: 'scripted', auth: 'oauth' },
   shopify: { key: 'shopify', name: 'Shopify Payments', group: 'payments', provides: ['balances', 'transactions'], freshness: 'scripted', auth: 'oauth' },
+  harvest: { key: 'harvest', name: 'Harvest', group: 'accounting', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  squarespace: { key: 'squarespace', name: 'Squarespace', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  wix: { key: 'wix', name: 'Wix', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  adsense: { key: 'adsense', name: 'Google AdSense', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  youtube: { key: 'youtube', name: 'YouTube', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  pinterest: { key: 'pinterest', name: 'Pinterest Ads', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  sumup: { key: 'sumup', name: 'SumUp', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
+  lightspeed: { key: 'lightspeed', name: 'Lightspeed', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
   woocommerce: { key: 'woocommerce', name: 'WooCommerce', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'api_key' },
 }
 

@@ -176,8 +176,38 @@ async function checkCaveats(s: Scope, a: MetricAnswer, checks: CheckResult[]): P
   return [...new Set(failed.filter((c) => flowChecks.includes(c.name)).map((c) => `${accounts.find((x) => x.id === accountOf(c))?.name ?? 'A check'} doesn't match, so this figure may be off`))]
 }
 
+/**
+ * A sale proposed as the same one in a processor and other books counts in both until someone answers, so revenue says
+ * how much that is. One charge can be proposed against both the invoice and its payment: it counts once.
+ */
+async function unconfirmedSales(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
+  const links = (await s.rc.store.listLinks(s.rc.ws, { statuses: ['proposed'] })).filter((l) => l.type === 'invoice_payment' && l.scores?.name === 1 && l.amount)
+  if (!links.length) return []
+  const amounts = new Map(links.map((l) => [l.toId, l.amount as Money]))
+  const scope = new Set<string>(s.entityIds)
+  const charges = (await s.rc.store.getRecords(s.rc.ws, [...amounts.keys()])).filter((r) => r.entityId && scope.has(r.entityId) && r.date >= from && r.date <= to)
+  if (!charges.length) return []
+  let total = 0
+  for (const r of charges) total += (await s.rc.toCurrency(amounts.get(r.id) as Money, s.currency, r.date)).minor
+  return [`${formatMoney(total, s.currency)} in sales that may also be in your books is waiting in Review and is counted twice until confirmed`]
+}
+
+/** The same for a refund in both, which only the accrual side takes off twice. */
+async function unconfirmedRefunds(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
+  if (s.basis !== 'accrual') return []
+  const links = (await s.rc.store.listLinks(s.rc.ws, { types: ['refund'], statuses: ['proposed'] })).filter((l) => l.scores?.name === 1 && l.amount)
+  if (!links.length) return []
+  const amounts = new Map(links.map((l) => [l.toId, l.amount as Money]))
+  const scope = new Set<string>(s.entityIds)
+  const rows = (await s.rc.store.getRecords(s.rc.ws, [...amounts.keys()])).filter((r) => r.entityId && scope.has(r.entityId) && r.date >= from && r.date <= to)
+  let total = 0
+  for (const r of rows) total += (await s.rc.toCurrency(amounts.get(r.id) as Money, s.currency, r.date)).minor
+  return total ? [`${formatMoney(total, s.currency)} in refunds that may also be in your books is waiting in Review and is counted twice until confirmed`] : []
+}
+
 /** Burn counts a proposed transfer's debit as spending until someone answers, so the answer says how much that is. */
 async function unconfirmedMoves(s: Scope, name: MetricName, from: IsoDate, to: IsoDate): Promise<string[]> {
+  if (name === 'revenue') return [...(await unconfirmedSales(s, from, to)), ...(await unconfirmedRefunds(s, from, to))]
   if (name !== 'gross_burn' && name !== 'net_burn' && name !== 'runway') return []
   const links = (await s.rc.store.listLinks(s.rc.ws, { statuses: ['proposed'] })).filter((l) => l.type === 'transfer' || l.type === 'intercompany')
   if (!links.length) return []
@@ -651,12 +681,54 @@ async function earliestActivity(s: Scope): Promise<IsoDate | null> {
 }
 
 /**
- * Which of these full months history reaches (1) and which it doesn't (0): a month counts once any activity falls in or
- * before it. The first row's date is when activity began, not when the account's history did, so a month that starts
- * mid-way counts whole. Averages divide by the sum: two months of books average two, not three.
+ * Which of these full months history covers (1) and which it doesn't (0). A month that starts part-way isn't complete,
+ * so it stays out of the average, its spending and its month both. Averages divide by the sum: two months of books
+ * average two, not three.
  */
 function monthWeights(months: Array<{ from: IsoDate; to: IsoDate }>, earliest: IsoDate | null): number[] {
-  return months.map((m) => (earliest !== null && earliest <= m.to ? 1 : 0))
+  return months.map((m) => (earliest !== null && earliest <= m.from ? 1 : 0))
+}
+
+/** Accounts whose rows start after the window does: what they spent before that isn't in the average. A fact, not a verdict. */
+async function lateStarts(s: Scope, from: IsoDate): Promise<string[]> {
+  const out: string[] = []
+  for (const a of (await scopedAccounts(s)).inScope) {
+    if (a.accountType !== 'credit_card' && !a.includeInCash) continue
+    const [first] = await s.rc.store.listRecords(s.rc.ws, { sourceAccountId: a.id, eventTypes: ['txn.upsert', 'processor.balance_txn'], statuses: ['posted'], limit: 1 })
+    if (first && first.date > from) out.push(`${a.name}${a.mask ? ` ··${a.mask}` : ''}: rows start ${first.date}, so nothing before that is in this average`)
+  }
+  return out.sort()
+}
+
+/** Payments to a card that isn't connected: the only sighting of that spending, as one lump on the day it was paid. */
+async function looseCardPayments(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
+  const accounts = await s.rc.directory.listSourceAccounts(s.rc.ws)
+  const noCard = s.entityIds.filter((id) => !accounts.some((a) => a.entityId === id && a.accountType === 'credit_card' && !a.duplicateOf))
+  if (!noCard.length) return []
+  const rows = await s.rc.store.listRecords(s.rc.ws, { entityIds: noCard, eventTypes: ['txn.upsert'], statuses: ['posted'], fromDate: from, toDate: to })
+  let total = 0
+  for (const r of rows) {
+    if (r.event.type === 'txn.upsert' && r.event.categoryHint === 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' && r.amount && r.amount.minor < 0) total += Math.abs((await s.rc.toCurrency(r.amount, s.currency, r.date)).minor)
+  }
+  return total ? [`${formatMoney(total, s.currency)} in credit card payments counts as spending in one lump, because no card is connected`] : []
+}
+
+/** Payments onto a connected loan: all of it comes off the loan, so the interest inside isn't in burn. */
+async function loanPayments(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
+  const accounts = await s.rc.directory.listSourceAccounts(s.rc.ws)
+  const loans = new Set(accounts.filter((a) => a.accountType === 'loan' && !a.duplicateOf).map((a) => a.id))
+  if (!loans.size) return []
+  const rows = await s.rc.store.listRecords(s.rc.ws, { entityIds: s.entityIds, eventTypes: ['txn.upsert'], statuses: ['posted'], fromDate: from, toDate: to })
+  let total = 0
+  for (const r of rows) {
+    if (r.sourceAccountId && loans.has(r.sourceAccountId) && r.amount && r.amount.minor > 0) total += (await s.rc.toCurrency(r.amount, s.currency, r.date)).minor
+  }
+  return total ? [`${formatMoney(total, s.currency)} in loan payments counts as paying down the loan, so burn can read low by the interest inside them`] : []
+}
+
+function withGaps<A extends MetricAnswer>(a: A, gaps: string[]): A {
+  if (!gaps.length) return a
+  return { ...a, coverage: { accounts: a.coverage?.accounts ?? [], gaps: [...(a.coverage?.gaps ?? []), ...gaps] } }
 }
 
 /** Calendar months from one date's month to another's, both counted (2026-07-15 to 2026-09-02 is 3). */
@@ -703,7 +775,7 @@ async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPer
       ? `Spending, ${per}, cash basis: every expense account (card purchases at swipe, payroll, fees, taxes) plus customer refunds. Excludes transfers, card payments, payouts, owner and investor money, loan principal and sales-tax remittances.`
       : `Gross burn − operating money in (revenue, interest, other income), ${per}, cash basis. Positive = burning; negative = cash-flow positive.`
   const state: MetricAnswer['state'] = !f.hasData ? 'no_data' : short ? 'not_enough_history' : name === 'net_burn' && net <= 0 ? 'not_burning' : 'ok'
-  return finish(
+  const answer = await finish(
     { ...s, from, to },
     {
       name,
@@ -721,6 +793,7 @@ async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPer
     },
     f.rows,
   )
+  return explicitPeriod || short ? answer : withGaps(answer, [...(await lateStarts(s, from)), ...(await looseCardPayments(s, from, to)), ...(await loanPayments(s, from, to))])
 }
 
 /**
@@ -768,16 +841,16 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
     nets.push(f.expenses + f.refunds - f.inflows)
     rows.push(...f.rows)
   }
-  // History: at least two complete months with posted activity, and the average is over only the months it covers
+  // History: at least two complete months with posted activity, and the average is over only the complete months
   // (a company two months old averages two, not two and an empty one).
   const earliest = await earliestActivity(s)
   const enough = earliest !== null && earliest <= (months[1] as { from: IsoDate }).from
   const weights = monthWeights(months, earliest)
   const covered = Math.round(weights.reduce((a, b) => a + b, 0) * 100) / 100
-  const avg = covered > 0 ? nets.reduce((a, b) => a + b, 0) / covered : 0
+  const avg = covered > 0 ? nets.reduce((a, b, i) => a + b * (weights[i] ?? 0), 0) / covered : 0
   let value: number | null = null
   let state: MetricAnswer['state'] = 'ok'
-  const spanText = covered === 3 ? '3 complete months' : `${covered} months of history in the last 3 complete months`
+  const spanText = covered === 3 ? '3 complete months' : `${covered} complete months of history in the last 3`
   let formula = `${cashWord} ÷ average net burn over ${months[0]?.from} to ${months[2]?.to} (${spanText}), cash basis.`
   let unknownReason: string | undefined
   if (!cash.included.length) {
@@ -800,7 +873,7 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
     state = 'unknown'
     unknownReason = burn.unknownReason
   }
-  return finish(
+  const answer = await finish(
     s,
     {
       name: 'runway',
@@ -819,15 +892,33 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
     },
     rows,
   )
+  const start = months[weights.indexOf(1)]?.from
+  return start ? withGaps(answer, [...(await lateStarts(s, start)), ...(await looseCardPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to)), ...(await loanPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to))]) : answer
+}
+
+const TAX_BLIND: Record<string, string> = { shopify: 'Shopify sale', stripe: 'Stripe charge', square: 'Square payment', gumroad: 'Gumroad sale' }
+
+/** Processors whose rows don't split sales tax. Only a charge tied to an invoice has its tax taken out. */
+async function taxInsideCharges(s: Scope): Promise<string[]> {
+  const conns = new Map((await s.rc.directory.listConnections(s.rc.ws)).filter((c) => TAX_BLIND[c.connectorKey]).map((c) => [c.id, c.connectorKey]))
+  if (!conns.size) return []
+  const linked = new Set((await s.rc.store.listLinks(s.rc.ws, { types: ['invoice_payment'], statuses: ['confirmed'] })).map((l) => l.toId))
+  const rows = await s.rc.store.listRecords(s.rc.ws, { entityIds: s.entityIds, eventTypes: ['processor.balance_txn'], statuses: ['posted'], fromDate: s.from, toDate: s.to })
+  const counts = new Map<string, number>()
+  for (const r of rows) {
+    const key = r.connectionId ? conns.get(r.connectionId) : undefined
+    if (key && r.event.type === 'processor.balance_txn' && r.event.kind === 'charge' && !r.event.taxIncluded && !linked.has(r.id)) counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [...counts].sort().map(([key, n]) => `May include sales tax collected on ${n} ${TAX_BLIND[key]}${n === 1 ? '' : 's'}${key === 'stripe' ? ' without an invoice' : ''}`)
 }
 
 async function revenueMetric(s: Scope): Promise<CoreMetricAnswer> {
   const f = await flows(s, s.from, s.to, s.basis)
   const formula =
     s.basis === 'cash'
-      ? `Money in from customers, ${s.from} to ${s.to}: processor charges at gross (refunds subtracted) plus bank receipts categorized as revenue. Payouts, transfers, owner and investor money and sales tax are excluded. Gross of processor fees: each processor charge is listed at gross with its fee as its own row (kind fee, the Processor fees expense), so the charge rows add up to this; don't add the fees back.`
+      ? `Money in from customers, ${s.from} to ${s.to}: processor charges at gross (refunds subtracted) plus bank receipts categorized as revenue. Payouts, transfers, owner and investor money are excluded, and so is sales tax, except tax inside a processor charge with no invoice, which the processor's row doesn't split out. Gross of processor fees: each processor charge is listed at gross with its fee as its own row (kind fee, the Processor fees expense), so the charge rows add up to this; don't add the fees back.`
       : `Invoiced revenue recognized ${s.from} to ${s.to} (issue date), minus credit notes and refunds, net of sales tax. Processor fees are a separate expense, not taken off revenue. Only as complete as the connected invoicing sources.`
-  return finish(
+  const answer = await finish(
     s,
     {
       name: 'revenue',
@@ -845,6 +936,7 @@ async function revenueMetric(s: Scope): Promise<CoreMetricAnswer> {
     },
     f.rows,
   )
+  return s.figureOnly ? answer : withGaps(answer, await taxInsideCharges(s))
 }
 
 // ---------- AR / AP ----------

@@ -6,11 +6,11 @@ updated: 2026-11-02
 
 # Trust
 
-Aggregate connects to your bank, payments and accounting accounts and gives your numbers to the AI you choose. This page says what we can and can't do, and what we don't have yet. For detail, read [Security](/security) and [Privacy](/privacy).
+Aggregate is operated by Aggregate Finance LLC, a New Jersey limited liability company. It connects to your bank, payments and accounting accounts and gives your numbers to the AI you choose. This page says what we can and can't do, and what we don't have yet. For detail, read [Security](/security) and [Privacy](/privacy).
 
 ## What we read, and what we can't do
 
-Aggregate reads balances, transactions, invoices, bills and reports. It can't move money. No tool in Aggregate, for you or for an AI, pays, transfers or sends anything.
+Aggregate reads balances, transactions, invoices, bills and reports. It can't move money. No tool in Aggregate, for you or for an AI, pays or transfers. It emails someone else only when you send an invite.
 
 Where a provider lets you choose, we ask for read-only access. QuickBooks, BILL, Lemon Squeezy and Expensify don't offer that, so what they give us could do more than read. Aggregate only reads from all four, and BILL's token can't pay anyone or move money.
 
@@ -102,9 +102,26 @@ We have data processing terms in place with Fly.io, Neon, Cloudflare and Resend,
 
 ## Reporting a security problem
 
-Email **security@aggregate.finance** rather than posting publicly. Tell us how to reproduce it. We aim to reply within 2 business days and will keep you updated until it's fixed. We won't take legal action against good-faith research that avoids privacy violations, data destruction and service disruption.
+Email **security@aggregate.finance** rather than posting publicly. Tell us how to reproduce it. We aim to reply within 2 business days and will keep you updated until it's fixed.
 
 If we confirm that someone got into your data without permission, we'll email the owners of the affected workspaces promptly, and as the law requires.
+
+## Safe Harbor
+
+This policy covers aggregate.finance, app.aggregate.finance, docs.aggregate.finance and the Aggregate MCP server. It doesn't cover the services customers connect, such as banks, Plaid or accounting apps, or the companies that host us. Use only your own account and test data, and avoid privacy violations, data destruction and service disruption. Our Official Channel is security@aggregate.finance. This text is the [disclose.io](https://disclose.io) Safe Harbor, unmodified.
+
+When conducting vulnerability research, according to this policy, we consider this research conducted under this policy to be:
+
+- Authorized concerning any applicable anti-hacking laws, and we will not initiate or support legal action against you for accidental, good-faith violations of this policy;
+- Authorized concerning any relevant anti-circumvention laws, and we will not bring a claim against you for circumvention of technology controls;
+- Exempt from restrictions in our Terms of Service (TOS) and/or Acceptable Usage Policy (AUP) that would interfere with conducting security research, and we waive those restrictions on a limited basis; and
+- Lawful, helpful to the overall security of the Internet, and conducted in good faith.
+
+You are expected, as always, to comply with all applicable laws. If legal action is initiated by a third party against you and you have complied with this policy, we will take steps to make it known that your actions were conducted in compliance with this policy.
+
+If at any time you have concerns or are uncertain whether your security research is consistent with this policy, please submit a report through one of our Official Channels before going any further.
+
+> Note that the Safe Harbor applies only to legal claims under the control of the organization participating in this policy, and that the policy does not bind independent third parties.
 
 ## What we don't have yet
 
@@ -125,5 +142,6 @@ These are public checks anyone can re-run. They test web and code hygiene, not a
 | Qualys SSL Labs | A+ on aggregate.finance, app.aggregate.finance and docs.aggregate.finance | [ssllabs.com](https://www.ssllabs.com/ssltest/analyze.html?d=aggregate.finance) |
 | Glama | A for the connector | [glama.ai](https://glama.ai/mcp/connectors/finance.aggregate/aggregate) |
 | OpenSSF Scorecard | 7.1 out of 10 | [scorecard.dev](https://scorecard.dev/viewer/?uri=github.com/Izzy-Gottz/aggregate-finance) |
+| Cloud Security Alliance | [![CSA STAR Level 1 badge](https://aggregate.finance/brand/badges/csa-star-level-1.png)](https://cloudsecurityalliance.org/star/registry/aggregate/services/aggregate) Listed in the CSA STAR Registry (Level 1 self-assessment, CAIQ) | [cloudsecurityalliance.org](https://cloudsecurityalliance.org/star/registry/aggregate/services/aggregate) |
 
-CSA STAR Level 1 is pending. We won't claim it until we're listed.
+The CSA listing is our own self-assessment, published on CSA's registry. It isn't an audit or a certification.

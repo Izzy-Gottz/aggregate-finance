@@ -10,9 +10,18 @@ const STEPS: Record<string, string> = {
   deel: 'In Deel, remove Aggregate, or go to the Developer Center → Delete the organization token.',
   mercury: 'In Mercury, go to Settings → Remove Aggregate, or delete the token if you pasted one.',
   wise: 'In Wise, go to Your Account → API tokens → Delete the token.',
+  harvest: 'In Harvest ID, open Security and sign out Aggregate. If you pasted a token, open Developers and revoke it.',
+  lightspeed: 'In Lightspeed Retail, open your connected apps and remove Aggregate. If you pasted a personal token, delete it there.',
+  sumup: 'SumUp documents no way for Aggregate to end a sign-in, so ask SumUp to remove Aggregate’s access. If you pasted a key, go to Settings → For Developers → Toolkit → API Keys and revoke it.',
+  squarespace: 'In your site’s settings, open Extensions and disconnect Aggregate.',
+  wix: 'In your site’s dashboard, open Apps and remove Aggregate.',
+  adsense: 'In your Google Account, open Security → Third-party apps and remove Aggregate.',
+  youtube: 'In your Google Account, open Security → Third-party apps and remove Aggregate.',
+  pinterest: 'In your Pinterest settings, remove Aggregate from your connected apps.',
   woocommerce: 'In WooCommerce, go to Settings → Advanced → REST API → Revoke the key.',
   paddle: 'In Paddle, revoke the API key.',
   chargebee: 'In Chargebee, delete the read-only key.',
+  freshbooks: 'In FreshBooks, go to your account’s connected apps → Remove Aggregate.',
   revenuecat: 'In RevenueCat, go to Project settings → API keys → Revoke the secret key.',
   appstore: 'In App Store Connect, revoke the key.',
   googleplay: 'In Google Play Console, remove the service account.',
@@ -20,6 +29,7 @@ const STEPS: Record<string, string> = {
   gumroad: 'In Gumroad, go to your account settings → Authorized applications → Remove Aggregate.',
   shopify: 'In Shopify, go to Settings → Apps → Uninstall Aggregate.',
   polar: 'In Polar, go to Settings → Remove Aggregate.',
+  patreon: 'In Patreon, go to Settings → More → Connected Apps → Remove Aggregate.',
 }
 
 export function notRevokedWarning(connectorKey: string, name: string): string {

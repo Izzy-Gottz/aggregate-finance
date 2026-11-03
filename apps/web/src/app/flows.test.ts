@@ -378,7 +378,7 @@ describe('workspace', () => {
 
   it('Personal: the owner sees their numbers and holdings, and is told only they do', async () => {
     start(new MockApi())
-    fireEvent.click(await screen.findByRole('button', { name: /^Personal, \$18,904/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /^Personal, only you see this, \$18,904/ }))
     await within(drawer()).findByRole('heading', { name: 'Personal' })
     expect(within(drawer()).getByText('Only you see this.')).toBeTruthy()
     within(drawer()).getByRole('region', { name: 'Holdings' })

@@ -1,0 +1,52 @@
+{
+  "_note": "synthesized from docs.patreon.com (Member and Campaign resources), not recorded from a real account; re-record from a real creator when one is available",
+  "identity": { "data": { "id": "9000001", "type": "user" } },
+  "campaigns": {
+    "": {
+      "data": [
+        { "id": "c-usd", "type": "campaign", "attributes": { "currency": "USD", "is_monthly": true, "pay_per_name": "month" } },
+        { "id": "c-eur", "type": "campaign", "attributes": { "currency": "EUR", "is_monthly": true, "pay_per_name": "month" } }
+      ],
+      "meta": { "pagination": { "cursors": { "next": "camp2" }, "total": 3 } }
+    },
+    "camp2": {
+      "data": [{ "id": "c-post", "type": "campaign", "attributes": { "currency": "USD", "is_monthly": false, "pay_per_name": "creation" } }],
+      "meta": { "pagination": { "cursors": { "next": null }, "total": 3 } }
+    }
+  },
+  "members": {
+    "c-usd": {
+      "": {
+        "data": [
+          { "id": "m-monthly", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 500, "will_pay_amount_cents": 500, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-10-01T00:00:00.000+00:00", "next_charge_date": "2026-11-01T00:00:00.000+00:00", "pledge_relationship_start": "2026-01-15T10:00:00.000+00:00", "campaign_lifetime_support_cents": 5000 } },
+          { "id": "m-annual", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 12000, "will_pay_amount_cents": 12000, "pledge_cadence": 12, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-03-01T00:00:00.000+00:00", "next_charge_date": "2027-03-01T00:00:00.000+00:00", "pledge_relationship_start": "2026-03-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 12000 } },
+          { "id": "m-annual-uneven", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 9999, "will_pay_amount_cents": 9999, "pledge_cadence": "12", "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-02-01T00:00:00.000+00:00", "next_charge_date": "2027-02-01T00:00:00.000+00:00", "pledge_relationship_start": "2026-02-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 9999 } },
+          { "id": "m-declined", "type": "member", "attributes": { "patron_status": "declined_patron", "currently_entitled_amount_cents": 700, "will_pay_amount_cents": 700, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Declined", "last_charge_date": "2026-10-01T00:00:00.000+00:00", "next_charge_date": "2026-11-01T00:00:00.000+00:00", "pledge_relationship_start": "2026-02-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 6300 } },
+          { "id": "m-declined-zero", "type": "member", "attributes": { "patron_status": "declined_patron", "currently_entitled_amount_cents": 0, "will_pay_amount_cents": 300, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Declined", "last_charge_date": "2026-10-01T00:00:00.000+00:00", "next_charge_date": null, "pledge_relationship_start": "2026-02-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 2700 } },
+          { "id": "m-quarterly", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 3000, "will_pay_amount_cents": 3000, "pledge_cadence": 3, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-09-01T00:00:00.000+00:00", "next_charge_date": "2026-12-01T00:00:00.000+00:00", "pledge_relationship_start": "2026-03-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 9000 } }
+        ],
+        "meta": { "pagination": { "cursors": { "next": "usd2" }, "total": 12 } }
+      },
+      "usd2": {
+        "data": [
+          { "id": "m-trial", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 1000, "will_pay_amount_cents": 1000, "pledge_cadence": 1, "is_free_trial": true, "is_gifted": false, "last_charge_status": null, "last_charge_date": null, "next_charge_date": "2026-11-07T00:00:00.000+00:00", "pledge_relationship_start": "2026-10-31T00:00:00.000+00:00", "campaign_lifetime_support_cents": 0 } },
+          { "id": "m-former", "type": "member", "attributes": { "patron_status": "former_patron", "currently_entitled_amount_cents": 0, "will_pay_amount_cents": 0, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-08-01T00:00:00.000+00:00", "next_charge_date": null, "pledge_relationship_start": "2026-01-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 4000 } },
+          { "id": "m-former-paid-up", "type": "member", "attributes": { "patron_status": "former_patron", "currently_entitled_amount_cents": 500, "will_pay_amount_cents": 0, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-10-01T00:00:00.000+00:00", "next_charge_date": null, "pledge_relationship_start": "2026-01-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 5000 } },
+          { "id": "m-free", "type": "member", "attributes": { "patron_status": null, "currently_entitled_amount_cents": 0, "will_pay_amount_cents": 0, "pledge_cadence": null, "is_free_trial": false, "is_gifted": false, "last_charge_status": null, "last_charge_date": null, "next_charge_date": null, "pledge_relationship_start": null, "campaign_lifetime_support_cents": 0 } },
+          { "id": "m-free-after-paying", "type": "member", "attributes": { "patron_status": null, "currently_entitled_amount_cents": 0, "will_pay_amount_cents": 0, "pledge_cadence": null, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-05-01T00:00:00.000+00:00", "next_charge_date": null, "pledge_relationship_start": "2026-01-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 1500 } },
+          { "id": "m-gifted", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 0, "will_pay_amount_cents": 0, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": true, "last_charge_status": null, "last_charge_date": null, "next_charge_date": null, "pledge_relationship_start": "2026-10-01T00:00:00.000+00:00", "campaign_lifetime_support_cents": 0 } }
+        ],
+        "meta": { "pagination": { "cursors": { "next": null }, "total": 12 } }
+      }
+    },
+    "c-eur": {
+      "": {
+        "data": [
+          { "id": "m-eur", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 1000, "will_pay_amount_cents": 1000, "pledge_cadence": 1, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-10-05T00:00:00.000+00:00", "next_charge_date": "2026-11-05T00:00:00.000+00:00", "pledge_relationship_start": "2026-06-05T00:00:00.000+00:00", "campaign_lifetime_support_cents": 5000 } },
+          { "id": "m-no-cadence", "type": "member", "attributes": { "patron_status": "active_patron", "currently_entitled_amount_cents": 250, "will_pay_amount_cents": 250, "pledge_cadence": null, "is_free_trial": false, "is_gifted": false, "last_charge_status": "Paid", "last_charge_date": "2026-10-05T00:00:00.000+00:00", "next_charge_date": null, "pledge_relationship_start": "2026-06-05T00:00:00.000+00:00", "campaign_lifetime_support_cents": 1250 } }
+        ],
+        "meta": { "pagination": { "total": 2 } }
+      }
+    }
+  }
+}

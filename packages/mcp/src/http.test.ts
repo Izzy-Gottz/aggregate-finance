@@ -89,6 +89,13 @@ describe('MCP over Streamable HTTP', () => {
     for (const t of ours.tools) expect(JSON.stringify(t), t.name).toBe(JSON.stringify(expected.get(t.name)))
   })
 
+  it('says what is allowed on a 405', async () => {
+    const { key } = await H.connectAi({ entityIds: [DEMO.acme] })
+    const r = await req('/mcp', { method: 'GET', key, headers: { accept: 'text/event-stream' } })
+    expect(r.status).toBe(405)
+    expect(r.headers.get('allow')).toBe('POST')
+  })
+
   it('401s with a resource_metadata challenge, and serves RFC 9728 metadata', async () => {
     const r = await req('/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' })
     expect(r.status).toBe(401)
@@ -96,6 +103,7 @@ describe('MCP over Streamable HTTP', () => {
     expect(r.headers.get('www-authenticate')).toContain('scope="finance:read records:write"')
     const bad = await req('/mcp', { method: 'POST', key: 'agfn_live_' + 'x'.repeat(43), headers: { 'content-type': 'application/json' }, body: '{}' })
     expect(bad.status).toBe(401)
+    expect(bad.headers.get('www-authenticate')).toContain('error="invalid_token"')
     const prm = await (await req('/.well-known/oauth-protected-resource/mcp')).json()
     expect(prm).toMatchObject({ resource: RESOURCE, authorization_servers: ['https://agfn.test'], scopes_supported: ['finance:read', 'records:write'], bearer_methods_supported: ['header'] })
   })

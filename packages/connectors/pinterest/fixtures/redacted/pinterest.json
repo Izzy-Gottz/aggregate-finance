@@ -1,0 +1,15 @@
+{
+  "_note": "Hand-built from Pinterest's public OpenAPI description v5.28.0. Not recorded from a real account.",
+  "adAccounts": {
+    "items": [
+      { "id": "54975588517", "name": "Sample Advertiser", "currency": "USD", "country": "US", "time_zone": "America/New_York", "owner": { "username": "NOT-READ", "id": "NOT-READ" }, "permissions": ["OWNER"] }
+    ],
+    "bookmark": null
+  },
+  "analytics": [
+    { "AD_ACCOUNT_ID": "54975588517", "DATE": "2026-09-01", "SPEND_IN_MICRO_DOLLAR": 12340000 },
+    { "AD_ACCOUNT_ID": "54975588517", "DATE": "2026-09-30", "SPEND_IN_MICRO_DOLLAR": 1005000 },
+    { "AD_ACCOUNT_ID": "54975588517", "DATE": "2026-10-02", "SPEND_IN_MICRO_DOLLAR": 0 },
+    { "AD_ACCOUNT_ID": "54975588517", "DATE": "2026-10-03", "SPEND_IN_MICRO_DOLLAR": 20000000 }
+  ]
+}

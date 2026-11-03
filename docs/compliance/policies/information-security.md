@@ -6,6 +6,8 @@ Owner: the founder. Review date: 2027-11-01.
 
 ## Purpose
 
+Aggregate is operated by Aggregate Finance LLC, a New Jersey limited liability company. "The founder" in these policies means its member and manager.
+
 Say who is responsible for security at Aggregate, how risks are found and tracked, and how the other policies fit together.
 
 ## Scope
@@ -16,7 +18,7 @@ The hosted service, its cloud accounts, the source code, and the devices and acc
 
 1. **Responsibility.** The founder owns security and every policy here. There is no board, security officer or independent oversight. Anyone who joins gets written responsibilities before they get access.
 2. **What we protect.** Customers' financial data, provider tokens and the keys that protect them.
-3. **What we won't do.** Aggregate doesn't move money or send anything on a customer's behalf. We don't sell data, show ads, or train models on it. Our server calls no AI model.
+3. **What we won't do.** Aggregate doesn't move money. It emails someone else only when you send an invite. We don't sell data, show ads, or train models on it. Our server calls no AI model.
 4. **Least access.** People, AI clients and systems get only the access they need (`access-control.md`).
 5. **Encryption.** Traffic uses HTTPS and TLS. Provider tokens are envelope-encrypted with AES-256-GCM. Backups are encrypted before they leave the server. Storage is encrypted by the provider.
 6. **Secure development.** Changes go through the merge gate and follow `change-management.md`. Security-relevant changes add a test. A red-team test suite runs at each merge.
@@ -34,6 +36,6 @@ The hosted service, its cloud accounts, the source code, and the devices and acc
 
 ## Gaps today
 
-- No formal risk register. Risks are spread across the threat model, these Gaps sections and drafts.
+- The risk register was started 2026-11-02 and isn't yet signed.
 - No independent oversight, because the company is one person.
 - The policies aren't approved yet.

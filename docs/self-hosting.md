@@ -162,8 +162,8 @@ console. Set `ALERT_WEBHOOK_URL` to also receive them in Slack, Discord, ntfy or
 
 ## Backups
 SQLite: back up `DATA_DIR` (the database file and `files/`). Litestream works well for continuous backups. Postgres:
-your provider's point-in-time restore (Neon keeps at least 7 days) or your usual dumps. The master key is never in a
-backup, by design.
+your provider's point-in-time restore (on Neon, the history window you set; hosted Aggregate keeps 7
+days) or your usual dumps. The master key is never in a backup, by design.
 
 ### Nightly encrypted off-site backup (built in)
 Set these and the worker uploads a backup every 24 hours, keeping 25 days:

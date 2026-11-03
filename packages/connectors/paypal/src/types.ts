@@ -40,6 +40,10 @@ export interface PayPalTransactionInfo {
   transaction_updated_date?: string
   transaction_amount?: PayPalMoney
   fee_amount?: PayPalMoney
+  /** "The PayPal- or merchant-reported sales tax amount": not seen on a real row yet. */
+  sales_tax_amount?: PayPalMoney
+  /** Not in PayPal's field definitions, but in a sample response: false means the amount above isn't inside the gross. */
+  tax_inclusive?: boolean
   /** D denied, P pending, S success, V reversed. */
   transaction_status?: string
   transaction_subject?: string

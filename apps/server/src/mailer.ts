@@ -56,3 +56,17 @@ export function withTestAddressesLogged(real: Mailer, log: Mailer = consoleMaile
     },
   }
 }
+
+/**
+ * AGFN_MAIL_ALLOW (comma list of exact addresses) holds all other mail: a test server can't reach real people or spend
+ * the shared sending quota. Unset, nothing changes. Never set on live.
+ */
+export function withMailAllowList(real: Mailer, allow: string): Mailer {
+  const listed = new Set(allow.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean))
+  return {
+    async send(msg) {
+      if (listed.has(msg.to.trim().toLowerCase())) return real.send(msg)
+      console.warn('[agfn] mail held by AGFN_MAIL_ALLOW')
+    },
+  }
+}

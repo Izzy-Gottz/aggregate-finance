@@ -196,7 +196,7 @@ export function headerSignature(headers: string[]): string {
 // ---------- Header vocabulary ----------
 
 const SYN = {
-  date: ['posting date', 'posted date', 'post date', 'transaction date', 'trans. date', 'trans date', 'date', 'booking date',
+  date: ['posting date', 'posted date', 'post date', 'transaction date', 'trans. date', 'trans date', 'date', 'datetime', 'booking date',
     'buchungstag', 'buchungsdatum', 'datum', 'date operation', 'date de l operation', 'date comptable', 'fecha', 'fecha operacion',
     'boekdatum', 'value date', 'valuta', 'wertstellung', 'date de valeur'],
   amount: ['amount', 'amt', 'transaction amount', 'betrag', 'umsatz', 'montant', 'importe', 'bedrag', 'amount (usd)', 'betrag (eur)'],
@@ -388,8 +388,16 @@ function signConvention(
   return { value: 'positive_is_in', guessed: false }
 }
 
+/** Spreadsheets' leading apostrophes. A loop, not a regex: cells come from uploads and can be huge. */
+function stripQuotes(s: string): string {
+  let start = 0, end = s.length
+  while (start < end && s[start] === "'") start++
+  while (end > start && s[end - 1] === "'") end--
+  return s.slice(start, end)
+}
+
 function looksLikeIds(values: string[]): boolean {
-  const v = values.map((x) => x.trim().replace(/^'+|'+$/g, '')).filter(Boolean)
+  const v = values.map((x) => stripQuotes(x.trim())).filter(Boolean)
   return v.length > 0 && new Set(v).size === v.length && v.every((x) => /^[A-Za-z0-9._:/-]{4,}$/.test(x) && /\d/.test(x))
 }
 
@@ -512,7 +520,7 @@ export function csvRows(table: CsvTable, mapping: ColumnMapping, accountCurrency
     const balance: Money | undefined = balRaw ? { minor: normZero(outSign * minor(balRaw, 'balance')), currency } : undefined
     const statusText = cell(statusI).toLowerCase()
     const status = /pend|authori[sz]/.test(statusText) ? 'pending' : /void|cancel|declin|fail|reject/.test(statusText) ? 'void' : 'posted'
-    const ref = cell(idI).replace(/^'+|'+$/g, '') || undefined
+    const ref = stripQuotes(cell(idI)) || undefined
     const base = {
       line: rec.line,
       date,

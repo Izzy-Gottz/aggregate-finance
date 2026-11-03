@@ -14,7 +14,7 @@ Say how the service keeps running, or comes back, after an outage, data loss, or
 |---|---|
 | A bad deploy | Blue-green deploys: traffic moves only after `/healthz` passes. Earlier releases stay available at Fly |
 | A machine fails | Fly restarts it. One always-on machine in Ashburn, Virginia |
-| Data lost or damaged | Neon point-in-time history, 1 day. Nightly encrypted backups to a separate Cloudflare R2 bucket, kept 25 days |
+| Data lost or damaged | Neon point-in-time history, 7 days. Nightly encrypted backups to a separate Cloudflare R2 bucket, kept 25 days |
 | Master key lost | Provider tokens and every backup become unreadable. Customers would have to reconnect. A copy held off Fly is planned, and is step 0 of the KMS plan |
 | A region outage | No failover. The app and database are both in the US East region, so we wait for the provider |
 | A vendor is lost | Self-hosting works, and the code is public, but no prepared migration exists |
@@ -38,7 +38,7 @@ These are aims, not promises, and they haven't been tested: restore within 1 day
 
 ## Gaps today
 
-- No restore drill is recorded.
+- One hosted restore drill is recorded, passed 2026-10-11 (`docs/security/backup-restore.md`). No wider continuity exercise yet.
 - No copy of the master key held off Fly is confirmed.
 - No failover or second region.
 - No backup person. Passwords and the ability to run the service die with one person's access.

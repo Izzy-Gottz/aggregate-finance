@@ -249,10 +249,11 @@ export class LedgerFinanceReader implements FinanceReader {
     return this.#cached(scope.workspaceId, key, () => this.engine.metric(name, scope))
   }
 
-  /** The state of the workspace's sources that a figure shows without a ledger write (a sync's time, an account's company). */
+  /** The state of the workspace's sources that a figure shows without a ledger write (a sync's time, going stale, an account's company). */
   async #sourcesKey(ws: WorkspaceId, rc: MetricContext): Promise<string> {
     const [conns, accounts] = await Promise.all([rc.directory.listConnections(ws), rc.directory.listSourceAccounts(ws)])
-    return [...conns.map((c) => `${c.id}:${c.status}:${c.lastSuccessAt ?? ''}:${c.entityId ?? ''}`), ...accounts.map((a) => `${a.id}:${a.entityId ?? ''}:${a.duplicateOf ?? ''}`)].sort().join(',')
+    const now = Date.parse(this.engine.now())
+    return [...conns.map((c) => `${c.id}:${c.status}:${c.lastSuccessAt ?? ''}:${c.entityId ?? ''}:${syncedLongAgo(c, now)}`), ...accounts.map((a) => `${a.id}:${a.entityId ?? ''}:${a.duplicateOf ?? ''}`)].sort().join(',')
   }
 
   /**

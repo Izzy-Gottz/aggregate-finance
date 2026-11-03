@@ -2,8 +2,8 @@
 
 Aggregate keeps two independent copies of your data:
 
-1. **Your database provider's own recovery.** Neon keeps at least 7 days of point-in-time history; a SQLite install
-   can run Litestream or copy `DATA_DIR`. This is the fastest way back from "I deleted the wrong thing an hour ago".
+1. **Your database provider's own recovery.** Neon's point-in-time history is 7 days on hosted Aggregate; a SQLite
+   install can run Litestream or copy `DATA_DIR`. This is the fastest way back from "I deleted the wrong thing an hour ago".
 2. **Aggregate's nightly encrypted backup** to a separate bucket (`BACKUP_S3_*`, set up in
    [self-hosting](../self-hosting.md#nightly-encrypted-off-site-backup-built-in)). One file per night, 25 days kept. It
    holds the whole database **and every document file** (receipts, statements), gzipped and then encrypted with your

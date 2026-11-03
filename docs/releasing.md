@@ -8,6 +8,9 @@ release has a tag `vX.Y.Z`.
 2. Update the version in both files.
 3. Check that `npm run typecheck` and `npm test` pass, and that CodeQL has no open finding of medium or higher.
 4. Tag the public repository's commit `vX.Y.Z` and publish a GitHub release with the changelog text.
+5. Publish to npm by running the `npm-publish` workflow on the public repository. It builds from that commit and publishes
+   with provenance, so npm shows which commit and workflow built the package. It needs `aggregate-finance` set up once on
+   npmjs.com as a trusted publisher: repository `Izzy-Gottz/aggregate-finance`, workflow `npm-publish.yml`.
 
 `main` moves between releases, and the hosted service runs a recent `main`. Self-hosters who want a fixed point should
 use a tag.

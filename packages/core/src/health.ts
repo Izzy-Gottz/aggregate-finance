@@ -21,6 +21,8 @@ export interface DataHealth {
     staleSources: number
     /** Months in the last three with no statement or no rows where some were expected. */
     missingStatements: number
+    /** Accounts with at most one balance, so nothing to compare: not wrong, not proven either. */
+    notTiedOut: number
     /** Checks that passed (so an AI can say "12 checks pass", not only what failed). */
     passedChecks: number
   }
@@ -74,6 +76,7 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   const unexplained = review.filter((r) => r.kind === 'unexplained_money')
   const otherReview = review.filter((r) => r.kind !== 'unexplained_money')
   const warnings = checks.filter((c) => c.status === 'warn').length
+  const notTiedOut = checks.filter((c) => c.name === 'balance_identity' && c.status === 'warn' && c.actualMinor === null).length
 
   // The same items on every run: checks, sources and months by what they say (review items come in a stable order).
   const byText = <T,>(xs: T[], t: (x: T) => string) => [...xs].sort((a, b) => (t(a) < t(b) ? -1 : t(a) > t(b) ? 1 : 0))
@@ -103,10 +106,13 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   if (silent.length) parts.push(`${silent.length} balance${silent.length === 1 ? '' : 's'} not reported yet`)
   if (missing.length) parts.push(`${missing.length} month${missing.length === 1 ? '' : 's'} missing`)
   const total = review.length + failed.length + transit.length + stale.length + silent.length + missing.length
+  // Nothing for anyone to do, so not a thing that needs a look, but "All reconciled" would claim more than we know.
+  const waiting = `${notTiedOut} account${notTiedOut === 1 ? '' : 's'} not tied out yet`
+  const line = total ? `${total} thing${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} a look: ${parts.join(', ')}` : notTiedOut ? `Reconciled except ${waiting}` : 'All reconciled'
   return {
     status: total === 0 ? 'ok' : 'needs_review',
-    line: total === 0 ? 'All reconciled' : `${total} thing${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} a look: ${parts.join(', ')}`,
-    counts: { toReview: review.length, failedChecks: failed.length, warnings, unmatchedInTransit: transit.length, unexplainedMoneyIn: unexplained.length, staleSources: stale.length + silent.length, missingStatements: missing.length, passedChecks },
+    line: total && notTiedOut ? `${line}. ${waiting[0]?.toUpperCase()}${waiting.slice(1)}` : line,
+    counts: { toReview: review.length, failedChecks: failed.length, warnings, notTiedOut, unmatchedInTransit: transit.length, unexplainedMoneyIn: unexplained.length, staleSources: stale.length + silent.length, missingStatements: missing.length, passedChecks },
     items: items.slice(0, 10),
   }
 }

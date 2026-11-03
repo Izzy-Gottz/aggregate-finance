@@ -67,7 +67,7 @@ describe('public demo: AI link and connections', () => {
     api.s.me = { ...api.s.me, publicDemo: true, demoMcpUrl: 'https://app.example/demo/mcp' }
     start(api, '#/')
     expect(await screen.findByText('https://app.example/demo/mcp')).toBeTruthy()
-    expect(screen.getByText('Paste this link into Claude, ChatGPT or any assistant. The demo books, no sign-in.')).toBeTruthy()
+    expect(screen.getByText('Paste this link into Claude, ChatGPT or any assistant. It reads the demo books, with no sign-in.')).toBeTruthy()
   })
 
   it('a connection only reads: no Sync now, Disconnect or Move', async () => {

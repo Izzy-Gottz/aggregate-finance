@@ -11,6 +11,9 @@ Start with [what Aggregate connects](../connectors.md): every connection, what i
 - [Connect your bank, Stripe and QuickBooks to Claude](connect-finances-to-claude.md)
 - [Connect your bank, Stripe and QuickBooks to ChatGPT](connect-finances-to-chatgpt.md)
 - [AI CFO for startups: what works today](ai-cfo-for-startups.md)
+- [Your company and personal finances in one AI](company-and-personal-finances-in-one-ai.md)
+- [Connecting your finances to AI: common questions](faq.md)
+- [Upload a CSV without counting money twice](upload-csv-statements.md)
 
 ## Connect your AI
 
@@ -58,6 +61,11 @@ Substack, Ko-fi, Beehiiv, Kraken, Gemini, Robinhood, Interactive Brokers, Fundri
 
 - [Definitions: cash, burn, runway, MRR, AR/AP, "All reconciled"](definitions.md)
 - [Known limits: what Aggregate doesn't do yet, and what happens instead](limits.md)
+- [How we check our numbers](how-we-check-our-numbers.md)
+
+## Security
+
+- [MCP security: how Aggregate maps to the OWASP MCP Top 10](mcp-security.md)
 
 ## Comparisons
 

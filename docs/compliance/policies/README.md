@@ -56,10 +56,12 @@ Approval record:
 | Date | Version | Approved by | Notes |
 |---|---|---|---|
 | 2026-11-01 | First approved version | The founder | All eight policies, including AI session rules 20 to 26 in `acceptable-use.md`. Effective 2026-11-01 |
+| 2026-11-02 | Operator name | The founder | Aggregate Finance LLC now operates Aggregate. No rule changed |
+| 2026-11-02 | Invites | The founder | `information-security.md` rule 3 allows the customer's own invite email |
 
 ## Records
 
-Some policies ask for a written record. Keep them in one private place, not in a repo, because they name
+Some policies ask for a written record. Keep them in one private place, never in the public repo, because they name
 accounts and vendors in detail.
 
 - `access-review-log` (quarterly access self-review)
@@ -69,7 +71,7 @@ accounts and vendors in detail.
 - `exceptions-log` (any time a rule is knowingly not followed, and why)
 - `restore-drill-log` (each backup restore test: date, backup name, time taken, problems). Procedure: `docs/self-hosting.md` § Restore drill
 
-Records are kept privately, not in this repository.
+Records are kept privately, in the private source repository, and left out of the public one.
 
 ## Review cadence
 

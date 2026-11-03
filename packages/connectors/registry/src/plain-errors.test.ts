@@ -19,6 +19,7 @@ import { classifyPaddleError } from '@agfn/connector-paddle'
 import { classifyPolarError } from '@agfn/connector-polar'
 import { classifyLsError } from '@agfn/connector-lemonsqueezy'
 import { classifyGumroadError } from '@agfn/connector-gumroad'
+import { classifyPatreonError } from '@agfn/connector-patreon'
 import { classifyAppStoreError } from '@agfn/connector-appstore'
 import { classifyGoogleError } from '@agfn/connector-googleplay'
 import { classifyQboError } from '@agfn/connector-quickbooks'
@@ -49,6 +50,7 @@ const CONNECTORS: Array<[string, (status: number) => ConnectorError | undefined]
   ['Polar', (s) => classifyPolarError(s, body)],
   ['Lemon Squeezy', (s) => classifyLsError(s, body)],
   ['Gumroad', (s) => classifyGumroadError(s, body)],
+  ['Patreon', (s) => classifyPatreonError(s, body)],
   ['App Store Connect', (s) => classifyAppStoreError(s, body)],
   ['Google Play', (s) => classifyGoogleError(s, body)],
   ['QuickBooks', (s) => classifyQboError({ status: s, body })],

@@ -64,4 +64,8 @@ Scanned on 2026-11-01 with [Cisco mcp-scanner](https://github.com/cisco-ai-defen
 against the public demo, which publishes the same tools: 40 tools, 0 findings. YARA rules are pattern matching, so that's
 a check for known bad patterns, not proof of safety. The LLM and Cisco API analyzers weren't run.
 
+Rerun on 2026-11-02 against a local copy of `main`, same version, adding the schema analyzer and protocol checks: 40 tools,
+0 findings on YARA and schema. The three prompts weren't scanned, because they need arguments the scanner doesn't supply.
+Details are in [scan-2026-11.md](scan-2026-11.md).
+
 Snyk Agent Scan wasn't run. It needs a Snyk account and sends tool descriptions to Snyk.

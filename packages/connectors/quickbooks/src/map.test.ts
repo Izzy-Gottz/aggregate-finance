@@ -74,9 +74,9 @@ describe('money that moved without an invoice or bill', () => {
     expect(pay).toMatchObject({ externalId: 'salesreceipt:11', direction: 'receivable', amount: usd(10_800) })
   })
 
-  it('RefundReceipt → a customer refund net of tax', () => {
+  it('RefundReceipt → a customer refund as paid, with its tax', () => {
     const [n] = mapCashEntity('RefundReceipt', { Id: '12', TxnDate: '2026-09-15', TotalAmt: 54, CustomerRef: { name: 'Pye' }, TxnTaxDetail: { TotalTax: 4 }, Line: [{ Amount: 50, DetailType: 'SalesItemLineDetail', SalesItemLineDetail: {} }] }, ctx) as [CreditNoteUpsert]
-    expect(n).toMatchObject({ externalId: 'refundreceipt:12', direction: 'receivable', amount: usd(5_000), appliedTo: 'refund' })
+    expect(n).toMatchObject({ externalId: 'refundreceipt:12', direction: 'receivable', amount: usd(5_400), tax: usd(400), appliedTo: 'refund' })
   })
 
   it('Deposit: linked payments are already counted; other income and fees are not', () => {

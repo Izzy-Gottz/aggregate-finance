@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { connect, migrateToLatest, newId, nowIso, JobQueue, type CoreTables, type DbHandle } from '@agfn/db'
 import { loadKeyRing } from '@agfn/security'
 import { ConnectorRegistry, SyncEngine } from '@agfn/sync'
@@ -399,6 +399,11 @@ describe('demo AI seed', () => {
 
 describe('demo review tidy', () => {
   it('files older unexplained deposits and keeps the newest one plus the founder-loan question', async () => {
+    // The review's 30-day window reads the real clock: pin it to the demo's NOW, or the data ages out of it.
+    vi.useFakeTimers({ toFake: ['Date'], now: NOW })
+    onTestFinished(() => {
+      vi.useRealTimers()
+    })
     const { db, keys, sync, ledger, personId } = await setup()
     const ws = await createDemoWorkspace({ db, keys, sync, now: () => NOW, extras: { buckets: ledger } }, { personId, historyDays: 60 })
     const before = await ledger.reviewItems(ws.workspaceId)

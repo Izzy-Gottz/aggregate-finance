@@ -16,8 +16,10 @@ MCP link: https://app.aggregate.finance/mcp
 - [Connect your bank, Stripe and QuickBooks to ChatGPT](https://docs.aggregate.finance/guides/connect-finances-to-chatgpt)
 - [AI CFO for startups: what works today](https://docs.aggregate.finance/guides/ai-cfo-for-startups)
 - [Best finance MCP servers: an honest comparison](https://docs.aggregate.finance/guides/best-finance-mcp-server)
+- [Connecting your finances to AI: common questions](https://docs.aggregate.finance/guides/faq)
 - [Definitions: cash, burn, runway, MRR](https://docs.aggregate.finance/guides/definitions)
 - [Known limits](https://docs.aggregate.finance/guides/limits)
+- [n8n: weekly cash and runway summary to Slack](https://n8n.io/workflows/20881)
 
 ## Optional
 

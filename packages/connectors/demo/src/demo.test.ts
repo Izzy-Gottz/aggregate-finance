@@ -144,13 +144,20 @@ describe('demo connector', () => {
   })
 
   it('bluebird: invoice state matches payments (paid, partial, open, overdue)', async () => {
-    const events = await all('bluebird')
+    const { connector, conn: c } = make('bluebird', Date.parse('2026-11-03T12:00:00Z'))
+    const { events } = await runSync(connector, c, null)
     const inv = events.filter((e) => e.type === 'invoice.upsert')
     const statuses = new Set(inv.map((e) => (e.type === 'invoice.upsert' ? e.status : '')))
     expect(statuses).toEqual(new Set(['paid', 'partially_paid', 'open']))
     const applied = new Map<string, number>()
     for (const e of events) if (e.type === 'payment.applied') for (const a of e.applications) applied.set(a.invoiceExternalId, (applied.get(a.invoiceExternalId) ?? 0) + a.amount.minor)
     for (const e of inv) if (e.type === 'invoice.upsert') expect(e.amountPaid.minor).toBe(applied.get(e.externalId) ?? 0)
+  })
+
+  it('bluebird: only the last few months of invoices stay unpaid', async () => {
+    const { connector, conn: c } = make('bluebird', Date.parse('2026-11-03T12:00:00Z'))
+    const { events } = await runSync(connector, c, null)
+    for (const e of events) if (e.type === 'invoice.upsert' && e.status !== 'paid') expect(e.issueDate >= '2026-06-01').toBe(true)
   })
 
   it('payroll runs settle against bank rows that exist', async () => {

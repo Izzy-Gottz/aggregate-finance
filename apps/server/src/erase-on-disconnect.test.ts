@@ -20,8 +20,8 @@ let outbox: string[]
 
 // Wefunder-shaped (investment events), plus an account with one row so the account rule is exercised: Wefunder itself
 // sends no accounts.
-const fakeWefunder = (deps: ConnectorDeps): Connector => ({
-  describe: () => ({ key: 'wefunder', name: 'Wefunder', group: 'investments', provides: ['investments'], freshness: 'daily', auth: 'oauth' }) as never,
+const fakeProvider = (key: string) => (deps: ConnectorDeps): Connector => ({
+  describe: () => ({ key, name: key, group: 'investments', provides: ['investments'], freshness: 'daily', auth: 'oauth' }) as never,
   connect: async () => ({ secret: {}, config: {} }),
   health: async () => ({ status: 'ok' }),
   sync: async (conn: ConnectionRef) => {
@@ -37,7 +37,7 @@ const fakeWefunder = (deps: ConnectorDeps): Connector => ({
 beforeEach(async () => {
   outbox = []
   const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: BASE, WEB_DIST: '/nonexistent' }), runWorker: false }
-  booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async (m) => void outbox.push(m.text) }, connectors: [fakeWefunder as never], fileStore: new MemoryFileStore(), ledger: (h) => ledgerFor(h.db) })
+  booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async (m) => void outbox.push(m.text) }, connectors: [fakeProvider('wefunder') as never, fakeProvider('freshbooks') as never], fileStore: new MemoryFileStore(), ledger: (h) => ledgerFor(h.db) })
   app = createApp(booted.services)
 })
 afterEach(() => booted.shutdown())
@@ -50,7 +50,7 @@ async function signIn(email: string): Promise<string> {
 }
 const post = (cookie: string, body: unknown = {}) => ({ method: 'POST', headers: { 'content-type': 'application/json', origin: BASE, cookie }, body: JSON.stringify(body) })
 
-async function setup(): Promise<{ cookie: string; ws: string; personal: string; id: string }> {
+async function setup(key = 'wefunder'): Promise<{ cookie: string; ws: string; personal: string; id: string }> {
   const cookie = await signIn('investor@example.test')
   await app.request('/api/workspaces', post(cookie, { companyName: 'Acme' }))
   const db = booted.services.db
@@ -61,7 +61,7 @@ async function setup(): Promise<{ cookie: string; ws: string; personal: string; 
     return { ws: m.workspace_id, personal: e.id }
   })
   const id = 'conn_wf'
-  await withBypass('t', () => db.insertInto('connections').values({ id, workspace_id: ws, connector_key: 'wefunder', entity_id: personal, display_name: 'Wefunder', status: 'active', secret_enc: null, config_json: '{}', cursor: null, last_sync_at: null, last_success_at: null, last_error: null, created_by: null, created_at: new Date().toISOString() }).execute())
+  await withBypass('t', () => db.insertInto('connections').values({ id, workspace_id: ws, connector_key: key, entity_id: personal, display_name: 'Wefunder', status: 'active', secret_enc: null, config_json: '{}', cursor: null, last_sync_at: null, last_success_at: null, last_error: null, created_by: null, created_at: new Date().toISOString() }).execute())
   await withBypass('t', () => booted.services.sync.sync(id))
   return { cookie, ws, personal, id }
 }
@@ -69,6 +69,20 @@ const anyDb = () => booted.services.db as never as import('kysely').Kysely<Recor
 const accountOf = (id: string) => withBypass('t', () => anyDb().selectFrom('accounts').select(['id', 'closed_at']).where('connection_id', '=', id).execute())
 
 describe('erase on disconnect', () => {
+  it('FreshBooks is erased like QuickBooks: records, entries and raw payloads all go', async () => {
+    expect(ERASE_ON_DISCONNECT.has('quickbooks')).toBe(true)
+    expect(ERASE_ON_DISCONNECT.has('freshbooks')).toBe(true)
+    const { cookie, ws, personal, id } = await setup('freshbooks')
+    const rows = (t: string) => withBypass('t', () => anyDb().selectFrom(t).select('id').where('connection_id', '=', id).execute())
+    expect((await rows('ledger_records')).length).toBe(4)
+    const res = await app.request(`/api/connections/${id}/disconnect`, post(cookie, {}))
+    expect(res.status, await res.clone().text()).toBe(200)
+    expect(await res.json()).toMatchObject({ ok: true, dataDeleted: true })
+    expect(await rows('ledger_records')).toEqual([])
+    expect(await rows('raw_records')).toEqual([])
+    expect(await withBypass('t', () => anyDb().selectFrom('journal_entries').select('id').where('workspace_id', '=', ws).where('entity_id', '=', personal).execute())).toEqual([])
+  })
+
   it('deletes a Wefunder connection\'s records, entries, raw payloads and (nothing else pointing at it) its account', async () => {
     expect(ERASE_ON_DISCONNECT.has('wefunder')).toBe(true)
     const { cookie, ws, personal, id } = await setup()

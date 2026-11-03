@@ -5,6 +5,8 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 /** "$1,234.56", "-$12.00", "(12.00)", "12.00-", "12.00 CR", "+$5.00" → signed minor units (CR and brackets negative). */
 export function parseMoney(s: string): number | null {
+  // A real amount is short, and this pattern gets very slow on long runs of spaces.
+  if (s.length > 64) return null
   s = s.replace(/\u2212/g, '-')
   const m = /^(-|\()?\s*\+?\s*\$?\s*(-)?\s*(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})\s*(\)|-|CR)?$/i.exec(s.trim())
   if (!m) return null

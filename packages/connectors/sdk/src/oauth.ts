@@ -19,6 +19,8 @@ export interface OAuthClientConfig {
   /** 'form' (default, RFC 6749 §2.3.1): id and secret URL-encoded inside the Basic header. 'raw': as they are, for
    *  providers that compare the decoded header literally (Deel, whose secrets end in '=='). */
   basicEncoding?: 'form' | 'raw'
+  /** 'form' (default): URL-encoded token requests. 'json': a JSON body, for providers documented that way (FreshBooks). */
+  tokenBody?: 'form' | 'json'
   scopeSeparator?: string
   /** Response header with the provider's request id, put on token-call errors (see HttpClientOptions). */
   requestIdHeader?: string
@@ -155,7 +157,7 @@ export class OAuthClient {
     const res = await this.http.request<Record<string, unknown>>({
       method: 'POST',
       path: this.cfg.tokenUrl,
-      form,
+      ...(this.cfg.tokenBody === 'json' ? { json: form } : { form }),
       headers,
       idempotent: false,
     })

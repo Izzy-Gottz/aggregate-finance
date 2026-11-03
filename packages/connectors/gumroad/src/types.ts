@@ -16,6 +16,10 @@ export interface GumroadSale {
   product_id?: string
   /** USD cents the seller sold for, including Gumroad's fee and any seller-collected tax. */
   price: number
+  /** Tax the seller is responsible for. Gumroad's API docs show it on GET /v2/sales. */
+  tax_cents?: number
+  /** Shown on GET /v2/sales/:id in the docs, not on the list's sample: not seen on a real list row yet. */
+  tax_included_in_price?: boolean
   /** Gumroad's fee in USD cents (includes the Discover fee). */
   gumroad_fee: number
   currency?: string

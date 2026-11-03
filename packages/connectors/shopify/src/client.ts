@@ -20,7 +20,8 @@ const SHOP_RE = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/
 /** "https://Example.myshopify.com/" → "example.myshopify.com"; undefined when it isn't a myshopify domain. */
 export function normalizeShop(input: unknown): string | undefined {
   if (typeof input !== 'string') return undefined
-  const s = input.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+  // Capped first: the box is free text, and no shop address is this long.
+  const s = input.trim().slice(0, 300).toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   return SHOP_RE.test(s) ? s : undefined
 }
 

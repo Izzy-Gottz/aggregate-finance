@@ -59,7 +59,18 @@ function describe(r: SourceRecord | null, thisYear: string): string {
   if (!r) return 'a record'
   const amt = r.amount ? formatMoney(r.amount.minor, r.amount.currency) : ''
   const ev = r.event
-  const who = ev.type === 'txn.upsert' ? (ev.counterparty ?? ev.rawText ?? '') : ev.type === 'invoice.upsert' ? `${ev.number ?? ''} ${ev.counterparty}` : ev.type
+  const who =
+    ev.type === 'txn.upsert'
+      ? (ev.counterparty ?? ev.rawText ?? '')
+      : ev.type === 'invoice.upsert'
+        ? `${ev.number ?? ''} ${ev.counterparty}`
+        : ev.type === 'payment.applied'
+          ? `${ev.counterparty ?? ''} payment`
+          : ev.type === 'processor.balance_txn'
+            ? `${ev.counterparty ?? ''} ${ev.kind}`
+            : ev.type === 'credit_note.upsert'
+              ? `${ev.counterparty ?? ''} credit note ${ev.number ?? ''}`
+              : ev.type
   return `${shortDate(r.date, thisYear)} ${who.trim()} ${amt}`.trim()
 }
 
@@ -167,6 +178,27 @@ async function computeReviewItems(rc: ReadContext, opts: { entityIds?: EntityId[
   const sourceAccounts = await rc.directory.listSourceAccounts(ws)
   const accountNames = new Map(sourceAccounts.map((a) => [a.id, a.institution && !a.name.toLowerCase().includes(a.institution.toLowerCase()) ? `${a.institution} ${a.name}` : a.name]))
   const nameOf = (r: SourceRecord): string | undefined => (r.sourceAccountId ? accountNames.get(r.sourceAccountId) : undefined)
+  // A payment in the books names its invoice by id: the number people know is on the invoice's own record.
+  const invoiceNumbers = new Map<string, string>()
+  if ([...linked.values()].some((r) => r.event.type === 'payment.applied')) {
+    for (const r of await rc.store.listRecords(ws, { eventTypes: ['invoice.upsert'] })) if (r.event.type === 'invoice.upsert' && r.event.number) invoiceNumbers.set(`${r.connectionId}|${r.externalId}`, r.event.number)
+  }
+  const numberOf = (r: SourceRecord): string => {
+    if (r.event.type !== 'payment.applied') return docNumber(r)
+    const numbers = r.event.applications.map((a) => invoiceNumbers.get(`${r.connectionId}|${a.invoiceExternalId}`)).filter((n) => n !== undefined)
+    return numbers.length ? ` ${numbers.join(' and ')}` : ''
+  }
+  /** Books on one side, the processor on the other: who, which document, and what the processor shows. */
+  const processorQuestion = (from: SourceRecord, to: SourceRecord): string | undefined => {
+    const [b, c] = [from.event, to.event]
+    if (c.type !== 'processor.balance_txn' || !from.amount || (b.type !== 'invoice.upsert' && b.type !== 'payment.applied' && b.type !== 'credit_note.upsert')) return undefined
+    const who = b.counterparty || c.counterparty || 'The customer'
+    const amt = formatMoney(Math.abs(from.amount.minor), from.amount.currency)
+    const gross = formatMoney(Math.abs(c.gross.minor), c.gross.currency)
+    const net = c.net.minor !== c.gross.minor ? `, ${formatMoney(Math.abs(c.net.minor), c.net.currency)} after fees` : ''
+    const said = b.type === 'credit_note.upsert' ? `${who} was refunded on credit note${b.number ? ` ${b.number}` : ''} (${amt})` : `${who} ${b.direction === 'payable' ? 'was paid on' : 'paid'} ${docWord(from)}${numberOf(from)} (${amt})`
+    return `${said}. Same money as the ${gross} ${c.kind} in ${nameOf(to) ?? 'your processor'}${net}?`
+  }
   const moveQuestion = (l: Link, from: SourceRecord, to: SourceRecord): string | undefined => {
     const [a, b] = [nameOf(from), nameOf(to)]
     if (!a || !b || !from.amount) return undefined
@@ -212,13 +244,13 @@ async function computeReviewItems(rc: ReadContext, opts: { entityIds?: EntityId[
     const asked = move ? moveQuestion(l, from, to) : undefined
     items.push({
       ...(asked ? { rejectLabel: 'No', questionNames: [nameOf(from) ?? '', nameOf(to) ?? ''], arrivedOn: shortDate(to.date, year) } : {}),
-      question: asked ?? (l.type === 'invoice_payment' ? `Is this payment of ${docWord(from)}${docNumber(from)}?` : `Is this ${LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' ')}?`),
+      question: asked ?? processorQuestion(from, to) ?? (l.type === 'invoice_payment' ? `Is this payment of ${docWord(from)}${numberOf(from)}?` : `Is this ${LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' ')}?`),
       id: `suggested_match:${l.id}`,
       kind: 'suggested_match',
       entityId: to.entityId ?? from.entityId,
       title: `Same money? (${l.type === 'invoice_payment' ? `${docWord(from)} payment` : l.type === 'intercompany' && withPersonal(from, to) ? 'between a company and Personal' : l.type.replace(/_/g, ' ')})`,
       detail: `${describe(from, year)} ↔ ${describe(to, year)}`,
-      confirmLabel: asked && !personal ? 'Yes' : `${asked ? 'Yes' : 'Confirm'}: ${l.type === 'invoice_payment' ? `payment of ${docWord(from)}${docNumber(from)}${leftover(l, from, to, explained)}` : personal ? 'money owed between your company and you (not pay)' : (LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' '))}`,
+      confirmLabel: asked && !personal ? 'Yes' : `${asked ? 'Yes' : 'Confirm'}: ${l.type === 'invoice_payment' ? `payment of ${docWord(from)}${numberOf(from)}${leftover(l, from, to, explained)}` : personal ? 'money owed between your company and you (not pay)' : (LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' '))}`,
       recordIds: [from.id, to.id],
       linkId: l.id,
       confidence: l.confidence,
@@ -364,8 +396,11 @@ async function computeReviewItems(rc: ReadContext, opts: { entityIds?: EntityId[
   for (const rule of await rc.store.listRules(ws)) {
     if (rule.status !== 'suggested') continue
     if (rule.actions.forEntityId && !inScope(rule.actions.forEntityId)) continue
+    // Review shows only items with a company, so a rule without one could be counted and never answered.
+    const ruleEntity = rule.actions.forEntityId ?? (rule.conditions.entityIds ?? allEntities.map((e) => e.id)).find((id) => inScope(id))
+    if (!ruleEntity) continue
     rank.set(`suggested_rule:${rule.id}`, { tier: TIER.rules, minor: 0 })
-    items.push({ id: `suggested_rule:${rule.id}`, kind: 'suggested_rule', entityId: rule.actions.forEntityId ?? null, title: 'Always do this?', detail: rule.name, recordIds: [], ruleId: rule.id, confirmLabel: 'Confirm: always do this', resolve: 'setRuleStatus' })
+    items.push({ id: `suggested_rule:${rule.id}`, kind: 'suggested_rule', entityId: ruleEntity, title: 'Always do this?', detail: rule.name, recordIds: [], ruleId: rule.id, confirmLabel: 'Confirm: always do this', resolve: 'setRuleStatus' })
   }
 
   // Accounts that still need "which company, or Personal?" (their rows are held until then).

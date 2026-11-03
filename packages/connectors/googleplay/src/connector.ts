@@ -47,7 +47,8 @@ const isSecret = (v: unknown): v is GooglePlaySecret =>
 export const EARNINGS_OBJECT = /^earnings\/earnings_(\d{6})(?:_[^/]*)?\.zip$/
 
 export function normalizeBucket(input: string): string {
-  return input.trim().replace(/^gs:\/\//, '').replace(/\/.*$/, '')
+  // Capped first: the box is free text, and no bucket address is this long.
+  return input.trim().slice(0, 300).replace(/^gs:\/\//, '').replace(/\/.*$/, '')
 }
 
 export const accountId = (bucket: string, currency: string) => `googleplay:${bucket}:${currency}`

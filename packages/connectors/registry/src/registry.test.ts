@@ -21,6 +21,11 @@ describe('connector registry', () => {
     expect(c.describe()).toMatchObject({ name: 'WooCommerce', provides: ['reports'], auth: 'api_key' })
   })
 
+  it('FreshBooks appears only with its OAuth app keys', () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('freshbooks')
+    expect(installedConnectorList({ FRESHBOOKS_CLIENT_ID: 'c', FRESHBOOKS_CLIENT_SECRET: 's' }).map((c) => c.key)).toContain('freshbooks')
+  })
+
   it("hides Rippling on the hosted service (its terms forbid using a customer's token for them); self-hosters keep it", () => {
     expect(installedConnectorList({}).map((c) => c.key)).toContain('rippling')
     expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).not.toContain('rippling')
@@ -44,6 +49,103 @@ describe('connector registry', () => {
     const u = new URL(b.url)
     expect(u.searchParams.get('scope')).toBe('view_sales view_payouts')
     expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/gumroad/callback')
+  })
+
+  it('Harvest: self-hosters paste a token; hosted has none until Aggregate’s app is set, then sign-in', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).toContain('harvest')
+    expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).not.toContain('harvest')
+    expect((await begin({}, 'harvest')).kind).toBe('api_key')
+    const hosted = { AGFN_HOSTED: '1', HARVEST_CLIENT_ID: 'c', HARVEST_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(hosted, 'harvest')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBeNull()
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/harvest/callback')
+  })
+
+  it('Patreon: self-hosters paste a Creator’s Access Token; hosted has none until Aggregate’s client is set, then sign-in with only the three scopes', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).toContain('patreon')
+    expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).not.toContain('patreon')
+    expect((await begin({}, 'patreon')).kind).toBe('api_key')
+    const hosted = { AGFN_HOSTED: '1', PATREON_CLIENT_ID: 'c', PATREON_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(hosted, 'patreon')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('identity campaigns campaigns.members')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/patreon/callback')
+  })
+
+  it('Squarespace: no app, no connector; with one, sign-in with only the read permission', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('squarespace')
+    const env = { SQUARESPACE_CLIENT_ID: 'c', SQUARESPACE_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'squarespace')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('website.transactions.read')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/squarespace/callback')
+  })
+
+  it('Wix: no app, no connector; with one, the install link for that app, back to the callback', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('wix')
+    const env = { WIX_CLIENT_ID: 'c', WIX_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'wix')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('appId')).toBe('c')
+    expect(u.searchParams.get('postInstallationUrl')).toMatch(/^https:\/\/app\.example\.com\/api\/connectors\/wix\/callback\?state=/)
+  })
+
+  it('YouTube: no app, no connector; with one, sign-in with only the two read-only scopes', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('youtube')
+    const env = { YOUTUBE_CLIENT_ID: 'c', YOUTUBE_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'youtube')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics-monetary.readonly')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/youtube/callback')
+  })
+
+  it('Pinterest: no app, no connector; with one, sign-in with only the read-only scope', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('pinterest')
+    const env = { PINTEREST_CLIENT_ID: 'c', PINTEREST_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'pinterest')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('ads:read')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/pinterest/callback')
+  })
+  it('AdSense: no app, no connector; with one, sign-in with only the read-only scope', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('adsense')
+    const env = { ADSENSE_CLIENT_ID: 'c', ADSENSE_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'adsense')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('https://www.googleapis.com/auth/adsense.readonly')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/adsense/callback')
+  })
+
+  it('SumUp: self-hosters paste a key; hosted has none until Aggregate’s app is set, then sign-in with only the read scopes', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).toContain('sumup')
+    expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).not.toContain('sumup')
+    expect((await begin({}, 'sumup')).kind).toBe('api_key')
+    const hosted = { AGFN_HOSTED: '1', SUMUP_CLIENT_ID: 'c', SUMUP_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(hosted, 'sumup')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('transactions.history user.profile_readonly')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/sumup/callback')
+  })
+
+  it('Lightspeed: self-hosters paste a token; hosted has none until Aggregate’s app is set, then sign-in', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).toContain('lightspeed')
+    expect(installedConnectorList({ AGFN_HOSTED: '1' }).map((c) => c.key)).not.toContain('lightspeed')
+    expect((await begin({}, 'lightspeed')).kind).toBe('api_key')
+    const hosted = { AGFN_HOSTED: '1', LIGHTSPEED_CLIENT_ID: 'c', LIGHTSPEED_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(hosted, 'lightspeed')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('sales:read retailer:read payment_types:read')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/lightspeed/callback')
   })
 
   it('hides BILL on the hosted service until it has a partner key (then shows it); Deel (live-checked) is offered on both', () => {

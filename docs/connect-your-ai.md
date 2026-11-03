@@ -68,6 +68,9 @@ For a WhatsApp/iMessage bot, a scheduled script or your own agent:
    ```
 4. REST instead of MCP: the same operations live under `/v1/*`, described at `/v1/openapi.json`.
 
+## Ready-made workflows
+- **n8n: weekly cash and runway summary to Slack.** [The template](https://n8n.io/workflows/20881) posts a digest each Monday and sends an alert if runway drops below your limit. You need an Anthropic API key and Slack.
+
 ## What your AI can do
 - **Read:** cash and runway per company, accounts, transactions, who owes you, what you owe soon, payroll, cap table,
   buckets (like Rent or Loans), reports, documents waiting to be read.

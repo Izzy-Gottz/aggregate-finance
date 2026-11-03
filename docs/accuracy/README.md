@@ -1,13 +1,14 @@
 # Accuracy scenarios
 
-Four synthetic workspaces whose every figure is known in advance, checked to the cent on every merge.
+Five synthetic workspaces whose every figure is known in advance, checked to the cent on every merge.
 
 | Scenario | Who | Status |
 | --- | --- | --- |
-| `s2-founder` | Lumen Labs: bank, card, Stripe (fees, a refund, payouts), payroll debits, invoices (paid, partly paid, overdue), a bill, a SAFE, a founder loan | 49 questions, all pass (SQLite and Postgres) |
-| `s1-individual` | Sam Lee, Personal only: checking, savings, two cards (a refund, a pending charge), brokerage and Coinbase holdings, a car loan with terms | 50 questions, all pass |
+| `s2-founder` | Lumen Labs: bank, card, Stripe (fees, a refund, payouts), payroll debits, invoices (paid, partly paid, overdue), a bill, a SAFE, a founder loan | 51 questions, all pass (SQLite and Postgres) |
+| `s1-individual` | Sam Lee, Personal only: checking, savings, two cards (a refund, a pending charge), brokerage and Coinbase holdings, a car loan with terms | 51 questions, all pass |
 | `s3-operator` | Dana Park: three companies (one keeping EUR books from two overlapping CSV exports) + Personal, a transfer and an invoice between companies, a card paid from another company's bank, her salary | 52 questions, all pass |
 | `s4-vc` | Harbor Seed Fund I kept as a company: three LPs' capital calls and a distribution back, the quarterly management fee, five investments wired out, an exit's proceeds, wire fees; told apart with rules (partners' capital, other assets) | 44 questions, all pass. Positions, gains and write-offs come with portfolio tracking |
+| `s5-same-money` | Northwind Supply and Eastside Labs: one account through two sources, an invoice paid through Stripe and recorded in QuickBooks, a taxed refund in both, a wire and a one-sided entry between companies, history starting mid-month | 13 questions, all pass |
 
 ## How it works
 
@@ -63,6 +64,7 @@ owner.
 
 ### Triage log
 
+- 2026-11-02, S5 first run: 12 of 13 matched; Eastside's September burn was asked of a month with no rows, which is unknown, not zero. A key design bug, not a product bug: the fixture now gives that month a real cost.
 - 2026-10-12, S2 first run: 34 of 38 matched; the 4 others were the suite reading the wrong field (paths), not wrong
   numbers. The SAFE wire was matched to the recorded SAFE automatically, so the fixture no longer answers it by hand.
 - 2026-10-12, S1: 24 of 31 matched at first; the rest were paths. The person's key must name their Personal space

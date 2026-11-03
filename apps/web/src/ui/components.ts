@@ -12,12 +12,14 @@ export interface SectionProps {
   children?: ComponentChildren
   /** Smaller heading, used inside drawers. */
   compact?: boolean
+  /** This heading names the page: read as level 1, styled as a section. */
+  pageTitle?: boolean
   id?: string
 }
-export function Section({ title, sub, children, compact, id }: SectionProps) {
+export function Section({ title, sub, children, compact, id, pageTitle }: SectionProps) {
   const hid = id ?? 'sec-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   return html`<section class=${'section' + (compact ? ' compact' : '')} aria-labelledby=${hid}>
-    <header><h2 id=${hid}>${title}</h2>${sub ? html`<p class="sub">${sub}</p>` : null}</header>
+    <header><h2 id=${hid} aria-level=${pageTitle ? 1 : undefined}>${title}</h2>${sub ? html`<p class="sub">${sub}</p>` : null}</header>
     ${children}
   </section>`
 }

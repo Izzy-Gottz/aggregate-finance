@@ -1,0 +1,26 @@
+{
+  "_note": "Hand-built from Squarespace's Commerce API reference and published schema (developers.squarespace.com, read 2026-11-02). Not recorded from a real site.",
+  "site": { "id": "site-sample-abcd", "siteId": "sample", "title": "Sample Shop", "url": "https://sample.example.com", "currency": "USD", "timeZone": "America/New_York" },
+  "page": {
+    "documents": [
+      {
+        "id": "doc-full-sale", "createdOn": "2026-09-05T15:00:00.000Z", "modifiedOn": "2026-09-05T15:00:00.000Z", "customerEmail": "redacted@example.com", "salesOrderId": "order-1", "voided": false,
+        "total": { "currency": "USD", "value": 49.99 },
+        "payments": [{ "id": "pay-1", "provider": "STRIPE", "amount": { "currency": "USD", "value": 49.99 }, "netAmount": { "currency": "USD", "value": 49.99 }, "refundedAmount": { "currency": "USD", "value": 0 }, "paidOn": "2026-09-05T15:00:00.000Z", "giftCardId": null, "processingFees": [], "refunds": [] }]
+      },
+      {
+        "id": "doc-part-refund", "createdOn": "2026-08-10T15:00:00.000Z", "modifiedOn": "2026-09-20T15:00:00.000Z", "customerEmail": "redacted@example.com", "salesOrderId": "order-2", "voided": false,
+        "payments": [{ "id": "pay-2", "provider": "PAYPAL", "amount": { "currency": "USD", "value": 100 }, "netAmount": { "currency": "USD", "value": 75 }, "refundedAmount": { "currency": "USD", "value": 25 }, "paidOn": "2026-08-10T15:00:00.000Z", "giftCardId": null, "processingFees": [], "refunds": [{ "id": "ref-1", "amount": { "currency": "USD", "value": 25 }, "refundedOn": "2026-09-20T15:00:00.000Z" }] }]
+      },
+      {
+        "id": "doc-voided", "createdOn": "2026-09-06T15:00:00.000Z", "modifiedOn": "2026-09-07T15:00:00.000Z", "customerEmail": "redacted@example.com", "salesOrderId": "order-3", "voided": true,
+        "payments": [{ "id": "pay-3", "provider": "STRIPE", "amount": { "currency": "USD", "value": 10 }, "netAmount": { "currency": "USD", "value": 0 }, "refundedAmount": { "currency": "USD", "value": 10 }, "paidOn": "2026-09-06T15:00:00.000Z", "giftCardId": null, "processingFees": [], "refunds": [] }]
+      },
+      {
+        "id": "doc-gift-card", "createdOn": "2026-09-08T15:00:00.000Z", "modifiedOn": "2026-09-08T15:00:00.000Z", "customerEmail": null, "salesOrderId": "order-4", "voided": false,
+        "payments": [{ "id": "pay-4", "provider": "SQUARESPACE", "amount": { "currency": "USD", "value": 20 }, "netAmount": { "currency": "USD", "value": 20 }, "refundedAmount": { "currency": "USD", "value": 0 }, "paidOn": "2026-09-08T15:00:00.000Z", "giftCardId": "gift-1", "processingFees": [], "refunds": [] }]
+      }
+    ],
+    "pagination": { "hasNextPage": false, "nextPageCursor": null, "nextPageUrl": null }
+  }
+}

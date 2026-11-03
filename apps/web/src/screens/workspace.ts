@@ -87,7 +87,7 @@ export function WorkspacePage() {
                   ? html`<span class="values"><span class=${'value' + (!e.cash ? ' grey' : '')}>${shown}</span><span class="value-sub">${inv}</span></span>`
                   : html`<span class=${'value' + (e.hidden || !e.cash ? ' grey' : '')}>${shown}</span>`}
                 onClick=${() => app.open({ kind: 'company', id: e.id })}
-                label=${`${e.name}, ${shown}${inv ? `, ${inv}` : ''}${updating ? ', updating' : ''}. Open details`}
+                label=${`${e.name}, ${line ? `${line.replace('updating…', 'updating').replaceAll(' · ', ', ')}, ` : ''}${shown}${inv ? `, ${inv}` : ''}. Open details`}
               />`
             })}
           </${Rows}>`}
@@ -131,7 +131,7 @@ export function WorkspacePage() {
       <${Pluses}>
         <${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'cash' })}>Add cash or a receipt</${PlusAction}>
         <${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'upload' })}>Upload a file</${PlusAction}>
-        ${isReviewer(app) || !app.ws?.me.friendInvites || app.ws.me.demo ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'friend-invite' })}>Invite someone</${PlusAction}>`}
+        ${limited || isPublicDemo(app) || !isManager(app) ? null : html`<${PlusAction} onClick=${() => app.open({ kind: 'invite' })}>Add a teammate</${PlusAction}>`}
         ${inbound.length && !limited ? html`<${PlusAction} onClick=${() => app.open({ kind: 'add', what: 'email' })}>${inbound.length > 1 ? 'Other email addresses, and who can send' : 'Who can email it'}</${PlusAction}>` : null}
       </${Pluses}>
     </${Section}>
@@ -159,7 +159,7 @@ function AiSection({ ws, now }: { ws: Workspace; now: number }) {
   // The no-sign-up demo: its own link, which needs no sign-in (the usual one asks for an account first).
   const demoLink = isPublicDemo(app) ? app.me?.demoMcpUrl : undefined
   const link = demoLink ?? ws.me.mcpUrl
-  return html`<${Section} title="Connect your AI" sub=${demoLink ? 'Paste this link into Claude, ChatGPT or any assistant. The demo books, no sign-in.' : 'Paste this link into Claude, ChatGPT or any assistant'}>
+  return html`<${Section} title="Connect your AI" sub=${demoLink ? 'Paste this link into Claude, ChatGPT or any assistant. It reads the demo books, with no sign-in.' : 'Paste this link into Claude, ChatGPT or any assistant'}>
     <${Rows} label="Your AI link and connected AIs">
       <${Row} name=${html`<span class="mono" style="font-size:14px">${link}</span>`} right=${html`<${CopyButton} text=${link} what="AI link" />`} />
       ${ws.aiPaused ? html`<${Row} icon=${html`<${Tile} icon="pause" />`} name="All AI access is paused" line="Nothing can read or add until you resume" right=${html`<${Button} quiet onClick=${async () => (await app.api.pauseAll(false), app.reload())}>Resume</${Button}>`} />` : null}

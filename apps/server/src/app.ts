@@ -59,7 +59,7 @@ import { adoptStatementAccounts, deleteConnectionFiles, ERASE_ON_DISCONNECT, ERA
 import { personalHidden } from './personal.ts'
 import { termsByAccount } from './account-terms.ts'
 import { connectionRoutes, plaidDuplicateMessage } from './routes/connections.ts'
-import { storeSalesThisMonth } from './store-sales.ts'
+import { hasDrawerLine, storeSalesThisMonth } from './store-sales.ts'
 import { passkeysPossible, type ServerConfig } from './config.ts'
 import { startDemoWorkspace } from './demo-start.ts'
 
@@ -1095,6 +1095,24 @@ export function createApp(s: Services): Hono<Env> {
   }
 
   /**
+   * FreshBooks' cap (config.freshbooksMaxConnections): its terms let it limit an app's access at 500 connections, so
+   * this counts every workspace (one named bypass read) and stops short, with a warning from 400 so there's time to
+   * talk to FreshBooks. Checked before the person is sent to FreshBooks. A workspace that already has FreshBooks may
+   * reconnect, because that adds nothing.
+   */
+  async function assertFreshbooksRoom(ws: string): Promise<void> {
+    const max = config.freshbooksMaxConnections
+    if (!max) return
+    const row = await withBypass('freshbooks:connection_cap', () => db.selectFrom('connections').select((eb) => eb.fn.countAll<number>().as('n')).where('connector_key', '=', 'freshbooks').where('status', '!=', 'disconnected').executeTakeFirst())
+    const n = Number(row?.n ?? 0)
+    if (n >= 400) console.warn('[agfn] freshbooks connections near the limit', { n, max })
+    if (n < max) return
+    const mine = await db.selectFrom('connections').select('id').where('workspace_id', '=', ws).where('connector_key', '=', 'freshbooks').where('status', '!=', 'disconnected').executeTakeFirst()
+    if (mine) return
+    fail(409, 'New FreshBooks connections are full right now. Try again in a few days, or email support@aggregate.finance and we’ll tell you when there’s room.', { error: 'freshbooks_limit', limit: max })
+  }
+
+  /**
    * One Plaid finish at a time per workspace, from the cap and duplicate checks until the connection row exists: the
    * public-token exchange (a new, billed Item) happens in between, so concurrent finishes (two tabs, two admins) would
    * each pass the checks and all exchange. A settings row is the lock, so it holds across server instances; a holder
@@ -1127,6 +1145,7 @@ export function createApp(s: Services): Hono<Env> {
     if (key === 'plaid') await assertPlaidRoom(ws)
     if (key === 'xero') await assertXeroRoom(ws)
     if (key === 'finch') await assertFinchRoom(ws)
+    if (key === 'freshbooks') await assertFreshbooksRoom(ws)
     const connector = s.registry.create(key, { raw: { put: async () => '' } })
     const d = connector.describe()
     const startBody = await c.req
@@ -1529,9 +1548,9 @@ export function createApp(s: Services): Hono<Env> {
       : Number((await db.selectFrom('raw_records').select((eb) => eb.fn.countAll<number>().as('n')).where('workspace_id', '=', ws).where('connection_id', '=', id).executeTakeFirst())?.n ?? 0)
     // The disconnect drawer can't promise "it stays" where the rule (retire.ts) deletes the data anyway.
     const erasesOnDisconnect = ERASE_ON_DISCONNECT.has(summary.connectorKey) ? ('always' as const) : ERASE_WHEN_REVOKED.has(summary.connectorKey) ? ('maybe' as const) : undefined
-    // WooCommerce: sales reported by the store, for the company's people who may see its money. App only, never a tool.
-    const storeSales = summary.connectorKey === 'woocommerce'
-      ? await storeSalesThisMonth(db as never, ws, id, await connectionCurrency(s, ws, id), new Date(), async (e) => visible.includes(e) && (await s.permissions.can(actorOf(c), 'view', e, 'balances')) && (await s.permissions.can(actorOf(c), 'view', e, 'reports')))
+    // Report-only connections: what the source reports, for the company's people who may see its money. App only, never a tool.
+    const storeSales = hasDrawerLine(summary.connectorKey)
+      ? await storeSalesThisMonth(db as never, ws, id, summary.connectorKey, await connectionCurrency(s, ws, id), new Date(), async (e) => visible.includes(e) && (await s.permissions.can(actorOf(c), 'view', e, 'balances')) && (await s.permissions.can(actorOf(c), 'view', e, 'reports')))
       : []
     return c.json({ ...summary, accounts, unassigned, provides, canRefreshBalance, ...(records !== undefined ? { records } : {}), ...(erasesOnDisconnect ? { erasesOnDisconnect } : {}), ...(storeSales.length ? { storeSales } : {}) })
   })
@@ -2126,7 +2145,7 @@ const LIVE_STATUSES: ReadonlySet<string> = new Set(['active', 'paused'])
 const XERO_FULL = 'New Xero connections are full right now while we add room on Xero’s side. Try again in a day or two, or email support@aggregate.finance and we’ll tell you when it’s ready.'
 
 /** Most founders' next useful connection first; niche tools last. */
-const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin']
+const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lightspeed', 'sumup', 'squarespace', 'wix', 'adsense', 'pinterest', 'youtube', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin', 'harvest']
 /** Tools whose data another connected tool already brings (an accounting tool carries bills and invoices). */
 const COVERED_BY: Record<string, string[]> = {
   xero: ['quickbooks'],

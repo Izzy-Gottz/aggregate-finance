@@ -24,6 +24,12 @@ describe('owner money that needs an account', () => {
 
       const held = await ai.call<{ status: string }>('add_entry', { ...entry, account_id: id, idempotency_key: 'owner-held-0002' })
       expect(held.status).toBe('pending_review')
+
+      // The rest of what Apply would refuse is refused here too, instead of being held first.
+      const fromCompany = await ai.try('add_entry', { ...entry, paid_by: 'Acme', account_id: id, idempotency_key: 'owner-held-0003' })
+      expect(fromCompany.text).toContain('Owner money must be paid by "owner"')
+      const payOwner = await ai.try('add_entry', { ...entry, kind: 'reimbursement', account_id: id, idempotency_key: 'owner-held-0004' })
+      expect(payOwner.text).toContain('paid_by should be the company')
     } finally {
       await srv.close()
     }

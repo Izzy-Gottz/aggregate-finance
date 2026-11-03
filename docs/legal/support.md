@@ -1,7 +1,7 @@
 ---
 title: Support
 status: final
-updated: 2026-10-11
+updated: 2026-11-02
 ---
 
 # Support
@@ -15,8 +15,8 @@ Email **support@aggregate.finance**. A person reads every message, usually withi
 
 ## Common questions
 
-**Can Aggregate move money?** No. It reads your accounts and records what happened. It never pays, transfers, sends
-invoices or emails anyone, and no connected AI can either.
+**Can Aggregate move money?** No. It reads your accounts and records what happened. It never pays, transfers or sends
+invoices, and no connected AI can either. It emails someone else only when you send an invite.
 
 **How do I stop an AI's access?** In the app, open Connect your AI, choose the AI, and press Pause or Revoke. It takes
 effect on its next request.

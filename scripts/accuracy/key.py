@@ -632,8 +632,58 @@ def s4(fx):
     return q
 
 
+def s5(fx):
+    conns = {c['id']: c['events'] for c in fx['connections']}
+    nw, east = fx['company'], fx['companies'][0]['name']
+    bank = [e for e in conns['plaid'] if e['type'] == 'txn.upsert']
+    stripe = [e for e in conns['stripe'] if e['type'] == 'processor.balance_txn']
+    qbo = conns['qbo']
+    moved = [a for a in fx['actions'] if a['do'] == 'add_entry' and a['args']['kind'] == 'intercompany']
+    moved_minor = sum(int(Decimal(a['args']['amount']['amount']) * 100) for a in moved)
+    wire = -sum(t['amount']['minor'] for t in bank if t['counterparty'] == east)
+
+    def month(rows, ym):
+        return sum(m for d, m in rows if d.startswith(ym))
+
+    # Spending, by the definitions: bank costs (not payouts, not money to Eastside), Stripe fees, customer refunds at what
+    # was paid back. Revenue: Stripe charges at gross; invoice 1038's payment is the same money as its charge.
+    costs = [(t['date'], -t['amount']['minor']) for t in bank if t['amount']['minor'] < 0 and t['counterparty'] != east]
+    costs += [(day_of(e), e['fee']['minor']) for e in stripe]
+    refunds = [(day_of(e), -e['gross']['minor']) for e in stripe if e['kind'] == 'refund']
+    charges = [(day_of(e), e['gross']['minor']) for e in stripe if e['kind'] == 'charge']
+    # Accrual: the invoice by issue date stands in for its charge; a refund takes off what it paid back, less the tax.
+    invoiced = {e['externalId']: e for e in qbo if e['type'] == 'invoice.upsert'}
+    note = next(e for e in qbo if e['type'] == 'credit_note.upsert')
+    paid_charges = [(day_of(e), e['gross']['minor']) for e in stripe if e['kind'] == 'charge' and e['counterparty'] != 'Globex Corp']
+    accrual = [(e['issueDate'], e['total']['minor']) for e in invoiced.values()] + paid_charges + [(note['date'], -(note['amount']['minor'] - note['tax']['minor']))]
+
+    q = Q(fx['scenario'], fx['now'])
+    # History starts mid-July, so of the last three months only August and September are whole.
+    full = ['2026-08', '2026-09']
+    spent = sum(month(costs, m) + month(refunds, m) for m in full)
+    got = sum(month(charges, m) for m in full)
+    metric = lambda name, company, **a: {'tool': 'get_metric', 'args': {'metric': name, 'company': company, **a}, 'path': 'value'}
+    cash = fx['openingBalances']['chk'] + sum(t['amount']['minor'] for t in bank) - moved_minor
+    q.add('cash', 'balances', f"What is {nw}'s cash?", 'money', cash, metric('cash', nw), 'The bank balance, counted once with two sources, an empty Stripe balance, less the one-sided entry paid from Cash on hand.', app=True)
+    half = lambda m: int((Decimal(m) / 2).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    q.add('gross-burn', 'burn', f"What is {nw}'s monthly gross burn?", 'money', half(spent), metric('gross_burn', nw), 'August and September only: July is partial, so it is in neither the spending nor the divisor.', app=True)
+    q.add('net-burn', 'burn', f"What is {nw}'s monthly net burn?", 'money', half(spent - got), metric('net_burn', nw), 'The same two months, less Stripe charges.')
+    for m in ('2026-08', '2026-09'):
+        frm, to = month_range(m)
+        q.add(f'gross-burn-{m}', 'burn', f'Gross burn for {m}?', 'money', month(costs, m) + month(refunds, m), metric('gross_burn', nw, **{'from': frm, 'to': to}), 'Copies from the second source and money to Eastside are out.')
+        q.add(f'revenue-{m}', 'revenue', f'Cash revenue for {m}?', 'money', month(charges, m) - month(refunds, m), metric('revenue', nw, **{'from': frm, 'to': to}), 'Each payment once; refunds at what was paid back.')
+        q.add(f'revenue-accrual-{m}', 'revenue', f'Accrual revenue for {m}?', 'money', month(accrual, m), metric('revenue', nw, **{'from': frm, 'to': to, 'basis': 'accrual'}), 'Invoice 1038 once; the taxed refund once, net of tax.', app=(m == '2026-09'))
+    q.add('intercompany-northwind', 'intercompany', f'What does {east} owe {nw}?', 'money', wire + moved_minor, metric('intercompany_balance', nw), 'The wire seen on both sides plus the one-sided entry.')
+    q.add('intercompany-eastside', 'intercompany', f'What is {east} owed?', 'money', -wire, metric('intercompany_balance', east), 'Only the wire: the entry has no side in Eastside until its money arrives.')
+    east_spent = -sum(t['amount']['minor'] for t in conns['east'] if t['type'] == 'txn.upsert' and t['amount']['minor'] < 0 and t['date'].startswith('2026-09'))
+    q.add('eastside-burn', 'burn', f'Gross burn at {east} for September?', 'money', east_spent, metric('gross_burn', east, **{'from': '2026-09-01', 'to': '2026-09-30'}), 'Its one bill: money moved between companies is not spending. (A month with no rows is unknown, not zero, so the month has a real cost.)')
+    aug = sum(1 for t in bank if t['date'].startswith('2026-08'))
+    q.add('august-rows', 'second source', 'How many bank transactions in August?', 'count', aug, {'tool': 'query_transactions', 'args': {'company': nw, 'from': '2026-08-01', 'to': '2026-08-31', 'query': '', 'measures': ['count']}, 'path': 'totals[0].count', 'abs': True}, 'Each row once, though two sources show it.')
+    return q
+
+
 MONTHS_S4 = ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09']
-SCENARIOS = {'s1-individual': s1, 's2-founder': s2, 's3-operator': s3, 's4-vc': s4}
+SCENARIOS = {'s1-individual': s1, 's2-founder': s2, 's3-operator': s3, 's4-vc': s4, 's5-same-money': s5}
 
 
 RATES_OVERRIDE = None

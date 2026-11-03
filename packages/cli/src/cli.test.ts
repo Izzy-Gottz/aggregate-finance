@@ -153,7 +153,11 @@ describe('agfn mcp', () => {
     await expect(mcpCommand(['--url', 'https://x.example/mcp', '--key-file', 'k'], io(d), deps)).rejects.toThrow(/readable by other users/)
     await expect(mcpCommand(['--url', 'http://x.example/mcp'], io(d, { AGFN_KEY: key }), deps)).rejects.toThrow(/https/)
     await expect(mcpCommand(['--url', 'https://x.example/mcp'], io(d, { AGFN_KEY: 'nope' }), deps)).rejects.toThrow(/agent key/)
-    await expect(mcpCommand(['--url', 'https://x.example/mcp'], io(d), deps)).rejects.toThrow(/usage/)
+    const noKey = mcpCommand(['--url', 'https://x.example/mcp'], io(d), deps)
+    await expect(noKey).rejects.toThrow(/usage/)
+    await expect(noKey).rejects.toThrow('https://app.aggregate.finance/mcp as a connector')
+    await expect(noKey).rejects.toThrow('npx aggregate-finance setup')
+    await expect(mcpCommand([], io(d), deps)).rejects.toThrow('as a connector')
   })
 
   it('prints a client config snippet without a real key', async () => {

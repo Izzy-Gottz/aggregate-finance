@@ -1,0 +1,821 @@
+{
+ "_note": "Hand-built from the shapes in the FreshBooks API docs. No real account has been read.",
+ "me": {
+  "response": {
+   "id": 7,
+   "first_name": "Fixture",
+   "business_memberships": [
+    {
+     "id": 99,
+     "role": "owner",
+     "business": {
+      "id": 55,
+      "business_uuid": "biz-uuid-1",
+      "name": "Fixture Co",
+      "account_id": "ACCT1"
+     }
+    }
+   ]
+  }
+ },
+ "invoices": [
+  {
+   "id": 101,
+   "invoiceid": 101,
+   "invoice_number": "0000101",
+   "accounting_systemid": "ACCT1",
+   "organization": "Globex Corp",
+   "fname": "",
+   "lname": "",
+   "customerid": 1101,
+   "status": 4,
+   "vis_state": 0,
+   "currency_code": "USD",
+   "create_date": "2026-09-01",
+   "due_date": "2026-09-01",
+   "updated": "2026-09-01 09:00:00",
+   "amount": {
+    "amount": "1080.00",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "1080.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "discount_total": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "lines": [
+    {
+     "lineid": 1,
+     "name": "Consulting",
+     "qty": "1",
+     "amount": {
+      "amount": "1000.00",
+      "code": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": 102,
+   "invoiceid": 102,
+   "invoice_number": "0000102",
+   "accounting_systemid": "ACCT1",
+   "organization": "",
+   "fname": "Jane",
+   "lname": "Doe",
+   "customerid": 1102,
+   "status": 2,
+   "vis_state": 0,
+   "currency_code": "USD",
+   "create_date": "2026-09-20",
+   "due_date": "2026-09-20",
+   "updated": "2026-09-20 09:00:00",
+   "amount": {
+    "amount": "450.00",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "450.00",
+    "code": "USD"
+   },
+   "discount_total": {
+    "amount": "-50.50",
+    "code": "USD"
+   },
+   "lines": [
+    {
+     "lineid": 1,
+     "name": "Design",
+     "qty": "1",
+     "amount": {
+      "amount": "300.00",
+      "code": "USD"
+     }
+    },
+    {
+     "lineid": 2,
+     "name": "Print",
+     "qty": "1",
+     "amount": {
+      "amount": "200.50",
+      "code": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": 103,
+   "invoiceid": 103,
+   "invoice_number": "0000103",
+   "accounting_systemid": "ACCT1",
+   "organization": "Initech",
+   "fname": "",
+   "lname": "",
+   "customerid": 1103,
+   "status": 8,
+   "vis_state": 0,
+   "currency_code": "USD",
+   "create_date": "2026-09-22",
+   "due_date": "2026-09-22",
+   "updated": "2026-09-22 09:00:00",
+   "amount": {
+    "amount": "250.00",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "100.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "150.00",
+    "code": "USD"
+   },
+   "discount_total": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "lines": [
+    {
+     "lineid": 1,
+     "name": "Support",
+     "qty": "1",
+     "amount": {
+      "amount": "250.00",
+      "code": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": 104,
+   "invoiceid": 104,
+   "invoice_number": "0000104",
+   "accounting_systemid": "ACCT1",
+   "organization": "Draft Co",
+   "fname": "",
+   "lname": "",
+   "customerid": 1104,
+   "status": 1,
+   "vis_state": 0,
+   "currency_code": "USD",
+   "create_date": "2026-09-23",
+   "due_date": "2026-09-23",
+   "updated": "2026-09-23 09:00:00",
+   "amount": {
+    "amount": "999.00",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "999.00",
+    "code": "USD"
+   },
+   "discount_total": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "lines": [
+    {
+     "lineid": 1,
+     "name": "Not sent",
+     "qty": "1",
+     "amount": {
+      "amount": "999.00",
+      "code": "USD"
+     }
+    }
+   ]
+  }
+ ],
+ "payments": [
+  {
+   "id": 9001,
+   "logid": 9001,
+   "invoiceid": 101,
+   "clientid": 1,
+   "amount": {
+    "amount": "1080.00",
+    "code": "USD"
+   },
+   "date": "2026-09-12",
+   "type": "Credit Card",
+   "gateway": null,
+   "from_credit": false,
+   "overpaymentid": null,
+   "updated": "2026-09-12 09:00:00",
+   "vis_state": 0
+  },
+  {
+   "id": 9002,
+   "logid": 9002,
+   "invoiceid": 103,
+   "clientid": 1,
+   "amount": {
+    "amount": "100.00",
+    "code": "USD"
+   },
+   "date": "2026-09-25",
+   "type": "Credit Card",
+   "gateway": null,
+   "from_credit": false,
+   "overpaymentid": null,
+   "updated": "2026-09-25 09:00:00",
+   "vis_state": 0
+  },
+  {
+   "id": 9003,
+   "logid": 9003,
+   "invoiceid": 102,
+   "clientid": 1,
+   "amount": {
+    "amount": "25.00",
+    "code": "USD"
+   },
+   "date": "2026-09-26",
+   "type": "Credit Card",
+   "gateway": null,
+   "from_credit": true,
+   "overpaymentid": null,
+   "updated": "2026-09-26 09:00:00",
+   "vis_state": 0,
+   "creditid": 5
+  }
+ ],
+ "expenses": [
+  {
+   "id": 401,
+   "expenseid": 401,
+   "date": "2026-09-14",
+   "amount": {
+    "amount": "89.75",
+    "code": "USD"
+   },
+   "vendor": "Delta",
+   "category": {
+    "category": "Travel",
+    "categoryid": 1,
+    "is_cogs": false,
+    "parentid": null,
+    "vis_state": 0
+   },
+   "isduplicate": false,
+   "bank_name": "",
+   "transactionid": null,
+   "status": 0,
+   "updated": "2026-09-14 09:00:00",
+   "vis_state": 0
+  },
+  {
+   "id": 402,
+   "expenseid": 402,
+   "date": "2026-09-14",
+   "amount": {
+    "amount": "89.75",
+    "code": "USD"
+   },
+   "vendor": "Delta",
+   "category": {
+    "category": "Travel",
+    "categoryid": 1,
+    "is_cogs": false,
+    "parentid": null,
+    "vis_state": 0
+   },
+   "isduplicate": true,
+   "bank_name": "",
+   "transactionid": null,
+   "status": 0,
+   "updated": "2026-09-14 09:00:00",
+   "vis_state": 0
+  }
+ ],
+ "bills": [
+  {
+   "id": 201,
+   "bill_number": "B-1",
+   "vendorid": 701,
+   "vendor": {
+    "vendorid": 701,
+    "vendor_name": "Hosting Co"
+   },
+   "issue_date": "2026-09-05",
+   "due_date": "2026-09-05",
+   "currency_code": "USD",
+   "status": "paid",
+   "vis_state": 0,
+   "amount": {
+    "amount": "400.00",
+    "code": "USD"
+   },
+   "tax_amount": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "total_amount": {
+    "amount": "400.00",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "400.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "bill_payments": [],
+   "lines": [
+    {
+     "description": "Software",
+     "category": {
+      "category": "Software",
+      "categoryid": 1,
+      "is_cogs": false,
+      "parentid": null,
+      "vis_state": 0
+     },
+     "amount": {
+      "amount": "400.00",
+      "code": "USD"
+     },
+     "total_amount": {
+      "amount": "400.00",
+      "code": "USD"
+     },
+     "tax_amount1": {
+      "amount": "0.00",
+      "code": "USD"
+     },
+     "tax_amount2": {
+      "amount": "0.00",
+      "code": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": 202,
+   "bill_number": "B-2",
+   "vendorid": 702,
+   "vendor": {
+    "vendorid": 702,
+    "vendor_name": "Parts Ltd"
+   },
+   "issue_date": "2026-09-09",
+   "due_date": "2026-09-09",
+   "currency_code": "USD",
+   "status": "unpaid",
+   "vis_state": 0,
+   "amount": {
+    "amount": "150.25",
+    "code": "USD"
+   },
+   "tax_amount": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "total_amount": {
+    "amount": "150.25",
+    "code": "USD"
+   },
+   "paid": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "outstanding": {
+    "amount": "150.25",
+    "code": "USD"
+   },
+   "bill_payments": [],
+   "lines": [
+    {
+     "description": "Materials",
+     "category": {
+      "category": "Materials",
+      "categoryid": 1,
+      "is_cogs": true,
+      "parentid": null,
+      "vis_state": 0
+     },
+     "amount": {
+      "amount": "150.25",
+      "code": "USD"
+     },
+     "total_amount": {
+      "amount": "150.25",
+      "code": "USD"
+     },
+     "tax_amount1": {
+      "amount": "0.00",
+      "code": "USD"
+     },
+     "tax_amount2": {
+      "amount": "0.00",
+      "code": "USD"
+     }
+    }
+   ]
+  }
+ ],
+ "bill_payments": [
+  {
+   "id": 301,
+   "billid": 201,
+   "amount": {
+    "amount": "400.00",
+    "code": "USD"
+   },
+   "paid_date": "2026-09-10",
+   "payment_type": "Check",
+   "matched_with_expense": false,
+   "note": "",
+   "vis_state": 0
+  }
+ ],
+ "journal_entry_accounts": [
+  {
+   "account_uuid": "acc-bank",
+   "account_name": "Business Checking",
+   "account_number": "1",
+   "account_type": "asset",
+   "account_sub_type": "Cash & Bank",
+   "system_account_name": null,
+   "state": "active",
+   "currency_code": "USD",
+   "balance": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "sub_accounts": [],
+   "auto_created": false
+  },
+  {
+   "account_uuid": "acc-ppe",
+   "account_name": "Accumulated Depreciation",
+   "account_number": "1",
+   "account_type": "asset",
+   "account_sub_type": "Fixed Asset",
+   "system_account_name": null,
+   "state": "active",
+   "currency_code": "USD",
+   "balance": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "sub_accounts": [],
+   "auto_created": false
+  },
+  {
+   "account_uuid": "acc-dep",
+   "account_name": "Depreciation",
+   "account_number": "1",
+   "account_type": "expense",
+   "account_sub_type": "Expense",
+   "system_account_name": null,
+   "state": "active",
+   "currency_code": "USD",
+   "balance": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "sub_accounts": [],
+   "auto_created": false
+  },
+  {
+   "account_uuid": "acc-fees",
+   "account_name": "Bank Fees",
+   "account_number": "1",
+   "account_type": "expense",
+   "account_sub_type": "Expense",
+   "system_account_name": null,
+   "state": "active",
+   "currency_code": "USD",
+   "balance": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "sub_accounts": [],
+   "auto_created": false
+  },
+  {
+   "account_uuid": "acc-parent",
+   "account_name": "Current Assets",
+   "account_number": "1",
+   "account_type": "asset",
+   "account_sub_type": "Current Asset",
+   "system_account_name": null,
+   "state": "active",
+   "currency_code": "USD",
+   "balance": {
+    "amount": "0.00",
+    "code": "USD"
+   },
+   "sub_accounts": [
+    {
+     "account_uuid": "acc-cash-sub",
+     "account_name": "Petty Cash",
+     "account_number": "1",
+     "account_type": "asset",
+     "account_sub_type": "Current Asset",
+     "system_account_name": null,
+     "state": "active",
+     "currency_code": "USD",
+     "balance": {
+      "amount": "0.00",
+      "code": "USD"
+     },
+     "sub_accounts": [],
+     "auto_created": false,
+     "parent_account_uuid": "acc-parent"
+    }
+   ],
+   "auto_created": false
+  }
+ ],
+ "manualJournalEntries": [
+  {
+   "id": "je-dep",
+   "userEnteredDate": {
+    "year": 2026,
+    "month": 9,
+    "day": 30
+   },
+   "name": "Adjustment",
+   "journalEntryNumber": "1",
+   "description": "Monthly adjustment",
+   "details": [
+    {
+     "id": "je-dep-0",
+     "accountId": "acc-dep",
+     "amount": {
+      "amount": "120.000",
+      "code": "USD"
+     },
+     "type": "TYPE_DEBIT",
+     "manualJournalEntryId": "je-dep"
+    },
+    {
+     "id": "je-dep-1",
+     "accountId": "acc-ppe",
+     "amount": {
+      "amount": "120.000",
+      "code": "USD"
+     },
+     "type": "TYPE_CREDIT",
+     "manualJournalEntryId": "je-dep"
+    }
+   ]
+  },
+  {
+   "id": "je-bank",
+   "userEnteredDate": {
+    "year": 2026,
+    "month": 9,
+    "day": 30
+   },
+   "name": "Adjustment",
+   "journalEntryNumber": "1",
+   "description": "Monthly adjustment",
+   "details": [
+    {
+     "id": "je-bank-0",
+     "accountId": "acc-fees",
+     "amount": {
+      "amount": "15.000",
+      "code": "USD"
+     },
+     "type": "TYPE_DEBIT",
+     "manualJournalEntryId": "je-bank"
+    },
+    {
+     "id": "je-bank-1",
+     "accountId": "acc-bank",
+     "amount": {
+      "amount": "15.000",
+      "code": "USD"
+     },
+     "type": "TYPE_CREDIT",
+     "manualJournalEntryId": "je-bank"
+    }
+   ]
+  }
+ ],
+ "profit_and_loss": {
+  "2026-09": {
+   "download_token": "x",
+   "start_date": "2026-09-01",
+   "end_date": "2026-09-30",
+   "currency_code": "USD",
+   "locale": "en",
+   "company_name": "Fixture Co",
+   "cash_based": false,
+   "group_by_account": false,
+   "dates": [
+    {
+     "start_date": "2026-09-01",
+     "end_date": "2026-09-30"
+    }
+   ],
+   "labels": [
+    "Sep 2026"
+   ],
+   "resolution": "m",
+   "income": [
+    {
+     "children": [
+      {
+       "children": [],
+       "data": [
+        {
+         "amount": "1700.00",
+         "code": "USD"
+        }
+       ],
+       "description": "Consulting",
+       "entry_type": "credit",
+       "account_uuid": "acc-sales",
+       "total": {
+        "amount": "1700.00",
+        "code": "USD"
+       }
+      }
+     ],
+     "data": [
+      {
+       "amount": "1700.00",
+       "code": "USD"
+      }
+     ],
+     "description": "Sales",
+     "entry_type": "credit",
+     "account_uuid": null,
+     "total": {
+      "amount": "1700.00",
+      "code": "USD"
+     }
+    }
+   ],
+   "expenses": [
+    {
+     "children": [],
+     "data": [
+      {
+       "amount": "400.00",
+       "code": "USD"
+      }
+     ],
+     "description": "Software",
+     "entry_type": "debit",
+     "account_uuid": "acc-sw",
+     "total": {
+      "amount": "400.00",
+      "code": "USD"
+     }
+    },
+    {
+     "children": [],
+     "data": [
+      {
+       "amount": "150.25",
+       "code": "USD"
+      }
+     ],
+     "description": "Cost of Goods Sold",
+     "entry_type": "debit",
+     "account_uuid": "acc-cogs",
+     "total": {
+      "amount": "150.25",
+      "code": "USD"
+     }
+    },
+    {
+     "children": [
+      {
+       "children": [],
+       "data": [
+        {
+         "amount": "89.75",
+         "code": "USD"
+        }
+       ],
+       "description": "Travel (general)",
+       "entry_type": "debit",
+       "account_uuid": "acc-trav",
+       "total": {
+        "amount": "89.75",
+        "code": "USD"
+       }
+      }
+     ],
+     "data": [
+      {
+       "amount": "89.75",
+       "code": "USD"
+      }
+     ],
+     "description": "Travel",
+     "entry_type": "debit",
+     "account_uuid": null,
+     "total": {
+      "amount": "89.75",
+      "code": "USD"
+     }
+    },
+    {
+     "children": [],
+     "data": [
+      {
+       "amount": "120.00",
+       "code": "USD"
+      }
+     ],
+     "description": "Depreciation",
+     "entry_type": "debit",
+     "account_uuid": "acc-dep",
+     "total": {
+      "amount": "120.00",
+      "code": "USD"
+     }
+    }
+   ],
+   "total_income": {
+    "children": [],
+    "data": [
+     {
+      "amount": "1700.00",
+      "code": "USD"
+     }
+    ],
+    "description": "Gross Profit",
+    "entry_type": "credit",
+    "account_uuid": null,
+    "total": {
+     "amount": "1700.00",
+     "code": "USD"
+    }
+   },
+   "total_expenses": {
+    "children": [],
+    "data": [
+     {
+      "amount": "760.00",
+      "code": "USD"
+     }
+    ],
+    "description": "Total Expenses",
+    "entry_type": "debit",
+    "account_uuid": null,
+    "total": {
+     "amount": "760.00",
+     "code": "USD"
+    }
+   },
+   "net_profit": {
+    "children": [],
+    "data": [
+     {
+      "amount": "940.00",
+      "code": "USD"
+     }
+    ],
+    "description": "Net Profit (USD)",
+    "entry_type": "credit",
+    "account_uuid": null,
+    "total": {
+     "amount": "940.00",
+     "code": "USD"
+    }
+   },
+   "gross_margin": {
+    "children": [],
+    "data": [
+     {
+      "amount": "100.00",
+      "code": "USD"
+     }
+    ],
+    "description": "Gross Margin",
+    "entry_type": "credit",
+    "account_uuid": null,
+    "total": {
+     "amount": "100.00",
+     "code": "%"
+    }
+   }
+  }
+ }
+}

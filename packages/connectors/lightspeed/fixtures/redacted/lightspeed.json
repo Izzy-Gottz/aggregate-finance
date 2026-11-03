@@ -1,0 +1,15 @@
+{
+  "_note": "Hand-built from the Lightspeed Retail X-Series 2026-10 API reference. NOT recorded from a real store. The Sale schema comes from the sale endpoints; the docs don't print a sale under /search, so that shape is an assumption. line_items, customer_id and note stand for what Lightspeed sends and Aggregate must never keep. Totals are worked by hand in lightspeed.test.ts.",
+  "retailer": { "data": { "domain_prefix": "samplestore", "timezone": "America/New_York", "currency": { "code": "USD", "symbol": "$", "denomination": [0.05, 0.1] } } },
+  "sales": [
+    { "id": "s5", "date": "2026-09-01T03:59:59+00:00", "state": "closed", "totals": { "price": 5.00, "price_incl_tax": 5.40, "tax": 0.40, "loyalty": 0, "surcharge": 0 } },
+    { "id": "s1", "date": "2026-09-01T04:00:00+00:00", "state": "closed", "customer_id": "CUSTOMER-MUST-NOT-BE-KEPT", "note": "NOTE-MUST-NOT-BE-KEPT", "totals": { "price": 100.10, "price_incl_tax": 108.11, "tax": 8.01, "loyalty": 0, "surcharge": 0 }, "line_items": [{ "product": { "id": "ITEM-MUST-NOT-BE-KEPT" }, "quantity": 1, "pricing": { "price": "100.10" } }] },
+    { "id": "r1", "date": "2026-09-15T12:00:00+00:00", "state": "closed", "return": { "is_return": true, "original_sale_id": "s0", "return_sale_ids": [] }, "totals": { "price": -20.10, "price_incl_tax": -21.71, "tax": -1.61, "loyalty": 0, "surcharge": 0 } },
+    { "id": "p1", "date": "2026-09-16T12:00:00+00:00", "state": "pending", "attributes": ["onaccount"], "totals": { "price": 777.00, "price_incl_tax": 777.00, "tax": 0, "loyalty": 0, "surcharge": 0 } },
+    { "id": "v1", "date": "2026-09-17T12:00:00+00:00", "state": "voided", "totals": { "price": 666.00, "price_incl_tax": 666.00, "tax": 0, "loyalty": 0, "surcharge": 0 } },
+    { "id": "k1", "date": "2026-09-18T12:00:00+00:00", "state": "parked", "totals": { "price": 555.00, "price_incl_tax": 555.00, "tax": 0, "loyalty": 0, "surcharge": 0 } },
+    { "id": "s2", "date": "2026-09-30T23:30:00+00:00", "state": "closed", "totals": { "price": 49.95, "price_incl_tax": 53.95, "tax": 4.00, "loyalty": 0, "surcharge": 0 } },
+    { "id": "s3", "date": "2026-10-01T03:59:59+00:00", "state": "closed", "totals": { "price": 1000.00, "price_incl_tax": 1080.00, "tax": 80.00, "loyalty": 0, "surcharge": 0 } },
+    { "id": "s4", "date": "2026-10-01T04:00:00+00:00", "state": "closed", "totals": { "price": 7.00, "price_incl_tax": 7.56, "tax": 0.56, "loyalty": 0, "surcharge": 0 } }
+  ]
+}

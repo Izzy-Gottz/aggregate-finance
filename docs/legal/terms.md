@@ -1,16 +1,16 @@
 ---
 title: Terms of Service
 status: final
-updated: 2026-11-01
+updated: 2026-11-02
 ---
 
 # Terms of Service
 
-These terms cover your use of the hosted Aggregate service at aggregate.finance. By using it, you agree to them. The service is offered by Yisrael Gottlieb, doing business as Aggregate ("we"), 1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA.
+These terms cover your use of the hosted Aggregate service at aggregate.finance. By using it, you agree to them. The service is offered by Aggregate Finance LLC, a New Jersey limited liability company ("we"), 1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA.
 
 ## What Aggregate is
 
-Aggregate shows the money of your companies in one place and lets you, and AI tools you connect, keep records. It reads data from the services you connect. **It never moves money.** It can't pay, transfer, trade or contact anyone for you.
+Aggregate shows the money of your companies in one place and lets you, and AI tools you connect, keep records. It reads data from the services you connect. **It never moves money.** It can't pay, transfer or trade. It emails someone else only when you send an invite.
 
 ## Beta
 

@@ -174,6 +174,9 @@ export function CompanySections({ c }: { c: CompanyDetail }) {
   const app = useApp()
   const now = app.now()
   const id = c.entity.id
+  // Every invoice from one source: say it once above the list, not on each row.
+  const sources = new Set(c.owedToYou?.invoices.map((i) => i.source))
+  const oneSource = sources.size === 1 && (c.owedToYou?.invoices.length ?? 0) > 1 ? [...sources][0] : null
   const empty = !c.accounts.length && !c.owedToYou && !c.bills && !c.buckets.length && !c.payroll && !c.equity && !c.whoseMoney.length && !c.odd.length && !c.hasTransactions && !c.holdings?.length
   const personal = c.entity.kind === 'personal'
   return html`
@@ -214,12 +217,13 @@ export function CompanySections({ c }: { c: CompanyDetail }) {
     ${c.owedToYou
       ? html`<${Section} compact title="Owed to you" sub=${`${fmt(c.owedToYou.total)} open · ${fmt(c.owedToYou.overdue)} overdue`}>
           <${Aging} aging=${c.owedToYou.aging} />
+          ${oneSource ? html`<p class="meta">${oneSource}</p>` : null}
           <${Rows}>
             ${c.owedToYou.invoices.map((i) => {
               const due = dueWords(i.dueDate, now)
               return html`<${Row}
                 name=${i.counterparty}
-                line=${html`${i.number ? i.number + ' · ' : ''}<span class=${due.tone === 'grey' ? '' : due.tone}>${due.text}</span> · ${i.source}`}
+                line=${html`${i.number ? i.number + ' · ' : ''}<span class=${due.tone === 'grey' ? '' : due.tone}>${due.text}</span>${oneSource ? '' : ` · ${i.source}`}`}
                 right=${html`<span class="value">${fmt(i.open)}</span>`}
               />`
             })}

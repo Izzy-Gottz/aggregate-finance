@@ -6,6 +6,8 @@ export const HOSTED_PLAID_MAX_ITEMS = 25
 /** Hosted's Finch caps when unset: one payroll connection per workspace, 15 in all (Finch Starter's limit). */
 export const HOSTED_FINCH_MAX_PER_WORKSPACE = 1
 export const HOSTED_FINCH_MAX_CONNECTIONS = 15
+/** Hosted's FreshBooks cap when unset: FreshBooks' terms let it limit an app's access at 500 connections. */
+export const HOSTED_FRESHBOOKS_MAX_CONNECTIONS = 450
 
 export interface ServerConfig {
   port: number
@@ -122,6 +124,11 @@ export interface ServerConfig {
    */
   finchMaxPerWorkspace?: number
   finchMaxConnections?: number
+  /**
+   * Most FreshBooks connections across every workspace (AGFN_FRESHBOOKS_MAX_CONNECTIONS, hosted default 450). FreshBooks'
+   * terms let it limit an app's access at 500, so hosted stops short and warns from 400. Self-hosted: unset = no cap.
+   */
+  freshbooksMaxConnections?: number
   /** The hosted service (AGFN_HOSTED=1): every connector is configured, so setup guides for missing ones are hidden. */
   hosted?: boolean
   /** Demo fills at once (AGFN_DEMO_FILL_CONCURRENCY; hosted default 3, the rest wait in line). Unset: no limit. */
@@ -220,6 +227,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(/^[1-9]\d*$/.test(env.AGFN_XERO_MAX_CONNECTIONS ?? '') ? { xeroMaxConnections: Number(env.AGFN_XERO_MAX_CONNECTIONS) } : {}),
     ...positiveOrHosted(env, 'finchMaxPerWorkspace', env.AGFN_FINCH_MAX_CONNECTIONS_PER_WORKSPACE, HOSTED_FINCH_MAX_PER_WORKSPACE),
     ...positiveOrHosted(env, 'finchMaxConnections', env.AGFN_FINCH_MAX_CONNECTIONS, HOSTED_FINCH_MAX_CONNECTIONS),
+    ...positiveOrHosted(env, 'freshbooksMaxConnections', env.AGFN_FRESHBOOKS_MAX_CONNECTIONS, HOSTED_FRESHBOOKS_MAX_CONNECTIONS),
     ...(env.AGFN_HOSTED === '1' ? { hosted: true } : {}),
     ...(env.AGFN_DEMO_POOL !== undefined && env.AGFN_DEMO_POOL !== '' ? (Number(env.AGFN_DEMO_POOL) > 0 ? { demoPool: Math.floor(Number(env.AGFN_DEMO_POOL)) } : {}) : env.AGFN_HOSTED === '1' ? { demoPool: 5 } : {}),
     ...(Number(env.AGFN_DEMO_FILL_CONCURRENCY) > 0 ? { demoFillConcurrency: Math.floor(Number(env.AGFN_DEMO_FILL_CONCURRENCY)) } : env.AGFN_HOSTED === '1' ? { demoFillConcurrency: 3 } : {}),
@@ -233,7 +241,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
  * Connectors built and tested against each provider's documentation that nobody has yet connected with a real or
  * sandbox account. Hosted marks them "beta" in the catalog; take a key out once it's verified end to end (§15 matrix) or approved.
  */
-export const HOSTED_BETA = ['mercury', 'brex', 'ramp', 'wise', 'paddle', 'polar', 'appstore', 'googleplay', 'gumroad'] as const
+export const HOSTED_BETA = ['mercury', 'brex', 'ramp', 'wise', 'paddle', 'polar', 'appstore', 'googleplay', 'gumroad', 'patreon'] as const
 
 /**
  * Hosted connectors that would connect to something other than what people expect, so they aren't offered yet:
@@ -258,14 +266,44 @@ export function hostedUnlisted(env: NodeJS.ProcessEnv): string[] {
   // RevenueCat: same, built and fixture-tested from its docs only. RevenueCat can't show a key's permissions either, so
   // read-only rests on the steps we give. Live waits for AGFN_OFFER_REVENUECAT=1.
   if (env.AGFN_OFFER_REVENUECAT !== '1') out.push('revenuecat')
+  // FreshBooks: built and fixture-tested from its docs only, and it posts to the books. Staging tries it first (test
+  // connectors above); live waits for AGFN_OFFER_FRESHBOOKS=1 after a real connect there.
+  if (env.FRESHBOOKS_CLIENT_ID && env.AGFN_OFFER_FRESHBOOKS !== '1') out.push('freshbooks')
   // Wefunder: until Wefunder approves the app, only Aggregate's own team could authorize it (others see "not reviewed").
   if (env.WEFUNDER_CLIENT_ID && env.WEFUNDER_APPROVED !== '1') out.push('wefunder')
   // Coinbase: sign-in only on hosted (no keys). Once the OAuth client exists, staging tries it first (test connectors
   // above); live waits for AGFN_OFFER_COINBASE=1 after a real connect there.
   if (env.COINBASE_CLIENT_ID && env.AGFN_OFFER_COINBASE !== '1') out.push('coinbase')
+  // Harvest: built from its docs, never run on a real account. Sign-in only on hosted. Staging tries Aggregate's app first
+  // (test connectors above); live waits for AGFN_OFFER_HARVEST=1 after a real connect there.
+  if (env.HARVEST_CLIENT_ID && env.AGFN_OFFER_HARVEST !== '1') out.push('harvest')
+  // Lightspeed: built from its docs, never run on a real account. Sign-in only on hosted. Staging tries Aggregate's app first
+  // (test connectors above); live waits for AGFN_OFFER_LIGHTSPEED=1 after a real connect there.
+  if (env.LIGHTSPEED_CLIENT_ID && env.AGFN_OFFER_LIGHTSPEED !== '1') out.push('lightspeed')
+  // SumUp: built from its docs, never run on a real account. Sign-in only on hosted. Staging tries Aggregate's app first
+  // (test connectors above); live waits for AGFN_OFFER_SUMUP=1 after a real connect there.
+  if (env.SUMUP_CLIENT_ID && env.AGFN_OFFER_SUMUP !== '1') out.push('sumup')
+  // AdSense: built from its docs, never run on a real account. Google's API terms need reading against stored snapshots
+  // and its uncapped indemnity waits for the company (package README). Live waits for AGFN_OFFER_ADSENSE=1.
+  if (env.ADSENSE_CLIENT_ID && env.AGFN_OFFER_ADSENSE !== '1') out.push('adsense')
+  // YouTube: built from its docs, never run on a real account. Verification, who may see the data and its uncapped
+  // indemnity come first (package README). Live waits for AGFN_OFFER_YOUTUBE=1.
+  if (env.YOUTUBE_CLIENT_ID && env.AGFN_OFFER_YOUTUBE !== '1') out.push('youtube')
+  // Pinterest: built from its docs, never run on a real account. App review, its uncapped indemnity and the MCP clause come
+  // first (package README). Live waits for AGFN_OFFER_PINTEREST=1.
+  if (env.PINTEREST_CLIENT_ID && env.AGFN_OFFER_PINTEREST !== '1') out.push('pinterest')
+  // Squarespace: built from its docs, never run on a real site. s.7.4.6 needs a written answer, the app needs production
+  // review, and its uncapped indemnity waits for the company (package README). Live waits for AGFN_OFFER_SQUARESPACE=1.
+  if (env.SQUARESPACE_CLIENT_ID && env.AGFN_OFFER_SQUARESPACE !== '1') out.push('squarespace')
+  // Wix: built from its docs, never run on a real site. It needs App Market review or Wix's written approval, and its uncapped
+  // indemnities wait for the company's insurance (package README). Live waits for AGFN_OFFER_WIX=1.
+  if (env.WIX_CLIENT_ID && env.AGFN_OFFER_WIX !== '1') out.push('wix')
   // Gumroad: sign-in only on hosted. Staging tries Aggregate's app first (test connectors above); live waits for
   // AGFN_OFFER_GUMROAD=1 after a real connect there.
   if (env.GUMROAD_CLIENT_ID && env.AGFN_OFFER_GUMROAD !== '1') out.push('gumroad')
+  // Patreon: the same, sign-in only on hosted. Nothing has run against a real Patreon account yet; live waits for
+  // AGFN_OFFER_PATREON=1 after a real connect on staging.
+  if (env.PATREON_CLIENT_ID && env.AGFN_OFFER_PATREON !== '1') out.push('patreon')
   return out
 }
 

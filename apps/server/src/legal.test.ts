@@ -51,6 +51,7 @@ describe('legal pages', () => {
     expect(p.html).not.toContain('not yet in effect')
     expect(p.html).not.toContain('<script>')
     expect(p.html).not.toContain('href="javascript')
+    expect(renderMarkdown('*Last checked.* and E*TRADE, 2 * 3 * 4')).toBe('<p><em>Last checked.</em> and E*TRADE, 2 * 3 * 4</p>')
     expect(renderMarkdown('- one\n- two\n\ntext https://a.example/x.')).toBe('<ul><li>one</li><li>two</li></ul>\n<p>text <a href="https://a.example/x">https://a.example/x</a>.</p>')
     expect(p.html).toContain('<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>')
   })

@@ -14,6 +14,7 @@ export type DateFormat =
   | 'D/M/YY'
   | 'D.M.YY'
   | 'DD MMM YYYY'
+  | 'MMM D, YYYY'
 
 interface Spec {
   re: RegExp
@@ -37,6 +38,7 @@ const SPECS: Record<DateFormat, Spec> = {
   'D/M/YY': { re: /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, y: 3, m: 2, d: 1, twoDigitYear: true },
   'D.M.YY': { re: /^(\d{1,2})\.(\d{1,2})\.(\d{2})$/, y: 3, m: 2, d: 1, twoDigitYear: true },
   'DD MMM YYYY': { re: /^(\d{1,2})[ -]([a-z]{3,4})\.?[ -](\d{4})$/, y: 3, m: 2, d: 1, monthName: true },
+  'MMM D, YYYY': { re: /^([a-z]{3,9})\.? (\d{1,2}),? (\d{4})$/, y: 3, m: 1, d: 2, monthName: true },
 }
 
 export const DATE_FORMATS = Object.keys(SPECS) as DateFormat[]

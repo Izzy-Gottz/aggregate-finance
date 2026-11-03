@@ -815,10 +815,19 @@ export class LedgerEngine implements Ledger {
 
   async #postOne(ctx: Ctx, ev: NormalizedEvent, opts: PostOptions): Promise<{ result: PostResult; record: SourceRecord | null }> {
     const ws = ctx.ws
+    const find = async (e: NormalizedEvent): Promise<SourceRecord | null> => {
+      const known = ctx.existing?.get(`${e.connectionId}|${e.type}|${e.externalId}`)
+      return known !== undefined ? known : this.store.findRecord(ws, e.connectionId, e.type, e.externalId)
+    }
+    let existing = await find(ev)
+    // Connectors keep one balance per UTC day. The workspace's day can end inside that one: a morning read must not
+    // replace the last read of the day before, or month-end loses its closing balance.
+    if (ev.type === 'balance.snapshot' && existing && existing.date !== eventDate(ev, ctx.timeZone)) {
+      ev = { ...ev, externalId: `${ev.externalId}~${eventDate(ev, ctx.timeZone)}` }
+      existing = await find(ev)
+    }
     const hash = contentHash(ev)
     const key = `${ev.connectionId}|${ev.type}|${ev.externalId}`
-    const known = ctx.existing?.get(key)
-    const existing = known !== undefined ? known : await this.store.findRecord(ws, ev.connectionId, ev.type, ev.externalId)
     if (existing && existing.contentHash === hash) {
       const active = await this.store.activeEntriesForSource(ws, existing.id)
       return { result: { journalEntryId: active[0]?.id ?? null, status: 'duplicate' }, record: null }

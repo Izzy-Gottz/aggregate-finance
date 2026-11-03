@@ -42,7 +42,7 @@
 <table>
 <tr><td><b>Does Aggregate see my bank password?</b></td><td>No. You sign in to your bank through Plaid, and to each app on its own page. Aggregate gets a token, encrypted with a key kept outside the database, and only ever uses it to read.</td></tr>
 <tr><td><b>Does my data train AI models?</b></td><td>No. Aggregate never uses your data to train models and doesn’t let anyone else. What your AI reads is covered by your AI provider’s own policy.</td></tr>
-<tr><td><b>Can it move money?</b></td><td>Never. There’s no tool and no connection that can pay, transfer, pay a bill or send anything.</td></tr>
+<tr><td><b>Can it move money?</b></td><td>Never. There’s no tool and no connection that can pay, transfer or pay a bill. It emails someone else only when you send an invite.</td></tr>
 <tr><td><b>How does it count cash, burn and runway?</b></td><td>The same way every time. Aggregate computes each figure from one written <a href="docs/guides/definitions.md">definition</a>, not your AI, and says “unknown” instead of guessing.</td></tr>
 <tr><td><b>What doesn’t it do yet?</b></td><td>Crypto, banks outside the US (upload statements instead), cash sales in Square, and more. Each is on <a href="docs/guides/limits.md">Known limits</a>, with what happens instead.</td></tr>
 </table>

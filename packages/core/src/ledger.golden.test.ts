@@ -888,8 +888,12 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       await k.engine.post(k.ws, txn(bank, '2026-08-01', -3_000))
       expect(await k.bal(acme, `cash:${bank.id}`, 'cash', '2026-09-30')).toBe(1_000_000)
       expect(await k.bal(acme, `cash:${bank.id}`, 'cash', '2026-07-31')).toBe(1_018_000)
-      const ok = (await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity')
-      expect(ok.map((c) => c.status)).toEqual(['ok'])
+      // One balance can't prove anything: the opening is worked out from it. A second balance tests the rows between.
+      const one = (await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity')
+      expect(one.map((c) => [c.status, c.message])).toEqual([['warn', expect.stringContaining('not tied out yet')]])
+      await k.engine.post(k.ws, snapshot(bank, '2026-10-01', 1_000_000))
+      const two = (await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity')
+      expect(two.map((c) => c.status)).toEqual(['ok'])
       await expectBalanced(acme)
     })
 
@@ -1002,7 +1006,9 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       const [suggested] = await learned()
       expect(suggested).toMatchObject({ status: 'suggested', origin: 'learned', conditions: { textPatterns: ['*figma*'], direction: 'out' }, actions: { category: 'software' } })
       expect(await k.engine.suggestRules(k.ws)).toEqual([]) // idempotent
-      expect((await k.engine.reviewItems(k.ws)).map((i) => i.kind)).toContain('suggested_rule')
+      const card = (await k.engine.reviewItems(k.ws)).find((i) => i.kind === 'suggested_rule')
+      expect(card).toMatchObject({ entityId: acme })
+      expect(card?.detail).toMatch(/→ Software/)
       await k.engine.setRuleStatus(k.ws, suggested?.id as string, 'active')
       await k.engine.post(k.ws, txn(bank, '2026-10-03', -1_500, { counterparty: 'FIGMA 2001' }))
       expect(await k.bal(acme, 'software')).toBe(6_000)
@@ -1071,19 +1077,83 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       expect(r.formula).toContain('Cash $60,000.00 ÷ $9,000.00 per month = 6.7 months')
     })
 
-    it('runway averages only the months history reaches (two months of books divide by two; a month begun mid-way counts whole)', async () => {
+    it('runway averages only the months history reaches (two months of books divide by two; a month begun part-way stays out)', async () => {
       const bank = await k.account({ entityId: acme, name: 'Ops' })
       await k.engine.postBatch(k.ws, [txn(bank, '2026-08-01', -1_200_000), txn(bank, '2026-09-15', -800_000), snapshot(bank, '2026-10-08', 6_000_000)])
       const two = await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme] })
       // 2,000,000 over 2 months = 1,000,000 per month (÷ 3 said 666,667 and 9.0 months); 6,000,000 / 1,000,000 = 6.0.
       expect(two.value).toBe(6)
-      expect(two.formula).toContain('2 months of history in the last 3 complete months')
-      // Activity from July 16: July counts whole (the first row says when spending began, not when the history did).
+      expect(two.formula).toContain('2 complete months of history in the last 3')
+      // Activity from July 16: July isn't a complete month, so nothing changes.
       await k.engine.post(k.ws, txn(bank, '2026-07-16', -500_000))
+      const partial = await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme] })
+      expect(partial.value).toBe(6)
+      // Activity from July 1: three months. 2,700,000 / 3 = 900,000 per month; 6,000,000 / 900,000 = 6.7.
+      await k.engine.post(k.ws, txn(bank, '2026-07-01', -200_000))
       const three = await k.engine.metric('runway', { workspaceId: k.ws, entityIds: [acme] })
-      // 2,500,000 / 3 = 833,333 per month; 6,000,000 / 833,333 = 7.2.
-      expect(three.value).toBe(7.2)
+      expect(three.value).toBe(6.7)
       expect(three.formula).toContain('3 complete months')
+    })
+
+    it('a morning read keeps the last balance of the day before, in the workspace\'s own day', async () => {
+      const ny = await makeKit(backend, { timeZone: 'America/New_York' })
+      const co = await ny.company('Acme')
+      const bank = await ny.account({ entityId: co })
+      const cash = async (to: string) => (await ny.engine.metric('cash', { workspaceId: ny.ws, entityIds: [co], to })).value
+      const evening = { ...snapshot(bank, '2026-10-01T01:00:00Z', 1_500_000), externalId: 'chk@2026-10-01' }
+      await ny.engine.postBatch(ny.ws, [snapshot(bank, '2026-09-30T12:00:00Z', 1_000_000), evening])
+      await ny.engine.post(ny.ws, { ...evening, at: '2026-10-01T12:00:00Z', current: usd(9_000_000) })
+      await ny.engine.post(ny.ws, { ...evening, at: '2026-10-01T15:00:00Z', current: usd(9_100_000) })
+      expect(await cash('2026-09-30')).toEqual(usd(1_500_000))
+      expect(await cash('2026-10-01')).toEqual(usd(9_100_000))
+      await ny.close()
+    })
+
+    it("a loan's interest doesn't fail its tie-out", async () => {
+      const loan = await k.account({ entityId: acme, name: 'Term loan', type: 'loan' })
+      await k.engine.postBatch(k.ws, [snapshot(loan, '2026-08-01', -10_000_000), snapshot(loan, '2026-09-01', -9_950_000), snapshot(loan, '2026-10-01', -9_900_000)])
+      expect((await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity' && c.subjectId === loan.id)).toEqual([])
+    })
+
+    it('says when loan payments may hide interest', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      const loan = await k.account({ entityId: acme, name: 'Term loan', type: 'loan' })
+      await k.engine.postBatch(k.ws, [txn(bank, '2026-07-01', -300_000), txn(bank, '2026-08-15', -120_000, { rawText: 'LOAN PAYMENT' }), txn(loan, '2026-08-15', 120_000, { rawText: 'PAYMENT RECEIVED' }), snapshot(bank, '2026-10-08', 6_000_000)])
+      const scope = { workspaceId: k.ws, entityIds: [acme] }
+      const note = '$1,200.00 in loan payments counts as paying down the loan, so burn can read low by the interest inside them'
+      expect((await k.engine.metric('gross_burn', scope)).coverage?.gaps).toContain(note)
+      expect((await k.engine.metric('runway', scope)).coverage?.gaps).toContain(note)
+    })
+
+    it('says when card payments stand in for a card that is not connected', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      await k.engine.postBatch(k.ws, [txn(bank, '2026-07-01', -300_000), txn(bank, '2026-08-15', -120_000, { categoryHint: 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' }), snapshot(bank, '2026-10-08', 6_000_000)])
+      const scope = { workspaceId: k.ws, entityIds: [acme] }
+      const lump = '$1,200.00 in credit card payments counts as spending in one lump, because no card is connected'
+      expect((await k.engine.metric('gross_burn', scope)).coverage?.gaps).toContain(lump)
+      expect((await k.engine.metric('runway', scope)).coverage?.gaps).toContain(lump)
+      await k.account({ entityId: acme, name: 'Card', type: 'credit_card' })
+      expect((await k.engine.metric('gross_burn', scope)).coverage?.gaps).not.toContain(lump)
+    })
+
+    it('a bank with rows and no balance is not tied out', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      await k.engine.post(k.ws, txn(bank, '2026-09-01', -1_000))
+      const checks = (await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity')
+      expect(checks.map((c) => [c.status, c.message])).toEqual([['warn', expect.stringContaining('no balance to compare')]])
+      await k.engine.post(k.ws, snapshot(bank, '2026-09-02', 5_000))
+      await k.engine.post(k.ws, snapshot(bank, '2026-09-03', 5_000))
+      expect((await k.engine.checks(k.ws, { entityIds: [acme] })).filter((c) => c.name === 'balance_identity').map((c) => c.status)).toEqual(['ok'])
+    })
+
+    it('says so when one account has a shorter history than the rest', async () => {
+      const bank = await k.account({ entityId: acme, name: 'Ops' })
+      const card = await k.account({ entityId: acme, name: 'Card', type: 'credit_card' })
+      await k.engine.postBatch(k.ws, [txn(bank, '2026-07-01', -300_000), txn(card, '2026-08-14', -100_000), snapshot(bank, '2026-10-08', 6_000_000)])
+      const scope = { workspaceId: k.ws, entityIds: [acme] }
+      const late = 'Card: rows start 2026-08-14, so nothing before that is in this average'
+      expect((await k.engine.metric('net_burn', scope)).coverage?.gaps).toContain(late)
+      expect((await k.engine.metric('runway', scope)).coverage?.gaps).toContain(late)
     })
 
     it('burn is a monthly average: the last 3 full months by default, a period divided by its months', async () => {
@@ -1304,6 +1374,41 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       expect(await byAmount(30_000)).toMatchObject({ status: 'confirmed', confidence: 0.99 })
       // A different pair of accounts stays a question.
       expect(await byAmount(40_000)).toMatchObject({ status: 'proposed' })
+    })
+
+    it('a second source repeats a row that is already linked: the copy still counts once', async () => {
+      const plaid = await k.account({ entityId: acme, name: 'Mercury', mask: '1234' })
+      const card = await k.account({ entityId: acme, type: 'credit_card', name: 'Amex' })
+      await k.engine.postBatch(k.ws, [txn(plaid, '2026-09-10', -50_000, { rawText: 'AMEX EPAY' }), txn(card, '2026-09-10', 50_000, { rawText: 'PAYMENT THANK YOU' })])
+      expect((await k.engine.store.listLinks(k.ws, { types: ['card_payment'] }))[0]?.status).toBe('confirmed')
+      const direct = await k.account({ entityId: acme, name: 'Mercury direct', mask: '1234' })
+      await k.markDuplicate(direct.id, plaid.id)
+      await k.engine.post(k.ws, txn(direct, '2026-09-10', -50_000, { rawText: 'AMEX EPAY' }))
+      const [dup] = await k.engine.store.listLinks(k.ws, { types: ['duplicate'] })
+      expect(dup).toMatchObject({ status: 'confirmed' })
+      expect(await k.bal(acme, 'uncategorized_expense')).toBe(0)
+      expect(await k.bal(acme, 'suspense')).toBe(0)
+    })
+
+    it('an upload a day off a synced row is a suggestion, and holds its copy back', async () => {
+      const plaid = await k.account({ entityId: acme, name: 'Amex' })
+      const upload = await k.account({ entityId: acme, name: 'Uploaded statements', connectionId: await k.connection({ key: 'files' }) })
+      await k.engine.post(k.ws, txn(plaid, '2026-09-10', -7_000, { counterparty: 'Staples' }))
+      await k.engine.post(k.ws, txn(upload, '2026-09-09', -7_000, { counterparty: 'Staples' }))
+      expect(await k.engine.store.listLinks(k.ws, { types: ['duplicate'] })).toMatchObject([{ status: 'proposed', confidence: 0.85 }])
+      expect(await k.bal(acme, 'uncategorized_expense')).toBe(7_000)
+    })
+
+    it('confirming one move on a pair clears the others already waiting on that pair at the next match', async () => {
+      const a = await k.account({ entityId: acme })
+      const b = await k.account({ entityId: acme })
+      await k.engine.postBatch(k.ws, [txn(a, '2026-07-01', -10_000), txn(b, '2026-07-01', 10_000), txn(b, '2026-08-01', -20_000), txn(a, '2026-08-01', 20_000)])
+      const links = await k.engine.store.listLinks(k.ws)
+      expect(links.map((l) => l.status)).toEqual(['proposed', 'proposed'])
+      await k.engine.decideLink(k.ws, links[0]?.id as string, 'confirmed', 'person-1')
+      await k.engine.post(k.ws, txn(a, '2026-09-01', -1, { counterparty: 'Unrelated' }))
+      await k.engine.reconcile(k.ws)
+      expect((await k.engine.store.listLinks(k.ws)).map((l) => l.status)).toEqual(['confirmed', 'confirmed'])
     })
 
     it('equal and opposite amounts with no words are only a suggestion: rent stays spending', async () => {

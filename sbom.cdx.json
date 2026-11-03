@@ -1,0 +1,4680 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:f0ada520-d338-4b5f-a4b1-f24f736837da",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-03T20:37:44.401Z",
+    "lifecycles": [
+      {
+        "phase": "pre-build"
+      }
+    ],
+    "tools": [
+      {
+        "vendor": "npm",
+        "name": "cli",
+        "version": "11.19.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "agfn@0.1.1",
+      "type": "application",
+      "name": "aggregate-public",
+      "version": "0.1.1",
+      "scope": "required",
+      "purl": "pkg:npm/agfn@0.1.1",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "@agfn/server@0.0.0",
+      "type": "library",
+      "name": "server",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/server@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "nodemailer@10.1.7",
+      "type": "library",
+      "name": "nodemailer",
+      "version": "10.1.7",
+      "scope": "required",
+      "purl": "pkg:npm/nodemailer@10.1.7",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/nodemailer/-/nodemailer-10.1.7.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3906ba143967e5f2edb66a926e30e2458bc50ce14dac1a9f88ec073e511b5118a5ddbfaf3c1d6ff31a62f92a78e9daf334396c4e736c4b9d36bed866cf9eabe3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT-0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/web@0.0.0",
+      "type": "library",
+      "name": "web",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/web@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/core@1.7.7",
+      "type": "library",
+      "name": "@better-auth/core",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/core@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/drizzle-adapter@1.7.7",
+      "type": "library",
+      "name": "@better-auth/drizzle-adapter",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/drizzle-adapter@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/kysely-adapter@1.7.7",
+      "type": "library",
+      "name": "@better-auth/kysely-adapter",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/kysely-adapter@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/memory-adapter@1.7.7",
+      "type": "library",
+      "name": "@better-auth/memory-adapter",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/memory-adapter@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/mongo-adapter@1.7.7",
+      "type": "library",
+      "name": "@better-auth/mongo-adapter",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/mongo-adapter@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/prisma-adapter@1.7.7",
+      "type": "library",
+      "name": "@better-auth/prisma-adapter",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/prisma-adapter@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/telemetry@1.7.7",
+      "type": "library",
+      "name": "@better-auth/telemetry",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/telemetry@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/utils@0.4.2",
+      "type": "library",
+      "name": "@better-auth/utils",
+      "version": "0.4.2",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/utils@0.4.2",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-fetch/fetch@1.3.2",
+      "type": "library",
+      "name": "@better-fetch/fetch",
+      "version": "1.3.2",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-fetch/fetch@1.3.2",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@fontsource/geist-sans@5.3.0",
+      "type": "library",
+      "name": "@fontsource/geist-sans",
+      "version": "5.3.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40fontsource/geist-sans@5.3.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@fontsource/geist-sans/-/geist-sans-5.3.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0261bb704d40bc4e0d1d138f68e975b0df9ad36701e71cbaa40fd957be875ea5930ac25357648205cf434c51df26a9d538e0e6ec7857218b5421bef934fe505d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@fontsource/newsreader@5.3.0",
+      "type": "library",
+      "name": "@fontsource/newsreader",
+      "version": "5.3.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40fontsource/newsreader@5.3.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@fontsource/newsreader/-/newsreader-5.3.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "00547a64a63cf4634bfbda812363f6fbae8d843e5b84e8ffbfa7ec2e71582cce04d099cc075c8a6fe468f1c03ae22d61c005a805f4eae421c91961f5b682c393"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@hexagon/base64@1.1.28",
+      "type": "library",
+      "name": "@hexagon/base64",
+      "version": "1.1.28",
+      "scope": "required",
+      "purl": "pkg:npm/%40hexagon/base64@1.1.28",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@hono/node-server@2.1.4",
+      "type": "library",
+      "name": "@hono/node-server",
+      "version": "2.1.4",
+      "scope": "required",
+      "purl": "pkg:npm/%40hono/node-server@2.1.4",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@hono/node-server/-/node-server-2.1.4.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "da0d6a78797805dbb00e7e8bf27900bc3acf5163cc96443ffdae4d84fff323269728c8d935157e706f42b2ef8188915febeebca6ace37f81e2e6c246287b92d6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@levischuck/tiny-cbor@0.2.11",
+      "type": "library",
+      "name": "@levischuck/tiny-cbor",
+      "version": "0.2.11",
+      "scope": "required",
+      "purl": "pkg:npm/%40levischuck/tiny-cbor@0.2.11",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@modelcontextprotocol/server@2.3.1",
+      "type": "library",
+      "name": "@modelcontextprotocol/server",
+      "version": "2.3.1",
+      "scope": "required",
+      "purl": "pkg:npm/%40modelcontextprotocol/server@2.3.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@modelcontextprotocol/server/-/server-2.3.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7b9f4c7d6b92b2c8fa0e843de89093a9d5b50174f9fd7b674e5d1659de8c53529ae37e1f154186a2c08b25b18dc920e11c6bf1416a1158ad77ec55d816460d5b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bede6da20d5cafe40a69d21d7467bedcbadc5f41268c47748b317bd7b5307fdda60668187ead974662f6af86d9538d2ca41ebd7b1c61ac19fd23dd47604affef"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-android-arm64@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-android-arm64",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-android-arm64@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-android-arm64/-/canvas-android-arm64-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "76d252e054047c7f4ec1260bb4cac49e3ed3f03cc16c973ff7b2c8fce92258e6295bf896e6de91fe073156b5174bc978e60095a7032e7e0b9c45efe97b4212a8"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-darwin-arm64@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-darwin-arm64",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-darwin-arm64@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "27f272956a094c6f0e42a65a8aa972e08383c80c4da1f525668d30b52049b4793a01dca66dd2243f29c033526f41a6693da1b987e9ac93d42e2bccb88b5a28ab"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-darwin-x64@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-darwin-x64",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-darwin-x64@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-darwin-x64/-/canvas-darwin-x64-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9e579c0a4df1cb4e9e0060bb92b66dccd0e6f543531cab874182bc6587a0763ce048bf1a9c6b7f78b2599bce8e59a360664c10c2f0ea7d2986f0da9ee8c3d935"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-arm-gnueabihf@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-arm-gnueabihf",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-arm-gnueabihf@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm-gnueabihf/-/canvas-linux-arm-gnueabihf-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0ca226986fac4cfa251349063ec60f0714ed3a36f720d00ba77d8eda55b609f4abd1b03348428abaef86ad06ed8a50a5ca83ce6a1504ad2dceaf39c50eb6a858"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-arm64-gnu@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-arm64-gnu",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-arm64-gnu@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm64-gnu/-/canvas-linux-arm64-gnu-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e79b3290008610d8f98f5ae18fef3500ef096d1f476201a3459eff1fea4daf8544d43bc834a60d31372eb64f19996c64dbbea3010bd4289dfe29d8fd19753795"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-arm64-musl@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-arm64-musl",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-arm64-musl@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm64-musl/-/canvas-linux-arm64-musl-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e89cfa8f2b35ef25f274ef9674982eec98680782bbff0f6c587072cf34e62e3420854c774c3316bcbbfe51c09d9d6860e28a6b113ebb10cca69eb11375e18d02"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-riscv64-gnu@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-riscv64-gnu",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-riscv64-gnu@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-riscv64-gnu/-/canvas-linux-riscv64-gnu-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "95fd9778479b5a251854e5448cb5f117b75f5eb0414843819fd02a061dfd5585eb3ede5c0ea23ed6de7c2054a39fc9e9aa48398c83acf1341b8ca0016c55b581"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-x64-gnu@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-x64-gnu",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-x64-gnu@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-gnu/-/canvas-linux-x64-gnu-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8836a9c3b9c5484e6db26431707dbe2a8b498727d53e61ddeaf50e40dfc49bef1635b91927027fac3a309493059cc97449848349f80a08d5068ba4a7e7ef929a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-linux-x64-musl@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-linux-x64-musl",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-linux-x64-musl@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-musl/-/canvas-linux-x64-musl-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dbaab6e80c884e8dc21995f81d614832004c03596edd8374ee0c73066e2d5ba1e096afce5724cfe74903ae65ae2b26c25fa761de6f0bcbe73b62123eb2a0a009"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-win32-arm64-msvc@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-win32-arm64-msvc",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-win32-arm64-msvc@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-win32-arm64-msvc/-/canvas-win32-arm64-msvc-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7143bde8876c7ef223d92fb63cd7034a44dc2e18cf8fca483845915752a3ef430e3f8c2713dcd293b3780b510a1e514645c81d4790246e70598f475f1caf676d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@napi-rs/canvas-win32-x64-msvc@1.0.11",
+      "type": "library",
+      "name": "@napi-rs/canvas-win32-x64-msvc",
+      "version": "1.0.11",
+      "scope": "optional",
+      "purl": "pkg:npm/%40napi-rs/canvas-win32-x64-msvc@1.0.11",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@napi-rs/canvas-win32-x64-msvc/-/canvas-win32-x64-msvc-1.0.11.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0c5629fd941174aba723f2cf7345244571b5be536324a3897fc3bc0ad6fcfb09b636dd842e0f446a6737d43d95a1a9247c6a3c2fecf421e8f3e96b456d0c321b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@noble/ciphers@2.4.0",
+      "type": "library",
+      "name": "@noble/ciphers",
+      "version": "2.4.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40noble/ciphers@2.4.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@noble/hashes@2.4.0",
+      "type": "library",
+      "name": "@noble/hashes",
+      "version": "2.4.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40noble/hashes@2.4.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@opentelemetry/semantic-conventions@1.43.0",
+      "type": "library",
+      "name": "@opentelemetry/semantic-conventions",
+      "version": "1.43.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40opentelemetry/semantic-conventions@1.43.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-android@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-android",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-android@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-cms@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-cms",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-cms@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-csr@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-csr",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-csr@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-ecc@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-ecc",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-ecc@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-pfx@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-pfx",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-pfx@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-pkcs8@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-pkcs8",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-pkcs8@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-pkcs9@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-pkcs9",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-pkcs9@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-rsa@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-rsa",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-rsa@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-schema@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-schema",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-schema@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-x509@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-x509",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-x509@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/asn1-x509-attr@2.10.0",
+      "type": "library",
+      "name": "@peculiar/asn1-x509-attr",
+      "version": "2.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/asn1-x509-attr@2.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/utils@2.0.3",
+      "type": "library",
+      "name": "@peculiar/utils",
+      "version": "2.0.3",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/utils@2.0.3",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@peculiar/x509@1.14.3",
+      "type": "library",
+      "name": "@peculiar/x509",
+      "version": "1.14.3",
+      "scope": "required",
+      "purl": "pkg:npm/%40peculiar/x509@1.14.3",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@resvg/resvg-wasm@2.6.2",
+      "type": "library",
+      "name": "@resvg/resvg-wasm",
+      "version": "2.6.2",
+      "scope": "required",
+      "purl": "pkg:npm/%40resvg/resvg-wasm@2.6.2",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@resvg/resvg-wasm/-/resvg-wasm-2.6.2.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "16a00b98723c0f8a3a964fcb4560e7870f79cf978ef9e01ae8e463560d3d61147b06470cea83c753dbb20b482d406e6fa452ef829794e3ecc4033d87f003c737"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@shuding/opentype.js@1.4.0-beta.0",
+      "type": "library",
+      "name": "@shuding/opentype.js",
+      "version": "1.4.0-beta.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40shuding/opentype.js@1.4.0-beta.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/@shuding/opentype.js/-/opentype.js-1.4.0-beta.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dcd8263721f797f1efe84bec5896ecbe972951b6ba47c211110f379c7f377326a40b0eee3356ab64a35f1f0bf55b3ea382aac5fe3e31e442ef47a3e72bd9d370"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@simplewebauthn/browser@13.3.0",
+      "type": "library",
+      "name": "@simplewebauthn/browser",
+      "version": "13.3.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40simplewebauthn/browser@13.3.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@simplewebauthn/server@13.3.3",
+      "type": "library",
+      "name": "@simplewebauthn/server",
+      "version": "13.3.3",
+      "scope": "required",
+      "purl": "pkg:npm/%40simplewebauthn/server@13.3.3",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "asn1js@3.0.10",
+      "type": "library",
+      "name": "asn1js",
+      "version": "3.0.10",
+      "scope": "required",
+      "purl": "pkg:npm/asn1js@3.0.10",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "base64-js@0.0.8",
+      "type": "library",
+      "name": "base64-js",
+      "version": "0.0.8",
+      "scope": "required",
+      "purl": "pkg:npm/base64-js@0.0.8",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/base64-js/-/base64-js-0.0.8.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dd7480d9c47f87fef71339575dd53a60dc9c99823bfa489c4f192ce1e260da0dfd6e21d1f38b25836f9d7acfa9ee21d885b460fee7484b84c3e7759a6dc39493"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "better-call@1.4.0",
+      "type": "library",
+      "name": "better-call",
+      "version": "1.4.0",
+      "scope": "required",
+      "purl": "pkg:npm/better-call@1.4.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/utils@0.5.0",
+      "type": "library",
+      "name": "@better-auth/utils",
+      "version": "0.5.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/utils@0.5.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "camelize@1.0.1",
+      "type": "library",
+      "name": "camelize",
+      "version": "1.0.1",
+      "scope": "required",
+      "purl": "pkg:npm/camelize@1.0.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/camelize/-/camelize-1.0.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "754f93c767ecca9c5382d2e8137ea7a62dd4a9c8d248c3587e4aa09a8121b59aeb68fe555aad0aec591655361af1e30fb6753f1b6b7156c7dd0894e7f6ece9b9"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "css-background-parser@0.1.0",
+      "type": "library",
+      "name": "css-background-parser",
+      "version": "0.1.0",
+      "scope": "required",
+      "purl": "pkg:npm/css-background-parser@0.1.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/css-background-parser/-/css-background-parser-0.1.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d8464b8ac89943eee6e30c2eaffaa26094678875f82b94dcf70f77313dc04b4592d6ee64699e0529794e4c184e8dcf8280480f88663e7d7d72583f14c2912a50"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "css-box-shadow@1.0.0-3",
+      "type": "library",
+      "name": "css-box-shadow",
+      "version": "1.0.0-3",
+      "scope": "required",
+      "purl": "pkg:npm/css-box-shadow@1.0.0-3",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/css-box-shadow/-/css-box-shadow-1.0.0-3.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f636aa47a7bb3a176cf9a5b09a17bac082c9f7dc5841b7e62bd41007d09c3230db4f13d98f0126510a54f75386d395e09bc05a853e5f5beb2f6ec4068d2ff33e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "css-color-keywords@1.0.0",
+      "type": "library",
+      "name": "css-color-keywords",
+      "version": "1.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/css-color-keywords@1.0.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/css-color-keywords/-/css-color-keywords-1.0.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "172cab0c764a1235c3a4d258bd5b15f7ad058aa4325dcfcb9589acc65d8171d31bd963f1d0e1915604e0e79acf4b22d234ca8fe7647dafc81e4a9edaa4ddce7e"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "css-gradient-parser@0.0.17",
+      "type": "library",
+      "name": "css-gradient-parser",
+      "version": "0.0.17",
+      "scope": "required",
+      "purl": "pkg:npm/css-gradient-parser@0.0.17",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/css-gradient-parser/-/css-gradient-parser-0.0.17.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c365f2f5430cc252ada2ed2f9519d7bd68253c071e5c24ed726552a3c64152fa825796971053ff3c2e9df88e3ae3cd7423d153fbe5000b04c3e79d756e618f52"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "css-to-react-native@3.2.0",
+      "type": "library",
+      "name": "css-to-react-native",
+      "version": "3.2.0",
+      "scope": "required",
+      "purl": "pkg:npm/css-to-react-native@3.2.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/css-to-react-native/-/css-to-react-native-3.2.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7bc44a68b5cc3858a2fb4da63a5ab08db0f4d0a4842aa6e59e93bd7befb56974b57cf40ea52d58a2a7551c1a8f8c7368c5e1769a29b356a6b09b62826c476d1d"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "defu@6.1.7",
+      "type": "library",
+      "name": "defu",
+      "version": "6.1.7",
+      "scope": "required",
+      "purl": "pkg:npm/defu@6.1.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "emoji-regex-xs@2.0.1",
+      "type": "library",
+      "name": "emoji-regex-xs",
+      "version": "2.0.1",
+      "scope": "required",
+      "purl": "pkg:npm/emoji-regex-xs@2.0.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/emoji-regex-xs/-/emoji-regex-xs-2.0.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d5016e87c97b2ea51c29edb82ec3d43738ebcc943ba60470a7540c719e4c5fa985a65936cd0d3c35508cf38fbed5cbde694518b5c0981e678512e360d7ab14e2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "escape-html@1.0.3",
+      "type": "library",
+      "name": "escape-html",
+      "version": "1.0.3",
+      "scope": "required",
+      "purl": "pkg:npm/escape-html@1.0.3",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3624aea59e0e7ae1b0afaf251887b29bf92c219309a1d506392099fc54a74f172b7a46efaab81d53194938ca628da299563009ad6ac6b3fe89cbc38cbb28fda3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "fflate@0.7.5",
+      "type": "library",
+      "name": "fflate",
+      "version": "0.7.5",
+      "scope": "required",
+      "purl": "pkg:npm/fflate@0.7.5",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/fflate/-/fflate-0.7.5.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4227987fffdc8aceb2c07362e6a5b5f8f5cf4386c2f9754902d4b801720c2fc3fbe86ae81223b19bfa10b67d5fd36524258d7e2ac5cc25c0be476bff120e06de"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "harfbuzzjs@0.10.0",
+      "type": "library",
+      "name": "harfbuzzjs",
+      "version": "0.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/harfbuzzjs@0.10.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/harfbuzzjs/-/harfbuzzjs-0.10.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "48df0b57008ecef4eadce3cd774f840208605ee808b73e7ac2cb79ebb0f5bececb9e72865a9ae18b7106e7c695381c2137c1c46d0c4be08f4d0d691c5d4bad47"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "hex-rgb@4.3.0",
+      "type": "library",
+      "name": "hex-rgb",
+      "version": "4.3.0",
+      "scope": "required",
+      "purl": "pkg:npm/hex-rgb@4.3.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/hex-rgb/-/hex-rgb-4.3.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3b1d69255ac30b2187306f42160d6d9ab4543113d1b0059873f3e29d8d17cc95382bbcbbbe33682ca210ec1479509302c4d37c10cd4c343987580fc1dda654bb"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "hono@4.13.13",
+      "type": "library",
+      "name": "hono",
+      "version": "4.13.13",
+      "scope": "required",
+      "purl": "pkg:npm/hono@4.13.13",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/hono/-/hono-4.13.13.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "090e3a53466400699b4ffe14c5dcf3189a5a70fd8878a818e1ae7fb4e23d00005ba4e31f2bbdfdc1f0d79afd6eb0293edd190a8f5850cb8fdf8e18b06b6c65ac"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "htm@3.1.1",
+      "type": "library",
+      "name": "htm",
+      "version": "3.1.1",
+      "scope": "required",
+      "purl": "pkg:npm/htm@3.1.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/htm/-/htm-3.1.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f7cdd5ca0f0dc1413b26467a3663aaa4267eb21d5b2afda2613954933956980e490f669c2a8c5de0a5716cc9b15fff399ad7dd9c399316834a720e43180bf135"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "kysely@0.29.6",
+      "type": "library",
+      "name": "kysely",
+      "version": "0.29.6",
+      "scope": "required",
+      "purl": "pkg:npm/kysely@0.29.6",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/kysely/-/kysely-0.29.6.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "847681f02feb7f30c3b6bfedf18670c40b8f2534f4cc7c9a3e8573717c0362160d0201ffe2c21f5618bf5cb2c863e6cbfc5a9a2099e30130db8bc39b4842e6c6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "linebreak@1.1.0",
+      "type": "library",
+      "name": "linebreak",
+      "version": "1.1.0",
+      "scope": "required",
+      "purl": "pkg:npm/linebreak@1.1.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/linebreak/-/linebreak-1.1.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "307a74dd4226795841ed766d8ddd04e27ebedf1af90eaffdc48ff9169b4693916b6c3477cda80f6b60d2e94f24b3fdc78db2961bd435336b9f3b3c55daa2d849"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "nanostores@1.5.5",
+      "type": "library",
+      "name": "nanostores",
+      "version": "1.5.5",
+      "scope": "required",
+      "purl": "pkg:npm/nanostores@1.5.5",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pako@0.2.9",
+      "type": "library",
+      "name": "pako",
+      "version": "0.2.9",
+      "scope": "required",
+      "purl": "pkg:npm/pako@0.2.9",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/pako/-/pako-0.2.9.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "35473068ac54c56ad92e90c6fb3ff165a0a04084e403f0efe15fd3e9bc3b54e37a9755f3fd59eb06aad88d9435d936a6287cc84d37ce1086148f8f32d8a5c898"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "parse-css-color@0.2.1",
+      "type": "library",
+      "name": "parse-css-color",
+      "version": "0.2.1",
+      "scope": "required",
+      "purl": "pkg:npm/parse-css-color@0.2.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/parse-css-color/-/parse-css-color-0.2.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6f04bf1862055776fa292e2ec29cc2163e30dbded8977baa9d28083eca10931ec630b44e5df3275afc5f3642f4a21f07561640e21bc9a04a0422aa277c9dc15a"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pdfjs-dist@6.3.289",
+      "type": "library",
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "scope": "required",
+      "purl": "pkg:npm/pdfjs-dist@6.3.289",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.3.289.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6478d25690dadc3ea2cccabcff4e25be48640135262fda71e8284f69773593a9d4d8cae1960d7fec5d1b754a82c148f0dcdb0f4df3d9b0c0d453a64871169e43"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pg@8.23.1",
+      "type": "library",
+      "name": "pg",
+      "version": "8.23.1",
+      "scope": "required",
+      "purl": "pkg:npm/pg@8.23.1",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pg-cloudflare@1.4.1",
+      "type": "library",
+      "name": "pg-cloudflare",
+      "version": "1.4.1",
+      "scope": "optional",
+      "purl": "pkg:npm/pg-cloudflare@1.4.1",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pg-connection-string@2.14.1",
+      "type": "library",
+      "name": "pg-connection-string",
+      "version": "2.14.1",
+      "scope": "required",
+      "purl": "pkg:npm/pg-connection-string@2.14.1",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pg-pool@3.14.0",
+      "type": "library",
+      "name": "pg-pool",
+      "version": "3.14.0",
+      "scope": "required",
+      "purl": "pkg:npm/pg-pool@3.14.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pgpass@1.0.5",
+      "type": "library",
+      "name": "pgpass",
+      "version": "1.0.5",
+      "scope": "required",
+      "purl": "pkg:npm/pgpass@1.0.5",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "postcss-value-parser@4.2.0",
+      "type": "library",
+      "name": "postcss-value-parser",
+      "version": "4.2.0",
+      "scope": "required",
+      "purl": "pkg:npm/postcss-value-parser@4.2.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d4d342b3abaeadf9156de5c6e12f09153f6dd7d9b8e480a789ff3358b779a0f499e74427c0c7caf87de3bf8d3c7788f0ffb06db6fe5ac52e48887a0b69534779"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pvtsutils@1.3.6",
+      "type": "library",
+      "name": "pvtsutils",
+      "version": "1.3.6",
+      "scope": "required",
+      "purl": "pkg:npm/pvtsutils@1.3.6",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pvutils@1.2.0",
+      "type": "library",
+      "name": "pvutils",
+      "version": "1.2.0",
+      "scope": "required",
+      "purl": "pkg:npm/pvutils@1.2.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "reflect-metadata@0.2.2",
+      "type": "library",
+      "name": "reflect-metadata",
+      "version": "0.2.2",
+      "scope": "required",
+      "purl": "pkg:npm/reflect-metadata@0.2.2",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "rou3@0.9.2",
+      "type": "library",
+      "name": "rou3",
+      "version": "0.9.2",
+      "scope": "required",
+      "purl": "pkg:npm/rou3@0.9.2",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "satori@0.33.5",
+      "type": "library",
+      "name": "satori",
+      "version": "0.33.5",
+      "scope": "required",
+      "purl": "pkg:npm/satori@0.33.5",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/satori/-/satori-0.33.5.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3cd5ba92dad0f1233a924eeee1a3ae4e49147b0933c933ab8fe41e1335d2b2734c01d7dfe22adef4202a233f3ee02deb0a206d2bc41310bbf9d806447753db47"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "set-cookie-parser@3.1.3",
+      "type": "library",
+      "name": "set-cookie-parser",
+      "version": "3.1.3",
+      "scope": "required",
+      "purl": "pkg:npm/set-cookie-parser@3.1.3",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "split2@4.2.0",
+      "type": "library",
+      "name": "split2",
+      "version": "4.2.0",
+      "scope": "required",
+      "purl": "pkg:npm/split2@4.2.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "string.prototype.codepointat@0.2.1",
+      "type": "library",
+      "name": "string.prototype.codepointat",
+      "version": "0.2.1",
+      "scope": "required",
+      "purl": "pkg:npm/string.prototype.codepointat@0.2.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/string.prototype.codepointat/-/string.prototype.codepointat-0.2.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d9c0550a3e88e083af1278e03bf856a978ea046b18fb3c0f987975d92ae4f485d2679e89c309b2fbae973b922eb7fa10551eede6285874b07418c6b86a511472"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "tiny-inflate@1.0.3",
+      "type": "library",
+      "name": "tiny-inflate",
+      "version": "1.0.3",
+      "scope": "required",
+      "purl": "pkg:npm/tiny-inflate@1.0.3",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/tiny-inflate/-/tiny-inflate-1.0.3.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a646357e3d5c2876f6b1e583cb4075e87796c9cce5240f7f596deeddce33fcd8960ec3b70ce5390fb9e14cb13d085d325effd064563bb042668f6e1d2be46bab"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "tslib@2.8.1",
+      "type": "library",
+      "name": "tslib",
+      "version": "2.8.1",
+      "scope": "required",
+      "purl": "pkg:npm/tslib@2.8.1",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "0BSD"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "tsyringe@4.10.0",
+      "type": "library",
+      "name": "tsyringe",
+      "version": "4.10.0",
+      "scope": "required",
+      "purl": "pkg:npm/tsyringe@4.10.0",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "tslib@1.14.1",
+      "type": "library",
+      "name": "tslib",
+      "version": "1.14.1",
+      "scope": "required",
+      "purl": "pkg:npm/tslib@1.14.1",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "0BSD"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "unicode-trie@2.0.0",
+      "type": "library",
+      "name": "unicode-trie",
+      "version": "2.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/unicode-trie@2.0.0",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/unicode-trie/-/unicode-trie-2.0.0.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c7b6dcefac746e6e29adfd552e0efdba10332b0f0355ba0295237957126e43e2ca0ce5445bd09d1fe558ed23febd7ef109842acf3810a45ab3d79cde2ef02d65"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "yoga-layout@3.2.1",
+      "type": "library",
+      "name": "yoga-layout",
+      "version": "3.2.1",
+      "scope": "required",
+      "purl": "pkg:npm/yoga-layout@3.2.1",
+      "properties": [],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://registry.npmjs.org/yoga-layout/-/yoga-layout-3.2.1.tgz"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d0b3ceb770312aa31d141640dc7040b7fb7ff2f20aabb55a4186ee03c5b10a0ba783ea7d4d5c8a458769bc26fcd0771d4cdd8d91b20a6e13702947e6ded432c1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/auth@0.0.0",
+      "type": "library",
+      "name": "auth",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/auth@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/cimd@1.7.7",
+      "type": "library",
+      "name": "@better-auth/cimd",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/cimd@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/oauth-provider@1.7.7",
+      "type": "library",
+      "name": "@better-auth/oauth-provider",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/oauth-provider@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@better-auth/passkey@1.7.7",
+      "type": "library",
+      "name": "@better-auth/passkey",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/%40better-auth/passkey@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "better-auth@1.7.7",
+      "type": "library",
+      "name": "better-auth",
+      "version": "1.7.7",
+      "scope": "required",
+      "purl": "pkg:npm/better-auth@1.7.7",
+      "properties": [],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/cli@0.1.1",
+      "type": "library",
+      "name": "cli",
+      "version": "0.1.1",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/cli@0.1.1",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-adsense@0.0.0",
+      "type": "library",
+      "name": "adsense",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-adsense@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-appstore@0.0.0",
+      "type": "library",
+      "name": "appstore",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-appstore@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-billcom@0.0.0",
+      "type": "library",
+      "name": "billcom",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-billcom@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-brex@0.0.0",
+      "type": "library",
+      "name": "brex",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-brex@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-carta@0.0.0",
+      "type": "library",
+      "name": "carta",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-carta@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-chargebee@0.0.0",
+      "type": "library",
+      "name": "chargebee",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-chargebee@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-coinbase@0.0.0",
+      "type": "library",
+      "name": "coinbase",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-coinbase@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-deel@0.0.0",
+      "type": "library",
+      "name": "deel",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-deel@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-demo@0.0.0",
+      "type": "library",
+      "name": "demo",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-demo@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-expensify@0.0.0",
+      "type": "library",
+      "name": "expensify",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-expensify@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-files@0.0.0",
+      "type": "library",
+      "name": "files",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-files@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-finch@0.0.0",
+      "type": "library",
+      "name": "finch",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-finch@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-freshbooks@0.0.0",
+      "type": "library",
+      "name": "freshbooks",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-freshbooks@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-googleplay@0.0.0",
+      "type": "library",
+      "name": "googleplay",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-googleplay@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-gumroad@0.0.0",
+      "type": "library",
+      "name": "gumroad",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-gumroad@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-harvest@0.0.0",
+      "type": "library",
+      "name": "harvest",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-harvest@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-justworks@0.0.0",
+      "type": "library",
+      "name": "justworks",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-justworks@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-lemonsqueezy@0.0.0",
+      "type": "library",
+      "name": "lemonsqueezy",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-lemonsqueezy@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-lightspeed@0.0.0",
+      "type": "library",
+      "name": "lightspeed",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-lightspeed@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-mercury@0.0.0",
+      "type": "library",
+      "name": "mercury",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-mercury@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-paddle@0.0.0",
+      "type": "library",
+      "name": "paddle",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-paddle@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-patreon@0.0.0",
+      "type": "library",
+      "name": "patreon",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-patreon@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-paypal@0.0.0",
+      "type": "library",
+      "name": "paypal",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-paypal@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-payroll-detect@0.0.0",
+      "type": "library",
+      "name": "payroll-detect",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-payroll-detect@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-pinterest@0.0.0",
+      "type": "library",
+      "name": "pinterest",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-pinterest@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-plaid@0.0.0",
+      "type": "library",
+      "name": "plaid",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-plaid@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-polar@0.0.0",
+      "type": "library",
+      "name": "polar",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-polar@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-quickbooks@0.0.0",
+      "type": "library",
+      "name": "quickbooks",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-quickbooks@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-ramp@0.0.0",
+      "type": "library",
+      "name": "ramp",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-ramp@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-registry@0.0.0",
+      "type": "library",
+      "name": "registry",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-registry@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-revenuecat@0.0.0",
+      "type": "library",
+      "name": "revenuecat",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-revenuecat@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-rippling@0.0.0",
+      "type": "library",
+      "name": "rippling",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-rippling@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-sdk@0.0.0",
+      "type": "library",
+      "name": "sdk",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-sdk@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-shopify@0.0.0",
+      "type": "library",
+      "name": "shopify",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-shopify@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-simplefin@0.0.0",
+      "type": "library",
+      "name": "simplefin",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-simplefin@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-square@0.0.0",
+      "type": "library",
+      "name": "square",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-square@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-squarespace@0.0.0",
+      "type": "library",
+      "name": "squarespace",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-squarespace@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-stripe@0.0.0",
+      "type": "library",
+      "name": "stripe",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-stripe@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-sumup@0.0.0",
+      "type": "library",
+      "name": "sumup",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-sumup@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-wefunder@0.0.0",
+      "type": "library",
+      "name": "wefunder",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-wefunder@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-wise@0.0.0",
+      "type": "library",
+      "name": "wise",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-wise@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-wix@0.0.0",
+      "type": "library",
+      "name": "wix",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-wix@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-woocommerce@0.0.0",
+      "type": "library",
+      "name": "woocommerce",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-woocommerce@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-xero@0.0.0",
+      "type": "library",
+      "name": "xero",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-xero@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-youtube@0.0.0",
+      "type": "library",
+      "name": "youtube",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-youtube@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/contracts@0.0.0",
+      "type": "library",
+      "name": "contracts",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/contracts@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/core@0.0.0",
+      "type": "library",
+      "name": "core",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/core@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/db@0.0.0",
+      "type": "library",
+      "name": "db",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/db@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/demo@0.0.0",
+      "type": "library",
+      "name": "demo",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/demo@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/equity@0.0.0",
+      "type": "library",
+      "name": "equity",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/equity@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/files@0.0.0",
+      "type": "library",
+      "name": "files",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/files@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/invoices@0.0.0",
+      "type": "library",
+      "name": "invoices",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/invoices@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/mcp@0.0.0",
+      "type": "library",
+      "name": "mcp",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/mcp@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/plaintext@0.0.0",
+      "type": "library",
+      "name": "plaintext",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/plaintext@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/recurring@0.0.0",
+      "type": "library",
+      "name": "recurring",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/recurring@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/security@0.0.0",
+      "type": "library",
+      "name": "security",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/security@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/sync@0.0.0",
+      "type": "library",
+      "name": "sync",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/sync@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "agfn@0.1.1",
+      "dependsOn": [
+        "@agfn/server@0.0.0",
+        "@agfn/web@0.0.0",
+        "@agfn/auth@0.0.0",
+        "@agfn/cli@0.1.1",
+        "@agfn/contracts@0.0.0",
+        "@agfn/core@0.0.0",
+        "@agfn/demo@0.0.0",
+        "@agfn/equity@0.0.0",
+        "@agfn/files@0.0.0",
+        "@agfn/invoices@0.0.0",
+        "@agfn/mcp@0.0.0",
+        "@agfn/plaintext@0.0.0",
+        "@agfn/recurring@0.0.0",
+        "@agfn/security@0.0.0",
+        "@agfn/sync@0.0.0",
+        "@agfn/connector-adsense@0.0.0",
+        "@agfn/connector-appstore@0.0.0",
+        "@agfn/connector-billcom@0.0.0",
+        "@agfn/connector-brex@0.0.0",
+        "@agfn/connector-carta@0.0.0",
+        "@agfn/connector-chargebee@0.0.0",
+        "@agfn/connector-coinbase@0.0.0",
+        "@agfn/connector-deel@0.0.0",
+        "@agfn/connector-demo@0.0.0",
+        "@agfn/connector-expensify@0.0.0",
+        "@agfn/connector-files@0.0.0",
+        "@agfn/connector-finch@0.0.0",
+        "@agfn/connector-freshbooks@0.0.0",
+        "@agfn/connector-googleplay@0.0.0",
+        "@agfn/connector-gumroad@0.0.0",
+        "@agfn/connector-harvest@0.0.0",
+        "@agfn/connector-justworks@0.0.0",
+        "@agfn/connector-lemonsqueezy@0.0.0",
+        "@agfn/connector-lightspeed@0.0.0",
+        "@agfn/connector-mercury@0.0.0",
+        "@agfn/connector-paddle@0.0.0",
+        "@agfn/connector-patreon@0.0.0",
+        "@agfn/connector-paypal@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0",
+        "@agfn/connector-pinterest@0.0.0",
+        "@agfn/connector-plaid@0.0.0",
+        "@agfn/connector-polar@0.0.0",
+        "@agfn/connector-quickbooks@0.0.0",
+        "@agfn/connector-ramp@0.0.0",
+        "@agfn/connector-registry@0.0.0",
+        "@agfn/connector-revenuecat@0.0.0",
+        "@agfn/connector-rippling@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-shopify@0.0.0",
+        "@agfn/connector-simplefin@0.0.0",
+        "@agfn/connector-square@0.0.0",
+        "@agfn/connector-squarespace@0.0.0",
+        "@agfn/connector-stripe@0.0.0",
+        "@agfn/connector-sumup@0.0.0",
+        "@agfn/connector-wefunder@0.0.0",
+        "@agfn/connector-wise@0.0.0",
+        "@agfn/connector-wix@0.0.0",
+        "@agfn/connector-woocommerce@0.0.0",
+        "@agfn/connector-xero@0.0.0",
+        "@agfn/connector-youtube@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/server@0.0.0",
+      "dependsOn": [
+        "@agfn/connector-files@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0",
+        "@agfn/connector-registry@0.0.0",
+        "@agfn/connector-woocommerce@0.0.0",
+        "@agfn/connector-harvest@0.0.0",
+        "@agfn/connector-lightspeed@0.0.0",
+        "@agfn/connector-adsense@0.0.0",
+        "@agfn/connector-youtube@0.0.0",
+        "@agfn/connector-pinterest@0.0.0",
+        "@agfn/connector-squarespace@0.0.0",
+        "@agfn/connector-wix@0.0.0",
+        "@agfn/connector-sumup@0.0.0",
+        "@agfn/core@0.0.0",
+        "@agfn/demo@0.0.0",
+        "@agfn/equity@0.0.0",
+        "@agfn/invoices@0.0.0",
+        "@agfn/mcp@0.0.0",
+        "@agfn/plaintext@0.0.0",
+        "@agfn/recurring@0.0.0",
+        "@fontsource/geist-sans@5.3.0",
+        "@fontsource/newsreader@5.3.0",
+        "@hono/node-server@2.1.4",
+        "@resvg/resvg-wasm@2.6.2",
+        "hono@4.13.13",
+        "kysely@0.29.6",
+        "nodemailer@10.1.7",
+        "satori@0.33.5"
+      ]
+    },
+    {
+      "ref": "nodemailer@10.1.7",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/web@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/equity@0.0.0",
+        "htm@3.1.1"
+      ]
+    },
+    {
+      "ref": "@better-auth/core@1.7.7",
+      "dependsOn": [
+        "@better-auth/utils@0.4.2",
+        "@better-fetch/fetch@1.3.2",
+        "better-call@1.4.0",
+        "kysely@0.29.6",
+        "nanostores@1.5.5",
+        "@opentelemetry/semantic-conventions@1.43.0"
+      ]
+    },
+    {
+      "ref": "@better-auth/drizzle-adapter@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2"
+      ]
+    },
+    {
+      "ref": "@better-auth/kysely-adapter@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@better-auth/memory-adapter@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2"
+      ]
+    },
+    {
+      "ref": "@better-auth/mongo-adapter@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2"
+      ]
+    },
+    {
+      "ref": "@better-auth/prisma-adapter@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2"
+      ]
+    },
+    {
+      "ref": "@better-auth/telemetry@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2",
+        "@better-fetch/fetch@1.3.2"
+      ]
+    },
+    {
+      "ref": "@better-auth/utils@0.4.2",
+      "dependsOn": [
+        "@noble/hashes@2.4.0"
+      ]
+    },
+    {
+      "ref": "@better-fetch/fetch@1.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@fontsource/geist-sans@5.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@fontsource/newsreader@5.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@hexagon/base64@1.1.28",
+      "dependsOn": []
+    },
+    {
+      "ref": "@hono/node-server@2.1.4",
+      "dependsOn": [
+        "hono@4.13.13"
+      ]
+    },
+    {
+      "ref": "@levischuck/tiny-cbor@0.2.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@modelcontextprotocol/server@2.3.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas@1.0.11",
+      "dependsOn": [
+        "@napi-rs/canvas-android-arm64@1.0.11",
+        "@napi-rs/canvas-darwin-arm64@1.0.11",
+        "@napi-rs/canvas-darwin-x64@1.0.11",
+        "@napi-rs/canvas-linux-arm-gnueabihf@1.0.11",
+        "@napi-rs/canvas-linux-arm64-gnu@1.0.11",
+        "@napi-rs/canvas-linux-arm64-musl@1.0.11",
+        "@napi-rs/canvas-linux-riscv64-gnu@1.0.11",
+        "@napi-rs/canvas-linux-x64-gnu@1.0.11",
+        "@napi-rs/canvas-linux-x64-musl@1.0.11",
+        "@napi-rs/canvas-win32-arm64-msvc@1.0.11",
+        "@napi-rs/canvas-win32-x64-msvc@1.0.11"
+      ]
+    },
+    {
+      "ref": "@napi-rs/canvas-android-arm64@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-darwin-arm64@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-darwin-x64@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-arm-gnueabihf@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-arm64-gnu@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-arm64-musl@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-riscv64-gnu@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-x64-gnu@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-linux-x64-musl@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-win32-arm64-msvc@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@napi-rs/canvas-win32-x64-msvc@1.0.11",
+      "dependsOn": []
+    },
+    {
+      "ref": "@noble/ciphers@2.4.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@noble/hashes@2.4.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@opentelemetry/semantic-conventions@1.43.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@peculiar/asn1-android@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-cms@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "@peculiar/asn1-x509-attr@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-csr@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-ecc@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-pfx@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-cms@2.10.0",
+        "@peculiar/asn1-pkcs8@2.10.0",
+        "@peculiar/asn1-rsa@2.10.0",
+        "@peculiar/asn1-schema@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-pkcs8@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-pkcs9@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-cms@2.10.0",
+        "@peculiar/asn1-pfx@2.10.0",
+        "@peculiar/asn1-pkcs8@2.10.0",
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "@peculiar/asn1-x509-attr@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-rsa@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-schema@2.10.0",
+      "dependsOn": [
+        "@peculiar/utils@2.0.3",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-x509@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/utils@2.0.3",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/asn1-x509-attr@2.10.0",
+      "dependsOn": [
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "asn1js@3.0.10",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/utils@2.0.3",
+      "dependsOn": [
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "@peculiar/x509@1.14.3",
+      "dependsOn": [
+        "@peculiar/asn1-cms@2.10.0",
+        "@peculiar/asn1-csr@2.10.0",
+        "@peculiar/asn1-ecc@2.10.0",
+        "@peculiar/asn1-pkcs9@2.10.0",
+        "@peculiar/asn1-rsa@2.10.0",
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "pvtsutils@1.3.6",
+        "reflect-metadata@0.2.2",
+        "tslib@2.8.1",
+        "tsyringe@4.10.0"
+      ]
+    },
+    {
+      "ref": "@resvg/resvg-wasm@2.6.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "@shuding/opentype.js@1.4.0-beta.0",
+      "dependsOn": [
+        "fflate@0.7.5",
+        "string.prototype.codepointat@0.2.1"
+      ]
+    },
+    {
+      "ref": "@simplewebauthn/browser@13.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@simplewebauthn/server@13.3.3",
+      "dependsOn": [
+        "@hexagon/base64@1.1.28",
+        "@levischuck/tiny-cbor@0.2.11",
+        "@peculiar/asn1-android@2.10.0",
+        "@peculiar/asn1-ecc@2.10.0",
+        "@peculiar/asn1-rsa@2.10.0",
+        "@peculiar/asn1-schema@2.10.0",
+        "@peculiar/asn1-x509@2.10.0",
+        "@peculiar/x509@1.14.3"
+      ]
+    },
+    {
+      "ref": "asn1js@3.0.10",
+      "dependsOn": [
+        "pvtsutils@1.3.6",
+        "pvutils@1.2.0",
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "base64-js@0.0.8",
+      "dependsOn": []
+    },
+    {
+      "ref": "better-call@1.4.0",
+      "dependsOn": [
+        "@better-auth/utils@0.5.0",
+        "@better-fetch/fetch@1.3.2",
+        "rou3@0.9.2",
+        "set-cookie-parser@3.1.3"
+      ]
+    },
+    {
+      "ref": "@better-auth/utils@0.5.0",
+      "dependsOn": [
+        "@noble/hashes@2.4.0"
+      ]
+    },
+    {
+      "ref": "camelize@1.0.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "css-background-parser@0.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "css-box-shadow@1.0.0-3",
+      "dependsOn": []
+    },
+    {
+      "ref": "css-color-keywords@1.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "css-gradient-parser@0.0.17",
+      "dependsOn": []
+    },
+    {
+      "ref": "css-to-react-native@3.2.0",
+      "dependsOn": [
+        "camelize@1.0.1",
+        "css-color-keywords@1.0.0",
+        "postcss-value-parser@4.2.0"
+      ]
+    },
+    {
+      "ref": "defu@6.1.7",
+      "dependsOn": []
+    },
+    {
+      "ref": "emoji-regex-xs@2.0.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "escape-html@1.0.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "fflate@0.7.5",
+      "dependsOn": []
+    },
+    {
+      "ref": "harfbuzzjs@0.10.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "hex-rgb@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "hono@4.13.13",
+      "dependsOn": []
+    },
+    {
+      "ref": "htm@3.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "kysely@0.29.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "linebreak@1.1.0",
+      "dependsOn": [
+        "base64-js@0.0.8",
+        "unicode-trie@2.0.0"
+      ]
+    },
+    {
+      "ref": "nanostores@1.5.5",
+      "dependsOn": []
+    },
+    {
+      "ref": "pako@0.2.9",
+      "dependsOn": []
+    },
+    {
+      "ref": "parse-css-color@0.2.1",
+      "dependsOn": [
+        "hex-rgb@4.3.0"
+      ]
+    },
+    {
+      "ref": "pdfjs-dist@6.3.289",
+      "dependsOn": [
+        "@napi-rs/canvas@1.0.11"
+      ]
+    },
+    {
+      "ref": "pg@8.23.1",
+      "dependsOn": [
+        "pg-connection-string@2.14.1",
+        "pg-pool@3.14.0",
+        "pgpass@1.0.5",
+        "pg-cloudflare@1.4.1"
+      ]
+    },
+    {
+      "ref": "pg-cloudflare@1.4.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pg-connection-string@2.14.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pg-pool@3.14.0",
+      "dependsOn": [
+        "pg@8.23.1"
+      ]
+    },
+    {
+      "ref": "pgpass@1.0.5",
+      "dependsOn": [
+        "split2@4.2.0"
+      ]
+    },
+    {
+      "ref": "postcss-value-parser@4.2.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pvtsutils@1.3.6",
+      "dependsOn": [
+        "tslib@2.8.1"
+      ]
+    },
+    {
+      "ref": "pvutils@1.2.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "reflect-metadata@0.2.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "rou3@0.9.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "satori@0.33.5",
+      "dependsOn": [
+        "@shuding/opentype.js@1.4.0-beta.0",
+        "css-background-parser@0.1.0",
+        "css-box-shadow@1.0.0-3",
+        "css-gradient-parser@0.0.17",
+        "css-to-react-native@3.2.0",
+        "emoji-regex-xs@2.0.1",
+        "escape-html@1.0.3",
+        "fflate@0.7.5",
+        "harfbuzzjs@0.10.0",
+        "linebreak@1.1.0",
+        "parse-css-color@0.2.1",
+        "postcss-value-parser@4.2.0",
+        "yoga-layout@3.2.1"
+      ]
+    },
+    {
+      "ref": "set-cookie-parser@3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "split2@4.2.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "string.prototype.codepointat@0.2.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "tiny-inflate@1.0.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "tslib@2.8.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "tsyringe@4.10.0",
+      "dependsOn": [
+        "tslib@1.14.1"
+      ]
+    },
+    {
+      "ref": "tslib@1.14.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "unicode-trie@2.0.0",
+      "dependsOn": [
+        "pako@0.2.9",
+        "tiny-inflate@1.0.3"
+      ]
+    },
+    {
+      "ref": "yoga-layout@3.2.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/auth@0.0.0",
+      "dependsOn": [
+        "@better-auth/cimd@1.7.7",
+        "@better-auth/oauth-provider@1.7.7",
+        "@better-auth/passkey@1.7.7",
+        "better-auth@1.7.7",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@better-auth/cimd@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/oauth-provider@1.7.7",
+        "better-auth@1.7.7",
+        "better-call@1.4.0"
+      ]
+    },
+    {
+      "ref": "@better-auth/oauth-provider@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2",
+        "@better-fetch/fetch@1.3.2",
+        "better-auth@1.7.7",
+        "better-call@1.4.0"
+      ]
+    },
+    {
+      "ref": "@better-auth/passkey@1.7.7",
+      "dependsOn": [
+        "@better-auth/core@1.7.7",
+        "@better-auth/utils@0.4.2",
+        "@better-fetch/fetch@1.3.2",
+        "better-auth@1.7.7",
+        "better-call@1.4.0",
+        "nanostores@1.5.5",
+        "@simplewebauthn/browser@13.3.0",
+        "@simplewebauthn/server@13.3.3"
+      ]
+    },
+    {
+      "ref": "better-auth@1.7.7",
+      "dependsOn": [
+        "pg@8.23.1",
+        "@better-auth/core@1.7.7",
+        "@better-auth/drizzle-adapter@1.7.7",
+        "@better-auth/kysely-adapter@1.7.7",
+        "@better-auth/memory-adapter@1.7.7",
+        "@better-auth/mongo-adapter@1.7.7",
+        "@better-auth/prisma-adapter@1.7.7",
+        "@better-auth/telemetry@1.7.7",
+        "@better-auth/utils@0.4.2",
+        "@better-fetch/fetch@1.3.2",
+        "@noble/ciphers@2.4.0",
+        "@noble/hashes@2.4.0",
+        "better-call@1.4.0",
+        "defu@6.1.7",
+        "kysely@0.29.6",
+        "nanostores@1.5.5"
+      ]
+    },
+    {
+      "ref": "@agfn/cli@0.1.1",
+      "dependsOn": [
+        "@agfn/connector-plaid@0.0.0",
+        "@agfn/connector-registry@0.0.0",
+        "@agfn/mcp@0.0.0",
+        "@agfn/security@0.0.0",
+        "@agfn/server@0.0.0",
+        "kysely@0.29.6",
+        "@agfn/demo@0.0.0",
+        "@agfn/core@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-adsense@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-appstore@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-billcom@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-brex@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-carta@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-chargebee@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-coinbase@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-deel@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-demo@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-expensify@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-files@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "pdfjs-dist@6.3.289"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-finch@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-freshbooks@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/invoices@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-googleplay@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-gumroad@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-harvest@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-justworks@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-lemonsqueezy@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-lightspeed@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-mercury@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-paddle@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-patreon@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-paypal@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-payroll-detect@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/invoices@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-pinterest@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-plaid@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-polar@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-quickbooks@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/invoices@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-ramp@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-registry@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-plaid@0.0.0",
+        "@agfn/connector-stripe@0.0.0",
+        "@agfn/connector-mercury@0.0.0",
+        "@agfn/connector-brex@0.0.0",
+        "@agfn/connector-ramp@0.0.0",
+        "@agfn/connector-wise@0.0.0",
+        "@agfn/connector-woocommerce@0.0.0",
+        "@agfn/connector-harvest@0.0.0",
+        "@agfn/connector-lightspeed@0.0.0",
+        "@agfn/connector-adsense@0.0.0",
+        "@agfn/connector-youtube@0.0.0",
+        "@agfn/connector-pinterest@0.0.0",
+        "@agfn/connector-squarespace@0.0.0",
+        "@agfn/connector-wix@0.0.0",
+        "@agfn/connector-sumup@0.0.0",
+        "@agfn/connector-files@0.0.0",
+        "@agfn/connector-paypal@0.0.0",
+        "@agfn/connector-square@0.0.0",
+        "@agfn/connector-shopify@0.0.0",
+        "@agfn/connector-paddle@0.0.0",
+        "@agfn/connector-polar@0.0.0",
+        "@agfn/connector-lemonsqueezy@0.0.0",
+        "@agfn/connector-chargebee@0.0.0",
+        "@agfn/connector-revenuecat@0.0.0",
+        "@agfn/connector-appstore@0.0.0",
+        "@agfn/connector-googleplay@0.0.0",
+        "@agfn/connector-gumroad@0.0.0",
+        "@agfn/connector-patreon@0.0.0",
+        "@agfn/connector-demo@0.0.0",
+        "@agfn/connector-quickbooks@0.0.0",
+        "@agfn/connector-xero@0.0.0",
+        "@agfn/connector-freshbooks@0.0.0",
+        "@agfn/connector-carta@0.0.0",
+        "@agfn/connector-wefunder@0.0.0",
+        "@agfn/connector-finch@0.0.0",
+        "@agfn/connector-justworks@0.0.0",
+        "@agfn/connector-deel@0.0.0",
+        "@agfn/connector-simplefin@0.0.0",
+        "@agfn/connector-billcom@0.0.0",
+        "@agfn/connector-rippling@0.0.0",
+        "@agfn/connector-coinbase@0.0.0",
+        "@agfn/connector-expensify@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-revenuecat@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-rippling@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0",
+        "@agfn/invoices@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-sdk@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-shopify@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-simplefin@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-square@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-squarespace@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-stripe@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-sumup@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-wefunder@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-wise@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-wix@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-woocommerce@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-xero@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0",
+        "@agfn/invoices@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-youtube@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/contracts@0.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/core@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/recurring@0.0.0",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@agfn/db@0.0.0",
+      "dependsOn": [
+        "kysely@0.29.6",
+        "pg@8.23.1"
+      ]
+    },
+    {
+      "ref": "@agfn/demo@0.0.0",
+      "dependsOn": [
+        "@agfn/auth@0.0.0",
+        "@agfn/connector-demo@0.0.0",
+        "@agfn/security@0.0.0",
+        "@agfn/sync@0.0.0",
+        "kysely@0.29.6",
+        "@agfn/core@0.0.0",
+        "@agfn/equity@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/equity@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@agfn/files@0.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/invoices@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-payroll-detect@0.0.0",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@agfn/mcp@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/recurring@0.0.0",
+        "@modelcontextprotocol/server@2.3.1",
+        "kysely@0.29.6"
+      ]
+    },
+    {
+      "ref": "@agfn/plaintext@0.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/recurring@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/security@0.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "@agfn/sync@0.0.0",
+      "dependsOn": []
+    }
+  ]
+}

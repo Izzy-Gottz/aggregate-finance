@@ -122,12 +122,23 @@ amount next to its balance.
 
 ## A sale in both a processor and your accounting books
 
-**Today:** if a customer's payment shows in Stripe and also in QuickBooks or Xero, it counts in both until you say
-they're the same.
+**Today:** if a customer's payment shows in Stripe and also in QuickBooks, Xero or FreshBooks, it counts in both until
+you say they're the same.
 
 **What happens instead:** when the amount and customer name agree, Aggregate asks in Review. Once you confirm, it counts
 once. If the names differ, it doesn't ask, so the sale stays counted twice. The revenue check against your accounting
 books won't catch this.
+
+## Loan payments
+
+**Today:** Aggregate doesn't split a loan payment into principal and interest. What happens depends on what your lender
+sends:
+
+- **Balances and transactions:** once you confirm the match, the payment comes off the loan in full, so burn can read
+  low by the interest. Burn and runway say how much in payments this covers.
+- **Balances only:** the bank payment counts as spending in full, so burn can read high by the principal.
+
+A loan's balance isn't checked against its rows, because interest raises it with no row behind it.
 
 ## Several companies added together
 
@@ -181,6 +192,8 @@ test compares SQLite and Postgres figure by figure.
 - **Finch and Rippling** are built and being tested with real accounts. On hosted, they also need production keys
   from each provider.
 - **Justworks** has no direct connection on hosted: Justworks didn't approve a partner key.
+- **FreshBooks** is built from FreshBooks' documentation and not yet checked on a real account, so it isn't listed as
+  supported yet. It doesn't read credit notes or other income, so the P&L check says so when those make the two differ.
 - **Expensify** is self-hosted only, in beta. Its credentials can't be limited to reading, and hosted Aggregate
   only takes read-only access. It's built from Expensify's documentation and not yet checked on a real account.
 

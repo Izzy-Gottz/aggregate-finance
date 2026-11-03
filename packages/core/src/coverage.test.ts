@@ -1,7 +1,7 @@
 // Statement coverage and pinned balances, golden answers on memory and SQLite.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createFinance } from './finance.ts'
-import { invoice, makeKit, snapshot, txn, usd, type Backend, type Kit } from './test-kit.ts'
+import { eur, invoice, makeKit, snapshot, txn, usd, type Backend, type Kit } from './test-kit.ts'
 
 const backends: Backend[] = ['memory', 'sqlite']
 
@@ -42,6 +42,13 @@ describe.each(backends)('coverage and balance assertions (%s)', (backend) => {
     expect((await k.engine.checks(k.ws, { problemsOnly: true })).filter((c) => c.name === 'balance_assertion')).toEqual([])
     expect((await k.engine.balanceAssertions(k.ws)).map((a) => a.id)).toContain(ok.id)
     await expect(k.engine.addBalanceAssertion(k.ws, { accountId: bank.id, date: '2026-09-30', balance: { minor: 1, currency: 'EUR' } })).rejects.toThrow('in USD')
+  })
+
+  it('a month-end row that reaches the balance a day later is posting lag, not a month that fails', async () => {
+    const bank = await k.account({ entityId: acme, name: 'Mercury' })
+    await k.engine.postBatch(k.ws, [snapshot(bank, '2026-07-31', 100_000), txn(bank, '2026-08-31', -30_000), snapshot(bank, '2026-08-31', 100_000), snapshot(bank, '2026-09-01', 70_000)])
+    const [cov] = await k.engine.coverage(k.ws)
+    expect(cov?.months.find((m) => m.month === '2026-08')?.status).toBe('covered')
   })
 
   it('coverage: a quiet month in a busy account, a statement not uploaded yet, a month that does not add up', async () => {
@@ -130,6 +137,18 @@ describe.each(backends)('coverage and balance assertions (%s)', (backend) => {
     // The overview keeps its numbers but says which ones are unknown or stale.
     const [row] = (await createFinance(k.engine).reader.overview(scope)).entities
     expect(row?.caveats?.find((c) => c.figure === 'cash')).toEqual({ figure: 'cash', state: 'unknown', reason: 'New Brex has never reported a balance' })
+  })
+
+  it("a company in another currency is compared in that currency, whatever the month's rates did", async () => {
+    const gmbh = await k.company('GmbH', { currency: 'EUR' })
+    const books = await k.connection({ entityId: gmbh, key: 'quickbooks' })
+    k.rates.set('2026-09-05', 'EUR', 'USD', '1.10').set('2026-09-30', 'EUR', 'USD', '1.20').set('2026-10-09', 'EUR', 'USD', '1.20')
+    await k.engine.postBatch(k.ws, [
+      invoice(books, { total: eur(100_000), issueDate: '2026-09-05', dueDate: '2026-10-05' }),
+      { type: 'report.snapshot', externalId: 'pnl:eur', connectionId: books, kind: 'profit_and_loss', from: '2026-09-01', to: '2026-09-30', basis: 'accrual', currency: 'EUR', rows: [{ account: 'Net Income', amount: eur(100_000), section: '', depth: 0 }] },
+    ])
+    const checks = (await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')
+    expect(checks.map((c) => c.status)).toEqual(['ok'])
   })
 
   it("our P&L is checked against the books' own report for each period", async () => {
@@ -261,6 +280,461 @@ describe.each(backends)('coverage and balance assertions (%s)', (backend) => {
           await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(wooFirst ? both : both.reverse())])
           const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
           // The real comparison still runs, against the books' own number, and still fails where it should.
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('Harvest: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `harvest:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Invoiced in Harvest', amount: usd(987_654), section: 'Sales', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'harvest' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'harvest' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('Lightspeed: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `lightspeed:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Sales reported by the store', amount: usd(987_654), section: 'Sales', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'lightspeed' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'lightspeed' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('Pinterest: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `pinterest:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Spent on Pinterest ads', amount: usd(987_654), section: 'Earnings', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'pinterest' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'pinterest' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+  describe('AdSense: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `adsense:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Estimated AdSense earnings', amount: usd(987_654), section: 'Earnings', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'adsense' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'adsense' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('YouTube: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `youtube:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Estimated YouTube earnings', amount: usd(987_654), section: 'Earnings', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'youtube' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'youtube' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('Squarespace: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `squarespace:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Net sales reported by the store', amount: usd(987_654), section: 'Sales', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'squarespace' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'squarespace' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('Wix: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `wix:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Net sales reported by the store', amount: usd(987_654), section: 'Sales', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'wix' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'wix' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
+          expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
+        } finally {
+          await kit.close()
+        }
+      }
+    })
+  })
+
+  describe('SumUp: a report-only source is not books', () => {
+    const report = (connectionId: never, month: string, basis: 'accrual' | 'cash' = 'accrual') => ({
+      type: 'report.snapshot' as const,
+      externalId: `sumup:${month}:USD:${basis}`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis,
+      currency: 'USD',
+      rows: [{ account: 'Paid out by SumUp', amount: usd(987_654), section: 'Payouts', depth: 0 }],
+    })
+    const books = (connectionId: never, month: string, net: number) => ({
+      type: 'report.snapshot' as const,
+      externalId: `pnl:${month}:accrual`,
+      connectionId,
+      kind: 'profit_and_loss' as const,
+      from: `${month}-01`,
+      to: `${month}-30`,
+      basis: 'accrual' as const,
+      currency: 'USD',
+      rows: [],
+      totals: { netIncome: usd(net) },
+    })
+
+    it('beside different ledger numbers: no provider_report at all, on either basis, even with a net income to compare', async () => {
+      const source = await k.connection({ entityId: acme, key: 'sumup' })
+      const stripe = await k.connection({ entityId: acme, key: 'stripe' })
+      await k.engine.postBatch(k.ws, [
+        invoice(stripe, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }),
+        report(source as never, '2026-08'),
+        report(source as never, '2026-08', 'cash'),
+        { ...report(source as never, '2026-07'), rows: [{ account: 'Net Income', amount: usd(5), section: '', depth: 0 }] },
+        { ...report(source as never, '2026-06'), totals: { netIncome: usd(7) } },
+      ])
+      expect((await k.engine.checks(k.ws)).filter((c) => c.name === 'provider_report')).toEqual([])
+      expect((await k.engine.dataHealth(k.ws)).counts.failedChecks).toBe(0)
+    })
+
+    it("never takes QuickBooks' or Xero's place for the same period, whichever arrived last", async () => {
+      for (const [key, sourceFirst] of [['quickbooks', true], ['quickbooks', false], ['xero', true], ['xero', false]] as const) {
+        const kit = await makeKit(backend, { now: '2026-10-09T12:00:00.000Z' })
+        try {
+          const acmeId = await kit.company('Acme')
+          const ledger = await kit.connection({ entityId: acmeId, key })
+          const source = await kit.connection({ entityId: acmeId, key: 'sumup' })
+          const both = [report(source as never, '2026-08'), books(ledger as never, '2026-08', 50_000)]
+          await kit.engine.postBatch(kit.ws, [invoice(ledger, { total: usd(100_000), issueDate: '2026-08-05', dueDate: '2026-09-05' }), ...(sourceFirst ? both : both.reverse())])
+          const checks = (await kit.engine.checks(kit.ws)).filter((c) => c.name === 'provider_report')
           expect(checks.map((c) => [c.status, c.expectedMinor, c.actualMinor])).toEqual([['fail', 50_000, 100_000]])
         } finally {
           await kit.close()

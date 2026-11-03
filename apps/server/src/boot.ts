@@ -14,7 +14,7 @@ import { ConnectorRegistry, SyncEngine, SYNC_JOB, applyPendingReassignments, typ
 import { eraseRevoked } from './retire.ts'
 import { hostedConfigProblems, type ServerConfig } from './config.ts'
 import type { McpModule, Services } from './services.ts'
-import { consoleMailer, mailFromProblem, smtpMailer, withTestAddressesLogged } from './mailer.ts'
+import { consoleMailer, mailFromProblem, smtpMailer, withMailAllowList, withTestAddressesLogged } from './mailer.ts'
 import { UsageMeter } from './usage.ts'
 import { nextDemoImport, stalledDemoImports } from '@agfn/demo'
 import { reseedReviewerDemos, serverDemoBuilder } from './reviewer.ts'
@@ -206,7 +206,9 @@ export async function boot(opts: BootOptions): Promise<Booted> {
   const mailProblem = opts.mailer ? null : mailFromProblem(opts.env ?? process.env, config.baseUrl)
   if (mailProblem) console.warn(`[agfn] ${mailProblem}`)
   const realMailer = opts.mailer ?? (config.smtpUrl ? smtpMailer(config.smtpUrl, config.mailFrom) : consoleMailer())
-  const baseMailer = (opts.env ?? process.env).AGFN_LOG_TEST_LINKS === '1' ? withTestAddressesLogged(realMailer) : realMailer
+  const mailAllow = (opts.env ?? process.env).AGFN_MAIL_ALLOW
+  const allowedMailer = mailAllow ? withMailAllowList(realMailer, mailAllow) : realMailer
+  const baseMailer = (opts.env ?? process.env).AGFN_LOG_TEST_LINKS === '1' ? withTestAddressesLogged(allowedMailer) : allowedMailer
   // Count every email sent (for the cost model); the count never blocks or fails the send.
   // .invalid can never receive mail (RFC 2606): the reviewer and public demo accounts live there. Sending would only bounce
   // and hurt the sending domain's reputation, so those are dropped here, for every kind of email.

@@ -77,7 +77,9 @@ function base(s: GumroadSale, sellerId: string, connectionId: string, rawRef: st
 export function mapSaleCharge(s: GumroadSale, sellerId: string, connectionId: string, rawRef: string): ProcessorBalanceTxn | undefined {
   if (!(s.price > 0)) return undefined
   const fee = saleFee(s)
-  return { ...base(s, sellerId, connectionId, rawRef), externalId: s.id, kind: 'charge', gross: usd(s.price), fee: usd(fee), net: usd(s.price - fee) }
+  // Seller-collected tax, only when Gumroad says it's inside the price. Tax added on top isn't in gross at all.
+  const tax = s.tax_included_in_price === true && s.tax_cents && s.tax_cents > 0 && s.tax_cents <= s.price ? s.tax_cents : 0
+  return { ...base(s, sellerId, connectionId, rawRef), externalId: s.id, kind: 'charge', gross: usd(s.price), fee: usd(fee), net: usd(s.price - fee), ...(tax ? { taxIncluded: usd(tax) } : {}) }
 }
 
 /**

@@ -87,7 +87,7 @@ notice from a vendor such as Plaid or the host.
 
 ## Gaps today
 
-- No incident log yet.
+- The incident log was started 2026-11-02.
 - No backup contact named.
 - No tabletop exercise done.
 - Legal notification duties haven't been reviewed by a lawyer.

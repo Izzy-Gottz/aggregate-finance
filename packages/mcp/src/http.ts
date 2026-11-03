@@ -190,7 +190,12 @@ export class AgfnHttp {
     if (p instanceof Response) return p
     const authInfo: AuthInfo = { token: '[redacted]', clientId: p.grant.clientId, scopes: p.scopes, resource: new URL(this.opts.resourceUrl), extra: { principal: p } }
     // The whole MCP exchange (tools/list included) runs in the principal's workspace (row-level security).
-    return withWorkspace(p.workspaceId, () => this.mcp.fetch(req, { authInfo }))
+    const res = await withWorkspace(p.workspaceId, () => this.mcp.fetch(req, { authInfo }))
+    // Stateless: GET and DELETE get 405, which must say what is allowed (RFC 9110 §15.5.6).
+    if (res.status !== 405 || res.headers.has('allow')) return res
+    const headers = new Headers(res.headers)
+    headers.set('allow', 'POST')
+    return new Response(res.body, { status: 405, headers })
   }
 
   // ---------- REST tools ----------

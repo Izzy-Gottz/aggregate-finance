@@ -187,7 +187,7 @@ describe('rules', () => {
     expect(suggestRules(records.slice(0, 2), overrides, [], 3)).toEqual([])
     expect(suggestRules(records.slice(0, 2), overrides, [], 2)).toHaveLength(1)
     const [s] = suggestRules(records, overrides, [], 3)
-    expect(s?.conditions).toEqual({ textPatterns: ['*figma*'], direction: 'out' })
+    expect(s?.conditions).toMatchObject({ textPatterns: ['*figma*'], direction: 'out', entityIds: [expect.any(String)] })
     expect(() => suggestRules(records, overrides, [], 1)).toThrow(RuleValidationError)
   })
 })

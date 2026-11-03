@@ -5,7 +5,7 @@
 // /v1/reporting/transactions in windows of at most 31 days (PayPal's limit), page by page, from the high-water mark
 // (3 years back on the first sync) up to the moment the cycle started. A window PayPal finds too big
 // (RESULTSET_TOO_LARGE, ~10k rows) is halved and retried from the same start, then grows back after it succeeds; then /v2/invoicing/invoices pages. The next
-// cycle re-reads the last 3 days, because PayPal's reporting lags up to ~3 hours and rows can change status.
+// cycle re-reads the last 14 days, because PayPal's reporting lags up to ~3 hours and a pending ACH-funded row can take days to complete.
 
 import type { ConnectBegin, ConnectBeginContext, Connector, ConnectionRef, ConnectorDescription, ConnectorHealth, NormalizedEvent, SyncResult } from '@agfn/contracts'
 import {
@@ -96,7 +96,7 @@ interface PayPalCursor {
 
 const DAY = 86_400_000
 const MAX_WINDOW_DAYS = 31
-const OVERLAP_MS = 3 * DAY
+const OVERLAP_MS = 14 * DAY
 
 const isCursor = (v: unknown): v is PayPalCursor =>
   isRecord(v) &&

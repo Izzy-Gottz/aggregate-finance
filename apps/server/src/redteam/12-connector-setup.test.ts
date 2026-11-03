@@ -14,6 +14,7 @@ const SECRETS: Record<string, string> = {
   PLAID_SECRET: 'FAKEVAL-plaid-secret-q1w2e3',
   QUICKBOOKS_CLIENT_SECRET: 'FAKEVAL-qbo-secret-r4t5y6',
   XERO_CLIENT_SECRET: 'FAKEVAL-xero-secret-u7i8o9',
+  FRESHBOOKS_CLIENT_SECRET: 'FAKEVAL-freshbooks-secret-a1b2c3',
   FINCH_CLIENT_SECRET: 'FAKEVAL-finch-secret-p0a1s2',
   JUSTWORKS_CLIENT_SECRET: 'FAKEVAL-jw-secret-d3f4g5',
   MERCURY_CLIENT_SECRET: 'FAKEVAL-mercury-secret-h6j7',
@@ -42,6 +43,7 @@ const IDS: Record<string, string> = {
   PLAID_CLIENT_ID: 'FAKEID-plaid-1a2b',
   QUICKBOOKS_CLIENT_ID: 'FAKEID-qbo-3c4d',
   XERO_CLIENT_ID: 'FAKEID-xero-5e6f',
+  FRESHBOOKS_CLIENT_ID: 'FAKEID-freshbooks-7a8b',
   FINCH_CLIENT_ID: 'FAKEID-finch-7g8h',
   JUSTWORKS_CLIENT_ID: 'FAKEID-jw-9i0j',
   MERCURY_CLIENT_ID: 'FAKEID-mercury-1k2l',
@@ -153,7 +155,7 @@ afterEach(() => {
   phase = ''
 })
 
-const GUIDED = ['plaid', 'quickbooks', 'xero', 'finch', 'justworks']
+const GUIDED = ['plaid', 'quickbooks', 'xero', 'freshbooks', 'finch', 'justworks']
 
 describe('red team: connector setup', () => {
   it('a connector without keys answers 409 not_configured on start, finish and callback; unknown keys 404', async () => {
@@ -165,7 +167,7 @@ describe('red team: connector setup', () => {
       const s = await owner(srv, 'setup@a.example')
       const list = await hit(srv, s, 'GET', '/api/connectors')
       const guides = (list.body as unknown as ConnectorDescription[]).filter((d) => d.setup && d.setup.configured === false).map((d) => d.key)
-      expect(guides.sort()).toEqual(['finch', 'justworks', 'xero'])
+      expect(guides.sort()).toEqual(['finch', 'freshbooks', 'justworks', 'xero'])
 
       for (const key of ['xero', 'finch', 'justworks']) {
         const start = await hit(srv, s, 'POST', `/api/connectors/${key}/start`, {})

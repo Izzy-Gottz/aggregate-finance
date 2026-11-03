@@ -43,17 +43,57 @@ const isAggregate = (name: string) =>
   AGGREGATES.has(name) || /(MSGSRSV\d|MSGSRQV\d|TRNRS|TRNRQ|RS|RQ|LIST|ACCTFROM|ACCTTO|INFO)$/.test(name)
 
 /** Parse the OFX body (SGML or XML) into a tree. Unclosed leaf tags (`<TRNAMT>-12.00`) close at the next tag. */
+interface OfxToken { index: number; cdata?: string; slash?: string; rawName?: string; selfClose?: string; chars?: string }
+
+/**
+ * Walks instructions, comments, CDATA, tags and text. Hand-written so an upload full of unclosed `<?` or `<!--` stays
+ * linear: a closer's position is remembered, so no stretch of the file is searched twice. A `<` that opens nothing is skipped.
+ */
+function* ofxTokens(text: string): Generator<OfxToken> {
+  const seen = new Map<string, number>()
+  const closeAt = (closer: string, from: number) => {
+    const known = seen.get(closer)
+    if (known === -1 || (known !== undefined && known >= from)) return known!
+    const at = text.indexOf(closer, from)
+    seen.set(closer, at)
+    return at
+  }
+  const tag = /<(\/?)([A-Za-z0-9._]+)[^>]*?(\/?)>/y
+  let i = 0
+  while (i < text.length) {
+    if (text[i] !== '<') {
+      const next = text.indexOf('<', i)
+      const end = next < 0 ? text.length : next
+      yield { index: i, chars: text.slice(i, end) }
+      i = end
+      continue
+    }
+    const skipped = text.startsWith('<?', i) ? ['?>', 2] as const : text.startsWith('<!--', i) ? ['-->', 4] as const : null
+    if (skipped) {
+      const end = closeAt(skipped[0], i + skipped[1])
+      if (end >= 0) { yield { index: i }; i = end + skipped[0].length; continue }
+    } else if (text.startsWith('<![CDATA[', i)) {
+      const end = closeAt(']]>', i + 9)
+      if (end >= 0) { yield { index: i, cdata: text.slice(i + 9, end) }; i = end + 3; continue }
+    } else if (closeAt('>', i) >= 0) {
+      tag.lastIndex = i
+      const m = tag.exec(text)
+      if (m) { yield { index: i, slash: m[1]!, rawName: m[2]!, selfClose: m[3]! }; i = tag.lastIndex; continue }
+    }
+    i++
+  }
+}
+
 export function parseOfxTree(text: string): OfxNode {
   const root: OfxNode = { name: '#root', children: [], line: 1 }
   const stack: OfxNode[] = [root]
   const top = () => stack[stack.length - 1] as OfxNode
-  const re = /<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<(\/?)([A-Za-z0-9._]+)[^>]*?(\/?)>|([^<]+)/g
   let line = 1
   let last = 0
-  for (let m = re.exec(text); m; m = re.exec(text)) {
+  for (const m of ofxTokens(text)) {
     for (let i = last; i < m.index; i++) if (text.charCodeAt(i) === 10) line++
     last = m.index
-    const [, cdata, slash, rawName, selfClose, chars] = m
+    const { cdata, slash, rawName, selfClose, chars } = m
     const textValue = cdata ?? (chars !== undefined ? decodeEntities(chars) : undefined)
     if (textValue !== undefined) {
       const v = textValue.trim()

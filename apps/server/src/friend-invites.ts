@@ -45,14 +45,17 @@ export function firstName(name: string | null | undefined): string {
   return /^[\p{L}][\p{L}'’]*(-[\p{L}][\p{L}'’]*)?$/u.test(first) && first.length <= 20 ? first : 'A friend'
 }
 
+/** The sender's address, the one on /privacy: an invite email must carry one. */
+const POSTAL = 'Aggregate Finance LLC, 1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA'
+
 export function friendEmail(inviter: string, link: string, stop: string): { subject: string; text: string; html: string } {
   const subject = `${inviter} invited you to try Aggregate`
   const line = 'Ask your AI about your finances. It can’t move money. Free during beta.'
   const fine = `${inviter} entered your address. You won’t get another email about this invite, and you’re not on any list.`
   return {
     subject,
-    text: `${subject}\n\n${line}\n\nSign up: ${link}\n\n${fine}\n\nDon’t send me invites: ${stop}\n`,
-    html: `<p>${subject}</p><p>${line}</p><p><a href="${link}">Sign up</a></p><p style="color:#74736E;font-size:13px">${fine} <a href="${stop}" style="color:#74736E">Don’t send me invites</a></p>`,
+    text: `${subject}\n\n${line}\n\nSign up: ${link}\n\n${fine}\n\nDon’t send me invites: ${stop}\n\n${POSTAL}\n`,
+    html: `<p>${subject}</p><p>${line}</p><p><a href="${link}">Sign up</a></p><p style="color:#74736E;font-size:13px">${fine} <a href="${stop}" style="color:#74736E">Don’t send me invites</a></p><p style="color:#74736E;font-size:13px">${POSTAL}</p>`,
   }
 }
 

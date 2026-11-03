@@ -3,6 +3,7 @@
 // balance.snapshot.holdings) as each one passes through the sync route; the ledger still gets every event.
 import type { BalanceSnapshot, HoldingView, LiabilityDetails, LiabilityView, Money, NormalizedEvent, ReadScope, UpcomingItem } from '@agfn/contracts'
 import type { CoreTables } from '@agfn/db'
+import { DEFAULT_TIME_ZONE, localDate } from '@agfn/core'
 import { newId } from '@agfn/db'
 import type { Kysely } from 'kysely'
 
@@ -49,6 +50,12 @@ type RoutePage = { events: readonly NormalizedEvent[]; cache: Map<string, unknow
 const n = (v: number | string | null | undefined): number | null => (v === null || v === undefined ? null : Number(v))
 const money = (minor: number | string | null, currency: string): Money | undefined => (minor === null ? undefined : { minor: Number(minor), currency })
 
+/** Positions are kept per day, the workspace's own: an evening sync in New York is that day, not tomorrow in UTC. */
+async function zoneOf(db: Db, ws: string): Promise<string> {
+  const r = await db.selectFrom('workspaces').select('time_zone').where('id', '=', ws).executeTakeFirst()
+  return r?.time_zone ?? DEFAULT_TIME_ZONE
+}
+
 async function accountOf(db: Db, ws: string, connectionId: string, externalId: string): Promise<string | undefined> {
   const r = await db.selectFrom('accounts').select('id').where('workspace_id', '=', ws).where('connection_id', '=', connectionId).where('external_id', '=', externalId).executeTakeFirst()
   return r?.id
@@ -61,7 +68,7 @@ export async function recordTerms(db: Db, ws: string, e: NormalizedEvent): Promi
     if (accountId) await saveLiability(db, ws, accountId, e.currency, e.liability)
   } else if (e.type === 'balance.snapshot' && e.holdings) {
     const accountId = await accountOf(db, ws, e.connectionId, e.accountExternalId)
-    if (accountId) await saveHoldings(db, ws, accountId, e)
+    if (accountId) await saveHoldings(db, ws, accountId, e, localDate(e.at, await zoneOf(db, ws)))
   }
 }
 
@@ -87,8 +94,7 @@ async function saveLiability(db: Db, ws: string, accountId: string, currency: st
 }
 
 /** One snapshot per account per day: the day's positions replace that day's earlier ones (a sold position goes). */
-async function saveHoldings(db: Db, ws: string, accountId: string, e: BalanceSnapshot): Promise<void> {
-  const day = e.at.slice(0, 10)
+async function saveHoldings(db: Db, ws: string, accountId: string, e: BalanceSnapshot, day: string): Promise<void> {
   const at = new Date().toISOString()
   await db.transaction().execute(async (tx) => {
     await tx.deleteFrom('account_holdings').where('account_id', '=', accountId).where('as_of_date', '=', day).execute()
@@ -136,22 +142,25 @@ export async function recordTermsPage(db: Db, ws: string, page: { events: readon
       }
     }
     // The last snapshot of an account for a day wins, as it would one event at a time.
-    const days = new Map<string, { accountId: string; e: BalanceSnapshot }>()
+    const zone = await zoneOf(db, ws)
+    const days = new Map<string, { accountId: string; e: BalanceSnapshot; day: string }>()
     for (const e of wanted) {
       if (e.type === 'account.upsert' && e.liability) {
         const accountId = ids.get(`${e.connectionId}\0${e.externalId}`)
         if (accountId) await saveLiability(db, ws, accountId, e.currency, e.liability)
       } else if (e.type === 'balance.snapshot') {
         const accountId = ids.get(`${e.connectionId}\0${e.accountExternalId}`)
-        if (accountId) days.set(`${accountId}\0${e.at.slice(0, 10)}`, { accountId, e })
+        if (accountId) {
+          const day = localDate(e.at, zone)
+          days.set(`${accountId}\0${day}`, { accountId, e, day })
+        }
       }
     }
     if (!days.size) return
     const at = new Date().toISOString()
     await db.transaction().execute(async (tx) => {
       const rows: Array<HoldingsTable> = []
-      for (const { accountId, e } of days.values()) {
-        const day = e.at.slice(0, 10)
+      for (const { accountId, e, day } of days.values()) {
         await tx.deleteFrom('account_holdings').where('account_id', '=', accountId).where('as_of_date', '=', day).execute()
         const seen = new Set<string>()
         for (const h of e.holdings ?? []) {
@@ -200,7 +209,9 @@ export function termsReader(db: Db): TermsReader {
       .where('a.closed_at', 'is', null)
       .orderBy('a.name')
       .execute()
-    return rows.map((r) => {
+    // A connection can name a card and report no terms: that's unknown, the same as having no row.
+    const reported = rows.filter((r) => r.apr || [r.minimum_payment_minor, r.next_due_date, r.last_statement_balance_minor, r.last_statement_date, r.last_payment_minor, r.last_payment_date, r.origination_principal_minor, r.maturity_date].some((x) => x !== null))
+    return reported.map((r) => {
       const c = r.currency
       const v: LiabilityView = { accountId: r.account_id, entityId: r.entity_id!, accountName: r.name, kind: r.kind as LiabilityView['kind'], asOf: r.as_of }
       if (r.institution) v.institution = r.institution

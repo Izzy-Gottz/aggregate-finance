@@ -348,6 +348,8 @@ export interface ProcessorBalanceTxn extends EventBase {
   /** Sales tax the merchant holds for the tax authority (Google Play's Tax, Tax rebill and Tax refund rows): not revenue
    *  and not an unexplained adjustment. Posted to sales tax payable. */
   salesTax?: true
+  /** Sales tax inside this charge or refund's gross, signed like gross, when the provider says so (PayPal). Not revenue. */
+  taxIncluded?: Money
   /** Money the company still owns or owes, not income or spending: funds held in a reserve (other_assets), a processor
    *  advance and its repayments (other_liabilities), or a topup from the bank (clearing_payouts, matched like a payout). */
   balanceRole?: 'other_assets' | 'other_liabilities' | 'clearing_payouts'

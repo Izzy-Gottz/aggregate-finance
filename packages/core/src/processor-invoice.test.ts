@@ -46,4 +46,21 @@ describe.each(backends)('processor charges that pay its invoices (%s)', (backend
     expect(links.map((l) => l.status)).toEqual(['proposed', 'proposed'])
     expect(await k.bal(acme, 'ar', 'accrual')).toBe(9_800)
   })
+
+  it('asks in names and numbers when the books and the processor may be the same money', async () => {
+    const { acme, acc } = await setup()
+    const qb = await k.connection({ entityId: acme, key: 'quickbooks' })
+    await k.engine.postBatch(k.ws, [
+      invoice(qb, { externalId: 'q1038', number: '1038', counterparty: 'Globex', total: usd(10_000), issueDate: '2026-10-01', dueDate: '2026-10-31' }),
+      { type: 'payment.applied', externalId: 'p1', connectionId: qb, direction: 'receivable', date: '2026-10-11', amount: usd(10_000), counterparty: 'Globex', applications: [{ invoiceExternalId: 'q1038', amount: usd(10_000) }] },
+      stripe(acc, '2026-10-11', 'charge', 10_000, 370, { counterparty: 'Globex' }),
+    ])
+    await k.engine.reconcile(k.ws)
+    const card = (await k.engine.reviewItems(k.ws)).find((i) => i.kind === 'suggested_match')
+    expect(card?.question).toContain('Globex paid invoice 1038 ($100.00). Same money as the $100.00 charge in ')
+    expect(card?.question).toContain(', $96.30 after fees?')
+    expect(card?.detail).not.toContain('balance_txn')
+    expect(card?.detail).not.toContain('payment.applied')
+    expect(card?.confirmLabel).toBe('Confirm: payment of invoice 1038')
+  })
 })

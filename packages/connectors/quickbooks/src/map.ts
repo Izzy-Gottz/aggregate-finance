@@ -555,8 +555,10 @@ export function mapCashEntity(entity: CashEntity, o: QboObject, ctx: MapContext)
     case 'RefundReceipt': {
       const doc = mapDoc({ ...o, Id: xid, Balance: 0 }, ctx, 'receivable')
       if (!doc) return []
-      const net = doc.total.minor - (doc.tax?.minor ?? 0)
-      return net > 0 ? [refundNote(xid, 'receivable', day, { minor: net, currency: cur }, ref(o.CustomerRef).name, number, voided, ctx)] : []
+      if (doc.total.minor <= 0) return []
+      // What left the bank, tax included: the books take the tax off what's owed, the rest off revenue.
+      const note = refundNote(xid, 'receivable', day, doc.total, ref(o.CustomerRef).name, number, voided, ctx)
+      return [doc.tax?.minor ? { ...note, tax: doc.tax } : note]
     }
     case 'Deposit': {
       let income = 0

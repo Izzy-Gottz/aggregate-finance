@@ -135,7 +135,7 @@ export function Shell({ children, onSearch }: { children: ComponentChildren; onS
       ${pub ? null : html`<a href="#/preferences" aria-current=${page === 'preferences' ? 'page' : undefined} onClick=${nav('preferences')}>Preferences</a>`}
       <button type="button" class="navbtn" onClick=${() => (setMenu(false), onSearch())}>Search <span class="kbd kbdhint" aria-hidden="true">${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</span></button>
       <div class="gap"></div>
-      ${isReviewer(app) || pub || !isManager(app) ? null : html`<button type="button" class="navbtn" onClick=${() => (setMenu(false), app.open({ kind: 'invite' }))}>Add a teammate</button>`}
+      ${isReviewer(app) || pub || !ws?.me.friendInvites || ws.me.demo ? null : html`<button type="button" class="navbtn" onClick=${() => (setMenu(false), app.open({ kind: 'friend-invite' }))}>Invite someone</button>`}
       ${demo ? html`<button type="button" class="navbtn" disabled=${leaving} onClick=${() => (setMenu(false), void leave())}>${leaving ? 'Leaving the demo…' : 'Leave the demo'}</button>` : null}
       <${Help} onPick=${() => setMenu(false)} />
       ${pub ? html`<button type="button" class="navbtn" onClick=${() => signUpFromDemo(app)}>Sign up</button>` : html`<button type="button" class="navbtn" onClick=${signOut}>Log out</button>`}
@@ -143,6 +143,7 @@ export function Shell({ children, onSearch }: { children: ComponentChildren; onS
       ${ws && !pub ? html`<p class="who">${ws.me.name}</p><p class="who">${ws.me.email}</p>` : null}
     </nav>
     <main class="main" id="main" tabindex="-1">
+      ${page === 'review' ? null : html`<h1 class="sr">${page === 'preferences' ? 'Preferences' : 'Workspace'}</h1>`}
       ${isReviewer(app) ? html`<p class="sub reviewer-note" role="note">Reviewer demo · made-up companies · resets nightly</p>` : null}
       ${pub ? html`<p class="demo-bar" role="note"><span>Demo company · read-only · made-up numbers</span> <button type="button" class="link" onClick=${() => signUpFromDemo(app)}>Sign up →</button></p>` : null}
       ${demo ? html`<p class="demo-bar" role="note"><span>You’re looking at a demo with made-up companies.</span> <button type="button" class="link" disabled=${leaving} aria-busy=${leaving ? 'true' : undefined} onClick=${() => void leave()}>${leaving ? 'Leaving the demo…' : 'Start with your own companies →'}</button></p>` : null}
@@ -156,5 +157,6 @@ export function ReadOnlyDemo({ onClose, onBack }: { onClose: () => void; onBack:
   const app = useApp()
   return html`<${Drawer} title="This is a read-only demo" sub="Sign up to connect your own accounts and ask your AI about them. It can never move money." onClose=${onClose} onBack=${onBack}>
     <div class="formrow" style="margin-top:20px"><${Button} onClick=${() => signUpFromDemo(app)}>Sign up</${Button}></div>
+    <p class="meta" style="margin-top:16px"><a href="https://docs.aggregate.finance/connectors" target="_blank" rel="noopener">See what connects</a></p>
   </${Drawer}>`
 }

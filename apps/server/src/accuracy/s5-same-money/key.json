@@ -1,0 +1,330 @@
+{
+ "scenario": "s5-same-money",
+ "fixture_sha256": "cfa64d81e6fb9ea876f92642bf2406314ee604204c4ab0a4f6bbb02a3369db49",
+ "as_of": "2026-10-12T16:00:00Z",
+ "questions": [
+  {
+   "id": "s5-same-money-cash",
+   "category": "balances",
+   "question": "What is Northwind Supply's cash?",
+   "answer": {
+    "type": "money",
+    "value": "28670.70",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The bank balance, counted once with two sources, an empty Stripe balance, less the one-sided entry paid from Cash on hand.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "cash",
+     "company": "Northwind Supply"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s5-same-money-gross-burn",
+   "category": "burn",
+   "question": "What is Northwind Supply's monthly gross burn?",
+   "answer": {
+    "type": "money",
+    "value": "6214.65",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "August and September only: July is partial, so it is in neither the spending nor the divisor.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northwind Supply"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s5-same-money-net-burn",
+   "category": "burn",
+   "question": "What is Northwind Supply's monthly net burn?",
+   "answer": {
+    "type": "money",
+    "value": "5914.65",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The same two months, less Stripe charges.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "net_burn",
+     "company": "Northwind Supply"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-gross-burn-2026-08",
+   "category": "burn",
+   "question": "Gross burn for 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "6203.70",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Copies from the second source and money to Eastside are out.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northwind Supply",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-revenue-2026-08",
+   "category": "revenue",
+   "question": "Cash revenue for 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "100.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Each payment once; refunds at what was paid back.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northwind Supply",
+     "from": "2026-08-01",
+     "to": "2026-08-31"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-revenue-accrual-2026-08",
+   "category": "revenue",
+   "question": "Accrual revenue for 2026-08?",
+   "answer": {
+    "type": "money",
+    "value": "100.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Invoice 1038 once; the taxed refund once, net of tax.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northwind Supply",
+     "from": "2026-08-01",
+     "to": "2026-08-31",
+     "basis": "accrual"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-gross-burn-2026-09",
+   "category": "burn",
+   "question": "Gross burn for 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "6225.60",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Copies from the second source and money to Eastside are out.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Northwind Supply",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-revenue-2026-09",
+   "category": "revenue",
+   "question": "Cash revenue for 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "489.20",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Each payment once; refunds at what was paid back.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northwind Supply",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-revenue-accrual-2026-09",
+   "category": "revenue",
+   "question": "Accrual revenue for 2026-09?",
+   "answer": {
+    "type": "money",
+    "value": "490.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Invoice 1038 once; the taxed refund once, net of tax.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "revenue",
+     "company": "Northwind Supply",
+     "from": "2026-09-01",
+     "to": "2026-09-30",
+     "basis": "accrual"
+    },
+    "path": "value"
+   },
+   "app": true
+  },
+  {
+   "id": "s5-same-money-intercompany-northwind",
+   "category": "intercompany",
+   "question": "What does Eastside Labs owe Northwind Supply?",
+   "answer": {
+    "type": "money",
+    "value": "3500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "The wire seen on both sides plus the one-sided entry.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "Northwind Supply"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-intercompany-eastside",
+   "category": "intercompany",
+   "question": "What is Eastside Labs owed?",
+   "answer": {
+    "type": "money",
+    "value": "-2000.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Only the wire: the entry has no side in Eastside until its money arrives.",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "intercompany_balance",
+     "company": "Eastside Labs"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-eastside-burn",
+   "category": "burn",
+   "question": "Gross burn at Eastside Labs for September?",
+   "answer": {
+    "type": "money",
+    "value": "500.00",
+    "currency": "USD"
+   },
+   "tolerance": {
+    "abs": 0.01
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Its one bill: money moved between companies is not spending. (A month with no rows is unknown, not zero, so the month has a real cost.)",
+   "check": {
+    "tool": "get_metric",
+    "args": {
+     "metric": "gross_burn",
+     "company": "Eastside Labs",
+     "from": "2026-09-01",
+     "to": "2026-09-30"
+    },
+    "path": "value"
+   }
+  },
+  {
+   "id": "s5-same-money-august-rows",
+   "category": "second source",
+   "question": "How many bank transactions in August?",
+   "answer": {
+    "type": "count",
+    "value": 4
+   },
+   "tolerance": {
+    "abs": 0
+   },
+   "as_of": "2026-10-12T16:00:00Z",
+   "notes": "Each row once, though two sources show it.",
+   "check": {
+    "tool": "query_transactions",
+    "args": {
+     "company": "Northwind Supply",
+     "from": "2026-08-01",
+     "to": "2026-08-31",
+     "query": "",
+     "measures": [
+      "count"
+     ]
+    },
+    "path": "totals[0].count",
+    "abs": true
+   }
+  }
+ ]
+}

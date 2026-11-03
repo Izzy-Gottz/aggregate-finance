@@ -114,6 +114,9 @@ function refuseFeeRows(x: unknown): void {
   if (m) throw new WriteRejected(`${m[0]} is the processor's fee on charge ${m[1]}: the fee follows its charge. Change the charge (${m[1]}) instead.`, 'invalid')
 }
 
+/** An account_id that means this company's Cash on hand, made when first used: there may be no account to name yet. */
+export const CASH_ON_HAND = 'cash_on_hand'
+
 export class LedgerRecordWriter implements RecordWriter {
   readonly engine: LedgerEngine
   readonly opts: WriterOptions
@@ -197,6 +200,7 @@ export class LedgerRecordWriter implements RecordWriter {
   }
 
   async #moneyAccount(ws: WorkspaceId, entity: EntityInfo, accountId: Id | null, inflow: boolean): Promise<SourceAccountInfo> {
+    if (accountId === CASH_ON_HAND) return this.engine.directory.ensureManualAccount(ws, entity.id, 'cash_on_hand', 'Cash on hand')
     if (accountId) {
       const a = await this.#account(ws, accountId)
       if (a.entityId !== entity.id) throw new WriteRejected(`Account ${a.name} belongs to another company, not ${entity.name}.`, 'wrong_company')
@@ -220,7 +224,23 @@ export class LedgerRecordWriter implements RecordWriter {
     if (!(await this.#hasBank(ws, entity))) return
     const accounts = (await this.engine.directory.listSourceAccounts(ws)).filter((a) => a.entityId === entity.id)
     const cash = makeCash ? await this.engine.directory.ensureManualAccount(ws, entity.id, 'cash_on_hand', 'Cash on hand') : accounts.find((a) => a.accountType === 'cash_on_hand')
-    throw new WriteRejected(`${question} ${entity.name} has a bank account, so this needs account_id.${cash ? ` If it was physical cash, use Cash on hand (${cash.id}).` : ''}`, 'invalid')
+    throw new WriteRejected(`${question} ${entity.name} has a bank account, so this needs account_id. If it was physical cash, use ${cash ? `Cash on hand (${cash.id})` : `account_id "${CASH_ON_HAND}"`}.`, 'invalid')
+  }
+
+  #ownerMoneyInto(company: EntityInfo): void {
+    if (company.kind === 'personal') throw new WriteRejected('Owner money goes into a company, not a Personal space. Money you hold is cash_income; money between your accounts is a transfer.', 'invalid')
+  }
+
+  async #ownerPaying(ws: WorkspaceId, paidBy: Party | undefined): Promise<EntityInfo> {
+    const owner = paidBy?.type === 'owner' ? await this.#personalOf(ws, paidBy.personId) : paidBy?.type === 'entity' ? await this.#entity(ws, paidBy.entityId) : null
+    if (!owner || owner.kind !== 'personal') throw new WriteRejected('Owner money must be paid by "owner" or a Personal space. Money from another company is kind intercompany.', 'invalid')
+    return owner
+  }
+
+  async #reimbursingCompany(ws: WorkspaceId, paidBy: Party | undefined, fallback: EntityId): Promise<EntityInfo> {
+    const payer = await this.#payer(ws, paidBy, fallback)
+    if (payer.kind !== 'company') throw new WriteRejected('A reimbursement is the company paying an owner back: paid_by should be the company.', 'invalid')
+    return payer
   }
 
   /**
@@ -234,10 +254,12 @@ export class LedgerRecordWriter implements RecordWriter {
     try {
       if (kind === 'owner_loan' || kind === 'owner_contribution') {
         const company = await this.#entity(cmd.workspaceId, cmd.entityId as EntityId)
-        if (company.kind !== 'personal') await this.#needsAccount(cmd.workspaceId, company, str(P, 'accountId'), 'Which account did it go into?', true)
+        this.#ownerMoneyInto(company)
+        await this.#ownerPaying(cmd.workspaceId, P['paidBy'] as Party | undefined)
+        await this.#needsAccount(cmd.workspaceId, company, str(P, 'accountId'), 'Which account did it go into?', true)
       } else if (kind === 'reimbursement') {
-        const payer = await this.#payer(cmd.workspaceId, P['paidBy'] as Party | undefined, cmd.entityId as EntityId)
-        if (payer.kind === 'company') await this.#needsAccount(cmd.workspaceId, payer, str(P, 'accountId'), 'Which account did it come from?', true)
+        const payer = await this.#reimbursingCompany(cmd.workspaceId, P['paidBy'] as Party | undefined, cmd.entityId as EntityId)
+        await this.#needsAccount(cmd.workspaceId, payer, str(P, 'accountId'), 'Which account did it come from?', true)
       }
     } catch (err) {
       throw asRejection(err)
@@ -340,7 +362,9 @@ export class LedgerRecordWriter implements RecordWriter {
     const records: SourceRecord[] = []
     let note = ''
     const cashImpact: AppliedWrite['cashImpact'] = []
+    const used: SourceAccountInfo[] = []
     const impact = (acct: SourceAccountInfo, signed: number) => {
+      used.push(acct)
       if (acct.includeInCash && acct.entityId) cashImpact.push({ entityId: acct.entityId, amount: { minor: signed, currency } })
     }
     const override = async (r: SourceRecord, o: Omit<Partial<RecordOverride>, 'recordId' | 'workspaceId' | 'updatedAt' | 'updatedBy'>) => {
@@ -359,7 +383,7 @@ export class LedgerRecordWriter implements RecordWriter {
       impact(to, minor)
     } else if (kind === 'cash_income' || kind === 'owner_loan' || kind === 'owner_contribution') {
       if (kind !== 'cash_income') {
-        if (company.kind === 'personal') throw new WriteRejected('Owner money goes into a company, not a Personal space. Money you hold is cash_income; money between your accounts is a transfer.', 'invalid')
+        this.#ownerMoneyInto(company)
         await this.#needsAccount(ws, company, str(P, 'accountId'), 'Which account did it go into?')
       }
       const acct = await this.#moneyAccount(ws, company, str(P, 'accountId'), true)
@@ -368,17 +392,15 @@ export class LedgerRecordWriter implements RecordWriter {
         // On Personal, money with no category is cash already held, not earnings: it raises cash and leaves income alone.
         const held = company.kind === 'personal' && !category
         await override(r, { kind: 'cash_income', category: held ? 'opening_balance_equity' : (category ?? undefined), bucketId: bucketId ?? undefined })
-        if (held) note = `, added to ${acct.name}, not counted as income`
+        if (held) note = `, added to ${acct.name}, not counted as income unless it has an income category`
       } else {
-        const owner = paidBy?.type === 'owner' ? await this.#personalOf(ws, paidBy.personId) : paidBy?.type === 'entity' ? await this.#entity(ws, paidBy.entityId) : null
-        if (!owner || owner.kind !== 'personal') throw new WriteRejected('Owner money must be paid by "owner" or a Personal space. Money from another company is kind intercompany.', 'invalid')
+        const owner = await this.#ownerPaying(ws, paidBy)
         await override(r, { kind: kind as TxnKind, ownerEntityId: owner.id, bucketId: bucketId ?? undefined })
       }
       records.push(r)
       impact(acct, minor)
     } else if (kind === 'reimbursement') {
-      const payer = await this.#payer(ws, paidBy, companyId)
-      if (payer.kind !== 'company') throw new WriteRejected('A reimbursement is the company paying an owner back: paid_by should be the company.', 'invalid')
+      const payer = await this.#reimbursingCompany(ws, paidBy, companyId)
       await this.#needsAccount(ws, payer, str(P, 'accountId'), 'Which account did it come from?')
       const owner = p.personId ? await this.#personalOf(ws, p.personId) : null
       const acct = await this.#moneyAccount(ws, payer, str(P, 'accountId'), false)
@@ -391,10 +413,13 @@ export class LedgerRecordWriter implements RecordWriter {
       const payer = await this.#payer(ws, paidBy, companyId)
       const forId = kind === 'intercompany' ? (str(P, 'toEntityId') ?? str(P, 'forEntityId')) : (str(P, 'forEntityId') ?? companyId)
       if (!forId) throw new WriteRejected('An intercompany entry needs the company that benefited.', 'invalid')
-      await this.#entity(ws, forId)
+      const forE = await this.#entity(ws, forId)
+      if (kind === 'intercompany' && forId === payer.id) throw new WriteRejected('An intercompany entry needs two companies: paid_by and the company on the other side.', 'invalid')
+      // Money moved between companies isn't a cost: the other company owes it back. With a category, it's that company's bill, paid for it.
+      const moved = kind === 'intercompany' && !category && payer.kind === 'company' && forE.kind === 'company'
       const acct = await this.#moneyAccount(ws, payer, str(P, 'accountId'), false)
       const r = await this.#post(ws, base(acct, -minor), p)
-      await override(r, {
+      await override(r, moved ? { kind: 'intercompany', category: `due_from:${forId}`, bucketId: bucketId ?? undefined, note: description ?? undefined } : {
         kind: kind === 'other' ? 'other' : 'expense',
         category: category ?? (kind === 'other' ? 'other_expense' : undefined),
         bucketId: bucketId ?? undefined,
@@ -403,13 +428,17 @@ export class LedgerRecordWriter implements RecordWriter {
       })
       records.push(r)
       impact(acct, -minor)
-      if (payer.kind === 'personal' && !str(P, 'accountId')) {
+      if (moved) note = `, owed back by ${forE.name}. Its side stays unmatched until the money shows up there`
+      else if (payer.kind === 'personal' && !str(P, 'accountId')) {
         const cashHeld = (await this.engine.directory.listSourceAccounts(ws)).some((a) => a.entityId === payer.id && a.accountType === 'cash_on_hand')
-        note = `, paid personally, not taken from any account${cashHeld ? '. If this came out of cash on hand, record it with that account' : ''}`
+        note = `, paid personally, not taken from any account${cashHeld ? '. If this came out of cash on hand, record it with that account' : ''}${kind === 'other' ? ". This records money out. For cash you hold, use kind cash_income, which adds it to Cash on hand" : ''}`
       } else if (payer.kind === 'company' && !str(P, 'accountId') && acct.accountType === 'cash_on_hand' && (await this.#hasBank(ws, payer))) {
         note = `, taken from ${acct.name}. If this was paid from the bank, it will also arrive from the bank, so use that bank transaction instead`
       }
     }
+    const conns = new Map((await this.engine.directory.listConnections(ws)).map((c) => [c.id, c.connectorKey]))
+    const synced = used.find((a) => !['manual', 'files'].includes(conns.get(a.connectionId as Id) ?? 'manual'))
+    if (synced) note += `. ${synced.name} syncs from its provider: its cash won't change until the next sync, and if this also arrives from there it will count twice, so use that transaction instead`
     const ids = records.map((r) => r.id)
     await this.#log(ws, p, 'add_entry', ids)
     const m = await this.#matches(ws, records)

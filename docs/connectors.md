@@ -33,7 +33,15 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | App Store | App sales and subscriptions | Beta |
 | Google Play | App sales and subscriptions | Beta |
 | PayPal, Lemon Squeezy, Chargebee | Sales and payouts | Self-host |
+| Patreon | Memberships and MRR | Self-host |
 | WooCommerce | Monthly sales reported by the store, with refunds, shipping and sales tax apart. Not booked revenue: the money arrives through Stripe, PayPal or your bank | Self-host |
+| Lightspeed Retail (X-Series) | Monthly sales reported by the store, with refunds and sales tax apart. Totals only, no item-level data. Not booked revenue: the money arrives through your bank or processor | Self-host |
+| Squarespace | Monthly store sales less refunds, in each currency. Totals only, no customer details. Includes tax, shipping and donations. Refunds made outside Squarespace aren't seen. Not booked revenue: the money arrives through your payment processor | Self-host |
+| YouTube | A channel's monthly estimated revenue from YouTube Analytics, in US dollars. Channel totals only, no video detail. Estimates can change. Not booked revenue: the money arrives through AdSense and your bank | Self-host |
+| Pinterest Ads | An ad account's monthly ad spend in its own currency, about the last 90 days and kept from then on. Account totals only, no campaign or ad detail. Not a booked expense: the money shows up as card or bank spend | Self-host |
+| Wix | Monthly store sales less refunds, in each currency, by UTC month. Totals only, no customer details. Includes tax and shipping. Chargebacks aren't taken off. Not booked revenue: the money arrives through your payment processor | Self-host |
+| Google AdSense | Monthly estimated earnings and payments received in each currency, each on its own line. Totals only, no site or ad unit detail. Estimates can change, and the unpaid balance is left out. Not booked revenue: the money arrives through your bank | Self-host |
+| SumUp | Monthly gross sales, cash sales, refunds and chargebacks, and payouts, fees and deductions in each currency, each on its own line. Totals only, no customer or card details. Not booked revenue: the money arrives through your bank | Self-host |
 | RevenueCat | MRR and churn for app subscriptions | Self-host |
 
 ## Accounting and bills
@@ -44,6 +52,7 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | Xero | Invoices, bills, accounts and reports from your books | Live, limited availability |
 | BILL | Bills you owe and invoices you've sent | Live |
 | Expensify | Expense reports | Self-host |
+| Harvest | Monthly invoiced and paid totals in each currency, with tax apart. Not booked revenue: the same invoices may be in your books, and the money arrives through your bank. Paid totals miss payments on invoices issued more than 12 months before the first month shown | Self-host |
 
 ## Payroll
 

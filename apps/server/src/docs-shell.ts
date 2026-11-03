@@ -56,6 +56,7 @@ export const DOCS_NAV: Array<{ name: string; items: Array<{ label: string; href:
     name: 'Trust',
     items: [
       { label: 'Security', href: '/security' },
+      { label: 'MCP security', href: '/docs/guides/mcp-security' },
       { label: 'Privacy', href: '/privacy' },
       { label: 'Terms', href: '/terms' },
     ],
@@ -143,6 +144,7 @@ a:hover{text-decoration-color:var(--ink)}
 .dais{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:40px}
 .dais a{display:flex;justify-content:space-between;padding:12px 16px;border:1px solid var(--hairline);border-radius:10px;background:var(--card);text-decoration:none;font-weight:400;font-size:15px}
 .dais a::after{content:'→';color:var(--faint)}
+.dfine{margin:40px 0 0;font-size:12px;color:var(--muted)}
 .dnext{border-top:1px solid var(--hairline)}
 .dnext a{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--hairline);text-decoration:none}
 .dnext b{flex:0 0 220px;font-weight:400;font-size:15px}
@@ -279,6 +281,7 @@ export function docsPage(o: { path: string; head: string; body: string; wide?: b
 <div class="dwrap">${sidebar(o.path)}<main class="dmain${o.wide ? ' wide' : ''}">
 ${crumb ? `<div class="dcrumb">${crumb}</div>` : ''}${o.body}
 ${pager(o.path)}
+<p class="dfine">© 2026 Aggregate Finance LLC</p>
 </main></div>
 </body></html>`
 }
@@ -297,7 +300,7 @@ export function docsHomeBody(): string {
     ['Security', 'Read-only access, encryption, and how to revoke anything.', '/security'],
   ]
   return `<h1>Get started</h1>
-<p>Connect your accounts, then connect the AI you already use. Three steps, about five minutes. Aggregate only reads; it can’t move money.</p>
+<p>Connect one account, then ask your AI. Aggregate only reads; it can’t move money.</p>
 <ol class="dsteps">
 ${step(1, 'Create your workspace', 'Sign up with a passkey, Google or a one-time email code. No passwords.', '%AGFN_BASE_URL%/?start=1', 'Sign up')}
 ${step(2, 'Connect your accounts', '9,600+ US institutions through Plaid, plus Stripe, QuickBooks, Shopify and 15 more apps.', '/docs/connectors', 'See all 18')}

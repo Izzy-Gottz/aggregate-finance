@@ -139,7 +139,15 @@
   .badges a { display: inline-block; padding: 10px 14px; border: 1px solid var(--hairline); border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none; }
   .badges a:hover { border-color: var(--ink); }
   .badges img { vertical-align: middle; }
+  .badges a.seal { display: flex; align-items: center; gap: 10px; }
   .badges span { font-weight: 400; color: var(--faint); }
+  .review-head { margin: 48px 0 0; font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
+  .review { margin: 16px 0 0; border-top: 1px solid var(--hairline); }
+  .review div { display: grid; grid-template-columns: 150px 1fr; gap: 4px 20px; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
+  .review dt { font-size: 15px; font-weight: 500; line-height: 1.6; }
+  .review dd { margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+  .review a { color: var(--ink); text-decoration-color: var(--underline); text-underline-offset: 4px; }
+  @media (max-width: 520px) { .review div { grid-template-columns: 1fr; } }
   .more { margin: 28px 0 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
   .more a { color: var(--ink); text-decoration-color: var(--underline); text-underline-offset: 4px; }
 </style>
@@ -168,6 +176,7 @@
     <li><a href="https://www.ssllabs.com/ssltest/analyze.html?d=docs.aggregate.finance">SSL Labs report <span>docs.aggregate.finance</span></a></li>
     <li><a href="https://glama.ai/mcp/connectors/finance.aggregate/aggregate"><img src="https://glama.ai/mcp/connectors/finance.aggregate/aggregate/badges/score.svg" alt="Rated A on Glama" height="20"> <span>MCP tool definitions</span></a></li>
     <li><a href="https://scorecard.dev/viewer/?uri=github.com/Izzy-Gottz/aggregate-finance"><img src="https://api.scorecard.dev/projects/github.com/Izzy-Gottz/aggregate-finance/badge" alt="OpenSSF Scorecard" height="20"></a></li>
+    <li><a class="seal" href="https://cloudsecurityalliance.org/star/registry/aggregate/services/aggregate"><img src="/brand/badges/csa-star-level-1.png" alt="CSA STAR Level 1 badge" width="48" height="48"><div>Listed in the CSA STAR Registry<br><span>Level 1 self-assessment</span></div></a></li>
   </ul>
   <ul class="facts">
     <li><b>Aggregate can’t move money</b><span>It only reads your accounts. No tool in Aggregate, for you or for an AI, can move money.</span></li>
@@ -177,11 +186,26 @@
     <li><b>Each workspace is kept apart</b><span>Every request is checked against the person making it, and every database query is limited to that person’s workspace.</span></li>
     <li><b>The code is public</b><span>Aggregate is licensed under the GNU AGPL v3. Anyone can read the code that handles your data.</span></li>
   </ul>
-  <p class="more">We don’t hold a SOC 2 report or other certification today. We’d rather tell you exactly what is built. The details are on the <a href="https://app.aggregate.finance/security">security page</a> and in the <a href="https://github.com/Izzy-Gottz/aggregate-finance">code</a>.</p>
+  <h2 class="review-head" id="security-review">For your security review</h2>
+  <!-- Facts only, from docs/legal/trust.md and security.md. -->
+  <dl class="review">
+    <div><dt>Company</dt><dd>Aggregate Finance LLC, a New Jersey limited liability company.</dd></div>
+    <div><dt>Questionnaire</dt><dd>Our CAIQ v4.1 self-assessment is on our <a href="https://cloudsecurityalliance.org/star/registry/aggregate/services/aggregate">CSA STAR listing</a>. These are our own answers, not an audit.</dd></div>
+    <div><dt>Policies</dt><dd>Eight written policies, approved by the founder on November 1, 2026. <a href="https://github.com/Izzy-Gottz/aggregate-finance/tree/main/docs/compliance/policies">Read them</a>.</dd></div>
+    <div><dt>Subprocessors</dt><dd>Fly.io, Neon, Cloudflare, Resend, Plaid, Vercel and Frankfurter, plus Google or Apple if you sign in with them. <a href="https://github.com/Izzy-Gottz/aggregate-finance/blob/main/docs/legal/trust.md#vendors-we-use">What each one handles</a>.</dd></div>
+    <div><dt>Data flow</dt><dd>Your accounts reach Aggregate through Plaid, SimpleFIN or the provider’s own API. Aggregate sends the AI you connect only what you grant it. Our server doesn’t call an AI model. Data is hosted in the US.</dd></div>
+    <div><dt>Encryption</dt><dd>HTTPS only. Bank tokens and API keys use AES-256-GCM, each with its own key, under a master key held as a hosting secret outside the database. Backups are encrypted before they leave the server.</dd></div>
+    <div><dt>Access</dt><dd>Sign-in uses passkeys, a one-time email link or code, Google or Apple, with no passwords. AI access is limited to what you choose and expires after 90 days. <a href="https://app.aggregate.finance/security#who-at-aggregate-can-see-your-data">Who at Aggregate can see your data</a>.</dd></div>
+    <div><dt>Incident response</dt><dd>If someone gets into your data without permission, we email the owners of affected workspaces promptly, and as the law requires. <a href="https://github.com/Izzy-Gottz/aggregate-finance/blob/main/docs/compliance/policies/incident-response.md">Read the policy</a>.</dd></div>
+    <div><dt>Safe harbor</dt><dd>Good-faith security research is covered by the disclose.io Safe Harbor. <a href="https://app.aggregate.finance/security#safe-harbor">Read it</a>.</dd></div>
+    <div><dt>Not in place yet</dt><dd>No SOC 2 report or other certification, no outside penetration test, no failover outside one US region, no uptime commitment during beta, and no second person reviewing code or access.</dd></div>
+    <div><dt>Contact</dt><dd><a href="mailto:security@aggregate.finance">security@aggregate.finance</a>. We aim to reply within 2 business days. For a data processing agreement, write to <a href="mailto:privacy@aggregate.finance">privacy@aggregate.finance</a>.</dd></div>
+  </dl>
+  <p class="more">The details are on the <a href="https://app.aggregate.finance/security">security page</a> and in the <a href="https://github.com/Izzy-Gottz/aggregate-finance">code</a>. Live uptime is on the <a href="https://status.aggregate.finance">status page</a>.</p>
 </main>
 <footer>
   <div class="legal">
-    <span>© 2026 Aggregate<span class="tm">Names belong to their owners; no endorsement</span></span>
+    <span>© 2026 Aggregate Finance LLC<span class="tm">Names belong to their owners; no endorsement</span></span>
     <nav aria-label="Legal">
       <a class="quiet" href="https://app.aggregate.finance/terms">Terms</a>
       <a class="quiet" href="https://app.aggregate.finance/privacy">Privacy</a>

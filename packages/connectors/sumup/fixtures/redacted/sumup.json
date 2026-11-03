@@ -1,0 +1,36 @@
+{
+  "_note": "Hand-built from SumUp's API docs and openapi.json (developer.sumup.com). NOT recorded from a real account. The user, product_summary, card_type, client_transaction_id and invite fields stand for the ones SumUp sends and Aggregate must never keep. Totals are worked by hand in sumup.test.ts.",
+  "memberships": {
+    "total_count": 3,
+    "items": [
+      { "id": "mem1", "resource_id": "MH4H92C7", "type": "merchant", "status": "accepted", "roles": ["role_owner"], "invite": { "email": "invite-must-not-be-kept@example.com" }, "metadata": { "note": "METADATA-MUST-NOT-BE-KEPT" }, "resource": { "id": "MH4H92C7", "type": "merchant", "name": "Sample Cafe", "attributes": { "sandbox": false } } },
+      { "id": "mem2", "resource_id": "SANDBOX1", "type": "merchant", "status": "accepted", "roles": ["role_owner"], "resource": { "id": "SANDBOX1", "type": "merchant", "name": "Test Merchant", "attributes": { "sandbox": true } } },
+      { "id": "mem3", "resource_id": "ORG12345", "type": "organization", "status": "accepted", "roles": ["role_owner"], "resource": { "id": "ORG12345", "type": "organization", "name": "Sample Group" } }
+    ]
+  },
+  "payouts": [
+    { "id": 1, "type": "PAYOUT", "amount": 132.45, "fee": 3.12, "date": "2026-09-02", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-1", "transaction_code": "TEENSK4W2K" },
+    { "id": 2, "type": "PAYOUT", "amount": 0.1, "fee": 0.2, "date": "2026-09-15", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-2", "transaction_code": "TEENSK4W2L" },
+    { "id": 3, "type": "PAYOUT", "amount": 0.2, "fee": 0.1, "date": "2026-09-30", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-3", "transaction_code": "TEENSK4W2M" },
+    { "id": 4, "type": "PAYOUT", "amount": 500.00, "fee": 9.99, "date": "2026-09-16", "currency": "EUR", "status": "FAILED", "reference": "payout-4", "transaction_code": "TEENSK4W2N" },
+    { "id": 5, "type": "REFUND_DEDUCTION", "amount": 25.50, "fee": 0, "date": "2026-09-16", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-5", "transaction_code": "TEENSK4W2P" },
+    { "id": 6, "type": "CHARGE_BACK_DEDUCTION", "amount": 40.00, "fee": 0, "date": "2026-09-17", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-6", "transaction_code": "TEENSK4W2Q" },
+    { "id": 7, "type": "DD_RETURN_DEDUCTION", "amount": 5.00, "fee": 0, "date": "2026-09-18", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-7", "transaction_code": "TEENSK4W2R" },
+    { "id": 8, "type": "BALANCE_DEDUCTION", "amount": 1.25, "fee": 0, "date": "2026-09-19", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-8", "transaction_code": "TEENSK4W2S" },
+    { "id": 9, "type": "PAYOUT", "amount": 80.00, "fee": 2.00, "date": "2026-10-01", "currency": "EUR", "status": "SUCCESSFUL", "reference": "payout-9", "transaction_code": "TEENSK4W2T" },
+    { "id": 10, "type": "PAYOUT", "amount": 1000, "fee": 30, "date": "2026-09-20", "currency": "CLP", "status": "SUCCESSFUL", "reference": "payout-10", "transaction_code": "TEENSK4W2U" }
+  ],
+  "transactions": [
+    { "id": "t1", "transaction_id": "t1", "transaction_code": "A1", "type": "PAYMENT", "status": "SUCCESSFUL", "payment_type": "POS", "amount": 100.10, "currency": "EUR", "timestamp": "2026-09-01T00:00:00.000Z", "refunded_amount": 0, "user": "cashier-must-not-be-kept@example.com", "product_summary": "PRODUCT-MUST-NOT-BE-KEPT", "card_type": "VISA", "client_transaction_id": "CLIENT-ID-MUST-NOT-BE-KEPT" },
+    { "id": "t2", "transaction_id": "t2", "transaction_code": "A2", "type": "PAYMENT", "status": "REFUNDED", "payment_type": "ECOM", "amount": 60.00, "currency": "EUR", "timestamp": "2026-09-05T10:00:00.000Z", "refunded_amount": 25.50, "user": "merchant@example.com" },
+    { "id": "t3", "transaction_id": "t3", "transaction_code": "A3", "type": "REFUND", "status": "SUCCESSFUL", "payment_type": "ECOM", "amount": 25.50, "currency": "EUR", "timestamp": "2026-09-06T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t4", "transaction_id": "t4", "transaction_code": "A4", "type": "PAYMENT", "status": "PENDING", "payment_type": "POS", "amount": 999.99, "currency": "EUR", "timestamp": "2026-09-07T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t5", "transaction_id": "t5", "transaction_code": "A5", "type": "PAYMENT", "status": "FAILED", "payment_type": "POS", "amount": 888.88, "currency": "EUR", "timestamp": "2026-09-08T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t6", "transaction_id": "t6", "transaction_code": "A6", "type": "PAYMENT", "status": "CANCELLED", "payment_type": "POS", "amount": 777.77, "currency": "EUR", "timestamp": "2026-09-09T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t7", "transaction_id": "t7", "transaction_code": "A7", "type": "PAYMENT", "status": "SUCCESSFUL", "payment_type": "CASH", "amount": 20.00, "currency": "EUR", "timestamp": "2026-09-10T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t8", "transaction_id": "t8", "transaction_code": "A8", "type": "CHARGE_BACK", "status": "SUCCESSFUL", "payment_type": "POS", "amount": 40.00, "currency": "EUR", "timestamp": "2026-09-11T10:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t9", "transaction_id": "t9", "transaction_code": "A9", "type": "PAYMENT", "status": "SUCCESSFUL", "payment_type": "POS", "amount": 0.10, "currency": "EUR", "timestamp": "2026-09-30T23:59:59.999Z", "user": "merchant@example.com" },
+    { "id": "t10", "transaction_id": "t10", "transaction_code": "A10", "type": "PAYMENT", "status": "SUCCESSFUL", "payment_type": "POS", "amount": 0.20, "currency": "EUR", "timestamp": "2026-10-01T00:00:00.000Z", "user": "merchant@example.com" },
+    { "id": "t11", "transaction_id": "t11", "transaction_code": "A11", "type": "PAYMENT", "status": "SUCCESSFUL", "payment_type": "POS", "amount": 5000, "currency": "CLP", "timestamp": "2026-09-12T10:00:00.000Z", "user": "merchant@example.com" }
+  ]
+}

@@ -68,17 +68,98 @@ describe('hostedUnlisted', () => {
     expect(hostedUnlisted({ ...live, AGFN_OFFER_REVENUECAT: '1' })).toEqual([])
     expect(hostedUnlisted({ ...live, AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
   })
+  it('hosted: FreshBooks only once AGFN_OFFER_FRESHBOOKS=1 (staging offers it with the test connectors)', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, FRESHBOOKS_CLIENT_ID: 'f' })).toEqual(['freshbooks'])
+    expect(hostedUnlisted({ ...live, FRESHBOOKS_CLIENT_ID: 'f', AGFN_OFFER_FRESHBOOKS: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, FRESHBOOKS_CLIENT_ID: 'f', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+  })
   it('hosted: Coinbase only once AGFN_OFFER_COINBASE=1, after its OAuth client exists', () => {
     const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted(live)).toEqual([])
     expect(hostedUnlisted({ ...live, COINBASE_CLIENT_ID: 'c' })).toEqual(['coinbase'])
     expect(hostedUnlisted({ ...live, COINBASE_CLIENT_ID: 'c', AGFN_OFFER_COINBASE: '1' })).toEqual([])
   })
+  it('hosted: Harvest only once AGFN_OFFER_HARVEST=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, HARVEST_CLIENT_ID: 'c' })).toEqual(['harvest'])
+    expect(hostedUnlisted({ ...live, HARVEST_CLIENT_ID: 'c', AGFN_OFFER_HARVEST: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, HARVEST_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ HARVEST_CLIENT_ID: 'c' })).toEqual([])
+  })
+  it('hosted: Wix only once AGFN_OFFER_WIX=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, WIX_CLIENT_ID: 'c' })).toEqual(['wix'])
+    expect(hostedUnlisted({ ...live, WIX_CLIENT_ID: 'c', AGFN_OFFER_WIX: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, WIX_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ WIX_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: Squarespace only once AGFN_OFFER_SQUARESPACE=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, SQUARESPACE_CLIENT_ID: 'c' })).toEqual(['squarespace'])
+    expect(hostedUnlisted({ ...live, SQUARESPACE_CLIENT_ID: 'c', AGFN_OFFER_SQUARESPACE: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, SQUARESPACE_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ SQUARESPACE_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: YouTube only once AGFN_OFFER_YOUTUBE=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, YOUTUBE_CLIENT_ID: 'c' })).toEqual(['youtube'])
+    expect(hostedUnlisted({ ...live, YOUTUBE_CLIENT_ID: 'c', AGFN_OFFER_YOUTUBE: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, YOUTUBE_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ YOUTUBE_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: Pinterest only once AGFN_OFFER_PINTEREST=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, PINTEREST_CLIENT_ID: 'c' })).toEqual(['pinterest'])
+    expect(hostedUnlisted({ ...live, PINTEREST_CLIENT_ID: 'c', AGFN_OFFER_PINTEREST: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, PINTEREST_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ PINTEREST_CLIENT_ID: 'c' })).toEqual([])
+  })
+  it('hosted: AdSense only once AGFN_OFFER_ADSENSE=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, ADSENSE_CLIENT_ID: 'c' })).toEqual(['adsense'])
+    expect(hostedUnlisted({ ...live, ADSENSE_CLIENT_ID: 'c', AGFN_OFFER_ADSENSE: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, ADSENSE_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ ADSENSE_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: SumUp only once AGFN_OFFER_SUMUP=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, SUMUP_CLIENT_ID: 'c' })).toEqual(['sumup'])
+    expect(hostedUnlisted({ ...live, SUMUP_CLIENT_ID: 'c', AGFN_OFFER_SUMUP: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, SUMUP_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ SUMUP_CLIENT_ID: 'c' })).toEqual([])
+  })
+  it('hosted: Lightspeed only once AGFN_OFFER_LIGHTSPEED=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, LIGHTSPEED_CLIENT_ID: 'c' })).toEqual(['lightspeed'])
+    expect(hostedUnlisted({ ...live, LIGHTSPEED_CLIENT_ID: 'c', AGFN_OFFER_LIGHTSPEED: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, LIGHTSPEED_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ LIGHTSPEED_CLIENT_ID: 'c' })).toEqual([])
+  })
   it('hosted: Gumroad only once AGFN_OFFER_GUMROAD=1, after Aggregate’s app exists', () => {
     const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g' })).toEqual(['gumroad'])
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g', AGFN_OFFER_GUMROAD: '1' })).toEqual([])
     expect(hostedUnlisted({ ...live, GUMROAD_CLIENT_ID: 'g', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+  })
+  it('hosted: Patreon only once AGFN_OFFER_PATREON=1, after Aggregate’s client exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted({ ...live, PATREON_CLIENT_ID: 'p' })).toEqual(['patreon'])
+    expect(hostedUnlisted({ ...live, PATREON_CLIENT_ID: 'p', AGFN_OFFER_PATREON: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, PATREON_CLIENT_ID: 'p', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
   })
   it('the challenge app offers sandbox Plaid (players link its test bank on purpose)', () => {
     expect(hostedUnlisted({ AGFN_HOSTED: '1', AGFN_CHALLENGE: '1', PLAID_ENV: 'sandbox' })).not.toContain('plaid')

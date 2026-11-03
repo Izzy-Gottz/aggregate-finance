@@ -200,7 +200,7 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
     ${limited || !manages ? null : html`<${ConnectionCompany} c=${c} onMoved=${async () => (reload(), await app.reload())} />`}
     ${c.connectorKey === 'xero' && !limited ? html`<${SharedOrgs} id=${c.id} />` : null}
     ${c.unassigned?.length && !limited ? html`<${ChooseCompanies} accounts=${c.unassigned} onSaved=${async () => (reload(), app.reload())} />` : null}
-    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">Sales reported by the store: ${fmt(m, { cents: true })} this month, not counted as revenue</p>`)}
+    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">${c.connectorKey === 'harvest' ? 'Invoiced in Harvest' : c.connectorKey === 'sumup' ? 'Paid out by SumUp' : c.connectorKey === 'adsense' ? 'Earned on AdSense' : c.connectorKey === 'youtube' ? 'Earned on YouTube' : c.connectorKey === 'pinterest' ? 'Spent on Pinterest ads' : 'Sales reported by the store'}: ${fmt(m, { cents: true })} this month, not counted as ${c.connectorKey === 'pinterest' ? 'an expense' : 'revenue'}</p>`)}
     ${!c.accounts.length && !needsReconnect
       ? html`<p class="sub" style="margin-top:16px">${c.status === 'syncing'
           ? 'Bringing in your data. The first import can take a few minutes.'

@@ -91,10 +91,10 @@ export interface ProfitAndLoss {
   netIncome: Money
 }
 
-export async function profitAndLoss(rc: ReadContext, opts: { entityIds: EntityId[] | 'all'; from: IsoDate; to: IsoDate; basis: Basis; sourceIds?: Id[] }): Promise<ProfitAndLoss> {
+export async function profitAndLoss(rc: ReadContext, opts: { entityIds: EntityId[] | 'all'; from: IsoDate; to: IsoDate; basis: Basis; sourceIds?: Id[]; currency?: string }): Promise<ProfitAndLoss> {
   const entities = await scopeEntities(rc, opts.entityIds)
   const ids = entities.map((e) => e.id)
-  const currency = await rc.directory.reportingCurrency(rc.ws)
+  const currency = opts.currency ?? (await rc.directory.reportingCurrency(rc.ws))
   const idx = (await ledgerAccounts(rc, ids)).byId
   const emap = new Map(entities.map((e) => [e.id, e]))
   const lines = await rc.store.listLines(rc.ws, { entityIds: ids, basis: opts.basis, fromDate: opts.from, toDate: opts.to, ...(opts.sourceIds ? { sourceIds: opts.sourceIds } : {}) })

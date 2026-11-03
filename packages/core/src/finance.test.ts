@@ -39,6 +39,59 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
     cmd('add_entry', { kind, amountMinor: minor, currency: 'USD', date: '2026-10-02', paidBy: { type: 'entity', entityId: acme }, forEntityId: acme, counterparty: null, category: null, bucketId: null, accountId: null, toAccountId: null, toEntityId: null, description: null, ...extra })
 
   describe('writes', () => {
+    it('warns when an entry lands on an account that syncs, not on cash on hand', async () => {
+      const bank = await k.account({ entityId: acme })
+      const r = await f.writer.apply(entry('expense', 12_000, { accountId: bank.id }), prov())
+      expect(r.summary).toContain('count twice')
+      const cash = await f.writer.apply(entry('cash_income', 12_000), prov())
+      expect(cash.summary).not.toContain('syncs from')
+    })
+
+    describe('intercompany entries', () => {
+      const oct = (entityIds: string[]) => ({ workspaceId: k.ws, entityIds, from: '2026-10-01', to: '2026-10-31' })
+
+      it('moves money without raising burn, and the other company owes it back', async () => {
+        const sub = await k.company('Sub')
+        const bank = await k.account({ entityId: acme })
+        const r = await f.writer.apply(entry('intercompany', 500_000, { accountId: bank.id, toEntityId: sub, forEntityId: null }), prov())
+        expect(r.summary).toContain('owed back by Sub')
+        expect(await k.bal(acme, `due_from:${sub}`)).toBe(500_000)
+        expect(await k.bal(acme, 'uncategorized_expense')).toBe(0)
+        expect(await k.bal(sub, 'uncategorized_expense')).toBe(0)
+        const burn = await k.engine.metric('gross_burn', oct([acme, sub]))
+        expect([null, 0]).toContainEqual(burn.value && (burn.value as { minor: number }).minor)
+        expect((await k.engine.checks(k.ws, { entityIds: [acme, sub] })).find((c) => c.name === 'intercompany')?.status).toBe('fail')
+      })
+
+      it('pairs with the deposit when it arrives, and the balance closes', async () => {
+        const sub = await k.company('Sub')
+        const bank = await k.account({ entityId: acme })
+        const subBank = await k.account({ entityId: sub })
+        await f.writer.apply(entry('intercompany', 500_000, { accountId: bank.id, toEntityId: sub, forEntityId: null }), prov())
+        await k.engine.post(k.ws, txn(subBank, '2026-10-02', 500_000, { rawText: 'WIRE FROM ACME' }))
+        await k.engine.reconcile(k.ws)
+        const links = await k.engine.store.listLinks(k.ws, { types: ['intercompany'] })
+        const link = links[0]
+        expect(link).toBeDefined()
+        if (link?.status === 'proposed') await k.engine.decideLink(k.ws, link.id, 'confirmed', 'person-1')
+        expect(await k.bal(acme, `due_from:${sub}`)).toBe(500_000)
+        expect(await k.bal(sub, `due_to:${acme}`)).toBe(-500_000)
+        expect((await k.engine.checks(k.ws, { entityIds: [acme, sub] })).find((c) => c.name === 'intercompany')?.status).toBe('ok')
+      })
+
+      it('with a category it stays the other company\'s cost', async () => {
+        const sub = await k.company('Sub')
+        const bank = await k.account({ entityId: acme })
+        await f.writer.apply(entry('intercompany', 500_000, { accountId: bank.id, toEntityId: sub, forEntityId: null, category: 'rent' }), prov())
+        expect(await k.bal(acme, `due_from:${sub}`)).toBe(500_000)
+        expect(await k.bal(sub, `due_to:${acme}`)).toBe(-500_000)
+      })
+
+      it('refuses one company on both sides', async () => {
+        await expect(f.writer.apply(entry('intercompany', 500_000), prov())).rejects.toMatchObject({ code: 'invalid' })
+      })
+    })
+
     it('cash income told by an AI: revenue, cash on hand, provenance, counted in metrics', async () => {
       const res = await f.writer.apply(entry('cash_income', 80_000, { counterparty: 'Farmers market' }), prov())
       expect(res).toMatchObject({ recordType: 'entry', cashImpact: [{ entityId: acme, amount: usd(80_000) }], possibleDuplicates: [] })
@@ -121,6 +174,44 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
         await expect(f.writer.precheck(entry('owner_loan', 50_000, { ...asOwner(), accountId: id }))).resolves.toBeUndefined()
         const res = await f.writer.apply(entry('owner_loan', 50_000, { ...asOwner(), accountId: id }), prov({ personId: owner }))
         expect(res.cashImpact).toEqual([{ entityId: acme, amount: usd(50_000) }])
+      })
+
+      it('a dry run of owner cash, with no Cash on hand yet, says how to name it, and it works without an account to look up', async () => {
+        const bank = await k.account({ entityId: acme })
+        const owed = entry('owner_contribution', 120_000, asOwner())
+        await expect(f.writer.preview?.(owed, prov({ personId: owner }))).rejects.toThrow('account_id "cash_on_hand"')
+        const named = entry('owner_contribution', 120_000, { ...asOwner(), accountId: 'cash_on_hand' })
+        expect((await f.writer.preview?.(named, prov({ personId: owner })))?.cashImpact).toEqual([{ entityId: acme, amount: usd(120_000) }])
+        // The memory directory sits outside the store's rollback; hosted and SQLite roll it back.
+        if (backend !== 'memory') expect((await k.engine.directory.listSourceAccounts(k.ws)).map((a) => a.id)).toEqual([bank.id])
+        expect((await f.writer.apply(named, prov({ personId: owner }))).cashImpact).toEqual([{ entityId: acme, amount: usd(120_000) }])
+        expect((await k.engine.directory.listSourceAccounts(k.ws)).map((a) => a.name)).toContain('Cash on hand')
+      })
+
+      it('other on Personal is money out, and the reply points to cash_income', async () => {
+        const r = await personal('other', 120_000)
+        expect(r.cashImpact).toEqual([])
+        expect(r.summary).toContain('use kind cash_income')
+      })
+
+      it('an expense typed in as cash, then seen at the bank, is asked about and counts once while it waits', async () => {
+        const bank = await k.account({ entityId: acme })
+        await f.writer.apply(entry('expense', 7_000, { counterparty: 'Staples', category: 'office' }), prov())
+        await k.engine.post(k.ws, txn(bank, '2026-10-03', -7_000, { counterparty: 'Staples' }))
+        await k.engine.reconcile(k.ws)
+        const [dup] = await k.engine.store.listLinks(k.ws, { types: ['duplicate'] })
+        expect(dup).toMatchObject({ status: 'proposed', confidence: 0.85 })
+        const spent = (await k.engine.metric('gross_burn', { ...scope, from: '2026-10-01', to: '2026-10-31' })).value
+        expect(spent).toEqual(usd(7_000))
+        expect((await k.engine.reviewItems(k.ws)).some((i) => i.linkId === dup?.id)).toBe(true)
+      })
+
+      it('real cash spending stays when the bank shows nothing like it', async () => {
+        const bank = await k.account({ entityId: acme })
+        await f.writer.apply(entry('expense', 7_000, { counterparty: 'Staples' }), prov())
+        await k.engine.post(k.ws, txn(bank, '2026-10-03', -9_000, { counterparty: 'Staples' }))
+        await k.engine.reconcile(k.ws)
+        expect(await k.engine.store.listLinks(k.ws, { types: ['duplicate'] })).toEqual([])
       })
 
       it('a company expense with no account still records, and warns of the bank row when there is a bank', async () => {
@@ -471,6 +562,16 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
   })
 
   describe('reads', () => {
+    it('a source going stale with no write reaches a cached answer', async () => {
+      const conn = await k.connection({ lastSuccessAt: '2026-10-09T18:00:00.000Z' })
+      const bank = await k.account({ entityId: acme, connectionId: conn })
+      await k.engine.postBatch(k.ws, [snapshot(bank, '2026-10-09T17:00:00.000Z', 1_000_000)])
+      k.setNow('2026-10-10T08:00:00.000Z')
+      expect((await f.reader.metric('cash', scope)).staleSources).toEqual([])
+      k.setNow('2026-10-10T19:00:00.000Z')
+      expect((await f.reader.metric('cash', scope)).staleSources).not.toEqual([])
+    })
+
     beforeEach(async () => {
       const conn = await k.connection({ key: 'plaid', lastSuccessAt: '2026-10-09T10:00:00Z' })
       const bank = await k.account({ entityId: acme, connectionId: conn, name: 'Chase', mask: '1234' })

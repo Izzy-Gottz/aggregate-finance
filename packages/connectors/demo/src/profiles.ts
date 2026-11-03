@@ -403,7 +403,8 @@ function makeInvoices(ctx: DayContext): Invoice[] {
       const issue = addDays(ctx.start, m * 30 + r.int(0, 25))
       const due = addDays(issue, 30)
       const total = r.int(80, 250) * 100_00
-      const style = r.next()
+      // Only the last few months stay short-paid: a healthy agency with a year of unpaid invoices reads as a broken demo.
+      const style = m < 10 ? r.next() * 0.75 : r.next()
       const payments: Array<[string, number]> =
         style < 0.55 ? [[addDays(due, r.int(-5, 6)), total]] : style < 0.75 ? [[addDays(due, r.int(10, 40)), total]] : style < 0.9 ? [[addDays(due, r.int(0, 10)), Math.round(total / 2)]] : []
       out.push({ id: `bb-inv-${n}`, number: `INV-${n}`, client: r.pick(CLIENTS), issue, due, total, payments })

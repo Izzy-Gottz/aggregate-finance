@@ -1,0 +1,538 @@
+{
+ "scenario": "s5-same-money",
+ "now": "2026-10-12T16:00:00Z",
+ "timeZone": "UTC",
+ "company": "Northwind Supply",
+ "companies": [
+  {
+   "name": "Eastside Labs",
+   "currency": "USD"
+  }
+ ],
+ "openingBalances": {
+  "chk": 5000000
+ },
+ "connections": [
+  {
+   "id": "plaid",
+   "key": "plaid",
+   "name": "Mercury",
+   "entity": "Northwind Supply",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "chk",
+     "connectionId": "$conn",
+     "name": "Mercury Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "institution": "Mercury",
+     "mask": "4410"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_jul",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-07-20",
+     "amount": {
+      "minor": -100000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "payout_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-12",
+     "amount": {
+      "minor": 9630,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "wire_east",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Eastside Labs",
+     "rawText": "EASTSIDE LABS"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": -120000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_sep",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-01",
+     "amount": {
+      "minor": -500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "payout_sep",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-12",
+     "amount": {
+      "minor": 47440,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "aws_sep",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-09-20",
+     "amount": {
+      "minor": -120000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "rent_oct",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "date": "2026-10-01",
+     "amount": {
+      "minor": -500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "chk_now",
+     "connectionId": "$conn",
+     "accountExternalId": "chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 3017070,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "direct",
+   "key": "plaid",
+   "name": "Mercury direct",
+   "entity": "Northwind Supply",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "direct_chk",
+     "connectionId": "$conn",
+     "name": "Mercury Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "institution": "Mercury",
+     "mask": "4410"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "direct_rent_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "direct_chk",
+     "date": "2026-08-01",
+     "amount": {
+      "minor": -500000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Pier Properties Rent",
+     "rawText": "PIER PROPERTIES RENT"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "direct_payout_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "direct_chk",
+     "date": "2026-08-12",
+     "amount": {
+      "minor": 9630,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Stripe Transfer",
+     "rawText": "STRIPE TRANSFER"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "direct_wire_east",
+     "connectionId": "$conn",
+     "accountExternalId": "direct_chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": -200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Eastside Labs",
+     "rawText": "EASTSIDE LABS"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "direct_aws_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "direct_chk",
+     "date": "2026-08-20",
+     "amount": {
+      "minor": -120000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Amazon Web Services",
+     "rawText": "AMAZON WEB SERVICES"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "direct_now",
+     "connectionId": "$conn",
+     "accountExternalId": "direct_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 3017070,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "east",
+   "key": "plaid",
+   "name": "Mercury Eastside",
+   "entity": "Eastside Labs",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "east_chk",
+     "connectionId": "$conn",
+     "name": "Eastside Checking",
+     "accountType": "depository",
+     "currency": "USD",
+     "institution": "Mercury",
+     "mask": "8820"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "wire_in",
+     "connectionId": "$conn",
+     "accountExternalId": "east_chk",
+     "date": "2026-08-15",
+     "amount": {
+      "minor": 200000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Northwind Supply",
+     "rawText": "NORTHWIND SUPPLY"
+    },
+    {
+     "type": "txn.upsert",
+     "externalId": "east_tools",
+     "connectionId": "$conn",
+     "accountExternalId": "east_chk",
+     "date": "2026-09-08",
+     "amount": {
+      "minor": -50000,
+      "currency": "USD"
+     },
+     "status": "posted",
+     "counterparty": "Figma",
+     "rawText": "FIGMA"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "east_now",
+     "connectionId": "$conn",
+     "accountExternalId": "east_chk",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 150000,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stripe",
+   "key": "stripe",
+   "name": "Stripe",
+   "entity": "Northwind Supply",
+   "events": [
+    {
+     "type": "account.upsert",
+     "externalId": "stripe_bal",
+     "connectionId": "$conn",
+     "name": "Stripe balance",
+     "accountType": "processor_balance",
+     "currency": "USD",
+     "institution": "Mercury"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_globex",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-10T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 10000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 370,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 9630,
+      "currency": "USD"
+     },
+     "counterparty": "Globex Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_aug",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-08-11T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -9630,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -9630,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_aug",
+     "arrivalDate": "2026-08-12"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "ch_initech",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-03T15:00:00Z",
+     "kind": "charge",
+     "gross": {
+      "minor": 50000,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 1480,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": 48520,
+      "currency": "USD"
+     },
+     "counterparty": "Initech"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "re_globex",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-05T10:00:00Z",
+     "kind": "refund",
+     "gross": {
+      "minor": -1080,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -1080,
+      "currency": "USD"
+     },
+     "counterparty": "Globex Corp"
+    },
+    {
+     "type": "processor.balance_txn",
+     "externalId": "po_sep",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-09-10T12:00:00Z",
+     "kind": "payout",
+     "gross": {
+      "minor": -47440,
+      "currency": "USD"
+     },
+     "fee": {
+      "minor": 0,
+      "currency": "USD"
+     },
+     "net": {
+      "minor": -47440,
+      "currency": "USD"
+     },
+     "payoutExternalId": "po_sep",
+     "arrivalDate": "2026-09-12"
+    },
+    {
+     "type": "balance.snapshot",
+     "externalId": "stripe_now",
+     "connectionId": "$conn",
+     "accountExternalId": "stripe_bal",
+     "at": "2026-10-11T08:00:00Z",
+     "current": {
+      "minor": 0,
+      "currency": "USD"
+     }
+    }
+   ]
+  },
+  {
+   "id": "qbo",
+   "key": "quickbooks",
+   "name": "QuickBooks",
+   "entity": "Northwind Supply",
+   "events": [
+    {
+     "type": "invoice.upsert",
+     "externalId": "inv_1038",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "1038",
+     "counterparty": "Globex Corp",
+     "issueDate": "2026-08-01",
+     "dueDate": "2026-08-31",
+     "total": {
+      "minor": 10000,
+      "currency": "USD"
+     },
+     "amountPaid": {
+      "minor": 10000,
+      "currency": "USD"
+     },
+     "status": "paid"
+    },
+    {
+     "type": "payment.applied",
+     "externalId": "pay_1038",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "date": "2026-08-09",
+     "amount": {
+      "minor": 10000,
+      "currency": "USD"
+     },
+     "counterparty": "Globex Corp",
+     "applications": [
+      {
+       "invoiceExternalId": "inv_1038",
+       "amount": {
+        "minor": 10000,
+        "currency": "USD"
+       }
+      }
+     ]
+    },
+    {
+     "type": "credit_note.upsert",
+     "externalId": "refundreceipt:1042",
+     "connectionId": "$conn",
+     "direction": "receivable",
+     "number": "1042",
+     "date": "2026-09-04",
+     "amount": {
+      "minor": 1080,
+      "currency": "USD"
+     },
+     "tax": {
+      "minor": 80,
+      "currency": "USD"
+     },
+     "appliedTo": "refund",
+     "counterparty": "Globex Corp",
+     "status": "applied",
+     "applications": []
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "do": "add_entry",
+   "args": {
+    "company": "Northwind Supply",
+    "kind": "intercompany",
+    "amount": {
+     "amount": "1500.00",
+     "currency": "USD"
+    },
+    "date": "2026-09-10",
+    "paid_by": "Northwind Supply",
+    "to_company": "Eastside Labs",
+    "description": "Moved to Eastside for payroll",
+    "idempotency_key": "s5-intercompany-entry-1"
+   }
+  },
+  {
+   "do": "confirm_all_matches"
+  }
+ ]
+}

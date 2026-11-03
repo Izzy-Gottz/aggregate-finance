@@ -12,6 +12,8 @@ const EXPONENTS: Record<string, number> = {
   CLF: 4, UYW: 4,
 }
 
+const MAX_AMOUNT_CHARS = 100
+
 export function currencyExponent(currency: Currency): number {
   return EXPONENTS[currency.toUpperCase()] ?? 2
 }
@@ -37,6 +39,8 @@ export interface ParseOptions {
 
 export function toMinor(value: string | number, currency: Currency, opts: ParseOptions = {}): number {
   const exp = currencyExponent(currency)
+  // No real amount is this long, and the patterns below get slow on huge cells from uploaded files.
+  if (typeof value === 'string' && value.length > MAX_AMOUNT_CHARS) throw new ConnectorError('invalid_input', `not an amount: ${JSON.stringify(value.slice(0, 40))}`, { provider: 'sdk' })
   let s = typeof value === 'number' ? numberToPlain(value) : value.trim()
   let neg = false
   if (/^\(.*\)$/.test(s)) {

@@ -1,0 +1,35 @@
+{
+  "_note": "Hand-built from Wix's eCommerce Orders API reference (dev.wix.com, read 2026-11-02). Not recorded from a real site. Fields Aggregate never reads are included so the tests can prove they are dropped.",
+  "page": {
+    "orders": [
+      {
+        "id": "order-full-sale", "number": "10001", "currency": "USD", "createdDate": "2026-09-05T15:00:00.000Z", "paymentStatus": "PAID", "status": "APPROVED",
+        "buyerInfo": { "email": "redacted@example.com", "contactId": "contact-1" },
+        "priceSummary": { "subtotal": { "amount": "45.00" }, "tax": { "amount": "4.99" }, "total": { "amount": "49.99" } },
+        "balanceSummary": { "paid": { "amount": "49.99", "formattedAmount": "$49.99" }, "refunded": { "amount": "0.00", "formattedAmount": "$0.00" }, "balance": { "amount": "0.00" } }
+      },
+      {
+        "id": "order-part-refund", "number": "10002", "currency": "USD", "createdDate": "2026-08-10T15:00:00.000Z", "paymentStatus": "PARTIALLY_REFUNDED", "status": "APPROVED",
+        "buyerInfo": { "email": "redacted@example.com", "contactId": "contact-2" },
+        "balanceSummary": { "paid": { "amount": "100.00", "formattedAmount": "$100.00" }, "refunded": { "amount": "25.00", "formattedAmount": "$25.00" } }
+      },
+      {
+        "id": "order-cancelled-refunded", "number": "10003", "currency": "USD", "createdDate": "2026-09-06T15:00:00.000Z", "paymentStatus": "FULLY_REFUNDED", "status": "CANCELED",
+        "buyerInfo": { "email": "redacted@example.com", "contactId": "contact-3" },
+        "balanceSummary": { "paid": { "amount": "10.00", "formattedAmount": "$10.00" }, "refunded": { "amount": "10.00", "formattedAmount": "$10.00" } }
+      },
+      {
+        "id": "order-unpaid", "number": "10004", "currency": "USD", "createdDate": "2026-09-07T15:00:00.000Z", "paymentStatus": "NOT_PAID", "status": "APPROVED",
+        "buyerInfo": { "email": "redacted@example.com", "contactId": "contact-4" },
+        "priceSummary": { "total": { "amount": "75.00" } },
+        "balanceSummary": { "balance": { "amount": "75.00" } }
+      },
+      {
+        "id": "order-imported", "number": "10005", "currency": "USD", "createdDate": "2026-09-08T15:00:00.000Z", "purchasedDate": "2026-07-01T12:00:00.000Z", "paymentStatus": "PAID", "status": "APPROVED",
+        "buyerInfo": { "email": "redacted@example.com", "contactId": "contact-5" },
+        "balanceSummary": { "paid": { "amount": "20.00", "formattedAmount": "$20.00" } }
+      }
+    ],
+    "metadata": { "count": 5, "cursors": {}, "hasNext": false }
+  }
+}

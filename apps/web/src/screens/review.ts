@@ -16,7 +16,7 @@ const KIND: Record<ReviewKind, { icon: IconName; word: string }> = {
   match: { icon: 'check', word: 'Possible match' },
   duplicate: { icon: 'alert', word: 'Possible duplicate' },
   rule: { icon: 'bucket', word: 'Suggested rule' },
-  whose_money: { icon: 'person', word: 'Whose money?' },
+  whose_money: { icon: 'person', word: 'Needs your answer' },
   document: { icon: 'file', word: 'Unread document' },
   set_aside_short: { icon: 'alert', word: 'Set-aside is short' },
 }
@@ -124,7 +124,7 @@ export function ReviewPage() {
   }, [target?.id])
   return html`<div class="column">
     ${wanted && data && !target ? html`<p class="sub" role="status" style="margin-bottom:16px">That change was already decided, or it’s no longer waiting.</p>` : null}
-    <${Section} title="Review" sub=${items.length || filed?.count ? html`${topLine(items.filter(answerable).length, filed?.count ?? 0, items.length)}<span class="keyshint"> Keys: <span class="kbd">Y</span> confirm · <span class="kbd">N</span> reject${items.some((i) => i.editable?.length) ? html` · <span class="kbd">E</span> edit` : null}${items.some((i) => i.answers?.length) ? html` · <span class="kbd">1</span> <span class="kbd">2</span> … answer` : null}</span>` : data ? 'Nothing waiting.' : error ? html`<span role="alert">${error === OFFLINE ? 'Can’t reach Aggregate. Check your connection.' : error}</span> <button type="button" class="link" onClick=${reload}>Try again</button>` : html`<span aria-busy="true">Loading…</span>`}>
+    <${Section} title="Review" pageTitle sub=${items.length || filed?.count ? html`${topLine(items.filter(answerable).length, filed?.count ?? 0, items.length)}<span class="keyshint"> Keys: <span class="kbd">Y</span> confirm · <span class="kbd">N</span> reject${items.some((i) => i.editable?.length) ? html` · <span class="kbd">E</span> edit` : null}${items.some((i) => i.answers?.length) ? html` · <span class="kbd">1</span> <span class="kbd">2</span> … answer` : null}</span>` : data ? 'Nothing waiting.' : error ? html`<span role="alert">${error === OFFLINE ? 'Can’t reach Aggregate. Check your connection.' : error}</span> <button type="button" class="link" onClick=${reload}>Try again</button>` : html`<span aria-busy="true">Loading…</span>`}>
       ${batches.map((g) => html`<div class="row batchrow"><span class="txt"><span class="name">These ${g.length} accounts look ${g[0]!.batch!.label === 'Personal' ? 'personal' : `like ${g[0]!.batch!.label}`}</span><span class="line">${namesLine(g.map((x) => x.title.replace(/^Which company is (.*)\?$/, '$1')))}</span></span><span class="right"><${Button} onClick=${() => answerAll(g)}>Put all in ${g[0]!.batch!.label}</${Button}></span></div>`)}
       <ul class="rows" ref=${listRef} aria-label="Waiting for review">
         ${items.map((it, i) => {

@@ -1,7 +1,7 @@
 ---
 title: Security
 status: final
-updated: 2026-11-01
+updated: 2026-11-02
 ---
 
 # Security
@@ -10,11 +10,13 @@ Aggregate connects to your bank, payments and accounting accounts and lets the A
 in plain words, how that access is limited and how your data is protected. It only describes what is built today;
 where something is still planned, it says so.
 
+Reviewing Aggregate for your company? Start with the [security review checklist](https://aggregate.finance/trust#security-review).
+
 ## Aggregate can't move money
 
 Aggregate only reads. It asks banks and providers for balances, transactions, invoices, bills and reports. Where a
 provider lets you choose, we ask for a read-only key, and Aggregate never calls anything that pays, transfers or sends.
-No tool in Aggregate, for you or for an AI, can move money or send anything on your behalf.
+No tool in Aggregate, for you or for an AI, can move money. It emails someone else only when you send an invite.
 
 A few providers don't offer read-only access, so what they give us could do more than read: QuickBooks (its one
 accounting permission covers reading and writing), BILL (its sync token can edit records but can't pay anyone or move
@@ -64,8 +66,8 @@ has a daily limit on changes, and a change that moves a company's cash by a larg
 Every request is checked against the person making it and the companies they can see, and every database query is
 limited to that person's workspace.
 
-In Postgres, row-level security adds a second check underneath, so a query that forgot that limit would return nothing
-rather than another workspace's data. It is on. This guards against mistakes in our code; it doesn't stop someone who
+In Postgres, row-level security is enabled on every table with a workspace ID. It adds a second check underneath, so a
+query that forgot that limit would return nothing rather than another workspace's data. This guards against mistakes in our code; it doesn't stop someone who
 could run their own SQL as the application.
 
 The checks above are exercised by an automated "red team" test suite that tries to cross workspaces, widen an AI's
@@ -112,7 +114,7 @@ credentials for the services you connect.
 
 ## What we don't claim
 
-We don't hold a SOC 2 report or other certification today. We don't use phrases like "bank-level security". We'd
+We don't hold a SOC 2 report or other certification today. We're [listed in the CSA STAR Registry (Level 1 self-assessment, CAIQ)](https://cloudsecurityalliance.org/star/registry/aggregate), which is our own self-assessment, not an audit. We don't use phrases like "bank-level security". We'd
 rather tell you exactly what is built.
 
 ## If something goes wrong
@@ -122,5 +124,21 @@ If we confirm that someone got into your data without permission, we'll email th
 ## Reporting a problem
 
 If you find a security problem, please email **security@aggregate.finance** rather than posting it publicly or opening a public issue. Tell
-us how to reproduce it. We aim to reply within 2 business days and will keep you updated until it's fixed. We won't take
-legal action against good-faith research that avoids privacy violations, data destruction and service disruption.
+us how to reproduce it. We aim to reply within 2 business days and will keep you updated until it's fixed. Good-faith research is covered by the Safe Harbor below.
+
+## Safe Harbor
+
+This policy covers aggregate.finance, app.aggregate.finance, docs.aggregate.finance and the Aggregate MCP server. It doesn't cover the services customers connect, such as banks, Plaid or accounting apps, or the companies that host us. Use only your own account and test data, and avoid privacy violations, data destruction and service disruption. Our Official Channel is security@aggregate.finance. This text is the [disclose.io](https://disclose.io) Safe Harbor, unmodified.
+
+When conducting vulnerability research, according to this policy, we consider this research conducted under this policy to be:
+
+- Authorized concerning any applicable anti-hacking laws, and we will not initiate or support legal action against you for accidental, good-faith violations of this policy;
+- Authorized concerning any relevant anti-circumvention laws, and we will not bring a claim against you for circumvention of technology controls;
+- Exempt from restrictions in our Terms of Service (TOS) and/or Acceptable Usage Policy (AUP) that would interfere with conducting security research, and we waive those restrictions on a limited basis; and
+- Lawful, helpful to the overall security of the Internet, and conducted in good faith.
+
+You are expected, as always, to comply with all applicable laws. If legal action is initiated by a third party against you and you have complied with this policy, we will take steps to make it known that your actions were conducted in compliance with this policy.
+
+If at any time you have concerns or are uncertain whether your security research is consistent with this policy, please submit a report through one of our Official Channels before going any further.
+
+> Note that the Safe Harbor applies only to legal claims under the control of the organization participating in this policy, and that the policy does not bind independent third parties.

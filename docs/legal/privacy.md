@@ -1,14 +1,14 @@
 ---
 title: Privacy Policy
 status: final
-updated: 2026-11-01
+updated: 2026-11-02
 ---
 
 # Privacy Policy
 
 Aggregate ("we") puts the money of your companies in one place. This page says what we collect, why, where it lives, and how to get rid of it. It describes the hosted service at aggregate.finance. If you run Aggregate yourself, your data stays on your own server and this policy covers none of it.
 
-Aggregate is operated by Yisrael Gottlieb, doing business as Aggregate ("we"), 1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA. Contact: privacy@aggregate.finance.
+Aggregate is operated by Aggregate Finance LLC, a New Jersey limited liability company ("we"), 1401 Pennsylvania Ave, Wilmington, DE 19806-4124, USA. Contact: privacy@aggregate.finance.
 
 ## What we collect and why
 
@@ -16,6 +16,7 @@ Aggregate is operated by Yisrael Gottlieb, doing business as Aggregate ("we"), 1
 - **Financial data you connect.** When you connect a bank, card, payment processor, payroll or accounting service (through Plaid or a direct connection), we receive accounts, balances, transactions, invoices, payroll totals and similar records. We use them to show you your numbers, and for nothing else. We handle QuickBooks data for you, at your direction. We don't process it on Intuit's behalf.
 - **What you add.** Entries, notes, buckets, rules, the cap table, and documents you upload (or email in, on a self-hosted copy) (receipts, bills, statements), including the text we read from them.
 - **AI activity.** When you connect an AI (Claude, ChatGPT or an agent key), we log every call it makes: which tool, when, which companies, whether it worked, plus the network address and app name it called from. Writes keep a record of who made them, so you can review and undo them.
+- **People you invite.** If you use Invite someone, we send that address one fixed email from Aggregate with your first name and a sign-up link. You can't add a message, and we send nothing if the address already has an account, got an invite in the last 30 days, or asked not to get invites. We don't keep the address. We keep a keyed hash of it for 30 days to refuse repeats, then delete it, or sooner if you delete your account. To stop abuse, we also keep a keyed hash of your network address with each invite for one day. Resend handles the email and sees the address to deliver it. The person isn't added to any list. The email has a "Don't send me invites" link; using it keeps only a keyed hash of the address, until they undo it. If they open the sign-up link, a cookie remembers it for 30 days, and if they sign up we record that you invited them. Deleting your account deletes that record.
 - **Security records.** Sign-in sessions keep the network address and browser they came from. Invites, exports and permission changes are logged with who made them and when. These protect your account.
 
 We don't collect anything beyond this. The marketing site (aggregate.finance) counts visits with Cloudflare Web Analytics, which sets no cookies and doesn't identify individual visitors. The app itself has no ads, analytics or tracking scripts. Plaid's sign-in window, when you open it, is run by Plaid. We use cookies only to keep you signed in.
@@ -24,7 +25,7 @@ We don't collect anything beyond this. The marketing site (aggregate.finance) co
 
 - We never sell your data or share it for anyone's marketing.
 - We never use your data to train AI models, including what we read from your banks and from apps like QuickBooks and Xero, and we never sell it. When you connect an AI app, what it receives follows that AI provider's terms ([AI clients](#ai-clients)).
-- Aggregate never moves money. It reads your accounts and keeps records; it can't pay, transfer or contact anyone for you.
+- Aggregate never moves money. It reads your accounts and keeps records; it can't pay or transfer. It emails someone else only when you send an invite.
 
 ## Where it is stored and how it is protected
 
@@ -62,7 +63,7 @@ BILL's sync token can technically edit records in your BILL account but can't pa
 ## Keeping and deleting your data
 
 - **Disconnect** a connection and we stop syncing. When you disconnect, we revoke our access at the provider where it allows that, and tell you if there's a step for you to do there.
-- For QuickBooks, Wefunder and Shopify (when it's the store's last connection in Aggregate), disconnecting (or removing Aggregate inside that service) also deletes what that connection brought in.
+- For QuickBooks, FreshBooks, Wefunder and Shopify (when it's the store's last connection in Aggregate), disconnecting (or removing Aggregate inside that service) also deletes what that connection brought in.
 - **Export** everything in Preferences → Export, as one file.
 - **Delete your workspace** in Preferences (owners only). This revokes our access at each provider where it allows that, tells you of any step left for you there, and erases all of the workspace's records, documents and AI activity. Your sign-in account stays so you can keep using other workspaces. You can also delete your sign-in account entirely in Preferences; if you are the only owner of a workspace, you first make someone else an owner or delete the workspace.
 - Encrypted backups are kept for 25 days, so deleted data is gone from backups within 30 days.

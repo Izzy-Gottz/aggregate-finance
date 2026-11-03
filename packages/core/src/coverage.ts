@@ -8,7 +8,7 @@
 // Balance assertions: "Chase held $12,340.11 on Sept 30" (a statement, a person, an AI). They never post anything;
 // each one is a check of the ledger balance at the end of that day.
 import type { EntityId, Id, IsoDate } from '@agfn/contracts'
-import { latestPerDay, snapCurrent, type CheckResult } from './checks.ts'
+import { businessDaysBetween, latestPerDay, POSTING_LAG_BUSINESS_DAYS, snapCurrent, type CheckResult } from './checks.ts'
 import { cashRole } from './coa.ts'
 import type { BalanceAssertion, SourceAccountInfo, SourceRecord } from './model.ts'
 import { formatMoney } from './money.ts'
@@ -209,7 +209,11 @@ async function computeCoverage(rc: ReadContext, opts: CoverageOptions): Promise<
         if (s1 && s0 && s1.date >= `${m}-01`) {
           const expected = snapCurrent(s1 as SourceRecord).minor - snapCurrent(s0 as SourceRecord).minor
           const actual = balanceAt(s1.date) - balanceAt(s0.date)
-          if (expected !== actual) {
+          // A row dated the 30th that reaches the balance on the 1st: the gap closes within the posting lag, or may yet.
+          const gapAt = (x: (typeof snaps)[number]) => snapCurrent(x as SourceRecord).minor - balanceAt(x.date)
+          const within = (d: IsoDate) => businessDaysBetween(s1.date, d) <= POSTING_LAG_BUSINESS_DAYS
+          const settles = snaps.some((x) => x.date > s1.date && within(x.date) && gapAt(x) === gapAt(s0)) || within(now)
+          if (expected !== actual && !settles) {
             status = 'mismatched'
             const fmt = (m: number) => formatMoney(m, a.currency)
             detail = `the balance moved ${fmt(expected)}, rows add up to ${fmt(actual)}`

@@ -88,7 +88,7 @@ export function mapTxn(t: SfTransaction, a: SfAccount, connectionId: string, raw
 
 /** errlist messages come from banks via the Bridge: strip control characters and markup, cap the length. */
 export function sanitize(msg: string): string {
-  return msg.replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
+  return msg.slice(0, 4000).replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
 }
 
 export function errorWarnings(errlist: SfError[] | undefined, errors: string[] | undefined): string[] {

@@ -1,0 +1,33 @@
+{
+  "_note": "Hand-built from Google's AdSense Management API v2 reference (developers.google.com/adsense/management/reference/rest/v2). NOT recorded from a real account. Totals are worked by hand in adsense.test.ts.",
+  "accounts": {
+    "accounts": [
+      { "name": "accounts/pub-1234", "displayName": "Sample Publisher", "timeZone": { "id": "America/New_York" }, "createTime": "2020-01-02T03:04:05Z", "state": "READY", "pendingTasks": ["PENDING-TASK-MUST-NOT-BE-KEPT"], "premium": false }
+    ]
+  },
+  "report": {
+    "totalMatchedRows": "3",
+    "headers": [
+      { "name": "MONTH", "type": "DIMENSION" },
+      { "name": "ESTIMATED_EARNINGS", "type": "METRIC_CURRENCY", "currencyCode": "USD" }
+    ],
+    "rows": [
+      { "cells": [{ "value": "2026-08" }, { "value": "120.10" }] },
+      { "cells": [{ "value": "2026-09" }, { "value": "98.05" }] },
+      { "cells": [{ "value": "2026-10" }, { "value": "34.56" }] }
+    ],
+    "totals": { "cells": [{}, { "value": "252.71" }] },
+    "averages": { "cells": [{}, { "value": "84.24" }] },
+    "startDate": { "year": 2025, "month": 11, "day": 1 },
+    "endDate": { "year": 2026, "month": 10, "day": 9 }
+  },
+  "payments": {
+    "payments": [
+      { "name": "accounts/pub-1234/payments/unpaid", "amount": "$34.56" },
+      { "name": "accounts/pub-1234/payments/2026-09-21", "amount": "$120.10", "date": { "year": 2026, "month": 9, "day": 21 } },
+      { "name": "accounts/pub-1234/payments/2026-10-21", "amount": "$1,098.05", "date": { "year": 2026, "month": 10, "day": 21 } },
+      { "name": "accounts/pub-1234/payments/youtube-2026-10-21", "amount": "$10.00", "date": { "year": 2026, "month": 10, "day": 21 } },
+      { "name": "accounts/pub-1234/payments/2024-01-21", "amount": "$555.00", "date": { "year": 2024, "month": 1, "day": 21 } }
+    ]
+  }
+}
