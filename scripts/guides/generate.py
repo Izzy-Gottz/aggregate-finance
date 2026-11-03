@@ -1,3 +1,4 @@
+# Stale, pages are hand-edited; don't regenerate.
 """Generate docs/guides/connect-*.md from one template (keeps the pages consistent; edit here, not the .md files).
 Usage: python3 scripts/guides/generate.py docs/guides"""
 import os, sys
@@ -174,8 +175,8 @@ Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during b
 
 {qs}
 
-{a} answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+{a} answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 {FAQ.format(signin=p['signin'], assistant=a, assistant_owner=owner, source_short=p['source_short'] if p['source_short'] not in ('bank', 'statements') else ('bank accounts' if p['source_short'] == 'bank' else 'files'), scope_note=p['scope_note'], selfhost_need=p['selfhost_need'])}

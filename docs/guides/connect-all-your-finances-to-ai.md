@@ -41,7 +41,7 @@ balances are checked against the source, and a number it doesn't know is reporte
 | Banks and cards | Plaid (9,600+ US institutions), SimpleFIN Bridge |
 | Payments and sales | Stripe, Square, Shopify |
 | Accounting and bills | QuickBooks Online, Xero (limited availability), BILL |
-| Payroll | Deel, plus payroll runs spotted in your bank data from any provider |
+| Payroll | Payroll runs spotted in your bank data from any provider. Deel opens once Deel's marketplace review finishes |
 | Investments and equity | Wefunder, investment holdings through Plaid, a built-in cap table |
 | Everything else | Statement files from any bank, receipts and bills you upload |
 

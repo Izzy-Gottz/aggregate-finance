@@ -78,6 +78,8 @@ whether that copy is right.
 | Date | Backup | Where | Result | Time |
 | --- | --- | --- | --- | --- |
 | 2026-10-11 | `agfn-postgres-2026-10-11T161920Z` (hosted, 63 tables, 80,567 rows, no documents yet) | Neon branch `restore-drill-2026-10-11`, empty database, restored from a laptop with the kept master key; no files bucket, no mail, no worker | Passed after two fixes (below). Counts match production as of the backup; all 14 sealed connection secrets open with the kept key; an existing account signs in and lands in its workspace; 20 OAuth clients, 7 AI grants and 2 reviewer links back | 63 s end to end: 7 s schema at the backup's version, 54 s restore, 2 s upgrade to the current version |
+| 2026-11-03 | Neon point-in-time snapshot of production, 10:48 UTC (not the nightly file) | New Neon branch from the snapshot, never made primary; deleted with the snapshot afterwards | Passed. All 86 tables present; row counts for workspaces, people, companies, connections, accounts, ledger and raw records, AI grants and write requests match production exactly; the removed `agfn_inspect` role is absent | About 1 minute from snapshot to readable branch |
+| 2026-11-03 | `agfn-postgres-2026-11-03T070001Z` (nightly, made by the live release) | Planned: the same branch, from a throwaway machine with the kept master key | Not completed. The backup was found and listed, but the only way to set the branch's database password prints it, which our rules forbid. Next try: a separate scratch database or the provider API. The last full restore of a nightly file is still 2026-10-11 | |
 
 Found by the 2026-10-11 drill, both fixed:
 - OAuth clients, consents and refresh tokens didn't restore: their json columns hold arrays, and the Postgres driver

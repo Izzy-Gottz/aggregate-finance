@@ -114,6 +114,9 @@ export interface ConnectionSummary {
   status: ConnectionStatus
   lastSyncAt: IsoTimestamp | null
   accountCount: number
+  /** Payroll runs and invoices/bills from this connection that still count ("Disconnect and delete its data" takes them too). */
+  payrollRunCount?: number
+  documentCount?: number
   message?: string
   /** Accounts that still need "which company?"; their transactions wait until then. */
   needsCompany?: number

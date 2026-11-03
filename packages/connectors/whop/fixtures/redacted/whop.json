@@ -1,0 +1,24 @@
+{
+  "accounts": { "data": [{ "id": "biz_SAMPLE000001", "title": "Sample Creator Co", "email": null }], "page_info": { "end_cursor": null, "start_cursor": null, "has_next_page": false, "has_previous_page": false } },
+  "usd": {
+    "report_type": "income_statement",
+    "currencies": ["usd", "eur"],
+    "rows": [
+      { "period": "2026-09", "grouping": "payments", "line_category": "payment_gross", "amount": 1250.5, "profit_and_loss_section": "revenue", "line_count": 12 },
+      { "period": "2026-09", "grouping": "refunds", "line_category": "refund", "amount": -100.25, "profit_and_loss_section": "revenue", "line_count": 1 },
+      { "period": "2026-09", "grouping": "fees", "line_category": "whop_processing_fee", "amount": -36.55, "profit_and_loss_section": "cost_of_revenue", "line_count": 12 },
+      { "period": "2026-08", "grouping": "payments", "line_category": "payment_gross", "amount": 800, "profit_and_loss_section": "revenue", "line_count": 8 },
+      { "period": "2026-08", "grouping": "disputes", "line_category": "dispute", "amount": -50, "profit_and_loss_section": "revenue", "line_count": 1 },
+      { "period": "2026-08", "grouping": "fees", "line_category": "whop_processing_fee", "amount": -24.1, "profit_and_loss_section": "cost_of_revenue", "line_count": 8 }
+    ],
+    "total": 1839.6
+  },
+  "eur": {
+    "report_type": "income_statement",
+    "currencies": ["usd", "eur"],
+    "rows": [
+      { "period": "2026-10", "grouping": "payments", "line_category": "payment_gross", "amount": 99.99, "profit_and_loss_section": "revenue", "line_count": 1 }
+    ],
+    "total": 99.99
+  }
+}

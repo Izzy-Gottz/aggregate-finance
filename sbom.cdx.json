@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:f0ada520-d338-4b5f-a4b1-f24f736837da",
+  "serialNumber": "urn:uuid:45093ca5-9c7c-4ae6-a5bb-4f017d1cc2be",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-03T20:37:44.401Z",
+    "timestamp": "2026-11-03T22:51:03.092Z",
     "lifecycles": [
       {
         "phase": "pre-build"
@@ -2687,6 +2687,50 @@
       ]
     },
     {
+      "bom-ref": "@agfn/connector-mollie@0.0.0",
+      "type": "library",
+      "name": "mollie",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-mollie@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "@agfn/connector-ownerrez@0.0.0",
+      "type": "library",
+      "name": "ownerrez",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-ownerrez@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
       "bom-ref": "@agfn/connector-paddle@0.0.0",
       "type": "library",
       "name": "paddle",
@@ -3127,6 +3171,28 @@
       ]
     },
     {
+      "bom-ref": "@agfn/connector-whop@0.0.0",
+      "type": "library",
+      "name": "whop",
+      "version": "0.0.0",
+      "scope": "required",
+      "purl": "pkg:npm/%40agfn/connector-whop@0.0.0",
+      "properties": [
+        {
+          "name": "cdx:npm:package:private",
+          "value": "true"
+        }
+      ],
+      "externalReferences": [],
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-only"
+          }
+        }
+      ]
+    },
+    {
       "bom-ref": "@agfn/connector-wise@0.0.0",
       "type": "library",
       "name": "wise",
@@ -3540,6 +3606,8 @@
         "@agfn/connector-lemonsqueezy@0.0.0",
         "@agfn/connector-lightspeed@0.0.0",
         "@agfn/connector-mercury@0.0.0",
+        "@agfn/connector-mollie@0.0.0",
+        "@agfn/connector-ownerrez@0.0.0",
         "@agfn/connector-paddle@0.0.0",
         "@agfn/connector-patreon@0.0.0",
         "@agfn/connector-paypal@0.0.0",
@@ -3560,6 +3628,7 @@
         "@agfn/connector-stripe@0.0.0",
         "@agfn/connector-sumup@0.0.0",
         "@agfn/connector-wefunder@0.0.0",
+        "@agfn/connector-whop@0.0.0",
         "@agfn/connector-wise@0.0.0",
         "@agfn/connector-wix@0.0.0",
         "@agfn/connector-woocommerce@0.0.0",
@@ -3580,6 +3649,9 @@
         "@agfn/connector-youtube@0.0.0",
         "@agfn/connector-pinterest@0.0.0",
         "@agfn/connector-squarespace@0.0.0",
+        "@agfn/connector-ownerrez@0.0.0",
+        "@agfn/connector-whop@0.0.0",
+        "@agfn/connector-mollie@0.0.0",
         "@agfn/connector-wix@0.0.0",
         "@agfn/connector-sumup@0.0.0",
         "@agfn/core@0.0.0",
@@ -4378,6 +4450,20 @@
       ]
     },
     {
+      "ref": "@agfn/connector-mollie@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-ownerrez@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
       "ref": "@agfn/connector-paddle@0.0.0",
       "dependsOn": [
         "@agfn/contracts@0.0.0",
@@ -4460,6 +4546,9 @@
         "@agfn/connector-youtube@0.0.0",
         "@agfn/connector-pinterest@0.0.0",
         "@agfn/connector-squarespace@0.0.0",
+        "@agfn/connector-ownerrez@0.0.0",
+        "@agfn/connector-whop@0.0.0",
+        "@agfn/connector-mollie@0.0.0",
         "@agfn/connector-wix@0.0.0",
         "@agfn/connector-sumup@0.0.0",
         "@agfn/connector-files@0.0.0",
@@ -4558,6 +4647,13 @@
     },
     {
       "ref": "@agfn/connector-wefunder@0.0.0",
+      "dependsOn": [
+        "@agfn/contracts@0.0.0",
+        "@agfn/connector-sdk@0.0.0"
+      ]
+    },
+    {
+      "ref": "@agfn/connector-whop@0.0.0",
       "dependsOn": [
         "@agfn/contracts@0.0.0",
         "@agfn/connector-sdk@0.0.0"

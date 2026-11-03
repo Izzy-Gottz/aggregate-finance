@@ -60,6 +60,8 @@ export interface ServerConfig {
   toolInvestments?: boolean
   /** AGFN_SET_ASIDES=1: `set_aside` on the bucket tools, the available_cash metric, and set-asides in the app. Changes tools/list, so off while a directory review pins it. The ledger and the app don't depend on it. */
   setAsides?: boolean
+  /** AGFN_TRY_CHAT=1 with ANTHROPIC_TRY_KEY: the no-sign-up demo chat at /try (try-chat.ts). AGFN_TRY_MODEL picks the model. */
+  tryChat?: { key: string; model: string }
   /** AGFN_FRIEND_INVITES=1: "Invite someone" in the app and its API. Off until the privacy policy and the email's postal address are done. */
   friendInvites?: boolean
   /** AGFN_FRIEND_INVITES_PER_DAY: invite emails for everyone, per day (friend-invites.ts). They share the quota with sign-in mail. */
@@ -208,6 +210,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(env.AGFN_TOOL_INVESTMENTS === '1' ? { toolInvestments: true } : {}),
     ...(env.AGFN_SET_ASIDES === '1' ? { setAsides: true } : {}),
     ...(env.AGFN_FRIEND_INVITES === '1' ? { friendInvites: true } : {}),
+    ...(env.AGFN_TRY_CHAT === '1' && env.ANTHROPIC_TRY_KEY ? { tryChat: { key: env.ANTHROPIC_TRY_KEY, model: ['claude-haiku-5-5', 'claude-sonnet-5-5'].includes(env.AGFN_TRY_MODEL ?? '') ? env.AGFN_TRY_MODEL! : 'claude-haiku-5-5' } } : {}),
     ...(Number(env.AGFN_FRIEND_INVITES_PER_DAY) > 0 ? { friendInvitesPerDay: Number(env.AGFN_FRIEND_INVITES_PER_DAY) } : {}),
     ...(env.AGFN_DOCS_HOST ? { docsHost: env.AGFN_DOCS_HOST.trim().toLowerCase() } : {}),
     ...(env.AGFN_MCP_PROMPTS === '1' ? { mcpPrompts: true } : {}),
@@ -295,6 +298,15 @@ export function hostedUnlisted(env: NodeJS.ProcessEnv): string[] {
   // Squarespace: built from its docs, never run on a real site. s.7.4.6 needs a written answer, the app needs production
   // review, and its uncapped indemnity waits for the company (package README). Live waits for AGFN_OFFER_SQUARESPACE=1.
   if (env.SQUARESPACE_CLIENT_ID && env.AGFN_OFFER_SQUARESPACE !== '1') out.push('squarespace')
+  // OwnerRez: built from its docs, never run on a real account. Other hosts' accounts need a partnership agreement with
+  // OwnerRez first (package README). Live waits for AGFN_OFFER_OWNERREZ=1.
+  if (env.OWNERREZ_CLIENT_ID && env.AGFN_OFFER_OWNERREZ !== '1') out.push('ownerrez')
+  // Whop: built from its docs, never run on a real business. Its Developer API Terms carry an uncapped indemnity, so no app
+  // is registered until the LLC, insurance quotes and 34's confirmation (package README). Live waits for AGFN_OFFER_WHOP=1.
+  if (env.WHOP_CLIENT_ID && env.AGFN_OFFER_WHOP !== '1') out.push('whop')
+  // Mollie: built from its docs, never run on a real account. Its User Agreement carries an uncapped indemnity, so no app is
+  // registered until the LLC, insurance quotes and 34's confirmation (package README). Live waits for AGFN_OFFER_MOLLIE=1.
+  if (env.MOLLIE_CLIENT_ID && env.AGFN_OFFER_MOLLIE !== '1') out.push('mollie')
   // Wix: built from its docs, never run on a real site. It needs App Market review or Wix's written approval, and its uncapped
   // indemnities wait for the company's insurance (package README). Live waits for AGFN_OFFER_WIX=1.
   if (env.WIX_CLIENT_ID && env.AGFN_OFFER_WIX !== '1') out.push('wix')

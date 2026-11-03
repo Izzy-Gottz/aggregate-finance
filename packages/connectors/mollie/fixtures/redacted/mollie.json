@@ -1,0 +1,20 @@
+{
+  "balances": { "count": 2, "_embedded": { "balances": [
+    { "resource": "balance", "id": "bal_SAMPLEEUR01", "mode": "live", "currency": "EUR", "status": "active", "availableAmount": { "currency": "EUR", "value": "10.00" }, "pendingAmount": { "currency": "EUR", "value": "0.00" } },
+    { "resource": "balance", "id": "bal_SAMPLEGBP01", "mode": "live", "currency": "GBP", "status": "active", "availableAmount": { "currency": "GBP", "value": "0.00" }, "pendingAmount": { "currency": "GBP", "value": "0.00" } }
+  ] }, "_links": { "self": { "href": "https://api.mollie.com/v2/balances", "type": "application/hal+json" }, "next": null } },
+  "eurSeptember": {
+    "resource": "balance-report", "balanceId": "bal_SAMPLEEUR01", "timeZone": "Europe/Amsterdam", "from": "2026-09-01", "until": "2026-10-01", "grouping": "transaction-categories",
+    "totals": {
+      "open": { "pending": { "amount": { "currency": "EUR", "value": "5.21" } }, "available": { "amount": { "currency": "EUR", "value": "2.25" } } },
+      "payments": { "pending": { "amount": { "currency": "EUR", "value": "4382.75" }, "subtotals": [{ "transactionType": "payment", "count": 82, "amount": { "currency": "EUR", "value": "4382.75" } }] }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "1082.55" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "0.00" } } },
+      "refunds": { "pending": { "amount": { "currency": "EUR", "value": "0.00" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "0.00" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "-0.12" } } },
+      "chargebacks": { "pending": { "amount": { "currency": "EUR", "value": "0.00" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "0.00" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "0.00" } } },
+      "capital": { "pending": { "amount": { "currency": "EUR", "value": "0.00" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "0.00" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "0.00" } } },
+      "transfers": { "pending": { "amount": { "currency": "EUR", "value": "0.00" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "0.00" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "-1077.62" } } },
+      "fee-prepayments": { "pending": { "amount": { "currency": "EUR", "value": "-2.24" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "-2.24" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "-1.00" } } },
+      "corrections": { "pending": { "amount": { "currency": "EUR", "value": "0.00" } }, "movedToAvailable": { "amount": { "currency": "EUR", "value": "0.00" } }, "immediatelyAvailable": { "amount": { "currency": "EUR", "value": "0.00" } } },
+      "close": { "pending": { "amount": { "currency": "EUR", "value": "3305.41" } }, "available": { "amount": { "currency": "EUR", "value": "3.82" } } }
+    }
+  }
+}

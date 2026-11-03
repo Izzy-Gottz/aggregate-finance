@@ -83,11 +83,15 @@ function nextLink(data: unknown, keep: Record<string, string> = {}): string | nu
   return u.toString()
 }
 
-function dec(v: unknown, currency: string): number {
+/** A decimal amount, or null when it isn't one Aggregate can read. */
+function readDec(v: unknown, currency: string): number | null {
   if (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '')) return money(v, currency).minor
   if (isRecord(v) && (typeof v.value === 'string' || typeof v.value === 'number')) return money(v.value, normalizeCurrency(str(v.currency), currency)).minor
-  return 0
+  return null
 }
+
+/** For the parts a record may leave out (taxes, contributions): missing is nothing. */
+const dec = (v: unknown, currency: string): number => readDec(v, currency) ?? 0
 
 export function createRipplingConnector(opts: RipplingOptions): Connector {
   const { deps } = opts
@@ -142,6 +146,7 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
       const runs = results(res.data)
       const events: NormalizedEvent[] = []
       const unknown = new Set<string>()
+      let unreadable = 0
       let reachedOld = false
       for (const r of runs) {
         const check = str(r.check_date)?.slice(0, 10)
@@ -152,13 +157,18 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
         }
         const rs = str(r.run_state)
         if (rs && !KNOWN_STATES.has(rs)) unknown.add(rs)
-        events.push(...(await toRuns(c, r, conn, today)))
+        const got = await toRuns(c, r, conn, today)
+        if (got.unreadable) unreadable++
+        events.push(...got.runs)
       }
       const link = reachedOld ? null : nextLink(res.data, { order_by: ORDER, limit: String(limit) })
       const done = link === null
       const next: CursorState = done ? { next: null, stopBefore: state.stopBefore, mark: state.mark } : { ...state, next: link }
       const out: SyncResult = { events, cursor: codec.encode(next), hasMore: !done }
-      if (unknown.size) out.warnings = [`Rippling returned payroll runs in a state Aggregate doesn't know yet (${[...unknown].sort().join(', ')}); those runs were skipped.`]
+      const warnings: string[] = []
+      if (unknown.size) warnings.push(`Rippling returned payroll runs in a state Aggregate doesn't know yet (${[...unknown].sort().join(', ')}); those runs were skipped.`)
+      if (unreadable) warnings.push(`${unreadable} Rippling payroll run${unreadable === 1 ? '' : 's'} had pay Aggregate couldn't read, so ${unreadable === 1 ? 'it was' : 'they were'} left out. Their totals are unknown, not $0.`)
+      if (warnings.length) out.warnings = warnings
       return out
     },
 
@@ -173,12 +183,12 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
     },
   }
 
-  async function toRuns(c: HttpClient, r: Obj, conn: ConnectionRef, today: string): Promise<PayrollRun[]> {
+  async function toRuns(c: HttpClient, r: Obj, conn: ConnectionRef, today: string): Promise<{ runs: PayrollRun[]; unreadable: boolean }> {
     const id = str(r.id)
     const state = str(r.run_state)
     const payDate = str(r.check_date)?.slice(0, 10)
     // Drafts can still change completely; they aren't payroll yet.
-    if (!id || !payDate || (state !== 'PAID' && state !== 'APPROVED')) return []
+    if (!id || !payDate || (state !== 'PAID' && state !== 'APPROVED')) return { runs: [], unreadable: false }
     const records: Obj[] = []
     let link: string | null = null
     for (let i = 0; i < 100; i++) {
@@ -209,8 +219,10 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
       const lines: NonNullable<PayrollRun['lines']> = []
       for (const w of ws) {
         const s = isRecord(w.summary) ? w.summary : {}
-        const g = dec(w.gross_pay, currency)
-        const n = dec(w.net_pay, currency)
+        const g = readDec(w.gross_pay, currency)
+        const n = readDec(w.net_pay, currency)
+        // A worker's pay Aggregate can't read leaves the run's total unknown: skip it rather than count that worker as $0.
+        if (g === null || n === null) return { runs: [], unreadable: true }
         gross += g
         net += n
         erTax += dec(s.employer_taxes, currency)
@@ -244,6 +256,6 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
       if (state === 'APPROVED' && run.status === 'paid') run.status = 'processed'
       out.push(run)
     }
-    return out
+    return { runs: out, unreadable: false }
   }
 }

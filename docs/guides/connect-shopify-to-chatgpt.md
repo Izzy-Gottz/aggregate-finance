@@ -1,11 +1,11 @@
 ---
-description: Connect Shopify to ChatGPT through Aggregate. Ask about orders, payouts and fees next to your bank data. Read-only.
+description: Connect Shopify to ChatGPT through Aggregate. Ask about Shopify Payments sales, payouts and fees next to your bank data. Read-only.
 ---
 
 # Connect Shopify to ChatGPT
 
 **Short answer:** connect Shopify to Aggregate, then add Aggregate to ChatGPT with one link
-(`https://app.aggregate.finance/mcp`). ChatGPT can then answer questions about your orders, refunds, fees and payouts, using one ledger that also holds your other
+(`https://app.aggregate.finance/mcp`). ChatGPT can then answer questions about your Shopify Payments sales, refunds, fees and payouts (not order details), using one ledger that also holds your other
 accounts and companies. Aggregate only reads from Shopify, it can never move money, and you
 choose exactly what ChatGPT can see.
 
@@ -28,13 +28,13 @@ In a ChatGPT Business or Enterprise workspace, an admin may need to allow custom
 ## Five questions to try
 
 1. *"How much did the store take in last month after refunds and fees?"* (uses `query_transactions`)
-2. *"Which Shopify payouts have not reached the bank yet?"* (uses `list_review_items`)
+2. *"Which Shopify payouts have not reached the bank yet?"* (uses `search_transactions`)
 3. *"What is our profit and loss for the store this quarter?"* (uses `get_reports`)
 4. *"How do this month's sales compare with last month?"* (uses `query_transactions`)
 5. *"How much cash do we have across Shopify and the bank?"* (uses `get_overview`)
 
-ChatGPT answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+ChatGPT answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask
@@ -57,6 +57,7 @@ Shopify app or a custom app token for your store.
 ## Related
 
 - [Connect your AI to Aggregate](../connect-your-ai.md): every assistant, plus bots and scripts
+- [Connect Shopify to Claude](connect-shopify-to-claude.md)
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 

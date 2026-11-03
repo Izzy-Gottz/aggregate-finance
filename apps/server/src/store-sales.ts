@@ -13,6 +13,9 @@ import { REPORT_ROW_EARNED as YOUTUBE_EARNED } from '@agfn/connector-youtube'
 import { REPORT_ROW_SPEND as PINTEREST_SPEND } from '@agfn/connector-pinterest'
 import { REPORT_ROW_NET_SALES as SQUARESPACE_NET_SALES } from '@agfn/connector-squarespace'
 import { REPORT_ROW_NET_SALES as WIX_NET_SALES } from '@agfn/connector-wix'
+import { REPORT_ROW_NET_COLLECTED as OWNERREZ_NET_COLLECTED } from '@agfn/connector-ownerrez'
+import { REPORT_ROW_NET as WHOP_NET } from '@agfn/connector-whop'
+import { REPORT_ROW_NET_SALES as MOLLIE_NET_SALES } from '@agfn/connector-mollie'
 
 type Db = Kysely<{ ledger_records: { workspace_id: string; connection_id: string; entity_id: string | null; event_type: string; external_id: string; status: string; event_json: string } }>
 
@@ -27,6 +30,9 @@ const DRAWER_ROWS: Record<string, string> = {
   pinterest: PINTEREST_SPEND,
   squarespace: SQUARESPACE_NET_SALES,
   wix: WIX_NET_SALES,
+  ownerrez: OWNERREZ_NET_COLLECTED,
+  whop: WHOP_NET,
+  mollie: MOLLIE_NET_SALES,
 }
 
 export const hasDrawerLine = (connectorKey: string) => Object.hasOwn(DRAWER_ROWS, connectorKey)

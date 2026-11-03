@@ -36,6 +36,9 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | Patreon | Memberships and MRR | Self-host |
 | WooCommerce | Monthly sales reported by the store, with refunds, shipping and sales tax apart. Not booked revenue: the money arrives through Stripe, PayPal or your bank | Self-host |
 | Lightspeed Retail (X-Series) | Monthly sales reported by the store, with refunds and sales tax apart. Totals only, no item-level data. Not booked revenue: the money arrives through your bank or processor | Self-host |
+| Mollie | Mollie's own monthly balance report per currency: payments, refunds, chargebacks, Mollie fees and their net, other balance moves, payouts to your bank, and the balance at month end. Each month is checked from opening to closing balance. Totals only, no customer details. Months on Amsterdam time | Self-host |
+| Whop | Whop's own monthly income statement per currency: payments, refunds, disputes, fees and the other families Whop groups its ledger into, and their net. Totals only, no buyer details. Not posted: payouts reach your bank | Self-host |
+| OwnerRez | Monthly payments collected, refunds, chargebacks and processing fees, each on its own line. Totals only, no guest or booking details. One currency per account: an account with properties in more than one currency isn't reported. Not booked revenue: the money arrives through Airbnb, Vrbo, your processor or your bank | Self-host |
 | Squarespace | Monthly store sales less refunds, in each currency. Totals only, no customer details. Includes tax, shipping and donations. Refunds made outside Squarespace aren't seen. Not booked revenue: the money arrives through your payment processor | Self-host |
 | YouTube | A channel's monthly estimated revenue from YouTube Analytics, in US dollars. Channel totals only, no video detail. Estimates can change. Not booked revenue: the money arrives through AdSense and your bank | Self-host |
 | Pinterest Ads | An ad account's monthly ad spend in its own currency, about the last 90 days and kept from then on. Account totals only, no campaign or ad detail. Not a booked expense: the money shows up as card or bank spend | Self-host |
@@ -58,7 +61,7 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 
 | Connection | What it brings in | Hosted |
 |---|---|---|
-| Deel | Payroll and contractor payments (connect with an organization token) | Live |
+| Deel | Payroll and contractor payments, through Deel's sign-in (open to other organizations once Deel's marketplace review finishes) | Coming soon |
 | Any payroll provider | Payroll runs spotted in your bank data | Live |
 | Justworks (direct), Rippling | Payroll runs | Self-host |
 | Finch | Payroll from many providers | Coming soon |

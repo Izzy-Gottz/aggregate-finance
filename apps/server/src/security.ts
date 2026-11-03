@@ -12,6 +12,21 @@ export function securityHeaders(config: ServerConfig): MiddlewareHandler {
     // The embedded Shopify page sets its own frame-ancestors (Shopify admin); everything else is never framed.
     if (!/frame-ancestors https:/.test(h.get('content-security-policy') ?? '')) h.set('x-frame-options', 'DENY')
     h.set('cross-origin-opener-policy', 'same-origin')
+    // Cross-Origin-Resource-Policy. HTML pages and API answers are 'same-site': no other origin embeds them no-cors.
+    // But public assets are meant to be hotlinked from other sites — our connector icon and logo shown in claude.ai,
+    // chatgpt.com, Muse and MCP directories, the og/share images unfurled in chats, fonts, and the built /assets/*
+    // bundles — and the /.well-known discovery documents are fetched by other origins; those stay 'cross-origin'.
+    // serverInfo.icons point at /icon-*.png and /favicon.svg (mcp-server.ts), so they must load anywhere.
+    const ct = h.get('content-type') ?? ''
+    const publicAsset =
+      c.req.path.startsWith('/assets/') ||
+      c.req.path.startsWith('/.well-known/') ||
+      ct.startsWith('image/') ||
+      ct.startsWith('font/') ||
+      ct.startsWith('application/manifest+json')
+    h.set('cross-origin-resource-policy', publicAsset ? 'cross-origin' : 'same-site')
+    // We serve no Adobe cross-domain policy files; forbid any client from honouring one.
+    h.set('x-permitted-cross-domain-policies', 'none')
     h.set('permissions-policy', 'camera=(self), microphone=(), geolocation=(), payment=()')
     if (https) h.set('strict-transport-security', 'max-age=31536000; includeSubDomains')
     // The app's pages and every API answer, errors and 401s included, are never stored by a browser or proxy (Intuit's

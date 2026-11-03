@@ -95,4 +95,18 @@ describe('rippling connector (docs-shaped fixtures)', () => {
     expect(r.events).toHaveLength(0)
     expect(r.warnings?.[0]).toMatch(/COMPLETED/)
   })
+
+  it('a worker whose pay can’t be read leaves the run out with a warning, never $0', async () => {
+    const run = FIX.runs[2] as Record<string, unknown>
+    const recs = (FIX.records[run.id as string] ?? []) as Array<Record<string, unknown>>
+    expect(recs.length).toBeGreaterThan(0)
+    const odd = recs.map((w, i) => (i === 0 ? { ...w, gross_pay: { amount: 350000 } } : w))
+    const { connector, conn } = make([
+      { match: (u) => u.pathname === '/payroll-runs/', respond: { json: { results: [run] } } },
+      { match: /worker-payroll-records/, respond: { json: { results: odd } } },
+    ])
+    const r = await connector.sync(conn, null)
+    expect(r.events).toHaveLength(0)
+    expect(r.warnings?.[0]).toMatch(/unknown, not \$0/)
+  })
 })

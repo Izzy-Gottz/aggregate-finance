@@ -9,7 +9,7 @@ description: Connect your bank accounts and cards to Claude through Aggregate, r
 accounts and companies. Aggregate only reads from your bank, it can never move money, and you
 choose exactly what Claude can see.
 
-**Status:** Bank connections on the hosted version go through Plaid. You can also upload statement files (CSV, OFX, QFX or QBO, or PDF statements: 11 known bank layouts import automatically when they reconcile, and any other PDF is kept for your AI to read) or connect through SimpleFIN Bridge, a separate paid service that links most US banks.
+**Status:** Bank connections on the hosted version go through Plaid. You can also upload statement files (CSV, OFX, QFX or QBO, or PDF statements: 11 known bank layouts import automatically when they reconcile, and any other PDF is kept for your AI to read) or connect through SimpleFIN Bridge, a separate paid service that links many US banks.
 
 Mortgages, student, auto and personal loans, and card APRs and due dates come through Plaid too. If you linked a bank earlier and don't see these, disconnect it, then connect it again.
 
@@ -36,8 +36,8 @@ Using Claude Code instead? Run `claude mcp add --transport http --scope user agg
 4. *"When are my credit card payments due, and what are the minimums?"* (uses `get_liabilities`)
 5. *"What money is coming in and going out over the next 30 days?"* (uses `list_upcoming`)
 
-Claude answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+Claude answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask
@@ -60,6 +60,7 @@ Plaid account, a SimpleFIN Bridge token, or statement files.
 ## Related
 
 - [Connect your AI to Aggregate](../connect-your-ai.md): every assistant, plus bots and scripts
+- [Connect bank accounts and cards to ChatGPT](connect-bank-accounts-to-chatgpt.md)
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 

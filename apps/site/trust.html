@@ -146,6 +146,7 @@
   .review div { display: grid; grid-template-columns: 150px 1fr; gap: 4px 20px; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
   .review dt { font-size: 15px; font-weight: 500; line-height: 1.6; }
   .review dd { margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+  .review .partner { display: block; height: 24px; width: auto; margin-top: 10px; } /* Stripe Partner badge, unaltered (logos/README.md) */
   .review a { color: var(--ink); text-decoration-color: var(--underline); text-underline-offset: 4px; }
   @media (max-width: 520px) { .review div { grid-template-columns: 1fr; } }
   .more { margin: 28px 0 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
@@ -198,6 +199,7 @@
     <div><dt>Access</dt><dd>Sign-in uses passkeys, a one-time email link or code, Google or Apple, with no passwords. AI access is limited to what you choose and expires after 90 days. <a href="https://app.aggregate.finance/security#who-at-aggregate-can-see-your-data">Who at Aggregate can see your data</a>.</dd></div>
     <div><dt>Incident response</dt><dd>If someone gets into your data without permission, we email the owners of affected workspaces promptly, and as the law requires. <a href="https://github.com/Izzy-Gottz/aggregate-finance/blob/main/docs/compliance/policies/incident-response.md">Read the policy</a>.</dd></div>
     <div><dt>Safe harbor</dt><dd>Good-faith security research is covered by the disclose.io Safe Harbor. <a href="https://app.aggregate.finance/security#safe-harbor">Read it</a>.</dd></div>
+    <div><dt>Stripe</dt><dd>The Aggregate app for Stripe is available on the Stripe App Marketplace, after Stripe's app review. Aggregate is a Stripe partner.<img class="partner" src="/logos/stripe-partner-badge-black.png" alt="Stripe Partner" width="341" height="86"></dd></div>
     <div><dt>Not in place yet</dt><dd>No SOC 2 report or other certification, no outside penetration test, no failover outside one US region, no uptime commitment during beta, and no second person reviewing code or access.</dd></div>
     <div><dt>Contact</dt><dd><a href="mailto:security@aggregate.finance">security@aggregate.finance</a>. We aim to reply within 2 business days. For a data processing agreement, write to <a href="mailto:privacy@aggregate.finance">privacy@aggregate.finance</a>.</dd></div>
   </dl>

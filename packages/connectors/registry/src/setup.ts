@@ -234,6 +234,54 @@ function optionalApps(env: Env): Array<{ key: string; name: string; setup: Omit<
       },
     },
     {
+      key: 'mollie',
+      name: 'Mollie',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Mollie Developers, Your apps', url: 'https://my.mollie.com/dashboard/developers/applications' },
+        redirectUri: redirectUriFor(env, 'mollie'),
+        env: ['MOLLIE_CLIENT_ID', 'MOLLIE_CLIENT_SECRET'],
+        steps: [
+          'In Mollie, open Developers, then Your apps, and create an application.',
+          'Add the redirect URI shown here. Aggregate asks only for balances.read and balance-reports.read.',
+          'Set MOLLIE_CLIENT_ID (app_…) and MOLLIE_CLIENT_SECRET from the app.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'whop',
+      name: 'Whop',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'Whop Developer Dashboard', url: 'https://whop.com/dashboard/developer' },
+        redirectUri: redirectUriFor(env, 'whop'),
+        env: ['WHOP_CLIENT_ID', 'WHOP_CLIENT_SECRET'],
+        steps: [
+          'In the Whop Developer Dashboard, create an app and open its OAuth section.',
+          'Add the redirect URI shown here, and select only the company:balance:read scope.',
+          'Set WHOP_CLIENT_ID (app_…) and WHOP_CLIENT_SECRET from the app.',
+          restart,
+        ],
+      },
+    },
+    {
+      key: 'ownerrez',
+      name: 'OwnerRez',
+      setup: {
+        kind: 'key' as const,
+        register: { name: 'OwnerRez Developer/API Settings', url: 'https://www.ownerrez.com/support/articles/api-oauth-app' },
+        redirectUri: redirectUriFor(env, 'ownerrez'),
+        env: ['OWNERREZ_CLIENT_ID', 'OWNERREZ_CLIENT_SECRET'],
+        steps: [
+          'In OwnerRez, open Developer/API Settings and create an OAuth app. Choose Read as its scope: it can’t be changed later.',
+          'Add the redirect URI shown here, and choose the Standard token policy.',
+          'Set OWNERREZ_CLIENT_ID and OWNERREZ_CLIENT_SECRET from the app.',
+          restart,
+        ],
+      },
+    },
+    {
       key: 'squarespace',
       name: 'Squarespace',
       setup: {

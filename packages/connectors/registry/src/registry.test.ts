@@ -75,6 +75,37 @@ describe('connector registry', () => {
     expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/patreon/callback')
   })
 
+  it('Mollie: no app, no connector; with one, sign-in with only the two balance-read scopes', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('mollie')
+    const env = { MOLLIE_CLIENT_ID: 'app_c', MOLLIE_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'mollie')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('balances.read balance-reports.read')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/mollie/callback')
+  })
+
+  it('Whop: no app, no connector; with one, PKCE sign-in with only the balance-read scope', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('whop')
+    const env = { WHOP_CLIENT_ID: 'app_c', WHOP_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'whop')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('company:balance:read')
+    expect(u.searchParams.get('code_challenge_method')).toBe('S256')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/whop/callback')
+  })
+
+  it('OwnerRez: no app, no connector; with one, sign-in with only the read scope', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('ownerrez')
+    const env = { OWNERREZ_CLIENT_ID: 'c', OWNERREZ_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    const b = (await begin(env, 'ownerrez')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.searchParams.get('scope')).toBe('read')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/ownerrez/callback')
+  })
+
   it('Squarespace: no app, no connector; with one, sign-in with only the read permission', async () => {
     expect(installedConnectorList({}).map((c) => c.key)).not.toContain('squarespace')
     const env = { SQUARESPACE_CLIENT_ID: 'c', SQUARESPACE_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }

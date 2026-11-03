@@ -153,6 +153,8 @@ aging in `searchInvoices`,
 The Workspace shows **All reconciled** only when nothing below is outstanding. Otherwise it counts what is, for example
 "3 things need a look: 2 to review, 1 balance doesn't match". An account with one balance or none has nothing to compare
 yet, so the line says "Reconciled except 1 account not tied out yet" until a second balance or a statement arrives.
+A warning, such as a difference on the newest day that may still settle, is nothing to act on yet, so it reads
+"Reconciled except 1 open warning" until it clears or turns into a thing that needs a look.
 
 - **Every balance matches.** For each bank, card and processor account, the change in the bank's reported balance between two days equals the
   sum of the transactions posted between them, to the cent. The newest day can lag a day while the bank settles; that

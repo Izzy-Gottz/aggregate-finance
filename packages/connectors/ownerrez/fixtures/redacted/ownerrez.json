@@ -1,0 +1,14 @@
+{
+  "me": { "id": 1001, "company_name": "Sample Rentals", "email_address": "host@example.com", "first_name": "Sam", "last_name": "Sample", "time_zone": "America/New_York" },
+  "calendar": { "items": [ { "property_id": 11, "currency_code": "USD", "days": [] }, { "property_id": 12, "currency_code": "USD", "days": [] } ], "count": 2, "limit": 100, "offset": 0, "next_page_url": null },
+  "payments": { "items": [
+    { "id": 501, "amount": 1250.00, "booking_id": 9001, "collected_utc": "2026-09-14T16:00:00Z", "description": "Booking payment from Sample Guest", "is_deposited": true, "total_fees": 36.55, "type": "credit_card", "deposits": [] },
+    { "id": 502, "amount": 800.5, "booking_id": 9002, "collected_utc": "2026-08-02T03:30:00Z", "description": "Balance", "is_deposited": true, "total_fees": 0, "type": "check", "deposits": [] },
+    { "id": 503, "amount": 200.00, "booking_id": 9003, "collected_utc": "2026-08-20T12:00:00Z", "description": "Disputed", "is_deposited": false, "total_fees": 15, "type": "chargeback", "deposits": [] },
+    { "id": 504, "amount": 99.00, "booking_id": 9004, "collected_utc": null, "description": "Scheduled", "is_deposited": false, "total_fees": 0, "type": "credit_card", "deposits": [] },
+    { "id": 505, "amount": 400.00, "booking_id": 9005, "collected_utc": "2025-06-01T12:00:00Z", "description": "Too old for the run", "is_deposited": true, "total_fees": 0, "type": "cash", "deposits": [] }
+  ], "limit": 100, "offset": 0, "next_page_url": null },
+  "refunds": { "items": [
+    { "id": 601, "amount": 150.25, "booking_id": 9002, "linked_payment_id": 502, "paid_utc": "2026-09-03T15:00:00Z", "description": "Early checkout", "is_deposited": true, "total_fees": 0, "type": "check", "deposits": [] }
+  ], "limit": 100, "offset": 0, "next_page_url": null }
+}

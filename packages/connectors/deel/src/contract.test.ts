@@ -45,7 +45,8 @@ describe('Deel API contract (docs-shaped)', () => {
     const a1 = runs.find((r) => r.externalId === 'rcpt_A1')!
     expect([a1.payDate, a1.gross.minor, a1.companyDebit?.minor, a1.employeeCount]).toEqual(['2026-09-29', 500_000, 515_000, 1])
     const a3 = runs.find((r) => r.externalId === 'rcpt_A3')!
-    expect([a3.gross.currency, a3.gross.minor, a3.companyDebit?.minor]).toEqual(['EUR', 196_000, 204_000])
+    // 2,000.00 of work plus a 40.00 processing fee on top adds up to the 2,040.00 receipt: the worker cost is 2,000.00.
+    expect([a3.gross.currency, a3.gross.minor, a3.companyDebit?.minor]).toEqual(['EUR', 200_000, 204_000])
     // Every receipts call is authenticated, and date_to is the day after the window (it is exclusive).
     const calls = ff.calls.filter((c) => /\/payments(\?|$)/.test(c.url))
     expect(calls.every((c) => c.headers.authorization === 'Bearer tok-test')).toBe(true)

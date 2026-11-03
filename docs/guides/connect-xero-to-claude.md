@@ -45,8 +45,8 @@ Using Claude Code instead? Run `claude mcp add --transport http --scope user agg
 4. *"How much did we pay this vendor this year?"* (uses `get_counterparty`)
 5. *"Which expense categories grew the most since last quarter?"* (uses `query_transactions`)
 
-Claude answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+Claude answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask

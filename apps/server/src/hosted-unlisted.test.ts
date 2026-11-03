@@ -98,6 +98,31 @@ describe('hostedUnlisted', () => {
     expect(hostedUnlisted({ WIX_CLIENT_ID: 'c' })).toEqual([])
   })
 
+  it('hosted: Mollie only once AGFN_OFFER_MOLLIE=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted({ ...live, MOLLIE_CLIENT_ID: 'c' })).toEqual(['mollie'])
+    expect(hostedUnlisted({ ...live, MOLLIE_CLIENT_ID: 'c', AGFN_OFFER_MOLLIE: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, MOLLIE_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ MOLLIE_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: Whop only once AGFN_OFFER_WHOP=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted({ ...live, WHOP_CLIENT_ID: 'c' })).toEqual(['whop'])
+    expect(hostedUnlisted({ ...live, WHOP_CLIENT_ID: 'c', AGFN_OFFER_WHOP: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, WHOP_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ WHOP_CLIENT_ID: 'c' })).toEqual([])
+  })
+
+  it('hosted: OwnerRez only once AGFN_OFFER_OWNERREZ=1, after Aggregate’s app exists', () => {
+    const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
+    expect(hostedUnlisted(live)).toEqual([])
+    expect(hostedUnlisted({ ...live, OWNERREZ_CLIENT_ID: 'c' })).toEqual(['ownerrez'])
+    expect(hostedUnlisted({ ...live, OWNERREZ_CLIENT_ID: 'c', AGFN_OFFER_OWNERREZ: '1' })).toEqual([])
+    expect(hostedUnlisted({ ...live, OWNERREZ_CLIENT_ID: 'c', AGFN_OFFER_TEST_CONNECTORS: '1' })).toEqual([])
+    expect(hostedUnlisted({ OWNERREZ_CLIENT_ID: 'c' })).toEqual([])
+  })
+
   it('hosted: Squarespace only once AGFN_OFFER_SQUARESPACE=1, after Aggregate’s app exists', () => {
     const live = { AGFN_HOSTED: '1', PLAID_ENV: 'production', STRIPE_APP_SECRET_KEY_LIVE: 'rk_live', AGFN_OFFER_CHARGEBEE: '1', AGFN_OFFER_REVENUECAT: '1', AGFN_OFFER_WOOCOMMERCE: '1' }
     expect(hostedUnlisted(live)).toEqual([])

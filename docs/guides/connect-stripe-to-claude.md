@@ -29,13 +29,13 @@ Using Claude Code instead? Run `claude mcp add --transport http --scope user agg
 ## Five questions to try
 
 1. *"What is our MRR, and how much came from new customers vs. churn last month?"* (uses `get_mrr_movements`)
-2. *"Did every Stripe payout this month land in the bank?"* (uses `list_review_items`)
+2. *"Did every Stripe payout this month land in the bank?"* (uses `search_transactions`)
 3. *"How much did we pay in Stripe fees this quarter?"* (uses `query_transactions`)
 4. *"Who are our ten largest customers by revenue this year?"* (uses `query_transactions`)
 5. *"Which invoices are past due?"* (uses `query_invoices`)
 
-Claude answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+Claude answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask
@@ -58,6 +58,7 @@ Stripe restricted key with read permissions.
 ## Related
 
 - [Connect your AI to Aggregate](../connect-your-ai.md): every assistant, plus bots and scripts
+- [Connect Stripe to ChatGPT](connect-stripe-to-chatgpt.md)
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 

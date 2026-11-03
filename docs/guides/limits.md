@@ -117,7 +117,8 @@ amount next to its balance.
 - Funds held in a reserve leave cash and sit in Other assets until they're released. They aren't spending.
 - A processor advance or loan is money owed (Other liabilities). Repayments lower what's owed and aren't spending. The
   interest or fee inside a repayment isn't split out.
-- A payout that has left the processor and hasn't reached the bank is in neither account until it lands.
+- A payout that has left the processor and hasn't reached the bank is in neither account until it lands. Cash says how
+  much is in transit like this, so you can add it back if you're sure it will arrive.
 - Stripe Connect transfers to your sellers stay in transit, and aren't spending. A warning appears after a week.
 
 ## A sale in both a processor and your accounting books

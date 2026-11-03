@@ -95,7 +95,7 @@ export async function verifiedBadges(engine: Pick<LedgerEngine, 'metric' | 'data
   )
 
   // Can Aggregate vouch for it? Exactly when the company's data health is clean (its "All reconciled": nothing failing,
-  // waiting for review, in transit, stale or missing), and runway has its history. Counted from the totals: the items
+  // warning, waiting for review, in transit, stale or missing), and runway has its history. Counted from the totals: the items
   // list stops at ten.
   const { counts } = await engine.dataHealth(ws, [entityId])
   const n = (k: keyof typeof counts) => counts[k] ?? 0
@@ -104,6 +104,7 @@ export async function verifiedBadges(engine: Pick<LedgerEngine, 'metric' | 'data
   if (n('toReview')) reasons.push(`${plural(n('toReview'), 'question', 'questions')} waiting for review`)
   if (n('unmatchedInTransit')) reasons.push(`${n('unmatchedInTransit') === 1 ? 'Money' : `${n('unmatchedInTransit')} amounts`} in transit for over a week`)
   if (n('staleSources')) reasons.push(`${plural(n('staleSources'), 'source', 'sources')} not synced in the last day`)
+  if (n('openWarnings')) reasons.push(`${plural(n('openWarnings'), 'warning', 'warnings')} open`)
   if (n('notTiedOut')) reasons.push(`${plural(n('notTiedOut'), 'account', 'accounts')} not tied out yet`)
   if (n('missingStatements')) reasons.push(`${plural(n('missingStatements'), 'month', 'months')} of statements missing`)
   if (runway.state === 'not_enough_history') reasons.push('Not enough history yet (two complete months of bank activity)')

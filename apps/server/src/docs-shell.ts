@@ -145,6 +145,7 @@ a:hover{text-decoration-color:var(--ink)}
 .dais a{display:flex;justify-content:space-between;padding:12px 16px;border:1px solid var(--hairline);border-radius:10px;background:var(--card);text-decoration:none;font-weight:400;font-size:15px}
 .dais a::after{content:'→';color:var(--faint)}
 .dfine{margin:40px 0 0;font-size:12px;color:var(--muted)}
+.dpartner{margin:28px 0 40px;font-size:15px;color:var(--muted)}.dpartner img{display:block;height:24px;width:auto;margin-top:10px}
 .dnext{border-top:1px solid var(--hairline)}
 .dnext a{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--hairline);text-decoration:none}
 .dnext b{flex:0 0 220px;font-weight:400;font-size:15px}
@@ -239,7 +240,7 @@ if(input){
 var copy=function(b,get){b.addEventListener('click',function(){navigator.clipboard.writeText(get()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)})})};
 $$('[data-copy]').forEach(function(b){copy(b,function(){return b.dataset.copy})});
 $$('.dmain pre').forEach(function(p){var b=document.createElement('button');b.type='button';b.className='dcopy';b.textContent='Copy';var t=p.textContent;p.appendChild(b);copy(b,function(){return t})});
-var chips=$$('.dchips button'),cats=$$('.dcat');
+var chips=$$('.dchips:not(.dinst-chips) button'),cats=$$('.dcat');
 chips.forEach(function(c){c.addEventListener('click',function(){
   chips.forEach(function(x){x.setAttribute('aria-pressed',String(x===c))});
   cats.forEach(function(s){s.hidden=!!c.dataset.cat&&s.dataset.cat!==c.dataset.cat})})});
@@ -313,6 +314,9 @@ ${step(3, 'Connect your AI', 'Paste one link into Claude, ChatGPT or any app tha
 <div class="dnext">${next.map(([t, d, h]) => `<a href="${h}"><b>${t}</b><span>${d}</span></a>`).join('')}</div>`
 }
 
+/** Not a row name: Stripe's row keeps its letter tile, and the unaltered Partner badge sits under the list. */
+const STRIPE_PARTNER = 'Stripe Partner badge'
+
 /** Files in the web build's brand folder (apps/web/scripts/build.mjs copies them), per ui/brand/README.md. Nothing else gets an icon. */
 const BRAND_FILES: Record<string, [file: string, type: string]> = {
   Plaid: ['plaid/plaid-icon.png', 'image/png'],
@@ -322,6 +326,7 @@ const BRAND_FILES: Record<string, [file: string, type: string]> = {
   Shopify: ['shopify/shopify-bag-monotone-black.svg', 'image/svg+xml'],
   Square: ['square/square-icon.png', 'image/png'],
   Deel: ['deel/deel-icon.png', 'image/png'],
+  [STRIPE_PARTNER]: ['stripe/stripe-partner-badge-black.png', 'image/png'],
 }
 
 /** Name → data URL. One read at boot; the CSP allows data: images and the docs host serves no other asset path. */
@@ -382,6 +387,7 @@ export function connectionsBody(md: string, render: (md: string) => string, icon
   return `${render(intro)}
 <div class="dchips" role="group" aria-label="Filter"><button type="button" aria-pressed="true">All</button>${sections.map((s) => `<button type="button" aria-pressed="false" data-cat="${esc(s.name)}">${esc(s.name)}</button>`).join('')}</div>
 ${sections.map((s) => `<section class="dcat" data-cat="${esc(s.name)}"><h2>${esc(s.name)}</h2><div class="drows">${s.rows.map(row).join('')}</div></section>`).join('\n')}
+<p class="dpartner">The Aggregate app for Stripe is available on the Stripe App Marketplace, and Aggregate is a Stripe partner.${icons[STRIPE_PARTNER] ? `<img src="${icons[STRIPE_PARTNER]}" alt="Stripe Partner" width="341" height="86">` : ''}</p>
 ${institutions}
 ${render(rest)}
 <p>Running your own server? <a href="${SELF_HOSTING}">Self-hosting adds PayPal, Lemon Squeezy, Expensify and more.</a></p>

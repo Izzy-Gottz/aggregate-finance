@@ -156,6 +156,9 @@ process.stdout.write(JSON.stringify(out))`
         expect(h.get('content-type'), path).toMatch(/^text\/html; charset=utf-8$/i)
         expect(h.get('x-content-type-options'), path).toBe('nosniff')
         expect(h.get('x-frame-options'), path).toBe('DENY')
+        // HTML pages are not embedded no-cors by other origins.
+        expect(h.get('cross-origin-resource-policy'), path).toBe('same-site')
+        expect(h.get('x-permitted-cross-domain-policies'), path).toBe('none')
         expect(h.get('strict-transport-security'), path).toMatch(/max-age=\d+/)
         const csp = h.get('content-security-policy') ?? ''
         expect(csp, path).toContain("frame-ancestors 'none'")
@@ -177,6 +180,26 @@ process.stdout.write(JSON.stringify(out))`
         expect(text, path).not.toContain('<script>alert(1)')
         expect(r.headers.get('x-content-type-options'), path).toBe('nosniff')
       }
+    } finally {
+      await booted.shutdown()
+    }
+  })
+
+  it('public assets (icons, og image, .well-known) load cross-origin so other sites can hotlink them', async () => {
+    const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: 'https://app.aggregate.finance', WEB_DIST: '/nonexistent' }), runWorker: false }
+    const booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async () => {} } })
+    try {
+      const app = createApp(booted.services)
+      // The exact URLs mcp-server.ts advertises in serverInfo.icons, plus the OAuth discovery document. A 'same-site'
+      // CORP here would stop claude.ai / chatgpt.com / Muse / directories showing our mark, so these must be cross-origin.
+      for (const path of ['/icon-512.png', '/icon-192.png', '/icon-64.png', '/favicon.svg', '/.well-known/oauth-authorization-server']) {
+        const r = await app.request(path)
+        expect(r.status, path).toBe(200)
+        expect(r.headers.get('cross-origin-resource-policy'), path).toBe('cross-origin')
+      }
+      // An API answer is not a public asset: it stays same-site.
+      const api = await app.request('/api/me')
+      expect(api.headers.get('cross-origin-resource-policy')).toBe('same-site')
     } finally {
       await booted.shutdown()
     }

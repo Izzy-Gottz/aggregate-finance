@@ -32,16 +32,15 @@ Using Claude Code instead? Run `claude mcp add --transport http --scope user agg
 2. *"Which months of each account are missing statements, or don't add up?"* (uses `get_coverage`)
 3. *"Which accounts haven't been updated in the last month?"* (uses `list_accounts`)
 4. *"Read the receipts I uploaded and tell me which ones aren't recorded yet."* (uses `list_documents`)
-5. *"What were my five largest expenses last quarter?"* (uses `search_transactions`)
+5. *"Who were the five payees I spent the most with last quarter?"* (uses `query_transactions`)
 
-Claude answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+Claude answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask
 
-**Does Aggregate see my password?** No. You sign in on nowhere: you upload files you already have. Aggregate stores only the access token it gets back,
-encrypted with a key kept outside the database.
+**Does Aggregate see my password?** No. There's nothing to sign in to: you upload files you already have.
 
 **Does my data train AI models?** Aggregate never uses your data to train models and doesn't let anyone else. What
 Claude reads is covered by Anthropic's own data policy for your plan.
@@ -58,6 +57,7 @@ statement files.
 ## Related
 
 - [Connect your AI to Aggregate](../connect-your-ai.md): every assistant, plus bots and scripts
+- [Connect bank statements to ChatGPT](connect-bank-statements-to-chatgpt.md)
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 

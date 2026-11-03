@@ -51,7 +51,9 @@ import { confirmPage, dropPending, embeddedPage, SHOPIFY_LINK_COOKIE, shopifyEmb
 import { deleteUploadedFile, FileDeleteError } from './delete-file.ts'
 import { APP_DISALLOW, type CrawlPage, llmsFullTxt, llmsTxt, robotsTxt } from './docs-crawl.ts'
 import { docsHost } from './docs-host.ts'
-import { INSTITUTIONS_JS, INSTITUTIONS_PATH, loadInstitutions } from './docs-institutions.ts'
+import { tryChat } from './try-chat.ts'
+import { renderTryPage, TRY_JS, TRY_JS_PATH } from './try-page.ts'
+import { INSTITUTION_GROUPS, INSTITUTIONS_JS, INSTITUTIONS_PATH, loadInstitutions } from './docs-institutions.ts'
 import { FRIEND_COOKIE, validFriendCode } from './friend-invites.ts'
 import { friendInviteRoutes, friendInviteStopRoutes } from './routes/friend-invites.ts'
 import { DOCS_JS, DOCS_JS_PATH, DOCS_SEARCH_PATH, docsSearchIndex, loadDocsIcons } from './docs-shell.ts'
@@ -569,6 +571,19 @@ export function createApp(s: Services): Hono<Env> {
   // The embedded page opened outside the admin sends the browser here: back into the admin.
   app.get('/api/connectors/shopify/install/top', shopifyInstall(false))
   shopifyEmbeddedRoutes(app, s)
+
+  // ---------- "Try it" demo chat (try-chat.ts, AGFN_TRY_CHAT): no session; demo data only ----------
+  const tryMcpUrl = config.publicDemoUrl ?? (s.publicDemo ? `${config.baseUrl.replace(/\/+$/, '')}/demo/mcp` : undefined)
+  if (config.tryChat && tryMcpUrl) {
+    const tryDeps = { key: config.tryChat.key, model: config.tryChat.model, demoMcpUrl: tryMcpUrl, db, limiter: new DbRateLimiter(db) }
+    app.post('/api/try', async (c) => {
+      const reply = await tryChat(tryDeps, clientIp(c.req.raw.headers, config.clientIpHeader), await c.req.json().catch(() => null))
+      return c.json(reply, 'invalid' in reply ? 400 : 200, { 'cache-control': 'no-store' })
+    })
+    const tryPage = renderTryPage(findLegalFonts(config.webDist))
+    app.get('/try', (c) => c.html(withBaseUrl(tryPage.html, config.baseUrl, '/try'), 200, { 'cache-control': 'public, max-age=300' }))
+    app.get(TRY_JS_PATH, (c) => c.body(TRY_JS, 200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' }))
+  }
 
   // ---------- Session for everything else under /api ----------
   app.use('/api/*', async (c, next) => {
@@ -1831,7 +1846,7 @@ export function createApp(s: Services): Hono<Env> {
   app.get('/docs', (c) => c.html(withBaseUrl(docsHomePage.html, config.baseUrl, '/docs'), 200, { 'cache-control': 'public, max-age=300' }))
   app.get(DOCS_JS_PATH, (c) => c.body(DOCS_JS + INSTITUTIONS_JS, 200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'public, max-age=300' }))
   const institutions = loadInstitutions()
-  if (institutions) app.get(INSTITUTIONS_PATH, (c) => c.json({ names: institutions.names }, 200, { 'cache-control': 'public, max-age=86400' }))
+  if (institutions) app.get(INSTITUTIONS_PATH, (c) => c.json({ names: institutions.names, flags: institutions.flags, groups: INSTITUTION_GROUPS }, 200, { 'cache-control': 'public, max-age=86400' }))
   for (const slug of Object.keys(docs) as Array<keyof typeof docs>) app.get(`/docs/${slug}`, (c) => c.html(withBaseUrl(docs[slug].html, config.baseUrl, `/docs/${slug}`), 200, { 'cache-control': 'public, max-age=300' }))
   // REST reference (api-docs.ts), built once from this server's own /v1/openapi.json so it matches the tools it serves
   // (without the MCP module, from the default tool set).
@@ -2072,6 +2087,15 @@ async function connectionSummaries(s: Services, workspaceId: string) {
     .where('accounts.closed_at', 'is', null)
     .execute()
   const attention = await listAttention(s.db as unknown as Kysely<import('@agfn/db').CoreTables & ConnectorTables>, workspaceId)
+  // What "Disconnect and delete its data" also takes, beyond accounts: payroll runs and invoices/bills still counting.
+  const loose = s.db as unknown as Kysely<Record<string, { workspace_id: string; connection_id: string | null; voided_at: string | null }>>
+  const countBy = async (table: string) =>
+    new Map(
+      (
+        (await loose.selectFrom(table).select((eb) => ['connection_id', eb.fn.countAll<number>().as('n')]).where('workspace_id', '=', workspaceId).where('voided_at', 'is', null).groupBy('connection_id').execute().catch(() => [])) as Array<{ connection_id: string | null; n: number | string }>
+      ).map((r) => [r.connection_id, Number(r.n)] as const),
+    )
+  const [payrollRuns, books] = [await countBy('payroll_runs'), await countBy('books_documents')]
   // "syncing" = a sync job for the connection is running or due within 3 minutes (the next page of a long import is
   // queued 5 s out, early history follow-ups 30 s and 2 min out), so an import in progress doesn't flicker to "ok".
   // Later follow-ups (10/30 min) stay "ok". The connection's own status column is untouched (a crash mid-sync must
@@ -2114,6 +2138,8 @@ async function connectionSummaries(s: Services, workspaceId: string) {
       status: r.status === 'active' ? (busy.has(r.id) || demoImporting(r.connector_key, r.cursor, today) ? 'syncing' : 'ok') : r.status,
       lastSyncAt: r.last_success_at,
       accountCount: mine.length,
+      ...(payrollRuns.get(r.id) ? { payrollRunCount: payrollRuns.get(r.id) } : {}),
+      ...(books.get(r.id) ? { documentCount: books.get(r.id) } : {}),
       ...(r.last_error ? { message: r.last_error } : flags[0] ? { message: flags[0].message } : r.warnings_json ? { message: (JSON.parse(r.warnings_json) as string[])[0] } : {}),
       // Still working, but a person should reconnect (consent ending) or pick newly opened accounts.
       ...(flags.length ? { attention: flags.map((f) => f.kind) } : {}),
@@ -2145,7 +2171,7 @@ const LIVE_STATUSES: ReadonlySet<string> = new Set(['active', 'paused'])
 const XERO_FULL = 'New Xero connections are full right now while we add room on Xero’s side. Try again in a day or two, or email support@aggregate.finance and we’ll tell you when it’s ready.'
 
 /** Most founders' next useful connection first; niche tools last. */
-const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lightspeed', 'sumup', 'squarespace', 'wix', 'adsense', 'pinterest', 'youtube', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin', 'harvest']
+const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lightspeed', 'sumup', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix', 'adsense', 'pinterest', 'youtube', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin', 'harvest']
 /** Tools whose data another connected tool already brings (an accounting tool carries bills and invoices). */
 const COVERED_BY: Record<string, string[]> = {
   xero: ['quickbooks'],

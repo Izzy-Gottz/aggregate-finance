@@ -26,6 +26,9 @@ import { createAdSenseConnector } from '@agfn/connector-adsense'
 import { createYouTubeConnector } from '@agfn/connector-youtube'
 import { createPinterestConnector } from '@agfn/connector-pinterest'
 import { createSquarespaceConnector } from '@agfn/connector-squarespace'
+import { createOwnerRezConnector } from '@agfn/connector-ownerrez'
+import { createWhopConnector } from '@agfn/connector-whop'
+import { createMollieConnector } from '@agfn/connector-mollie'
 import { createWixConnector } from '@agfn/connector-wix'
 import { createRevenueCatConnector } from '@agfn/connector-revenuecat'
 import { createAppStoreConnector } from '@agfn/connector-appstore'
@@ -428,6 +431,21 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
   // Squarespace: sign-in with Aggregate's app and the one read-only permission. Nothing shows what a site's API key can write, so keys aren't taken and no app means no connector.
   const squarespaceOAuth = env.SQUARESPACE_CLIENT_ID && env.SQUARESPACE_CLIENT_SECRET ? { clientId: env.SQUARESPACE_CLIENT_ID, clientSecret: env.SQUARESPACE_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'squarespace') } : undefined
   if (squarespaceOAuth) add('squarespace', (deps) => createSquarespaceConnector({ oauth: squarespaceOAuth }, deps))
+  // OwnerRez: sign-in with Aggregate's app and the read scope only. Personal Access Tokens reach everything, so they aren't taken and no app means no connector.
+  const ownerrezOAuth = env.OWNERREZ_CLIENT_ID && env.OWNERREZ_CLIENT_SECRET ? { clientId: env.OWNERREZ_CLIENT_ID, clientSecret: env.OWNERREZ_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'ownerrez') } : undefined
+  if (ownerrezOAuth) add('ownerrez', (deps) => createOwnerRezConnector({ oauth: ownerrezOAuth }, deps))
+  // Whop: "Sign in with Whop" (PKCE) on Aggregate's app, scope company:balance:read only. API keys reach whole accounts, so they aren't taken.
+  const whopOAuth = env.WHOP_CLIENT_ID && env.WHOP_CLIENT_SECRET ? { clientId: env.WHOP_CLIENT_ID, clientSecret: env.WHOP_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'whop') } : undefined
+  if (whopOAuth) add('whop', (deps) => {
+    const c = createWhopConnector({ oauth: whopOAuth }, deps)
+    return withBegin(c, (state) => ({ kind: 'oauth', url: c.authorizationUrl(state) }))
+  })
+  // Mollie: "Connect with Mollie" on Aggregate's app, balances.read and balance-reports.read only. API keys and access tokens reach payments, so they aren't taken.
+  const mollieOAuth = env.MOLLIE_CLIENT_ID && env.MOLLIE_CLIENT_SECRET ? { clientId: env.MOLLIE_CLIENT_ID, clientSecret: env.MOLLIE_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'mollie') } : undefined
+  if (mollieOAuth) add('mollie', (deps) => {
+    const c = createMollieConnector({ oauth: mollieOAuth }, deps)
+    return withBegin(c, (state) => ({ kind: 'oauth', url: c.authorizationUrl(state) }))
+  })
   // Wix: the site owner installs Aggregate's app. Keys aren't open to third-party apps, so no app means no connector.
   const wixApp = env.WIX_CLIENT_ID && env.WIX_CLIENT_SECRET ? { clientId: env.WIX_CLIENT_ID, clientSecret: env.WIX_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'wix'), ...(env.WIX_SHARE_URL_ID ? { shareUrlId: env.WIX_SHARE_URL_ID } : {}) } : undefined
   if (wixApp) add('wix', (deps) => createWixConnector({ app: wixApp }, deps))

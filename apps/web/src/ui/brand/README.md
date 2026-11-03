@@ -32,6 +32,7 @@ identify services you can connect. No endorsement implied." In US law, using a l
 | Plaid | `plaid/plaid-icon.png` | No clause on developers using Plaid's marks. Only on the row that offers Plaid; a connected bank keeps the bank icon. | plaid.com/assets/img/favicons/apple-touch-icon.png | [Terms](https://plaid.com/legal/terms-of-use/), [press](https://plaid.com/press/) |
 | Deel | `deel/deel-icon.png` | No icon clause. Deel's written yes (2026-10-26) covers the wordmark, not this icon. | www.deel.com/apple-touch-icon.png | [Partner docs](https://developer.deel.com/docs/partner-get-started) |
 | Ramp | `ramp/ramp-icon.png` | Its API agreement couldn't be found. | ramp.com/apple-touch-icon.png | [Press](https://ramp.com/press) |
+| Stripe | `stripe/stripe-partner-badge-black.png` | Not a tile: the unaltered Stripe Partner badge under the docs connections list. No pre-approval needed (partner portal co-branding guidelines, April 2026); no crop, stretch, recolor or effects; never more prominent than our mark. The Stripe logo itself needs Stripe's written OK. | Stripe partner portal asset library (2026-11-03) | [Marks](https://stripe.com/legal/marks) |
 | SimpleFIN | `simplefin/simplefin-logo.svg` | No usage terms published. | beta-bridge.simplefin.org/static/logo.svg | [Protocol](https://www.simplefin.org/protocol.html) |
 
 ## Letter tiles
@@ -51,6 +52,9 @@ identify services you can connect. No endorsement implied." In US law, using a l
 | Gumroad | Marks need permission (§13.2). | [Terms](https://gumroad.com/terms) |
 | Wise | Prior written consent (§11.4). | [API terms](https://wise.com/us/legal/send-money-api) |
 | Harvest | No logo grant for integrators found; letter tile until terms are checked. | [Terms](https://www.getharvest.com/terms) |
+| Mollie | No logo grant for integrators found; letter tile. | [User Agreement](https://www.mollie.com/legal/user-agreement) |
+| Whop | No logo grant for integrators found; letter tile. | [Developer API Terms](https://whop.com/tos-developer-api/) |
+| OwnerRez | No logo grant for integrators found; letter tile until terms are checked. | [Terms](https://www.ownerrez.com/support/articles/privacy-security-terms-of-service) |
 | Squarespace | Its Developer Terms don't grant an integrator its logo for this use. Letter tile. | [Developer Terms](https://www.squarespace.com/developer-terms) |
 | YouTube | The API Services terms don't grant an integrator its logo for this use. Letter tile. | [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service) |
 | Pinterest Ads | Publicity needs Pinterest's permission and the Brand guidelines weren't read. Letter tile. | Pinterest developer guidelines |

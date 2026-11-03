@@ -206,6 +206,18 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
         expect((await k.engine.reviewItems(k.ws)).some((i) => i.linkId === dup?.id)).toBe(true)
       })
 
+      it('an expense typed onto a synced account, then synced, is asked about and counts once while it waits (audit E3)', async () => {
+        const bank = await k.account({ entityId: acme })
+        await k.engine.post(k.ws, txn(bank, '2026-09-28', -1_000, { counterparty: 'Coffee' }))
+        await f.writer.apply(entry('expense', 7_000, { counterparty: 'Staples', category: 'office', accountId: bank.id }), prov())
+        await k.engine.post(k.ws, txn(bank, '2026-10-03', -7_000, { counterparty: 'STAPLES' }))
+        await k.engine.reconcile(k.ws)
+        const [dup] = await k.engine.store.listLinks(k.ws, { types: ['duplicate'] })
+        expect(dup).toMatchObject({ status: 'proposed', confidence: 0.85 })
+        const spent = (await k.engine.metric('gross_burn', { ...scope, from: '2026-10-01', to: '2026-10-31' })).value
+        expect(spent).toEqual(usd(7_000))
+      })
+
       it('real cash spending stays when the bank shows nothing like it', async () => {
         const bank = await k.account({ entityId: acme })
         await f.writer.apply(entry('expense', 7_000, { counterparty: 'Staples' }), prov())

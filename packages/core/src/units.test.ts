@@ -190,6 +190,14 @@ describe('rules', () => {
     expect(s?.conditions).toMatchObject({ textPatterns: ['*figma*'], direction: 'out', entityIds: [expect.any(String)] })
     expect(() => suggestRules(records, overrides, [], 1)).toThrow(RuleValidationError)
   })
+
+  it('never learns from Aggregate’s own auto-filing, only from answers (audit: U S Dollar → Other income)', () => {
+    const records = [rec('U S Dollar', 50, 'a1'), rec('U S Dollar', 30, 'a2'), rec('U S Dollar', 70, 'a3')]
+    const by = (who: string) => new Map(records.map((r) => [r.id, { recordId: r.id, workspaceId: 'w', category: 'other_income', updatedBy: who, updatedAt: '' }]))
+    expect(suggestRules(records, by('auto:review'), [], 3)).toEqual([])
+    expect(suggestRules(records, by('auto:rule'), [], 3)).toEqual([])
+    expect(suggestRules(records, by('person_1'), [], 3)).toHaveLength(1)
+  })
 })
 
 describe('buckets', () => {

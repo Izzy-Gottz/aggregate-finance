@@ -608,7 +608,7 @@ async function balanceMetric(name: 'cash' | 'card_balances' | 'net_cash', s: Sco
   const hasAny = included.length > 0
   // No account counts as cash: the figure is unknown, never $0 (and runway with it).
   const noCash = !hasAny && name !== 'card_balances'
-  return finish(
+  const answer = await finish(
     s,
     {
       name,
@@ -627,6 +627,22 @@ async function balanceMetric(name: 'cash' | 'card_balances' | 'net_cash', s: Sco
     },
     f.rows,
   )
+  return hasAny && name !== 'card_balances' ? withGaps(answer, await inTransit(s)) : answer
+}
+
+/** Payouts and transfers that left one account and haven't been seen arriving: in neither balance, so not in cash. */
+async function inTransit(s: Scope): Promise<string[]> {
+  const idx = await ledgerAccounts(s.rc, s.entityIds)
+  const bal = await baseBalances(s.rc, s.entityIds, 'cash', s.asOf)
+  let total = 0
+  for (const a of idx.byId.values()) {
+    if (a.role !== 'clearing_payouts' && a.role !== 'clearing_transfers') continue
+    const entity = s.byId.get(a.entityId)
+    const b = bal.get(a.id) ?? 0
+    if (!entity || b <= 0) continue
+    total += (await s.rc.toCurrency({ minor: b, currency: entity.baseCurrency }, s.currency, s.asOf)).minor
+  }
+  return total ? [`${formatMoney(total, s.currency)} in payouts or transfers has left one account and hasn't been seen arriving yet, so it isn't in this figure`] : []
 }
 
 // ---------- Burn, revenue (flows from the P&L) ----------

@@ -150,7 +150,7 @@ export interface RuleSuggestion {
 }
 
 /**
- * Learn from what people and AIs set by hand: when the same merchant + direction got the same
+ * Learn from what people and AIs set by hand (never from Aggregate's own auto-filing): when the same merchant + direction got the same
  * (company, kind, category, bucket) `threshold` times (default 3; the spec allows 2-3), suggest a rule.
  * Skips patterns an existing rule (active, suggested or rejected) already covers.
  */
@@ -166,6 +166,9 @@ export function suggestRules(
     if (r.event.type !== 'txn.upsert') continue
     const o = overrides.get(r.id)
     if (!o) continue
+    // Aggregate's own filing (auto:review, auto:rule ...) is a guess, not an answer: learning from it would turn the guess
+    // into a rule nobody chose, with no amount limit.
+    if (o.updatedBy?.startsWith('auto:')) continue
     // An opening balance happens once for an account: a repeat of it isn't a habit to learn.
     if (o.category === 'opening_balance_equity') continue
     const actions: RuleActions = {}

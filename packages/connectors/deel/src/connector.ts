@@ -83,7 +83,14 @@ function amount(v: unknown, currency: string): number {
   return 0
 }
 
-const FEE_TYPES = /fee|deel_percentage|management/i
+// Deel's own charges and non-pay statements; they can carry a contract_id but aren't anyone's pay.
+const FEE_TYPES = /fee|deel_percentage|management|prepaid_billing|prepaid_funding|expense_card|standalone_payment|it_order/i
+
+/** Deel sends some amounts as "" (e.g. total_payment_currency); treat that as missing, never as 0. */
+const nonEmpty = (v: unknown): unknown => (typeof v === 'string' && v.trim() === '' ? undefined : v)
+
+/** A receipt Aggregate can't read exactly is left out with a sync warning, never stored with a wrong (often $0) amount. */
+const unreadable = (p: Obj, why: string): { warning: string } => ({ warning: `Deel receipt ${str(p.label) ?? str(p.id) ?? ''} was skipped: ${why}.` })
 
 const nextDay = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10)
 
@@ -185,15 +192,17 @@ export function createDeelConnector(opts: DeelOptions): Connector & { authorizat
       const res = await c.request<unknown>({ path: '/payments', query: { date_from: w.from, date_to: nextDay(w.to), ...(state.page ? { cursor: state.page } : {}) } })
       const { items, next: page } = rows(res.data)
       const events: NormalizedEvent[] = []
+      const warnings: string[] = []
       for (const p of items) {
         const run = await toRun(c, p, conn, today)
-        if (run) events.push(run)
+        if (run && 'warning' in run) warnings.push(run.warning)
+        else if (run) events.push(run)
       }
       let next: CursorState | null
       if (page) next = { ...state, page }
       else if (w.next) next = { from: w.next.from, end: w.next.end, mark: w.next.mark }
       else next = null
-      return { events, cursor: codec.encode(next ?? { from: '9999-12-31', end: state.end, mark: state.mark }), hasMore: next !== null, ...(renewed ? { updatedSecret: renewed } : {}) }
+      return { events, cursor: codec.encode(next ?? { from: '9999-12-31', end: state.end, mark: state.mark }), hasMore: next !== null, ...(warnings.length ? { warnings } : {}), ...(renewed ? { updatedSecret: renewed } : {}) }
     },
 
     async health(conn): Promise<ConnectorHealth> {
@@ -212,7 +221,7 @@ export function createDeelConnector(opts: DeelOptions): Connector & { authorizat
     },
   }
 
-  async function toRun(c: HttpClient, p: Obj, conn: ConnectionRef, today: string): Promise<PayrollRun | null> {
+  async function toRun(c: HttpClient, p: Obj, conn: ConnectionRef, today: string): Promise<PayrollRun | { warning: string } | null> {
     const id = str(p.id)
     const paidAt = str(p.paid_at)
     const status = str(p.status)?.toLowerCase()
@@ -223,21 +232,37 @@ export function createDeelConnector(opts: DeelOptions): Connector & { authorizat
     const lines = rows(res.data).items
     const rawRef = await deps.raw.put(conn.id, `${PROVIDER}.payment`, id, { payment: p, breakdown: lines })
 
+    // Read every line first; the receipt total then says whether processing fees sit inside each line's total or on top.
+    const other = lines.map((l) => normalizeCurrency(str(l.payment_currency), currency)).find((cur) => cur !== currency)
+    if (other) return unreadable(p, `a line is in ${other}, the receipt in ${currency}`)
+    const read = lines.map((l) => {
+      // The contract type decides: Deel's API sends worker lines with contract_id null (and sometimes no worker id).
+      // A line is Deel's own only if its type says so, or it has no type, contract or worker at all.
+      const type = str(l.contract_type)
+      const worker = type ? !FEE_TYPES.test(type) : !!(str(l.contract_id) ?? str(l.contractor_unique_identifier))
+      return { l, worker, total: amount(nonEmpty(l.total_payment_currency) ?? l.total, currency), fee: amount(l.processing_fee, currency) }
+    })
+    const companyDebit = amount(p.total, currency)
+    const sumTotals = read.reduce((a, r) => a + r.total, 0)
+    const sumFees = read.reduce((a, r) => a + r.fee, 0)
+    // A receipt that moved no money and paid no one isn't a pay run (Deel's sandbox issues one a day).
+    if (companyDebit === 0 && sumTotals === 0) return null
+    // The lines must add up to the receipt, or the run would show a wrong (often $0) payroll cost.
+    const feesOnTop = sumTotals !== companyDebit && sumFees > 0 && sumTotals + sumFees === companyDebit
+    if (sumTotals !== companyDebit && !feesOnTop) return unreadable(p, `its lines add up to ${(sumTotals / 100).toFixed(2)} and the receipt to ${(companyDebit / 100).toFixed(2)}`)
+
     let gross = 0
     const people: NonNullable<PayrollRun['lines']> = []
-    for (const l of lines) {
-      const isFee = !str(l.contract_id) || FEE_TYPES.test(str(l.contract_type) ?? '')
-      if (isFee) continue
-      const lineCur = normalizeCurrency(str(l.payment_currency), currency)
-      if (lineCur !== currency) continue
-      const total = amount(l.total_payment_currency ?? l.total, currency) - amount(l.processing_fee, currency)
+    for (const { l, worker, total: lineTotal, fee } of read) {
+      if (!worker) continue
+      // Deel's processing fee is Deel's, not the worker's pay.
+      const total = feesOnTop ? lineTotal : lineTotal - fee
       gross += total
       const kind = /eor|employee|global_payroll|gp/i.test(str(l.contract_type) ?? '') ? 'employee' : 'contractor'
       people.push({ person: str(l.contractor_employee_name) ?? str(l.contractor_unique_identifier) ?? 'Worker', gross: { minor: total, currency }, net: { minor: total, currency }, kind })
     }
-    const companyDebit = amount(p.total, currency)
-    // A receipt that moved no money and paid no one isn't a pay run (Deel's sandbox issues one a day).
-    if (companyDebit === 0 && gross === 0) return null
+    // A receipt of only Deel's own fees (a subscription, say) isn't a pay run: its bank debit stays a plain Deel expense.
+    if (!people.length) return null
     const input: Parameters<typeof providerRun>[0] = {
       externalId: id,
       connectionId: conn.id,

@@ -14,6 +14,7 @@ Start with [what Aggregate connects](../connectors.md): every connection, what i
 - [Your company and personal finances in one AI](company-and-personal-finances-in-one-ai.md)
 - [Connecting your finances to AI: common questions](faq.md)
 - [Upload a CSV without counting money twice](upload-csv-statements.md)
+- [Upload a Lyft, DoorDash or Cash App statement (PDF)](upload-earnings-statements-pdf.md)
 
 ## Connect your AI
 
@@ -40,11 +41,12 @@ Agent and assistant apps that take a pasted MCP link:
 |---|---|---|
 | QuickBooks Online | [Guide](connect-quickbooks-to-claude.md) | [Guide](connect-quickbooks-to-chatgpt.md) |
 | Xero | [Guide](connect-xero-to-claude.md) | [Guide](connect-xero-to-chatgpt.md) |
-| Square | [Guide](connect-square-to-claude.md) | |
-| Stripe | [Guide](connect-stripe-to-claude.md) | |
-| Shopify | | [Guide](connect-shopify-to-chatgpt.md) |
-| Bank accounts and cards | [Guide](connect-bank-accounts-to-claude.md) | |
-| Bank statements (CSV, OFX, PDF) | [Guide](connect-bank-statements-to-claude.md) | |
+| BILL | [Guide](connect-bill-to-claude.md) | [Guide](connect-bill-to-chatgpt.md) |
+| Square | [Guide](connect-square-to-claude.md) | [Guide](connect-square-to-chatgpt.md) |
+| Stripe | [Guide](connect-stripe-to-claude.md) | [Guide](connect-stripe-to-chatgpt.md) |
+| Shopify | [Guide](connect-shopify-to-claude.md) | [Guide](connect-shopify-to-chatgpt.md) |
+| Bank accounts and cards | [Guide](connect-bank-accounts-to-claude.md) | [Guide](connect-bank-accounts-to-chatgpt.md) |
+| Bank statements (CSV, OFX, PDF) | [Guide](connect-bank-statements-to-claude.md) | [Guide](connect-bank-statements-to-chatgpt.md) |
 | Deel | [Guide](connect-deel-to-claude.md) | |
 
 Every other combination works the same way: connect the source in Aggregate, then follow the assistant's steps in

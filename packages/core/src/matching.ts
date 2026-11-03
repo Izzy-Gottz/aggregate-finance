@@ -213,8 +213,10 @@ type Push = (p: Proposal) => void
 function sameAccountPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, push: Push): void {
   const accountOf = (r: SourceRecord): SourceAccountInfo | undefined => (r.sourceAccountId ? input.accounts.get(r.sourceAccountId) : undefined)
   const uploaded = (r: SourceRecord): boolean => Boolean(r.sourceAccountId && input.uploadedAccounts?.has(r.sourceAccountId))
-  // Spending typed in as cash can be the bank's own row arriving later: asked about, like an upload.
-  const typedIn = (r: SourceRecord): boolean => r.origin !== 'connector' && accountOf(r)?.accountType === 'cash_on_hand' && (r.amount?.minor ?? 0) < 0
+  // Spending typed in as cash can be the bank's own row arriving later, and so can anything typed onto an account that
+  // syncs: asked about, like an upload.
+  const synced = new Set(txns.filter((t) => t.origin === 'connector').map((t) => t.sourceAccountId))
+  const typedIn = (r: SourceRecord): boolean => r.origin !== 'connector' && ((accountOf(r)?.accountType === 'cash_on_hand' && (r.amount?.minor ?? 0) < 0) || synced.has(r.sourceAccountId))
   const byAccount = new Map<Id, SourceRecord[]>()
   const byEntity = new Map<string, SourceRecord[]>()
   const copies: SourceRecord[] = []

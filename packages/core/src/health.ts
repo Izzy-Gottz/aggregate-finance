@@ -23,6 +23,8 @@ export interface DataHealth {
     missingStatements: number
     /** Accounts with at most one balance, so nothing to compare: not wrong, not proven either. */
     notTiedOut: number
+    /** Warnings shown nowhere else (suspense shows as review, clearing as in transit): a difference that may still settle, a skipped void, a report for a period still open. */
+    openWarnings: number
     /** Checks that passed (so an AI can say "12 checks pass", not only what failed). */
     passedChecks: number
   }
@@ -77,6 +79,7 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   const otherReview = review.filter((r) => r.kind !== 'unexplained_money')
   const warnings = checks.filter((c) => c.status === 'warn').length
   const notTiedOut = checks.filter((c) => c.name === 'balance_identity' && c.status === 'warn' && c.actualMinor === null).length
+  const openWarnings = checks.filter((c) => c.status === 'warn' && c.name !== 'clearing' && c.name !== 'suspense' && !(c.name === 'balance_identity' && c.actualMinor === null)).length
 
   // The same items on every run: checks, sources and months by what they say (review items come in a stable order).
   const byText = <T,>(xs: T[], t: (x: T) => string) => [...xs].sort((a, b) => (t(a) < t(b) ? -1 : t(a) > t(b) ? 1 : 0))
@@ -108,11 +111,13 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   const total = review.length + failed.length + transit.length + stale.length + silent.length + missing.length
   // Nothing for anyone to do, so not a thing that needs a look, but "All reconciled" would claim more than we know.
   const waiting = `${notTiedOut} account${notTiedOut === 1 ? '' : 's'} not tied out yet`
-  const line = total ? `${total} thing${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} a look: ${parts.join(', ')}` : notTiedOut ? `Reconciled except ${waiting}` : 'All reconciled'
+  // An open warning isn't a thing to do yet either, but it isn't "All reconciled".
+  const except = [openWarnings ? `${openWarnings} open warning${openWarnings === 1 ? '' : 's'}` : '', notTiedOut ? waiting : ''].filter(Boolean).join(' and ')
+  const line = total ? `${total} thing${total === 1 ? '' : 's'} need${total === 1 ? 's' : ''} a look: ${parts.join(', ')}` : except ? `Reconciled except ${except}` : 'All reconciled'
   return {
     status: total === 0 ? 'ok' : 'needs_review',
     line: total && notTiedOut ? `${line}. ${waiting[0]?.toUpperCase()}${waiting.slice(1)}` : line,
-    counts: { toReview: review.length, failedChecks: failed.length, warnings, notTiedOut, unmatchedInTransit: transit.length, unexplainedMoneyIn: unexplained.length, staleSources: stale.length + silent.length, missingStatements: missing.length, passedChecks },
+    counts: { toReview: review.length, failedChecks: failed.length, warnings, notTiedOut, openWarnings, unmatchedInTransit: transit.length, unexplainedMoneyIn: unexplained.length, staleSources: stale.length + silent.length, missingStatements: missing.length, passedChecks },
     items: items.slice(0, 10),
   }
 }

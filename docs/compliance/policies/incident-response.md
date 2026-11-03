@@ -66,6 +66,8 @@ notice from a vendor such as Plaid or the host.
    - **Plaid:** email security@plaid.com promptly, as the Plaid Developer Policy requires, for any incident that
      involves Plaid data or Plaid credentials. Target: within 24 hours of confirming it.
      Within 24 hours, or sooner if the Plaid agreement requires.
+   - **Providers whose terms require incident notice:** within the deadline in that provider's terms, 30 days at
+     the latest.
    - **Other providers** whose data or credentials are involved: as their terms require.
    - **Affected customers:** by email, in plain words: what happened, what data, what we did, what they should do.
      Promptly, and as the law requires. That is the public wording on /security and /privacy (approved 2026-11-01). Internal aim: 72 hours from confirming it.

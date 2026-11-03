@@ -29,13 +29,13 @@ Using Claude Code instead? Run `claude mcp add --transport http --scope user agg
 ## Five questions to try
 
 1. *"How much did we sell through Square last month, after fees and refunds?"* (uses `query_transactions`)
-2. *"Which Square payouts have not shown up in the bank yet?"* (uses `list_review_items`)
+2. *"Which Square payouts have not shown up in the bank yet?"* (uses `search_transactions`)
 3. *"How much did Square fees cost us this year?"* (uses `query_transactions`)
 4. *"How much cash do we have across Square and the bank right now?"* (uses `get_overview`)
 5. *"Compare this month's sales with the same month last year."* (uses `query_transactions`)
 
-Claude answers from Aggregate's ledger, where every payment is counted once (a payout and the bank deposit it becomes are
-matched, not added twice) and balances are checked against the source. Each answer can be traced to the records
+Claude answers from Aggregate's ledger, where a payout and the bank deposit it becomes are matched, not added twice (a pair
+it isn't sure of waits in Review for you), and balances are checked against the source. Each answer can be traced to the records
 behind it.
 
 ## Questions people ask
@@ -58,6 +58,7 @@ Square application, or a Square access token.
 ## Related
 
 - [Connect your AI to Aggregate](../connect-your-ai.md): every assistant, plus bots and scripts
+- [Connect Square to ChatGPT](connect-square-to-chatgpt.md)
 - [Prompt recipes](../recipes.md)
 - [How Aggregate compares](README.md#comparisons)
 

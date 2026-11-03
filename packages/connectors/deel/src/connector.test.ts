@@ -134,3 +134,95 @@ describe('deel one-click sign-in (Aggregate’s Deel app)', () => {
     expect(ff.calls.some((c) => new URL(c.url).pathname === '/oauth2/tokens')).toBe(false)
   })
 })
+
+const SANDBOX = JSON.parse(readFileSync(new URL('../fixtures/redacted/sandbox-2026-11.json', import.meta.url), 'utf8')) as { payments: Array<Record<string, unknown>>; breakdown: Record<string, Array<Record<string, unknown>>> }
+
+function sandbox(payments = SANDBOX.payments, breakdown = SANDBOX.breakdown) {
+  const ff = fixtureFetch([
+    { match: (u) => u.pathname.endsWith('/payments'), respond: (url) => ({ json: { data: payments.filter((p) => (p.created_at as string).slice(0, 10) >= (url.searchParams.get('date_from') as string) && (p.created_at as string).slice(0, 10) < (url.searchParams.get('date_to') as string)) } }) },
+    { match: /\/payments\/[^/]+\/breakdown/, respond: (url) => ({ json: { data: breakdown[url.pathname.split('/')[4] as string] ?? [] } }) },
+  ])
+  const connector = createDeelConnector({ deps: { raw: new MemoryRawSink(), fetch: ff.fetch, clock: fakeClock(Date.parse('2026-11-03T12:00:00Z')), random: () => 0.5 } })
+  const conn: ConnectionRef = { id: 'conn_deel', workspaceId: 'ws_1', connectorKey: 'deel', secret: { token: 'tok-test' }, config: { environment: 'sandbox' } }
+  return { connector, conn }
+}
+
+/** Sync to the end, keeping every page's warnings (runSync only returns the events). */
+async function syncAll(connector: ReturnType<typeof sandbox>['connector'], conn: ConnectionRef) {
+  const warnings: string[] = []
+  const { events } = await runSync(connector, conn, null, { onPage: async (page) => void warnings.push(...(page.warnings ?? [])) })
+  return { events, warnings }
+}
+
+describe('deel connector (sandbox-shaped: contract_id null, total_payment_currency "")', () => {
+  it('fixtures are redacted', () => assertRedacted(SANDBOX))
+
+  it('each receipt becomes a run whose worker cost is the receipt total, to the cent', async () => {
+    const { connector, conn } = sandbox()
+    const runs = (await runSync(connector, conn, null)).events as PayrollRun[]
+    assertValidEvents(runs, { connectionId: conn.id })
+    const byId = Object.fromEntries(runs.map((r) => [r.externalId, [r.payDate, r.gross.minor, r.net.minor, r.companyDebit?.minor, r.lines?.length, r.lines?.[0]?.kind]]))
+    expect(byId).toEqual({
+      rcpt_s37: ['2026-10-11', 950_000, 950_000, 950_000, 1, 'contractor'],
+      rcpt_s41: ['2026-09-01', 580_000, 580_000, 580_000, 1, 'contractor'],
+      rcpt_s27: ['2026-07-11', 1_153_800, 1_153_800, 1_153_800, 1, 'contractor'],
+      rcpt_s05: ['2026-06-11', 9_000, 9_000, 9_000, 1, 'contractor'],
+    })
+  })
+
+  it("a receipt whose lines don't add up is skipped with a warning; it never becomes a $0 run", async () => {
+    const p = SANDBOX.payments[0]!
+    const line = { ...SANDBOX.breakdown[p.id as string]![0]!, total: '9000.00' }
+    const { connector, conn } = sandbox([p], { [p.id as string]: [line] })
+    const out = await syncAll(connector, conn)
+    expect(out.events).toHaveLength(0)
+    expect(out.warnings).toEqual(['Deel receipt REC-2026-37 was skipped: its lines add up to 9000.00 and the receipt to 9500.00.'])
+  })
+
+  it("a receipt with no readable lines is skipped with a warning too (it used to read as $0)", async () => {
+    const p = SANDBOX.payments[0]!
+    const { connector, conn } = sandbox([p], { [p.id as string]: [] })
+    const out = await syncAll(connector, conn)
+    expect(out.events).toHaveLength(0)
+    expect(out.warnings[0]).toMatch(/REC-2026-37 was skipped: its lines add up to 0\.00 and the receipt to 9500\.00/)
+  })
+
+  it('a line in another currency than the receipt is no longer dropped silently: the receipt is skipped with a warning', async () => {
+    const p = SANDBOX.payments[0]!
+    const line = { ...SANDBOX.breakdown[p.id as string]![0]!, payment_currency: 'EUR' }
+    const { connector, conn } = sandbox([p], { [p.id as string]: [line] })
+    const out = await syncAll(connector, conn)
+    expect(out.events).toHaveLength(0)
+    expect(out.warnings).toEqual(['Deel receipt REC-2026-37 was skipped: a line is in EUR, the receipt in USD.'])
+  })
+})
+
+describe('deel non-pay lines', () => {
+  it.each(['prepaid_billing', 'expense_card', 'contractor_standalone_payment', 'deel_it_order_statement', 'prepaid_funding_statement'])('a %s line with a contract_id is not worker pay', async (type) => {
+    const p: Record<string, unknown> = { ...SANDBOX.payments[0]!, total: '9600.00' }
+    const work = SANDBOX.breakdown[p.id as string]![0]!
+    const other = { ...work, contract_id: 'ctr_x', contract_type: type, total: '100.00', contractor_unique_identifier: null }
+    const { connector, conn } = sandbox([p], { [p.id as string]: [work, other] })
+    const { events } = await syncAll(connector, conn)
+    expect((events as PayrollRun[]).map((r) => [r.gross.minor, r.companyDebit?.minor])).toEqual([[950_000, 960_000]])
+  })
+})
+
+describe('deel worker vs fee lines (by contract type)', () => {
+  it('a pay-type line with no contract_id and no worker id is still worker pay', async () => {
+    const p = SANDBOX.payments[0]!
+    const line = { ...SANDBOX.breakdown[p.id as string]![0]!, contract_id: null, contractor_unique_identifier: '' }
+    const { connector, conn } = sandbox([p], { [p.id as string]: [line] })
+    const { events } = await syncAll(connector, conn)
+    expect((events as PayrollRun[]).map((r) => [r.gross.minor, r.companyDebit?.minor])).toEqual([[950_000, 950_000]])
+  })
+
+  it('a receipt of only Deel fees is not a payroll run', async () => {
+    const p: Record<string, unknown> = { ...SANDBOX.payments[0]!, total: '49.00' }
+    const fee = { ...SANDBOX.breakdown[p.id as string]![0]!, contract_type: 'deel_percentage_fee', total: '49.00', contractor_unique_identifier: null }
+    const { connector, conn } = sandbox([p], { [p.id as string]: [fee] })
+    const out = await syncAll(connector, conn)
+    expect(out.events).toHaveLength(0)
+    expect(out.warnings).toEqual([])
+  })
+})

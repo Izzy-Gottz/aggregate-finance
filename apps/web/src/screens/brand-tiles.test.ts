@@ -23,7 +23,7 @@ describe('Brand icons', () => {
   })
 
   // Forbidden without written permission, or no usable file. Changing this list means changing ui/brand/README.md first.
-  it.each(['stripe', 'wefunder', 'paddle', 'polar', 'bill', 'quickbooks', 'xero', 'brex', 'gumroad', 'wise', 'appstoreconnect', 'googleplay', 'woocommerce', 'lightspeed', 'sumup', 'adsense', 'pinterest', 'youtube', 'squarespace', 'wix', 'freshbooks', 'patreon', 'harvest'])('%s keeps a letter', (key) => {
+  it.each(['stripe', 'wefunder', 'paddle', 'polar', 'bill', 'quickbooks', 'xero', 'brex', 'gumroad', 'wise', 'appstoreconnect', 'googleplay', 'woocommerce', 'lightspeed', 'sumup', 'adsense', 'pinterest', 'youtube', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix', 'freshbooks', 'patreon', 'harvest'])('%s keeps a letter', (key) => {
     const t = tile(key)
     expect(t.className).not.toContain('brand-')
     expect(t.textContent).not.toBe('')

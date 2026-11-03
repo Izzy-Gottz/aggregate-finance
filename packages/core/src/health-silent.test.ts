@@ -29,6 +29,20 @@ describe.each(backends)('data health: balances never reported (%s)', (backend) =
     expect(h.line).toBe('All reconciled')
   })
 
+  it('a difference that may still settle is an open warning, not "All reconciled"; once it has had time, it needs a look', async () => {
+    k = await makeKit(backend, { now: '2026-10-12T20:00:00.000Z' })
+    const acme = await k.company('Acme')
+    const bank = await k.connection({ entityId: acme, key: 'mercury' })
+    const acc = await k.account({ entityId: acme, connectionId: bank, name: 'Mercury' })
+    await k.engine.post(k.ws, snapshot(acc, '2026-10-09T10:00:00.000Z', 12_000))
+    await k.engine.post(k.ws, snapshot(acc, '2026-10-12T10:00:00.000Z', 13_000))
+    let h = await k.engine.dataHealth(k.ws, [acme])
+    expect([h.status, h.line, h.counts.openWarnings]).toEqual(['ok', 'Reconciled except 1 open warning', 1])
+    k.setNow('2026-10-16T20:00:00.000Z')
+    h = await k.engine.dataHealth(k.ws, [acme])
+    expect([h.status, h.counts.openWarnings, h.counts.failedChecks]).toEqual(['needs_review', 0, 1])
+  })
+
   it('still says what is waiting when other things need a look', async () => {
     k = await makeKit(backend, { now: '2026-10-11T12:00:00.000Z' })
     const acme = await k.company('Acme')

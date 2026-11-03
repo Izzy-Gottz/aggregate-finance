@@ -21,6 +21,18 @@ import { returnHere, recentlyRechecked, forgetRechecked } from '../lib/recheck.t
 import { HttpError, OFFLINE } from '../api/http.ts'
 
 /** Back from an OAuth bank: re-open Link with the same token and the full return URL, then ask which company. */
+/** What "Disconnect and delete its data" takes, counted: accounts, payroll runs, invoices and bills. */
+export function deleteLine(c: Pick<ConnectionSummary, 'accountCount' | 'payrollRunCount' | 'documentCount'>, provider: string): string {
+  const n = (k: number, one: string, many: string) => `${k.toLocaleString('en-US')} ${k === 1 ? one : many}`
+  const parts = [
+    c.accountCount ? `${n(c.accountCount, 'account', 'accounts')} and all ${c.accountCount === 1 ? 'its' : 'their'} transactions` : '',
+    c.payrollRunCount ? n(c.payrollRunCount, 'payroll run', 'payroll runs') : '',
+    c.documentCount ? n(c.documentCount, 'invoice or bill', 'invoices and bills') : '',
+  ].filter(Boolean)
+  const what = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0] ?? 'everything this connection brought in'
+  return `This deletes ${what} from Aggregate. Nothing changes at ${provider}.`
+}
+
 export function PlaidReturnView({ onClose }: { onClose: () => void }) {
   const app = useApp()
   useEffect(() => closePlaidLink, [])
@@ -200,7 +212,7 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
     ${limited || !manages ? null : html`<${ConnectionCompany} c=${c} onMoved=${async () => (reload(), await app.reload())} />`}
     ${c.connectorKey === 'xero' && !limited ? html`<${SharedOrgs} id=${c.id} />` : null}
     ${c.unassigned?.length && !limited ? html`<${ChooseCompanies} accounts=${c.unassigned} onSaved=${async () => (reload(), app.reload())} />` : null}
-    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">${c.connectorKey === 'harvest' ? 'Invoiced in Harvest' : c.connectorKey === 'sumup' ? 'Paid out by SumUp' : c.connectorKey === 'adsense' ? 'Earned on AdSense' : c.connectorKey === 'youtube' ? 'Earned on YouTube' : c.connectorKey === 'pinterest' ? 'Spent on Pinterest ads' : 'Sales reported by the store'}: ${fmt(m, { cents: true })} this month, not counted as ${c.connectorKey === 'pinterest' ? 'an expense' : 'revenue'}</p>`)}
+    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">${c.connectorKey === 'harvest' ? 'Invoiced in Harvest' : c.connectorKey === 'sumup' ? 'Paid out by SumUp' : c.connectorKey === 'adsense' ? 'Earned on AdSense' : c.connectorKey === 'youtube' ? 'Earned on YouTube' : c.connectorKey === 'pinterest' ? 'Spent on Pinterest ads' : c.connectorKey === 'ownerrez' ? 'Collected in OwnerRez' : c.connectorKey === 'whop' ? 'Net in Whop' : c.connectorKey === 'mollie' ? 'Net from sales in Mollie' : 'Sales reported by the store'}: ${fmt(m, { cents: true })} this month, not counted as ${c.connectorKey === 'pinterest' ? 'an expense' : 'revenue'}</p>`)}
     ${!c.accounts.length && !needsReconnect
       ? html`<p class="sub" style="margin-top:16px">${c.status === 'syncing'
           ? 'Bringing in your data. The first import can take a few minutes.'
@@ -225,7 +237,7 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
         ? html`<${LinkButton} onClick=${() => setConfirm('keep')}>${DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect'}</${LinkButton}>${c.erasesOnDisconnect ? null : html`<${LinkButton} danger onClick=${() => setConfirm('delete')}>Disconnect and delete its data</${LinkButton}>`}`
         : html`<div class="confirm" role="alert" ref=${confirmBox}>
             <p class="name">${confirm === 'keep' ? `Disconnect ${provider}?` : `Delete ${provider}’s data?`}</p>
-            <p class="sub">${confirm === 'keep' ? (c.erasesOnDisconnect === 'always' ? 'Its data will be deleted.' : c.erasesOnDisconnect === 'maybe' ? 'Its data may be deleted when you do.' : 'We stop syncing. What already synced stays.') : `This deletes ${c.accountCount} ${c.accountCount === 1 ? 'account' : 'accounts'} and all their transactions from Aggregate. Your bank isn’t affected.`}</p>
+            <p class="sub">${confirm === 'keep' ? (c.erasesOnDisconnect === 'always' ? 'Its data will be deleted.' : c.erasesOnDisconnect === 'maybe' ? 'Its data may be deleted when you do.' : 'We stop syncing. What already synced stays.') : deleteLine(c, provider)}</p>
             <div class="formrow"><${Button} danger onClick=${() => disconnect(confirm === 'delete')}>${confirm === 'keep' ? (DISCONNECT_WORDS[c.connectorKey] ?? 'Disconnect') : 'Delete'}</${Button}><${Button} quiet onClick=${() => setConfirm(null)}>Cancel</${Button}></div>
           </div>`}
     </div>
@@ -257,7 +269,7 @@ const CONNECT_WORDS: Record<string, string> = { xero: 'Connect to Xero', quickbo
 const DISCONNECT_WORDS: Record<string, string> = { xero: 'Disconnect from Xero', quickbooks: 'Disconnect from QuickBooks' }
 
 const GROUPS: Array<{ group: ConnectorGroup; title: string; sub: string }> = [
-  { group: 'banks', title: 'Banks and cards', sub: 'Every US bank and card, through Plaid. You sign in with your bank, not with us.' },
+  { group: 'banks', title: 'Banks and cards', sub: 'Through Plaid, Aggregate can connect to thousands of US banks and financial institutions. You sign in with your bank, not with us.' },
   { group: 'payments', title: 'Payments', sub: 'Charges, payouts and fees' },
   { group: 'spend', title: 'Spend platforms', sub: 'Read-only tokens' },
   { group: 'accounting', title: 'Accounting and invoices', sub: 'Invoices, bills and your books' },
@@ -295,10 +307,50 @@ export function ConnectView({ connectorKey, entityId, onClose, onBack }: { conne
             ? html`<${Row} icon=${html`<${SourceTile} connectorKey=${c.key} />`} name=${c.name} line=${needsLine(c)} right=${html`<${Button} quiet onClick=${() => app.push({ kind: 'connect', key: c.key })} label=${'Set up ' + c.name}>Set up</${Button}>`} />`
             : html`<${Row} icon=${html`<${SourceTile} connectorKey=${c.key} plaidMark />`} name=${c.beta ? html`${c.name} <span class="pill">Beta</span>` : c.key === 'plaid' ? 'Bank, card or brokerage' : c.name} line=${c.freshness} right=${html`<${Button} quiet=${!connected && c.key !== 'plaid'} onClick=${() => app.push(c.key === 'files' ? { kind: 'add', what: 'upload' } : { kind: 'connect', key: c.key })} label=${'Connect ' + c.name}>${c.auth === 'file' ? 'Upload' : 'Connect'}</${Button}>`} />`,
         )}</${Rows}>
+        ${group === 'banks' && items.some((c) => c.key === 'plaid' && !needsSetup(c)) ? html`<${InstitutionSearch} />` : null}
       </${Section}>`
     })}
     ${all ? html`<p class="meta" style="margin-top:24px">Logos belong to their owners and are shown only to identify services you can connect. No endorsement implied.</p>` : null}
   </${Drawer}>`
+}
+
+/** The docs page's "Banks and institutions" search (docs-institutions.ts), behind a +. Names from Plaid's public file. */
+interface InstitutionData { names: string[]; flags: string; groups: Array<{ bit: number; label: string; top?: string[]; lead?: string; notLead?: string }> }
+function InstitutionSearch() {
+  const [open, setOpen] = useState(false)
+  const [data, setData] = useState<InstitutionData | null | 'failed'>(null)
+  const [q, setQ] = useState('')
+  const [bit, setBit] = useState(0)
+  useEffect(() => {
+    if (!open || data) return
+    fetch('/assets/institutions.json').then((r) => (r.ok ? r.json() : Promise.reject())).then((j: InstitutionData) => setData(j), () => setData('failed'))
+  }, [open])
+  if (!open) return html`<${PlusAction} onClick=${() => setOpen(true)}>Find your bank or institution</${PlusAction}>`
+  if (data === 'failed') return html`<p class="sub" style="margin-top:12px">The list didn’t load. Choose your bank in Plaid instead.</p>`
+  if (!data) return html`<p class="sub" aria-busy="true" style="margin-top:12px">Loading the list…</p>`
+  const term = q.trim().toLowerCase()
+  const has = (i: number) => !bit || (parseInt(data.flags[i] ?? '0', 16) & bit) !== 0
+  const hits = term.length < 2 && !bit ? [] : data.names.filter((n, i) => has(i) && (term.length < 2 || n.toLowerCase().includes(term)))
+  // Same order as the docs page (orderHits in docs-institutions.ts): query start, then the group's top names, its obvious names, A–Z.
+  const g = data.groups.find((x) => x.bit === bit)
+  const top = g?.top ?? []
+  const lead = g?.lead ? new RegExp(g.lead, 'i') : null
+  const not = g?.notLead ? new RegExp(g.notLead, 'i') : null
+  const rank = (n: string) => (term && n.toLowerCase().startsWith(term) ? 0 : 3) + (top.includes(n) ? 0 : lead && lead.test(n) && !not?.test(n) ? 1 : 2)
+  const shown = hits.map((n, i) => [rank(n), top.includes(n) ? top.indexOf(n) : i, n] as const).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map((x) => x[2]).slice(0, 20)
+  // As on the docs page: over 1,000 rounds down to hundreds, small groups are exact.
+  const count = (b: number) => { const n = [...data.flags].filter((f) => parseInt(f, 16) & b).length; return n >= 1000 ? `over ${(Math.floor(n / 100) * 100).toLocaleString('en-US')}` : String(n) }
+  return html`<div class="institutions" style="margin-top:12px">
+    <div class="instchips" role="group" aria-label="Institution type">
+      <button type="button" aria-pressed=${bit === 0} onClick=${() => setBit(0)}>All</button>
+      ${data.groups.map((g) => html`<button type="button" aria-pressed=${bit === g.bit} onClick=${() => setBit(g.bit)}>${g.label} · ${count(g.bit)}</button>`)}
+    </div>
+    <label class="sr" for="inst-q">Institution name</label>
+    <input id="inst-q" class="input" type="search" placeholder="Institution name" autocomplete="off" spellcheck=${false} value=${q} onInput=${(e: Event) => setQ((e.target as HTMLInputElement).value)} style="margin:10px 0 4px" />
+    <p class="meta" role="status">${!hits.length ? (term.length >= 2 || bit ? 'Not on the list. You can still upload statements.' : '') : hits.length > 20 ? `First 20 of ${hits.length.toLocaleString('en-US')}. Type a name to narrow it.` : hits.length === 1 ? '1 match.' : `${hits.length} matches.`}</p>
+    ${shown.length ? html`<ul class="instlist">${shown.map((n) => html`<li>${n}</li>`)}</ul>` : null}
+    <p class="meta">From Plaid’s public coverage file. Listed means supported by Plaid, not that a given account will connect. Being listed doesn’t mean an institution endorses Aggregate.</p>
+  </div>`
 }
 
 const needsLine = (c: Connector) => (c.key === 'plaid' ? 'With your own Plaid account' : `Needs your own ${c.name} app`)

@@ -541,7 +541,7 @@ async function clearingAndSuspense(rc: ReadContext, entities: EntityInfo[], asOf
 const PROVIDER_NAMES: Record<string, string> = { quickbooks: 'QuickBooks', xero: 'Xero', freshbooks: 'FreshBooks' }
 
 /** Figures a store or invoicing tool reports, stored as report snapshots: not a company's books, so never compared with the ledger's P&L. */
-const NOT_BOOKS = new Set(['woocommerce', 'harvest', 'lightspeed', 'sumup', 'adsense', 'youtube', 'pinterest', 'squarespace', 'wix'])
+const NOT_BOOKS = new Set(['woocommerce', 'harvest', 'lightspeed', 'sumup', 'adsense', 'youtube', 'pinterest', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix'])
 
 /** Records that put amounts on a P&L outside bank feeds (books, billing and payroll sources). */
 const BOOKED_TYPES = ['invoice.upsert', 'credit_note.upsert', 'payment.applied', 'payroll.run', 'journal.upsert', 'equity.event']

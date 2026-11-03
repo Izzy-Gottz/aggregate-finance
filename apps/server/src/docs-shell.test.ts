@@ -24,8 +24,8 @@ async function withApp(run: (app: ReturnType<typeof createApp>) => Promise<void>
 describe('the connections page', () => {
   const names = hostedConnections(md).flatMap((s) => s.rows.map((r) => r.name))
 
-  it('lists exactly the 18 hosted connections the homepage counts, never Xero', () => {
-    expect(names).toHaveLength(18)
+  it('lists exactly the 17 hosted connections the homepage counts, never Xero', () => {
+    expect(names).toHaveLength(17)
     expect(names).not.toContain('Xero')
     expect(names).toEqual(expect.arrayContaining(['Plaid', 'Stripe', 'QuickBooks Online', 'Wefunder', 'Google Play']))
   })
@@ -37,6 +37,13 @@ describe('the connections page', () => {
     expect(html).toContain('>S</span><b>Stripe</b>')
     expect(html).toContain('Logos belong to their owners')
     expect(html).not.toMatch(/Xero/)
+  })
+
+  it('puts the Stripe Partner badge under the list, and Stripe keeps its letter tile', () => {
+    const html = connectionsBody(md, renderMarkdown, { 'Stripe Partner badge': 'data:image/png;base64,BB' })
+    expect(html).toContain('Aggregate is a Stripe partner.<img src="data:image/png;base64,BB" alt="Stripe Partner"')
+    expect(html).toContain('>S</span><b>Stripe</b>')
+    expect(html).not.toMatch(/official|certified/i)
   })
 })
 

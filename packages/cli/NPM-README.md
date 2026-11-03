@@ -11,6 +11,17 @@ It finds Claude Code, Codex CLI, Cursor, VS Code, Windsurf, Gemini CLI, Zed and 
 and applies it with `--yes` (backing up each file it edits). Running your own server? Pass `--url https://<your-server>/mcp`.
 Installed globally (`npm i -g aggregate-finance`), the command is `agfn`.
 
+## Add it by hand
+
+Most AI apps can use the hosted server directly. You sign in with OAuth, and no key is needed:
+
+```sh
+claude mcp add --transport http aggregate https://app.aggregate.finance/mcp
+```
+
+The local `npx aggregate-finance mcp` bridge is only for clients that can't use a remote server, and it **needs an
+agent key** in `AGFN_KEY`. Without one it fails to sign in. See [Bots and scripts](#bots-and-scripts) below.
+
 ## Try it with sample data
 
 ```sh

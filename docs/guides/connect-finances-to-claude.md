@@ -39,7 +39,7 @@ The Claude mobile apps use connectors added on the web or desktop. Using Claude 
 ## Questions to try
 
 1. *"How much cash do we have, and how many months of runway?"* (uses `get_metric`)
-2. *"Did every Stripe payout this month land in the bank?"* (uses `list_review_items`)
+2. *"Did every Stripe payout this month land in the bank?"* (uses `search_transactions`)
 3. *"What is our MRR, and how much came from new customers vs. churn last month?"* (uses `get_mrr_movements`)
 4. *"Which invoices are overdue, and who owes us the most?"* (uses `query_invoices`)
 5. *"What was our profit and loss last quarter?"* (uses `get_reports`)
