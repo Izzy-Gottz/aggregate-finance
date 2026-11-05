@@ -1,0 +1,25 @@
+{
+  "name": "aggregate",
+  "version": "0.1.0",
+  "description": "All your companies' money in one double-entry ledger — cash, runway, invoices, bills, payroll, cap table — built from your banks, Stripe and more. Read-only unless you allow writes; records money, never moves it. OAuth connect. Open source, free during beta.",
+  "author": {
+    "name": "Aggregate",
+    "email": "support@aggregate.finance"
+  },
+  "homepage": "https://aggregate.finance",
+  "repository": "https://github.com/Izzy-Gottz/aggregate-finance",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "finance",
+    "accounting",
+    "bookkeeping",
+    "ledger",
+    "runway",
+    "invoices",
+    "payroll",
+    "mcp",
+    "oauth",
+    "remote-mcp"
+  ],
+  "logo": "openai-plugin/assets/logo.png"
+}
