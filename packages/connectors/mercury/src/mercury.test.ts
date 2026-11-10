@@ -84,12 +84,19 @@ describe('mercury mapping', () => {
       counterparty: 'Blue Bottle', rawText: 'BLUE BOTTLE COFFEE OAKLAND CA', categoryHint: 'debitCardTransaction', linkRefs: { card_id: 'card_debit_1' },
     })
     expect(txn(events, 'txn_wire_in')).toMatchObject({ amount: { minor: 1000000 }, counterparty: 'Customer Co', rawText: 'WIRE IN CUSTOMER CO REF INV-1001 | Invoice 1001' })
+    // Mercury's postedAt/createdAt are real instants: carried as `at` so the engine dates the row in the workspace tz.
+    expect(txn(events, 'txn_card')!.at).toMatch(/^2026-10-02T\d\d:\d\d/)
     expect(txn(events, 'txn_xfer_out')).toMatchObject({ amount: { minor: -250000 }, linkRefs: { counterparty_account: 'acc_savings' } })
     expect(txn(events, 'txn_xfer_out')?.linkRefs?.transfer).toBeUndefined()
     expect(txn(events, 'txn_xfer_in')).toMatchObject({ accountExternalId: 'acc_savings', amount: { minor: 250000 } })
     expect(txn(events, 'txn_pending')).toMatchObject({ status: 'pending', date: '2026-09-20', amount: { minor: -10050 }, rawText: 'September services | INV 77' })
     expect(txn(events, 'txn_cc')).toMatchObject({ accountExternalId: 'cred_io', amount: { minor: -1999 }, date: '2026-10-06' })
     expect(txn(events, 'txn_failed')?.status).toBe('void')
+  })
+
+  it('a persistent 5xx on a transactions page fails the whole pass — no partial posted as complete', async () => {
+    const { connector } = make([{ match: (u) => /^\/api\/v1\/account\/[^/]+\/transactions$/.test(u.pathname), respond: { status: 503, json: { message: 'down' } } }])
+    await expect(runSync(connector, conn, null)).rejects.toMatchObject({ kind: 'transient' })
   })
 
   it('next cycle re-reads from the oldest pending row (or the overlap)', async () => {
@@ -356,5 +363,13 @@ describe('mercury disconnect', () => {
     const { connector, calls } = make([revoke(200, {})], app)
     await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Settings → Tokens') })
     expect(calls.filter((c) => c.url.endsWith('/oauth2/revoke'))).toHaveLength(0)
+  })
+})
+
+
+describe('mercury pagination completeness: a partial account list never passes as complete', () => {
+  it('an account list that never stops paging fails visibly instead of returning a partial list', async () => {
+    const { connector } = make([{ match: (u) => u.pathname === '/api/v1/accounts', respond: { json: { accounts: [], page: { nextPage: 'p' } } } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow(/page through/)
   })
 })

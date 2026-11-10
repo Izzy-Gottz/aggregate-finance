@@ -7,6 +7,8 @@ export interface Io {
   err(line: string): void
   /** One line typed by the person; absent when nobody is at a terminal (commands then need an explicit flag). */
   ask?(question: string): Promise<string>
+  /** All of standard input, for a secret a command must not take on the command line; absent at a bare terminal. */
+  readStdin?(): Promise<string>
 }
 
 export const processIo = (): Io => ({
@@ -26,7 +28,15 @@ export const processIo = (): Io => ({
           }
         },
       }
-    : {}),
+    : {
+        // Only when input is piped or redirected (not a bare terminal, where this would hang waiting for input).
+        readStdin: async () => {
+          process.stdin.setEncoding('utf8')
+          let data = ''
+          for await (const chunk of process.stdin) data += chunk
+          return data
+        },
+      }),
 })
 
 /** A usage or input problem: printed without a stack trace, exit code 2. */

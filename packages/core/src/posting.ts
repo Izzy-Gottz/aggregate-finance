@@ -25,6 +25,7 @@ import { BILL_BALANCE_SHEET_ROLES, cashRole, defineRole, isExpenseRole, isFixedR
 import type { Basis, EntityInfo, Link, RecordOverride, SourceAccountInfo, SourceRecord } from './model.ts'
 import { allocate } from './money.ts'
 import type { RuleResult } from './rules.ts'
+import { knownVendorRole } from './known-vendors.ts'
 
 /** A planned line. `amount` is signed: positive = debit, negative = credit. */
 export interface PlannedLine {
@@ -267,8 +268,11 @@ export function classifyTxn(ctx: Pick<PlanContext, 'record' | 'override' | 'rule
   // Crypto bought or sold from an exchange's cash wallet (Coinbase): the money became, or came back from, crypto still
   // owned. Other assets, at what was paid: not spending or income. The crypto itself is shown as holdings, never posted.
   if (!kindGiven && ev.categoryHint === 'CRYPTO_TRADE') return { kind: 'other', counterRole: 'other_assets', bucketId, forEntityId, ownerEntityId, defaulted: false }
+  // A vendor known by name (Fly.io, AWS, GitHub…) books to its own kind of spending whatever the provider guessed
+  // (Plaid has read FLY.IO as an airline). It never decides whether money is spending: see known-vendors.ts.
+  const vendor = knownVendorRole(ev)
   const refundHint = inflow && !kindGiven ? refundHintRole(ev.categoryHint) : null
-  if (refundHint) return { kind: 'refund', counterRole: refundHint, bucketId, forEntityId, ownerEntityId, defaulted: false }
+  if (refundHint) return { kind: 'refund', counterRole: vendor ?? refundHint, bucketId, forEntityId, ownerEntityId, defaulted: false }
   const kind: TxnKind = kindGiven ?? (inflow ? 'other' : 'expense')
   const { role, defaulted } = roleForKind(kind, inflow, {
     ownerEntityId,
@@ -276,7 +280,7 @@ export function classifyTxn(ctx: Pick<PlanContext, 'record' | 'override' | 'rule
     entityId,
     hasCard: ctx.entityHasCard(entityId),
     hasProcessor: ctx.entityHasProcessor(entityId),
-    hint: inflow ? null : hintRole(ev.categoryHint),
+    hint: inflow ? null : (vendor ?? hintRole(ev.categoryHint)),
   })
   return { kind: kindGiven ?? (role === 'suspense' ? 'other' : kind), counterRole: role, bucketId, forEntityId, ownerEntityId, defaulted }
 }
@@ -415,7 +419,7 @@ async function planTxn(ctx: PlanContext, ev: TxnUpsert, view: Basis): Promise<Pl
     pieces.push(...classifiedPieces(ctx, cls, cashSide, remaining, cur, memo))
     kind ??= cls.kind
   }
-  return entries(ctx, ev.date, kind ?? cls.kind, memo, pieces)
+  return entries(ctx, ctx.record.date, kind ?? cls.kind, memo, pieces)
 }
 
 interface LinkedPieces {
@@ -625,14 +629,16 @@ function planInvoice(ctx: PlanContext, inv: InvoiceUpsert, view: Basis): Planned
     lines.push(line('ap', -total, cur, { memo }))
     lines.push(...billExpenseLines(inv, ctx.override, total, cur, memo))
   }
-  const out = entries(ctx, inv.issueDate, inv.direction === 'receivable' ? 'revenue' : 'expense', memo, [{ entityId: ctx.entity.id, lines }])
+  // record.date is the business date in the workspace tz (= issueDate unless the connector gave a real `at`); keep the
+  // ledger, matching and the invoice view on the one date.
+  const out = entries(ctx, ctx.record.date, inv.direction === 'receivable' ? 'revenue' : 'expense', memo, [{ entityId: ctx.entity.id, lines }])
   if (inv.status === 'uncollectible') {
     const remaining = total - inv.amountPaid.minor
     if (remaining > 0) {
       const wo = inv.direction === 'receivable'
         ? [line('bad_debt', remaining, cur, { memo }), line('ar', -remaining, cur, { memo })]
         : [line('ap', remaining, cur, { memo }), line('other_income', -remaining, cur, { memo })]
-      out.push(...entries(ctx, inv.dueDate ?? inv.issueDate, 'expense', `Written off: ${memo ?? ''}`.trim(), [{ entityId: ctx.entity.id, lines: wo }]))
+      out.push(...entries(ctx, inv.dueDate ?? ctx.record.date, 'expense', `Written off: ${memo ?? ''}`.trim(), [{ entityId: ctx.entity.id, lines: wo }]))
     }
   }
   return out
@@ -684,15 +690,17 @@ function planCreditNote(ctx: PlanContext, cn: CreditNoteUpsert, view: Basis): Pl
   const memo = cn.number ?? null
   const counter =
     cn.appliedTo === 'refund' ? 'clearing_unmatched_receipts' : cn.appliedTo === 'customer_credit' ? 'customer_deposits' : cn.direction === 'receivable' ? 'ar' : 'ap'
-  // A customer credit gives back revenue net of sales tax, and the tax itself (as planInvoice credited it).
-  const tax = cn.direction === 'receivable' ? (cn.tax?.minor ?? 0) : 0
-  if (cn.direction === 'receivable' && cn.tax && (cn.tax.currency !== cur || tax < 0 || tax > Math.abs(a))) {
+  // A customer credit gives back revenue net of sales tax, and the tax itself (as planInvoice credited it). A supplier
+  // credit with tax (Xero, whose bills put their tax on the tax account) takes back the expense net of tax, and the tax.
+  const tax = cn.tax?.minor ?? 0
+  if (cn.tax && (cn.tax.currency !== cur || tax < 0 || tax > Math.abs(a))) {
     throw new PostingError(`Credit note ${cn.externalId}: tax ${tax} ${cn.tax.currency} outside 0..amount`)
   }
+  const taxLine = tax ? [line('sales_tax_payable', cn.direction === 'receivable' ? tax : -tax, cur, { memo })] : []
   const lines =
     cn.direction === 'receivable'
-      ? [line('revenue', a - tax, cur, { memo }), ...(tax ? [line('sales_tax_payable', tax, cur, { memo })] : []), line(counter, -a, cur, { memo })]
-      : [line(counter === 'customer_deposits' ? 'prepaid' : counter, a, cur, { memo }), line('uncategorized_expense', -a, cur, { memo })]
+      ? [line('revenue', a - tax, cur, { memo }), ...taxLine, line(counter, -a, cur, { memo })]
+      : [line(counter === 'customer_deposits' ? 'prepaid' : counter, a, cur, { memo }), line('uncategorized_expense', -(a - tax), cur, { memo }), ...taxLine]
   return entries(ctx, cn.date, 'refund', memo, [{ entityId: ctx.entity.id, lines }])
 }
 
@@ -704,7 +712,7 @@ export function payrollAccrues(run: PayrollRun): boolean {
 function planPayroll(ctx: PlanContext, run: PayrollRun, view: Basis): PlannedEntry[] {
   if (view === 'cash' || !payrollAccrues(run)) return []
   const cur = run.gross.currency
-  const memo = `Payroll ${run.payDate}`
+  const memo = `Payroll ${ctx.record.date}`
   const benefits = run.employerBenefits?.minor ?? 0
   const lines = [
     line('payroll_expense', run.gross.minor, cur, { memo }),
@@ -712,7 +720,7 @@ function planPayroll(ctx: PlanContext, run: PayrollRun, view: Basis): PlannedEnt
     line('payroll_benefits', benefits, cur, { memo }),
     line('payroll_liabilities', -(run.gross.minor + run.employerTaxes.minor + benefits), cur, { memo }),
   ]
-  return entries(ctx, run.payDate, 'payroll', memo, [{ entityId: ctx.entity.id, lines }])
+  return entries(ctx, ctx.record.date, 'payroll', memo, [{ entityId: ctx.entity.id, lines }])
 }
 
 /** A journal from the books posts as given, on both bases: validation already kept it off money accounts. */

@@ -23,6 +23,10 @@
     "@agfn/connector-whop": "*",
     "@agfn/connector-mollie": "*",
     "@agfn/connector-wix": "*",
+    "@agfn/connector-bigcommerce": "*",
+    "@agfn/connector-amazon": "*",
+    "@agfn/connector-etsy": "*",
+    "@agfn/connector-zeffy": "*",
     "@agfn/connector-sumup": "*",
     "@agfn/core": "*",
     "@agfn/demo": "*",
@@ -37,12 +41,14 @@
     "@resvg/resvg-wasm": "2.6.2",
     "hono": "^4.13.13",
     "kysely": "^0.29.6",
-    "nodemailer": "~10.1.4",
+    "nodemailer": "~10.4.0",
     "satori": "0.33.5"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.3.1",
-    "@types/nodemailer": "^8.0.2"
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1"
   },
   "exports": {
     "./boot": "./src/boot.ts",
@@ -55,10 +61,12 @@
     "./challenge/qa-player": "./src/challenge/qa-player.ts",
     "./challenge/reset": "./src/challenge/reset.ts",
     "./creator-links": "./src/creator-links.ts",
+    "./delete-account": "./src/delete-account.ts",
     "./free-grants": "./src/free-grants.ts",
     "./glass-ledger": "./src/glass-ledger.ts",
     "./prelaunch-wipe": "./src/prelaunch-wipe.ts",
     "./orphans": "./src/orphans.ts",
-    "./plaintext": "./src/plaintext.ts"
+    "./plaintext": "./src/plaintext.ts",
+    "./connection-requests": "./src/connection-requests.ts"
   }
 }

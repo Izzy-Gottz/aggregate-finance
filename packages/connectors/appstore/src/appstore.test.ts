@@ -85,7 +85,7 @@ describe('appstore mapping', () => {
     const t = (id: string) => find<ProcessorBalanceTxn>(events, 'processor.balance_txn', id)
     expect(t('2026-07:USD:US:S')).toMatchObject({
       kind: 'charge', accountExternalId: 'appstore:85000001:USD', gross: { minor: 910, currency: 'USD' }, fee: { minor: 0 }, net: { minor: 910 },
-      at: '2026-08-01T00:00:00.000Z',
+      at: '2026-08-01T12:00:00.000Z',
     })
     expect(t('2026-07:USD:US:R')).toMatchObject({ kind: 'refund', net: { minor: -70 } })
     expect(t('2026-07:USD:MX:S')?.net.minor).toBe(280)
@@ -100,6 +100,17 @@ describe('appstore mapping', () => {
     expect(calls[0]!.headers.authorization).toMatch(/^Bearer [\w-]+\.[\w-]+\.[\w-]+$/)
     // One token reused across the sync.
     expect(new Set(calls.map((c) => c.headers.authorization)).size).toBe(1)
+  })
+
+  it('a fiscal-period payout does not roll back a day in a Western-timezone workspace (date-only end anchored at midday UTC)', async () => {
+    const { events } = await runSync(make().connector, conn, null)
+    const at = find<ProcessorBalanceTxn>(events, 'processor.balance_txn', '2026-07:USD:US:S')!.at
+    // The engine dates this event as localDate(at, workspaceTz). Midday UTC keeps it on the fiscal endDate for any
+    // Americas/Europe workspace; T00:00:00Z would land on the day before (the bug this guards).
+    const dayIn = (tz: string) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(at))
+    expect(dayIn('America/New_York')).toBe('2026-08-01')
+    expect(dayIn('America/Los_Angeles')).toBe('2026-08-01')
+    expect(dayIn('UTC')).toBe('2026-08-01')
   })
 
   it('a 404 for the latest month means "not published yet": stop and keep the cursor', async () => {

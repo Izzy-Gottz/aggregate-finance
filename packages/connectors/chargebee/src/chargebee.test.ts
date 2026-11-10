@@ -108,13 +108,15 @@ describe('chargebee MRR accuracy (independent answers, to the cent)', () => {
     expect(m.get('sub_charge')?.items?.map((i) => i.priceExternalId)).toEqual(['sub_charge-plan'])
   })
 
-  it('later syncs ask only for what changed since the newest update seen', async () => {
+  it('later syncs ask for what changed since the newest update seen, minus an overlap so a late-visible change at the boundary is not missed', async () => {
     const { connector, calls } = make()
     const first = await runSync(connector, conn, null)
     calls.length = 0
     await runSync(connector, conn, first.cursor)
     const u = new URL(calls[0]!.url)
-    expect(u.searchParams.get('updated_at[after]')).toBe(String(1_767_225_600 + 19 - 1))
+    // Newest updated_at seen was 1_767_225_600 + 19; the next sync re-reads 300s before it (not 1s), so a subscription
+    // whose change becomes visible just after the cursor passed its second is still caught.
+    expect(u.searchParams.get('updated_at[after]')).toBe(String(1_767_225_600 + 19 - 300))
     expect(u.searchParams.get('include_deleted')).toBe('true')
     expect(u.searchParams.get('sort_by[asc]')).toBe('updated_at')
   })

@@ -9,8 +9,8 @@
 #   AUTH_SECRET                      signs sessions (npm run keygen)
 #   AGFN_MASTER_KEY                  encrypts provider tokens and backups (npm run keygen). Keep a copy OFF Fly too:
 #                                    without it, backups cannot be restored. (Or AGFN_MASTER_KEY_COMMAND, see docs.)
-#   DATABASE_URL                     Neon: postgres://…@…neon.tech/aggregate?sslmode=require (the pooled host is fine:
-#                                    PgBouncer session mode; see docs/security/rls.md about transaction mode)
+#   DATABASE_URL                     Neon: postgres://…@…neon.tech/aggregate?sslmode=require (the DIRECT host, never
+#                                    "-pooler": row-level security needs session state; boot refuses a pooler. docs/security/rls.md)
 #   SMTP_URL                         smtps://resend:<RESEND_API_KEY>@smtp.resend.com:465
 #   RESEND_WEBHOOK_SECRET            whsec_… (email-in webhook signing secret)
 #   RESEND_API_KEY                   re_… with access to received emails (email-in)

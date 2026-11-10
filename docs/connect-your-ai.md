@@ -59,8 +59,8 @@ each client it finds and applies it with `--yes` (backing up each file first); o
 
 ## Bots and scripts (no browser sign-in)
 For a WhatsApp/iMessage bot, a scheduled script or your own agent:
-1. In **Connect your AI**, choose **+ Connect another AI → Create a key**, pick what it can see, and copy the key
-   (`agfn_live_…`). It's shown once and must have an expiry.
+1. In **Connect your AI**, choose **+ Connect another AI → A key for a bot**, name it, choose **Make a key** and copy it
+   (`agfn_live_…`). It's shown once. It starts read only, for all companies, for 90 days; you can change that after.
 2. Give it to your bot as the environment variable `AGFN_KEY`. Never paste keys into a chat.
 3. Remote MCP: send `Authorization: Bearer $AGFN_KEY` to your Aggregate link. Local stdio bridge:
    ```sh

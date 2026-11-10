@@ -53,7 +53,11 @@ function checkDate(v: string | undefined, field: string, required = true): void 
   if (typeof v !== 'string' || !DATE.test(v) || Number.isNaN(Date.parse(`${v}T00:00:00Z`))) throw new EventValidationError(`${field} must be YYYY-MM-DD`)
 }
 
-function checkTs(v: string, field: string): void {
+function checkTs(v: string | undefined, field: string, required = true): void {
+  if (v === undefined) {
+    if (required) throw new EventValidationError(`${field} is required`)
+    return
+  }
   if (typeof v !== 'string' || !TS.test(v) || Number.isNaN(Date.parse(v))) throw new EventValidationError(`${field} must be an ISO 8601 timestamp`)
 }
 
@@ -72,6 +76,7 @@ export function validateEvent(ev: NormalizedEvent): void {
       return
     case 'txn.upsert':
       checkDate(ev.date, 'date')
+      checkTs(ev.at, 'at', false)
       checkMoney(ev.amount, 'amount')
       if (!['pending', 'posted', 'void'].includes(ev.status)) throw new EventValidationError('status must be pending|posted|void')
       return
@@ -83,6 +88,7 @@ export function validateEvent(ev: NormalizedEvent): void {
       return
     case 'invoice.upsert':
       checkDate(ev.issueDate, 'issueDate')
+      checkTs(ev.at, 'at', false)
       checkDate(ev.dueDate, 'dueDate', false)
       checkMoney(ev.total, 'total')
       checkMoney(ev.amountPaid, 'amountPaid')
@@ -92,6 +98,7 @@ export function validateEvent(ev: NormalizedEvent): void {
       return
     case 'payroll.run':
       checkDate(ev.payDate, 'payDate')
+      checkTs(ev.at, 'at', false)
       checkMoney(ev.gross, 'gross')
       checkMoney(ev.employerTaxes, 'employerTaxes')
       checkMoney(ev.net, 'net')

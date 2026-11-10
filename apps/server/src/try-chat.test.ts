@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { connect, migrateToLatest, type CoreTables, type DbHandle } from '@agfn/db'
 import { DbRateLimiter, MemoryRateLimiter } from '@agfn/mcp'
 import { costUsd, LIMITED, PAUSED, spentUsd, TRY_CAP_USD, TRY_OFF_AT, tryChat, validMessages, type TryDeps } from './try-chat.ts'
-import { renderTryPage, TRY_JS } from './try-page.ts'
+import { renderTryPage, TRY_FEATURED, TRY_IDEAS, TRY_JS } from './try-page.ts'
 
 let h: DbHandle<CoreTables> | undefined
 afterEach(async () => {
@@ -45,8 +45,24 @@ describe('try chat', () => {
     expect(sent.mcp_servers).toEqual([{ type: 'url', url: 'https://demo.example.test/mcp', name: 'aggregate-demo' }])
     expect(sent.tools).toEqual([{ type: 'mcp_toolset', mcp_server_name: 'aggregate-demo' }])
     expect(sent.thinking).toEqual({ type: 'disabled' })
-    expect(sent.cache_control).toEqual({ type: 'ephemeral' })
+    expect(sent.cache_control).toBeUndefined()
+    expect(sent.system[0].cache_control).toEqual({ type: 'ephemeral' })
     expect(sent).not.toHaveProperty('temperature')
+  })
+
+  it('shows only the text after the last tool call', async () => {
+    const content = [
+      { type: 'text', text: 'I’ll pull the revenue.' },
+      { type: 'mcp_tool_use' },
+      { type: 'mcp_tool_result' },
+      { type: 'text', text: 'Retrying with that name.' },
+      { type: 'mcp_tool_use' },
+      { type: 'mcp_tool_result' },
+      { type: 'text', text: 'Revenue was **$51,966.00**.' },
+      { type: 'text', text: 'One item is in review.' },
+    ]
+    const { d } = await deps(() => new Response(JSON.stringify({ stop_reason: 'end_turn', usage, content }), { status: 200 }))
+    expect(await tryChat(d, '203.0.113.9', ask())).toEqual({ answer: 'Revenue was $51,966.00.\n\nOne item is in review.' })
   })
 
   it('keeps a running spend and pauses at the cap', async () => {
@@ -102,6 +118,36 @@ describe('try chat', () => {
     expect(html).not.toMatch(/certified|compliant|official|free forever/i)
     expect(TRY_JS).toContain('textContent=j.answer')
     expect(TRY_JS).not.toContain('innerHTML')
-    expect(html).toContain('.tasks[hidden],.tform[hidden],.tpaused[hidden]{display:none}')
+    expect(html).toContain('.tchat [hidden]{display:none}')
+    // Stop messages name no one AI; the setup links below them still do.
+    for (const t of [PAUSED, LIMITED, TRY_JS]) expect(t).not.toContain('own Claude or ChatGPT')
+    expect(PAUSED).toContain('your own AI assistant or agent')
+    expect(html).toContain('Connect to Claude</a> · <a href="/docs/guides/connect-chatgpt">Connect to ChatGPT')
+  })
+
+  it('a chat box: example questions by topic, the cap in words, Enter sends', () => {
+    const html = renderTryPage({}).html
+    const asks = TRY_IDEAS.flatMap((g) => g.asks)
+    expect(TRY_IDEAS.map((g) => g.topic)).toEqual(['Cash and runway', 'Revenue and sales', 'Spending and burn', 'Payroll', 'Invoices and AR', 'Reconciliation and review', 'Investments'])
+    expect(asks.length).toBeGreaterThanOrEqual(20)
+    expect(asks.length).toBeLessThanOrEqual(30)
+    expect(new Set(asks).size).toBe(asks.length)
+    expect(html).toContain('6 of 6 questions left')
+    expect(html).toContain('aria-label="Example questions"')
+    // A page of its own: no docs sidebar or search, a few questions shown and the rest behind "More questions".
+    expect(html).not.toContain('class="dnav')
+    expect(html).not.toContain('Search the docs')
+    expect(html).toContain('>Sign in</a>')
+    expect(TRY_FEATURED.length).toBeLessThanOrEqual(4)
+    for (const q of TRY_FEATURED) expect(asks).toContain(q)
+    expect(html).toContain('More questions')
+    expect(html).toContain('class="tfine"')
+    expect(TRY_JS).toContain("e.key==='Enter'&&!e.shiftKey")
+    expect(() => new Function(TRY_JS)).not.toThrow()
+    // A script focus after an answer mustn't resize the box on phones: only a shrunk visible area does.
+    expect(TRY_JS).toContain('vv.height>window.innerHeight-120')
+    expect(TRY_JS).toContain('!form.hidden&&!touch')
+    // With the keyboard open the box ends at the visible bottom, not where the layout viewport ends.
+    expect(TRY_JS).toContain('vv.offsetTop+vv.height-chat.getBoundingClientRect().top-8')
   })
 })

@@ -53,11 +53,19 @@ export function demoConfigOf(config: Record<string, unknown>): DemoConfig {
   return { profile, start, seed: str(config.seed) ?? DEFAULT_SEED, ...(withGlass ? { glass } : {}), ...(withGlass && config.glassTag === true ? { glassTag: true } : {}) }
 }
 
-/** True once a demo connection's history reaches `today` (the connector has nothing left to backfill). */
-export function demoCaughtUp(cursor: string | null, today: string): boolean {
+/**
+ * The demo's last day: the latest UTC day whose rows (up to 19:00Z) and closing balance (21:00Z) are all in the past.
+ * A build at 00:22Z is still the evening before in the US, so the UTC date would write tomorrow's rows and balance.
+ */
+export function demoToday(now: Date | number): string {
+  return new Date(+now - 21 * 3_600_000).toISOString().slice(0, 10)
+}
+
+/** True once a demo connection's history reaches the demo's last day (nothing left to backfill). */
+export function demoCaughtUp(cursor: string | null, now: Date | number): boolean {
   try {
     const state = cursorCodec<DemoCursor>(DEMO_KEY, 1, isCursor).decode(cursor)
-    return state !== null && state.next > today
+    return state !== null && state.next > demoToday(now)
   } catch {
     return false
   }
@@ -106,7 +114,7 @@ export function createDemoConnector(deps: ConnectorDeps): DemoConnector {
       const profile = PROFILES[cfg.profile]
       const ctx: DayContext = { seed: cfg.seed, start: cfg.start, ...(cfg.glass ? { glass: cfg.glass } : {}), ...(cfg.glassTag ? { glassTag: true } : {}) }
       const now = clock.now()
-      const today = isoTimestamp(now).slice(0, 10)
+      const today = demoToday(now)
       const opening = () => Object.fromEntries(profile.accounts.map((a) => [a.id, a.opening]))
       const decoded = codec.decode(cursor)
 

@@ -110,3 +110,23 @@ describe('rippling connector (docs-shaped fixtures)', () => {
     expect(r.warnings?.[0]).toMatch(/unknown, not \$0/)
   })
 })
+
+
+describe('rippling: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/payroll-runs/', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/payroll-runs/', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})
+
+
+describe('rippling pagination completeness: a partial run is never summed as complete', () => {
+  it('worker-payroll-records that never stop paging fail visibly instead of summing a partial run', async () => {
+    const { connector, conn } = make([{ match: /worker-payroll-records/, respond: { json: { results: [], next_link: 'https://rest.ripplingapis.com/payroll-runs/r/worker-payroll-records/?limit=100&offset=1' } } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow(/page through/)
+  })
+})

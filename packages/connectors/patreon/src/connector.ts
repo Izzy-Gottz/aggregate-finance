@@ -130,6 +130,9 @@ export function createPatreonConnector(opts: PatreonConnectorOptions, deps: Conn
     let page: string | null = null
     do {
       const res: PatreonList<PatreonCampaign> = await c.get('/campaigns', campaignQuery({ 'page[count]': PAGE, ...(page ? { 'page[cursor]': page } : {}) }))
+      // A present JSON:API object with `data` omitted/empty is a real empty page; a null/non-object body (an empty
+      // body, or the sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop the sync.
+      if (!isRecord(res as unknown)) throw new ConnectorError('transient', 'Patreon sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       const rows = res.data ?? []
       for (const row of rows) {
         const currency = row.attributes?.currency
@@ -149,6 +152,7 @@ export function createPatreonConnector(opts: PatreonConnectorOptions, deps: Conn
       'page[count]': PAGE,
       ...(s.page ? { 'page[cursor]': s.page } : {}),
     })
+    if (!isRecord(res as unknown)) throw new ConnectorError('transient', 'Patreon sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
     const rows = res.data ?? []
     const nowIso = new Date(clock.now()).toISOString()
     const events: NormalizedEvent[] = []

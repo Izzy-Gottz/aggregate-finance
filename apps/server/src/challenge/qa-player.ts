@@ -5,6 +5,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Kysely } from 'kysely'
 import type { GrantShape } from '@agfn/contracts'
+import { captureMagicLink } from '@agfn/auth'
 import { newId, nowIso, withWorkspace, type CoreTables } from '@agfn/db'
 
 export const CHALLENGE_QA_DOMAIN = 'challenge-qa.aggregate.invalid'
@@ -41,4 +42,30 @@ export async function mintQaPlayer(deps: QaPlayerDeps, opts: { label: string; da
   const { shape } = await withWorkspace(workspaceId, () => deps.control.proposeGrant(actor, label))
   const created = await withWorkspace(workspaceId, () => deps.control.createAgentKey(actor, { name: label, shape: { ...shape, entityIds: 'all', write: true, expiresAt } }))
   return { email, workspaceId, key: created.key, keyId: created.keyId, expiresAt }
+}
+
+/** The Better Auth surface a web session needs: sign a magic link in (captured, not emailed) and run its verify. */
+interface AuthLike {
+  api: { signInMagicLink(input: { body: { email: string; callbackURL: string }; headers: Headers }): Promise<unknown> }
+  handler(req: Request): Promise<Response>
+}
+
+/**
+ * Mint a browser session for a QA player, so 43 can run the web-route injection payloads the GitHub-only sign-in blocks.
+ * Signs the player in through the ordinary magic-link flow, but captures the link instead of emailing it (its address is
+ * `*.aggregate.invalid`, never deliverable) and runs Better Auth's verify server-side. Returns a Cookie header value
+ * (the session cookies' name=value pairs) to paste into a browser or a request. Challenge only (the caller checks).
+ */
+export async function mintQaWebSession(deps: { auth: AuthLike; baseUrl: string }, email: string): Promise<string> {
+  const base = deps.baseUrl.replace(/\/+$/, '')
+  const link = await captureMagicLink(() => deps.auth.api.signInMagicLink({ body: { email, callbackURL: '/' }, headers: new Headers({ origin: base }) }))
+  if (!link) throw new Error('could not mint a web session: no magic link was captured')
+  const verify = await deps.auth.handler(new Request(link))
+  const cookies = verify.headers.getSetCookie()
+  if (!cookies.some((c) => c.includes('session_token'))) throw new Error('sign-in did not produce a session cookie')
+  // name=value pairs only (drop attributes and any deletion cookie), ready to use as a Cookie: header.
+  return cookies
+    .map((c) => c.split(';')[0] ?? '')
+    .filter((c) => c && !c.endsWith('='))
+    .join('; ')
 }

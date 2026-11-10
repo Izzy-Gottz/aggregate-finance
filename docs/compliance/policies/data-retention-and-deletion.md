@@ -26,7 +26,7 @@ hold their own data; the code behaviour described here applies to them too, but 
 | AI write requests (provenance, undo) | `write_requests` | While the workspace exists. Undo window is 30 days | `packages/mcp/src/writes.ts` |
 | Agent keys, OAuth tokens | Hashed only | Until revoked or expired. Revoking a grant deletes its refresh tokens and consent | `packages/mcp/src/keys.ts`, `apps/server/src/modules.ts` |
 | Workspace exports | File store under `exports/` | Link expires after 1 hour. The file is deleted at the workspace's next export | `apps/server/src/routes/settings.ts` |
-| Server logs (stdout) | The host's log view | Whatever the host keeps | Fly.io's log view (short retention). Planned: logs shipped to a log service and kept 90 days, with request bodies and secrets never logged. |
+| Server logs (stdout) | The host's log view | 7 days | Kept 7 days by Fly.io's log search, then deleted; we don't ship them elsewhere. Any log extract we save for an investigation is deleted within 7 days. |
 
 Plaid transactions are requested with up to 24 months of history (`days_requested: 730` in
 `packages/connectors/plaid/src/connector.ts`). Decision: keep 24 months. It supports year-over-year reports and runway, and the history is deleted with the connection or workspace like everything else.
@@ -72,7 +72,8 @@ Plaid transactions are requested with up to 24 months of history (`days_requeste
 8. **Raw payload limit.** True today: raw payloads of a disconnected connection are deleted 30 days after disconnect,
    by the daily `retention.purge` worker job (`apps/server/src/retention.ts`; `connections.disconnected_at` is
    set on every disconnect). Connections disconnected before that column existed start their 30 days at the first run.
-9. **Logs.** Planned: server logs are kept 1 year, then deleted. Logs never contain secrets.
+9. **Logs.** Kept 7 days by Fly.io's log search, then deleted; we don't ship them elsewhere. Any log extract we save
+   for an investigation is deleted within 7 days. Logs never contain secrets.
    Amounts are redacted in logged AI arguments (`redactArgs` in `packages/mcp/src/activity.ts`).
 10. **Export before leaving.** An owner or admin can export the workspace's data at any time, after a passkey
     re-check (`POST /api/export`, `apps/server/src/routes/settings.ts`). Secrets and other people's Personal
@@ -93,8 +94,8 @@ Plaid transactions are requested with up to 24 months of history (`days_requeste
   - Older backups are deleted automatically.
 
   Restore drill: `docs/self-hosting.md` § Restore drill, using `agfn backup restore`.
-- True today: backups are encrypted at rest, and deleted data ages out of the R2 backups within 26 days (Neon's history
-  window is 1 day). Planned: one restore is tested and recorded before launch, then once a year.
+- True today: backups are encrypted at rest, and deleted data ages out of the R2 backups within 26 days (live's Neon
+  history window is 7 days). Planned: one restore is tested and recorded before launch, then once a year.
 
 ## How it is checked
 
@@ -107,6 +108,5 @@ Plaid transactions are requested with up to 24 months of history (`days_requeste
 ## Gaps today
 
 - Raw payloads of a live connection have no time limit, and are plain text in the database.
-- Logs stay only as long as Fly keeps them, with no decided retention.
 - The founder's decision on Personal ledger rows after account deletion isn't recorded.
 - The first restore drill isn't recorded.

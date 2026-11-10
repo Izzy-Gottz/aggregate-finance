@@ -43,8 +43,14 @@ export async function seedDemoAiWhenReady(
   deps: { db: Kysely<CoreTables>; seed: SeedDemoAi; tidy?: (workspaceId: string) => Promise<unknown>; warm?: (workspaceId: string) => Promise<unknown>; now?: () => Date; log?: (msg: string, fields: Record<string, unknown>) => void },
   workspaceId: string,
   connectionId?: string,
+  opts: { seedAi?: boolean } = {},
 ): Promise<boolean> {
   const { db } = deps
+  // The challenge deployment reuses these demo books for each player, but must NOT pre-connect a "Claude (demo)" AI or
+  // make its sample write: a player brings their own AI, and a seeded write would show up as an "AI did this" the
+  // player never caused — misleading tier-C judging (the write is copied into challenge_activity). The books still get
+  // tidied, warmed and marked ready; only the AI grant and its write are skipped.
+  const seedAi = opts.seedAi !== false
   const flags = await db.selectFrom('settings').select(['key', 'value_json', 'updated_at']).where('workspace_id', '=', workspaceId).where('key', 'in', ['demo', DEMO_AI_SETTING, DEMO_READY_SETTING, 'demo_pool_ready']).execute()
   if (!flags.some((f) => f.key === 'demo' && f.value_json === 'true')) return false
   // Already claimed: done, or under way elsewhere, unless the claim is stale on a demo still not ready (below).
@@ -55,7 +61,7 @@ export async function seedDemoAiWhenReady(
   const today = (deps.now?.() ?? new Date()).toISOString().slice(0, 10)
   const conns = await db.selectFrom('connections').select(['cursor', 'status']).where('workspace_id', '=', workspaceId).where('connector_key', '=', DEMO_KEY).execute()
   // Every demo connection caught up, or failed (it shows its own error and retries; the rest of the demo is final).
-  const caught = (c: { cursor: string | null; status: string }) => c.status === 'active' && demoCaughtUp(c.cursor, today)
+  const caught = (c: { cursor: string | null; status: string }) => c.status === 'active' && demoCaughtUp(c.cursor, deps.now?.() ?? new Date())
   const failed = (c: { status: string }) => c.status === 'error' || c.status === 'needs_reauth'
   if (!conns.some(caught) || !conns.every((c) => caught(c) || failed(c))) return false
   // Another connection's job still posting, or a next page queued (the engine re-queues 5 s out): not final yet. The
@@ -107,7 +113,7 @@ export async function seedDemoAiWhenReady(
       deps.log?.('demo pool: filled, ready to hand over', { workspaceId })
       return true
     }
-    await deps.seed({ workspaceId, personId: owner.person_id, clientName: 'Claude (demo)', write: demoAiWrite(today) })
+    if (seedAi) await deps.seed({ workspaceId, personId: owner.person_id, clientName: 'Claude (demo)', write: demoAiWrite(today) })
     // The first page after "Filling the demo…" reads answers computed here, not cold (staging: 2.3 s for the first overview).
     await deps.warm?.(workspaceId).catch((err: unknown) => deps.log?.('demo: warm failed', { workspaceId, error: err instanceof Error ? err.message : String(err) }))
     await db
@@ -140,11 +146,11 @@ export async function isDemoReady(db: Kysely<CoreTables>, workspaceId: string, n
  * workspace's ledger lock if run together. Called after a sync: once `connectionId` (a demo connection) has caught up,
  * or failed (`opts.failed`), returns the next demo connection that hasn't started yet, or null.
  */
-export async function nextDemoImport(db: Kysely<CoreTables>, workspaceId: string, connectionId: string, today: string, opts: { failed?: boolean } = {}): Promise<string | null> {
+export async function nextDemoImport(db: Kysely<CoreTables>, workspaceId: string, connectionId: string, now: Date, opts: { failed?: boolean } = {}): Promise<string | null> {
   const rows = await db.selectFrom('connections').select(['id', 'cursor', 'config_json', 'status']).where('workspace_id', '=', workspaceId).where('connector_key', '=', DEMO_KEY).execute()
   const me = rows.find((r) => r.id === connectionId)
   // A failed import doesn't hold up the rest: the next one starts, and the failed one retries on its own.
-  if (!me || (!opts.failed && !demoCaughtUp(me.cursor, today))) return null
+  if (!me || (!opts.failed && !demoCaughtUp(me.cursor, now))) return null
   const next = rows.filter((r) => r.status === 'active' && r.cursor === null).sort((a, b) => profileOrder(a) - profileOrder(b))[0]
   return next?.id ?? null
 }
@@ -165,7 +171,6 @@ function profileOrder(r: { config_json: string }): number {
  */
 export async function stalledDemoImports(db: Kysely<CoreTables>, opts: { now?: Date; quietMs?: number } = {}): Promise<Array<{ workspaceId: string; connectionId: string }>> {
   const now = opts.now ?? new Date()
-  const today = now.toISOString().slice(0, 10)
   const quietSince = new Date(now.getTime() - (opts.quietMs ?? 120_000)).toISOString()
   const flags = await db.selectFrom('settings').select(['workspace_id', 'key']).where('key', 'in', ['demo', 'public_demo', DEMO_READY_SETTING, 'demo_fill_waiting', 'demo_pool_ready']).execute()
   const byWs = new Map<string, Set<string>>()
@@ -186,11 +191,11 @@ export async function stalledDemoImports(db: Kysely<CoreTables>, opts: { now?: D
     const conns = (await db.selectFrom('connections').select(['id', 'cursor', 'config_json', 'status']).where('workspace_id', '=', ws).where('connector_key', '=', DEMO_KEY).where('status', '=', 'active').execute()).sort(
       (a, b) => profileOrder(a) - profileOrder(b),
     )
-    const pick = conns.find((c) => c.cursor !== null && !demoCaughtUp(c.cursor, today)) ?? conns.find((c) => c.cursor === null) ?? conns[0]
+    const pick = conns.find((c) => c.cursor !== null && !demoCaughtUp(c.cursor, now)) ?? conns.find((c) => c.cursor === null) ?? conns[0]
     if (pick) out.push({ workspaceId: ws, connectionId: pick.id })
   }
   return out
 }
 
 /** A demo connection still importing its history (shown as syncing, even while it waits its turn). */
-export const demoImporting = (connectorKey: string, cursor: string | null, today: string): boolean => connectorKey === DEMO_KEY && !demoCaughtUp(cursor, today)
+export const demoImporting = (connectorKey: string, cursor: string | null, now: Date): boolean => connectorKey === DEMO_KEY && !demoCaughtUp(cursor, now)

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/preact'
 import { describe, expect, it, vi } from 'vitest'
+import { HttpError } from '../api/http.ts'
 import { MockApi } from '../api/mock.ts'
 import { Root } from '../app/app.ts'
 import '../test/setup.ts'
@@ -131,6 +132,32 @@ describe('connect forms', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }))
     await screen.findByRole('heading', { name: 'Which company is each account?' })
     expect(api.lastFinish).toMatchObject({ apiKey: 'tok' })
+  })
+  it('after a refused token, Connect again works: a fresh attempt is started, never "expired, start again"', async () => {
+    const api = new MockApi()
+    const used = new Set<string>()
+    const base = api.finishConnect.bind(api)
+    let refuse = true
+    api.finishConnect = async (key, input) => {
+      // Like the server: each attempt (state) is spent by its first finish, whatever the outcome.
+      if (used.has(input.state)) throw new HttpError(400, 'This connection attempt expired. Start again.')
+      used.add(input.state)
+      if (refuse) throw new HttpError(400, 'SimpleFIN says this Setup Token was already used.')
+      return base(key, input)
+    }
+    start(api, '#/?d=connect:mercury')
+    fireEvent.change(await screen.findByLabelText('For which company?'), { target: { value: 'e_acme' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Mercury' }))
+    fireEvent.input(await screen.findByLabelText('Mercury read-only token'), { target: { value: 'old' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }))
+    expect((await screen.findByRole('alert')).textContent).toMatch(/already used/)
+    await waitFor(() => expect(used.size).toBe(1))
+    refuse = false
+    fireEvent.input(screen.getByLabelText('Mercury read-only token'), { target: { value: 'new' } })
+    await new Promise((r) => setTimeout(r, 0))
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }))
+    await screen.findByRole('heading', { name: 'Which company is each account?' })
+    expect(api.lastFinish).toMatchObject({ apiKey: 'new' })
   })
 })
 

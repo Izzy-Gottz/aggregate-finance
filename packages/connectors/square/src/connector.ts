@@ -207,6 +207,10 @@ export function createSquareConnector(opts: SquareConnectorOptions, deps: Connec
     if (s.stage === 'locations') {
       const now = clock.now()
       const res = await client.get<{ locations?: SquareLocation[] }>(env, token, '/v2/locations')
+      // Square returns {} with the key omitted when empty, so a present object is a real (possibly empty) result; a
+      // null/non-object body (an empty body, or the sign-in/error page the shared client rejects as non-JSON) is
+      // unreadable and must stop — locations seed the whole sync, so a silent empty here would zero every total.
+      if (!isRecord(res)) throw new ConnectorError('transient', 'Square sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'square' })
       const locs = (res.locations ?? []).map((l) => ({ id: l.id, cur: normalizeCurrency(l.currency), ...(l.name ? { name: l.name.slice(0, 80) } : {}), ...(l.timezone ? { tz: l.timezone } : {}) }))
       const merchant = configOf(conn).merchantId || res.locations?.find((l) => l.merchant_id)?.merchant_id || 'square'
       const next: SquareCursor = { ...fresh(s.hw ?? isoTimestamp(now - lookbackMs), isoTimestamp(now), s.hw), stage: 'payouts', merchant, locs }
@@ -229,6 +233,7 @@ export function createSquareConnector(opts: SquareConnectorOptions, deps: Connec
       })
       const st: SquareCursor = { ...s }
       const queue: string[] = []
+      if (!isRecord(res)) throw new ConnectorError('transient', 'Square sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'square' })
       for (const p of res.payouts ?? []) {
         const rawRef = await deps.raw.put(conn.id, 'square.payout', p.id, p)
         const ev = mapPayout(p, s.merchant, loc.cur, conn.id, rawRef)
@@ -288,6 +293,7 @@ export function createSquareConnector(opts: SquareConnectorOptions, deps: Connec
         throw e
       }
       const st: SquareCursor = { ...s }
+      if (!isRecord(res)) throw new ConnectorError('transient', 'Square sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'square' })
       for (const x of (isPay ? res.payments : res.refunds) ?? []) {
         const rawRef = await deps.raw.put(conn.id, isPay ? 'square.payment' : 'square.refund', x.id, x)
         const cash = isPay ? mapCashPayment(x as SquarePayment, s.merchant, loc, conn.id, rawRef) : mapCashRefund(x as SquareRefund, s.merchant, loc, conn.id, rawRef)
@@ -323,6 +329,7 @@ export function createSquareConnector(opts: SquareConnectorOptions, deps: Connec
       if (isConnectorError(e) && (e.code === 'INSUFFICIENT_SCOPES' || e.code === 'FORBIDDEN')) return { ...done(), warnings: [SQUARE_NO_INVOICES_WARNING] }
       throw e
     }
+    if (!isRecord(res)) throw new ConnectorError('transient', 'Square sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'square' })
     for (const inv of res.invoices ?? []) {
       const rawRef = await deps.raw.put(conn.id, 'square.invoice', inv.id, inv)
       events.push(mapInvoice(inv, loc.cur, conn.id, rawRef))

@@ -364,3 +364,5 @@ li.linked > .row { background: var(--hover); border-radius: var(--r-btn); box-sh
 .rows.wrap .row .name, .rows.wrap .row .line { white-space: normal; overflow: visible; }
 /* Investments: an opened position sits apart from the next one. */
 .positions .position { padding: 0 0 var(--s4); margin-bottom: var(--s2); border-bottom: 1px solid var(--rule); }
+/* "Maybe connected twice": the two choices sit side by side on the row's right. */
+.dup-actions { display: inline-flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }

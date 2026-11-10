@@ -14,7 +14,7 @@ choose exactly what ChatGPT can see.
 ## Set it up
 
 ### 1. Connect Shopify to Aggregate
-Install Aggregate from the [Shopify App Store](https://apps.shopify.com/aggregate). Shopify opens Aggregate; sign in with the email you use for the store (free during beta), confirm the workspace, and your payouts start syncing. Self-hosting? Open **Workspace → Connections → + More connections → Shopify Payments** and follow the steps there to use your own Shopify app instead.
+Install Aggregate from the [Shopify App Store](https://apps.shopify.com/aggregate). Shopify opens Aggregate; sign in with the email you use for the store (free during beta), confirm the workspace, and your payouts start syncing. Self-hosting? Open **Workspace → Connections → + Add a connection → Shopify Payments** and follow the steps there to use your own Shopify app instead.
 
 ### 2. Add Aggregate to ChatGPT
 1. Open [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add** (top right), then **Add custom MCP server**.

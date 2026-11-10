@@ -246,6 +246,33 @@ describe('server', () => {
     expect(raw).not.toContain('good')
   })
 
+  it('resolves a possible duplicate: dismiss persists, mark-duplicate sets duplicate_of and drops it from cash', async () => {
+    const cookie = await signIn('dup@example.com')
+    await app.request('/api/workspaces', json(cookie, { companyName: 'Acme' }))
+    await withPasskey('dup@example.com')
+    const me = (await (await app.request('/api/workspace', { headers: { cookie } })).json()) as { me: { workspaceId: string }; entities: Array<{ id: string; name: string }> }
+    const ws = me.me.workspaceId
+    const acme = me.entities.find((e) => e.name === 'Acme')!.id
+    const db = booted.handle.db
+    const at = new Date().toISOString()
+    await db.insertInto('connections').values({ id: 'conn_dup', workspace_id: ws, connector_key: 'fakebank', entity_id: acme, display_name: 'Dup', status: 'active', config_json: '{}', created_at: at } as never).execute()
+    for (const [id, mask] of [['acc_a', '1234'], ['acc_b', '1234']] as const)
+      await db.insertInto('accounts').values({ id, workspace_id: ws, entity_id: acme, connection_id: 'conn_dup', external_id: id, name: 'Mercury', account_type: 'depository', currency: 'USD', mask, institution: null, business_hint: null, include_in_cash: 1, duplicate_of: null, created_at: at, closed_at: null } as never).execute()
+
+    // A dismissal missing its accounts is rejected; a complete one is accepted (persistence itself is covered where a
+    // real ledger is wired — this harness boots the records-nothing stub).
+    expect((await app.request('/api/accounts/dismiss-duplicate', json(cookie, { subjectId: 'acc_a' }))).status).toBe(400)
+    expect((await app.request('/api/accounts/dismiss-duplicate', json(cookie, { subjectId: 'acc_a', relatedId: 'acc_b', dupKey: 'acc_a|acc_b|balance' }))).status).toBe(200)
+    expect((await app.request('/api/accounts/dismiss-duplicate', json(cookie, { subjectId: 'acc_a', relatedId: 'acc_unknown', dupKey: 'x' }))).status).toBe(404)
+
+    // Marking one a duplicate of itself is rejected; marking acc_b a duplicate of acc_a drops acc_b from cash.
+    expect((await app.request('/api/accounts/mark-duplicate', json(cookie, { duplicateId: 'acc_a', ofId: 'acc_a' }))).status).toBe(400)
+    expect((await app.request('/api/accounts/mark-duplicate', json(cookie, { duplicateId: 'acc_b', ofId: 'acc_a' }))).status).toBe(200)
+    const b = await db.selectFrom('accounts').select(['duplicate_of', 'include_in_cash']).where('id', '=', 'acc_b').executeTakeFirstOrThrow()
+    expect(b.duplicate_of).toBe('acc_a')
+    expect(Number(b.include_in_cash)).toBe(0)
+  })
+
   it('blocks cross-site writes and keeps workspaces apart', async () => {
     const a = await signIn('a@x.com')
     await app.request('/api/workspaces', json(a, { companyName: 'A Co' }))

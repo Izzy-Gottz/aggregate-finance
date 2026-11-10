@@ -84,6 +84,12 @@ export interface ConnectorDescription {
   setup?: ConnectorSetup
   /** May also be linked inside a demo workspace on this server (the challenge's sandbox Plaid; AGFN_DEMO_EXTRA_CONNECTORS). */
   demoAllowed?: boolean
+  /**
+   * The provider's terms cap how old its data may be when shown (Etsy's API Terms: 24 hours). Past this many hours since
+   * the connection's last successful sync, its current figures are marked out of date and left out of totals until the
+   * next good sync; closed past periods stay as recorded. Unset: the general limits apply.
+   */
+  staleAfterHours?: number
 }
 
 /** Setup guide for a connector that needs keys on this server (one source for the web, `agfn doctor` and docs). */
@@ -128,6 +134,29 @@ export interface SyncResult {
    * this many ms instead of waiting for the next scheduled round or a webhook.
    */
   syncAgainInMs?: number
+  /** How fresh the provider says its data is (Plaid's Item status, balance timestamps). Saved on the connection. */
+  freshness?: ProviderFreshness
+}
+
+/**
+ * The provider's own word on how current its data is, stored per connection (connections.freshness_json) and shown by
+ * MCP reads as data_as_of. Every field is optional: left out when the provider doesn't say. ISO timestamps.
+ */
+export interface ProviderFreshness {
+  /** Plaid /item/get status.transactions.last_successful_update. */
+  transactionsLastSuccessAt?: IsoTimestamp
+  /** Plaid status.transactions.last_failed_update. */
+  transactionsLastFailedAt?: IsoTimestamp
+  /** Plaid status.investments.last_successful_update. */
+  investmentsLastSuccessAt?: IsoTimestamp
+  /** The provider's error code for this connection, e.g. Plaid's item.error.error_code ("ITEM_LOGIN_REQUIRED"). Code only. */
+  providerErrorCode?: string
+  /** The OLDEST balance timestamp across the connection's accounts, so data_as_of never claims fresher than the stalest. */
+  balancesUpdatedAt?: IsoTimestamp
+  /** Each account's balance timestamp, by accountExternalId, where the provider gives one. */
+  balancesUpdatedAtByAccount?: Record<string, IsoTimestamp>
+  /** When Aggregate read these. */
+  checkedAt?: IsoTimestamp
 }
 
 export interface ConnectorHealth {
@@ -308,6 +337,9 @@ export interface TxnUpsert extends EventBase {
   type: 'txn.upsert'
   accountExternalId: string
   date: IsoDate
+  /** Optional real instant the row happened. When set, the engine dates the row as localDate(at, workspaceTz); when
+   *  absent, `date` is used as-is. Set it only for a genuine intraday timestamp (see instantAt), never a date-only value. */
+  at?: IsoTimestamp
   amount: Money
   status: 'pending' | 'posted' | 'void'
   /** Cleaned counterparty name (safe to show). */
@@ -361,6 +393,9 @@ export interface InvoiceUpsert extends EventBase {
   number?: string
   counterparty: string
   issueDate: IsoDate
+  /** Optional real instant the invoice was issued. When set, the engine dates it as localDate(at, workspaceTz); when
+   *  absent, `issueDate` is used as-is. Set it only for a genuine intraday timestamp (see instantAt). */
+  at?: IsoTimestamp
   dueDate?: IsoDate
   total: Money
   amountPaid: Money
@@ -387,6 +422,9 @@ export interface InvoiceUpsert extends EventBase {
 export interface PayrollRun extends EventBase {
   type: 'payroll.run'
   payDate: IsoDate
+  /** Optional real instant the run was paid. When set, the engine dates it as localDate(at, workspaceTz); when absent,
+   *  `payDate` is used as-is. Set it only for a genuine intraday timestamp (see instantAt). */
+  at?: IsoTimestamp
   gross: Money
   employerTaxes: Money
   net: Money
@@ -449,7 +487,9 @@ export interface CreditNoteUpsert extends EventBase {
   status?: 'open' | 'applied' | 'void'
   /** Allocation across several invoices. When present it is authoritative; invoiceExternalId is the first one. */
   applications?: Array<{ invoiceExternalId: string; amount: Money }>
-  /** Sales tax inside `amount` (a customer credit gives back revenue net of tax, and the tax itself). */
+  /** Sales tax inside `amount`: a customer credit gives back revenue net of tax and the tax itself; a supplier credit
+   * takes back the expense net of tax and the tax (send it only when that supplier's bills put their tax on sales tax
+   * owed, as Xero's do). */
   tax?: Money
   /** The provider's own rate for a foreign-currency document (see ProviderFx). Absent: the ledger's market rate. */
   fx?: ProviderFx
@@ -812,6 +852,15 @@ export interface Ledger {
   metric(name: MetricName, scope: MetricScope): Promise<MetricAnswer>
   /** Called when an account's company or duplicate status changes, so held ('unassigned') rows can post. */
   accountChanged?(workspaceId: WorkspaceId, accountId: AccountId): Promise<void>
+  /** Record that the person judged a possible-duplicate pair to be two different accounts, so the data-health check
+   *  stops flagging it (keyed by dupKey: the pair and the evidence kind, so only new evidence re-raises it). */
+  dismissDuplicate?(workspaceId: WorkspaceId, dismissal: { subjectId: AccountId; relatedId: AccountId; dupKey: string }): Promise<void>
+  /**
+   * Maintenance: re-post already-posted records of the given event types on the given connections so their date and
+   * journal entries match today's dating/posting rules, re-dating any left stale by a rule change. Idempotent (a second
+   * run changes nothing); dryRun writes nothing and only counts. Returns the count of changed records per connection id.
+   */
+  repostToRules?(workspaceId: WorkspaceId, opts: { connectionIds: ConnectionId[]; eventTypes: Array<NormalizedEvent['type']>; dryRun: boolean }): Promise<Record<string, number>>
   /** Called when a connection's company changes. */
   connectionChanged?(workspaceId: WorkspaceId, connectionId: ConnectionId): Promise<void>
   /** A connection was removed with its data: what it brought stops counting (kept for the audit trail, not deleted). */
@@ -1343,6 +1392,8 @@ export interface DocumentView {
   text?: string
   /** A PDF with no text layer (a scan or a photo saved as PDF): there is nothing to read as text. */
   scanned?: boolean
+  /** A PDF longer than Aggregate reads (60 pages or 60,000 characters): text holds only its first part. */
+  partial?: boolean
   recordIds: Id[]
 }
 
@@ -1451,6 +1502,8 @@ export interface CoverageView {
   }>
   /** One plain line per gap or mismatch, e.g. "Chase ··4411: August statement missing". */
   problems: string[]
+  /** The exact day this account has data through (balance/statement as-of, else last transaction date), not the month. */
+  dataThrough?: IsoDate
 }
 
 // ---------- The write port ----------

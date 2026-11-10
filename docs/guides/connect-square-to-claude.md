@@ -14,7 +14,7 @@ choose exactly what Claude can see.
 ## Set it up
 
 ### 1. Connect Square to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Square**, sign in to Square, and allow access.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Square**, sign in to Square, and allow access.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →

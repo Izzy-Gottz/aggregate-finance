@@ -15,6 +15,7 @@ import type {
   ConnectorHealth,
   LiabilityDetails,
   NormalizedEvent,
+  ProviderFreshness,
   SyncResult,
 } from '@agfn/contracts'
 import {
@@ -24,6 +25,7 @@ import {
   isConnectorError,
   isRecord,
   isoTimestamp,
+  oldestIso,
   requireSecret,
   str,
   systemClock,
@@ -51,6 +53,7 @@ import type {
   PlaidHoldingsResponse,
   PlaidInvestmentTxnsResponse,
   PlaidItem,
+  PlaidItemStatus,
   PlaidLiabilitiesResponse,
   PlaidTransactionsSyncResponse,
 } from './types.ts'
@@ -203,7 +206,8 @@ export function createPlaidConnector(opts: PlaidConnectorOptions, deps: Connecto
     name: 'Bank or card (Plaid)',
     group: 'banks',
     provides: ['balances', 'transactions'],
-    freshness: opts.webhookUrl ? 'updates within minutes via webhooks' : 'updates every few hours',
+    // The webhook only tells us when Plaid has new data; it doesn't make the bank post faster. State the real cadence.
+    freshness: 'bank data updates a few times a day; investments about once a night',
     auth: 'link_widget',
     // Bump when the mapping changes what stored rows should say: each existing connection re-reads its history once
     // (/transactions/sync from the start; no extra Plaid cost). 1: payment-app rows name the person, rows without a
@@ -282,6 +286,7 @@ export function createPlaidConnector(opts: PlaidConnectorOptions, deps: Connecto
       const bal = mapBalance(a, conn.id, rawRef, at, holdings.get(a.account_id))
       if (bal) events.push(bal)
     }
+    const freshness = await itemFreshness(accessToken, res.accounts, at)
     const next: PlaidCursor = {
       stage: 'txns',
       tx: state.tx,
@@ -291,7 +296,38 @@ export function createPlaidConnector(opts: PlaidConnectorOptions, deps: Connecto
       ...(invAccounts ? { invAccounts: true } : {}),
       ...(state.waits ? { waits: state.waits } : {}),
     }
-    return { events, cursor: codec.encode(next), hasMore: true }
+    return { events, cursor: codec.encode(next), hasMore: true, freshness }
+  }
+
+  /**
+   * How current Plaid says this Item's data is: /item/get's status (free; never Plaid's billed on-demand refresh) and
+   * each balance's last_updated_datetime where the institution gives one. Best effort: a failed /item/get leaves the
+   * product times out, never the sync.
+   */
+  async function itemFreshness(accessToken: string, accounts: PlaidAccountsGetResponse['accounts'], at: string): Promise<ProviderFreshness> {
+    const out: ProviderFreshness = { checkedAt: at }
+    const byAccount: Record<string, string> = {}
+    for (const a of accounts) {
+      const t = a.balances.last_updated_datetime
+      if (t && Number.isFinite(Date.parse(t))) byAccount[a.account_id] = t
+    }
+    if (Object.keys(byAccount).length) {
+      out.balancesUpdatedAtByAccount = byAccount
+      const oldest = oldestIso(Object.values(byAccount))
+      if (oldest) out.balancesUpdatedAt = oldest
+    }
+    const got = await client.call<{ item?: PlaidItem; status?: PlaidItemStatus | null }>('/item/get', { access_token: accessToken }).catch(() => undefined)
+    const s = got?.status ?? undefined
+    // The code only, never Plaid's message: a silently stuck Item then reads as "Plaid's last refresh failed".
+    const code = got?.item?.error?.error_code
+    if (typeof code === 'string' && /^[A-Z0-9_]{1,64}$/.test(code)) out.providerErrorCode = code
+    const put = (k: 'transactionsLastSuccessAt' | 'transactionsLastFailedAt' | 'investmentsLastSuccessAt', v: string | null | undefined) => {
+      if (v && Number.isFinite(Date.parse(v))) out[k] = v
+    }
+    put('transactionsLastSuccessAt', s?.transactions?.last_successful_update)
+    put('transactionsLastFailedAt', s?.transactions?.last_failed_update)
+    put('investmentsLastSuccessAt', s?.investments?.last_successful_update)
+    return out
   }
 
   /**

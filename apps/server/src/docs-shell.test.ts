@@ -5,7 +5,7 @@ import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { boot } from './boot.ts'
 import { createApp } from './app.ts'
 import { loadConfig } from './config.ts'
-import { connectionsBody, DOCS_JS_PATH, DOCS_NAV, DOCS_SEARCH_PATH, hostedConnections } from './docs-shell.ts'
+import { connectionsBody, DOCS_JS_PATH, ETSY_TRADEMARK_NOTICE, DOCS_NAV, DOCS_SEARCH_PATH, hostedConnections } from './docs-shell.ts'
 import { renderMarkdown } from './legal.ts'
 
 const md = readFileSync(new URL('../../../docs/connectors.md', import.meta.url), 'utf8')
@@ -43,7 +43,38 @@ describe('the connections page', () => {
     const html = connectionsBody(md, renderMarkdown, { 'Stripe Partner badge': 'data:image/png;base64,BB' })
     expect(html).toContain('Aggregate is a Stripe partner.<img src="data:image/png;base64,BB" alt="Stripe Partner"')
     expect(html).toContain('>S</span><b>Stripe</b>')
-    expect(html).not.toMatch(/official|certified/i)
+    // Our own words never claim to be official or certified. The one exception is Etsy's required trademark notice, word for
+    // word (Etsy API Terms), which says the opposite.
+    expect(html.replace(ETSY_TRADEMARK_NOTICE, '')).not.toMatch(/official|certified/i)
+  })
+
+  it("shows Etsy's trademark notice word for word once Etsy is listed, and only then", () => {
+    expect(connectionsBody(md, renderMarkdown, {})).not.toContain('trademark of Etsy')
+    const listed = md.replace(/^(\| Etsy \|.*\| )In development( \|)$/m, '$1Beta$2')
+    expect(listed).not.toBe(md)
+    const html = connectionsBody(listed, renderMarkdown, {})
+    expect(html).toContain(`</h1>\n<p class="dnotice">${ETSY_TRADEMARK_NOTICE}</p>`)
+    expect(html.replace(ETSY_TRADEMARK_NOTICE, '')).not.toMatch(/official|certified/i)
+  })
+})
+
+describe('the Etsy page (/docs/etsy)', () => {
+  it('says plainly what it reads and keeps, and how fresh it is; docs search finds it', async () => {
+    await withApp(async (app) => {
+      const r = await app.request(`${BASE}/docs/etsy`)
+      expect(r.status).toBe(200)
+      const text = (await r.text()).replace(/<[^>]+>/g, ' ').replace(/&#39;|&rsquo;|’/g, "'").replace(/\s+/g, ' ')
+      expect(text).toContain(ETSY_TRADEMARK_NOTICE)
+      expect(text).toContain("Aggregate doesn't request access to buyer emails and never stores them")
+      expect(text).toContain('the database enforces this with row-level security')
+      expect(text).toContain('Etsy data refreshes at least every 24 hours')
+      expect(text).toContain('left out until the next successful sync')
+      expect(text).toContain('Closed past months stay as recorded')
+      expect(text).toContain('You can ask your own AI assistant about your own books')
+      expect(text).not.toMatch(/aggregat(or|ion)/i)
+      // Found by docs search (it isn't on the hosted connections list while Etsy isn't offered).
+      expect(JSON.stringify(await (await app.request(`${BASE}${DOCS_SEARCH_PATH}`)).json())).toContain('/docs/etsy')
+    })
   })
 })
 

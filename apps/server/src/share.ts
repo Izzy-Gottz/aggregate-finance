@@ -12,6 +12,7 @@ import { createRequire } from 'node:module'
 import type { Kysely } from 'kysely'
 import type { FinanceReader, Money } from '@agfn/contracts'
 import { nowIso, withBypass, type CoreTables } from '@agfn/db'
+import { exponentOf } from '@agfn/core'
 import { DbRateLimiter } from '@agfn/mcp'
 import { financeFor } from './finance.ts'
 import { cashTrend } from './routes/finance.ts'
@@ -91,7 +92,7 @@ const db = (s: S) => s.db as unknown as Kysely<CoreTables & { share_cards: Share
 // ---------- Figures ----------
 
 export function compactMoney(m: Money): string {
-  const v = Math.abs(m.minor / 100)
+  const v = Math.abs(m.minor / 10 ** exponentOf(m.currency))
   const [n, suffix] = v >= 1e9 ? [v / 1e9, 'B'] : v >= 1e6 ? [v / 1e6, 'M'] : v >= 1e4 ? [v / 1e3, 'K'] : [v, '']
   const digits = suffix && n < 10 ? 1 : 0
   let sym = ''
@@ -142,7 +143,8 @@ export async function buildSnapshot(s: S, ws: string, entity: { id: string; name
     return snap
   }
   const trend = await cashTrend(s, r, ws, entity.id, now)
-  if (trend.length < 2 || !cashMoney) throw new ShareError(422, 'There isn’t a year of cash history to share yet.')
+  // The card says "over 12 months", so it needs all twelve: a younger company's trend starts later (cashTrend).
+  if (trend.length < 12 || !cashMoney) throw new ShareError(422, 'There isn’t a year of cash history to share yet.')
   const lo = Math.min(...trend)
   const hi = Math.max(...trend)
   snap.points = trend.map((v) => (hi === lo ? 0.5 : Math.round(((v - lo) / (hi - lo)) * 1000) / 1000))

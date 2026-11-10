@@ -1109,6 +1109,63 @@ describe.each(backends)('ledger golden answers (%s)', (backend) => {
       await ny.close()
     })
 
+    it('a txn.upsert instant dates the row in the workspace day, and a re-sync that moves the date updates it in place (no double-count)', async () => {
+      const ny = await makeKit(backend, { timeZone: 'America/New_York' })
+      const co = await ny.company('Acme')
+      const bank = await ny.account({ entityId: co })
+      const rowOf = async (xid: string) => (await ny.engine.store.listRecords(ny.ws)).filter((r) => r.eventType === 'txn.upsert' && r.externalId === xid)
+      // 03:30Z on Nov 1 is 23:30 on Oct 31 in New York (midnight NY is 04:00Z): the row belongs to Oct 31, not Nov 1.
+      await ny.engine.post(ny.ws, { ...txn(bank, '2026-11-01', -100_000, { at: '2026-11-01T03:30:00Z' }), externalId: 'tx1' })
+      let r = await rowOf('tx1')
+      expect(r).toHaveLength(1)
+      expect(r[0]!.date).toBe('2026-10-31')
+      // Re-sync the same row with a later instant (noon Nov 1 UTC = morning Nov 1 in NY): the date moves forward a day.
+      await ny.engine.post(ny.ws, { ...txn(bank, '2026-11-01', -100_000, { at: '2026-11-01T12:00:00Z' }), externalId: 'tx1' })
+      r = await rowOf('tx1')
+      expect(r).toHaveLength(1) // updated in place, not a second row
+      expect(r[0]!.date).toBe('2026-11-01')
+      await ny.close()
+    })
+
+    it('a transfer stays linked and does not double-count when a re-sync moves one leg’s date', async () => {
+      const ny = await makeKit(backend, { timeZone: 'America/New_York' })
+      const co = await ny.company('Acme')
+      const a = await ny.account({ entityId: co, name: 'Checking' })
+      const b = await ny.account({ entityId: co, name: 'Savings' })
+      const net = async () => (await ny.engine.metric('cash', { workspaceId: ny.ws, entityIds: [co] })).value
+      const links = async () => (await ny.engine.store.listLinks(ny.ws, { types: ['transfer'] })).map((l) => [l.type, l.status])
+      await ny.engine.postBatch(ny.ws, [
+        { ...txn(a, '2026-10-31', -50_000, { rawText: 'xfer', linkRefs: { transfer: 'T9' } }), externalId: 'out1' },
+        { ...txn(b, '2026-11-01', 50_000, { rawText: 'xfer', linkRefs: { transfer: 'T9' }, at: '2026-11-01T03:30:00Z' }), externalId: 'in1' },
+      ])
+      expect(await links()).toEqual([['transfer', 'confirmed']])
+      const before = await net() // a transfer nets to zero across the two accounts
+      // Re-sync the in-leg with a later instant (date moves from Oct 31 to Nov 1 in NY). The link is by reference, so it
+      // must survive, and the in-place update must not add a second leg.
+      await ny.engine.post(ny.ws, { ...txn(b, '2026-11-01', 50_000, { rawText: 'xfer', linkRefs: { transfer: 'T9' }, at: '2026-11-01T12:00:00Z' }), externalId: 'in1' })
+      expect(await links()).toEqual([['transfer', 'confirmed']]) // still one link, not orphaned or duplicated
+      expect(await net()).toEqual(before) // not double-counted
+      await ny.close()
+    })
+
+    it('an evening-of-month-end payroll run pins the payroll view and the ledger to the same month (at-instant)', async () => {
+      const ny = await makeKit(backend, { timeZone: 'America/New_York' })
+      const co = await ny.company('Acme')
+      const conn = await ny.connection({ entityId: co, key: 'deel' })
+      // Paid 2026-12-01T03:28Z = 2026-11-30 22:28 in New York. The UTC-sliced payDate is Dec 1, but the run belongs to
+      // November everywhere: ledger/burn and the payroll view must agree, or a month-end run splits across months.
+      await ny.engine.post(ny.ws, {
+        type: 'payroll.run', externalId: 'r1', connectionId: conn,
+        payDate: '2026-12-01', at: '2026-12-01T03:28:00Z',
+        gross: usd(100_000), employerTaxes: usd(0), net: usd(100_000), status: 'paid', provider: 'Deel',
+      } as never)
+      const view = await createFinance(ny.engine).reader.payroll({ workspaceId: ny.ws, entityIds: [co] }, { people: false })
+      expect(view[0]?.runs?.[0]?.payDate).toBe('2026-11-30') // payroll view
+      const lineDates = [...new Set((await ny.engine.store.listLines(ny.ws, { entityIds: [co], basis: 'accrual' })).map((l) => l.date))]
+      expect(lineDates).toEqual(['2026-11-30']) // the ledger entry the burn metric reads — same day, same month
+      await ny.close()
+    })
+
     it("a loan's interest doesn't fail its tie-out", async () => {
       const loan = await k.account({ entityId: acme, name: 'Term loan', type: 'loan' })
       await k.engine.postBatch(k.ws, [snapshot(loan, '2026-08-01', -10_000_000), snapshot(loan, '2026-09-01', -9_950_000), snapshot(loan, '2026-10-01', -9_900_000)])

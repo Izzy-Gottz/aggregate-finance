@@ -26,7 +26,11 @@ export function xeroDate(v: unknown): string | undefined {
   const s = str(v)
   if (!s) return undefined
   const ms = /^\/Date\((-?\d+)([+-]\d{4})?\)\/$/.exec(s)
-  if (ms) return new Date(Number(ms[1])).toISOString().slice(0, 10)
+  if (ms) {
+    // Honor the trailing offset so the date is the one in that offset's frame, not UTC (a no-op for the usual +0000).
+    const off = ms[2] ? (ms[2][0] === '-' ? -1 : 1) * (Number(ms[2].slice(1, 3)) * 60 + Number(ms[2].slice(3, 5))) : 0
+    return new Date(Number(ms[1]) + off * 60_000).toISOString().slice(0, 10)
+  }
   return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : undefined
 }
 
@@ -118,11 +122,13 @@ export function roleForAccount(o: XeroObject): [string, string] | null {
     if (type === 'CURRENT' || type === 'NONCURRENT') return [code, 'other_assets']
     return null
   }
+  // Xero's tax account ("Sales Tax" in the US, GST or VAT elsewhere): money paid to it lowers what's owed.
+  if (klass === 'LIABILITY' && str(o.SystemAccount) === 'GST') return [code, 'sales_tax_payable']
   if (klass === 'LIABILITY') return type === 'CURRLIAB' || type === 'LIABILITY' || type === 'TERMLIAB' || type === 'PAYGLIABILITY' || type === 'SUPERANNUATIONLIABILITY' ? [code, 'other_liabilities'] : null
   return null
 }
 
-const BALANCE_SHEET = new Set(['inventory', 'fixed_assets', 'prepaid', 'other_assets', 'other_liabilities'])
+const BALANCE_SHEET = new Set(['inventory', 'fixed_assets', 'prepaid', 'other_assets', 'other_liabilities', 'sales_tax_payable'])
 
 /** Line amount without tax: Xero's "Inclusive" line amounts include it. */
 function exTax(l: XeroObject, lineAmountTypes: string | undefined, c: Currency): { amount: Money; tax?: Money } {
@@ -130,6 +136,16 @@ function exTax(l: XeroObject, lineAmountTypes: string | undefined, c: Currency):
   const tax = l.TaxAmount !== undefined ? amt(l.TaxAmount, c) : undefined
   if (lineAmountTypes === 'Inclusive' && tax) return { amount: { minor: gross.minor - tax.minor, currency: c }, tax }
   return tax ? { amount: gross, tax } : { amount: gross }
+}
+
+type DocLines = NonNullable<InvoiceUpsert['lines']>
+
+/**
+ * Xero posts the tax on a bill (or spend money) to its tax account, where it lowers what's owed: the expense, or the
+ * equipment bought, is net of tax. So each line's tax becomes its own sales tax line.
+ */
+function billTaxLines(lines: DocLines): DocLines {
+  return lines.flatMap(({ tax, ...l }) => (tax?.minor ? [l, { description: 'Sales tax', amount: tax, category: 'sales_tax_payable' }] : [l]))
 }
 
 // ---------- invoices and bills ----------
@@ -183,7 +199,7 @@ export function mapInvoice(o: XeroObject, ctx: MapContext): InvoiceUpsert | null
     line.category = (code && ctx.roles?.[code]) || (direction === 'receivable' ? 'revenue' : 'uncategorized_expense')
     out.push(line)
   }
-  if (out.length) e.lines = out
+  if (out.length) e.lines = direction === 'payable' ? billTaxLines(out) : out
   return e
 }
 
@@ -288,8 +304,8 @@ const optional = <K extends string>(k: K, v: Money | undefined): Partial<Record<
 
 /** Xero gives apps no access to Xero Payroll or expense claims (no journals scope); their P&L lines can't be matched. */
 export const NOT_COVERED = {
-  text: "Xero payroll and expense claims aren't available to apps; connect Gusto (via Finch) or your bank to include wages",
-  withPayroll: "Wages in Xero Payroll and expense claims aren't readable by apps; your payroll connection is counted instead, and the two books differ by that",
+  text: "Xero payroll and expense claims aren't included, because this Xero connection doesn't read them; connect Gusto (via Finch) or your bank to include wages",
+  withPayroll: "Wages in Xero Payroll and expense claims aren't included, because this Xero connection doesn't read them; your payroll connection is counted instead, and the two books differ by that",
 }
 
 export function mapProfitAndLoss(body: XeroObject, ctx: MapContext, period: { from: string; to: string }): ReportSnapshot | null {
@@ -387,7 +403,7 @@ export function mapBankTransaction(o: XeroObject, ctx: MapContext): Array<Invoic
     status: voided ? 'void' : 'paid',
   }
   if (o.TotalTax !== undefined) doc.tax = amt(o.TotalTax, c)
-  if (out.length) doc.lines = out
+  if (out.length) doc.lines = direction === 'payable' ? billTaxLines(out) : out
   const reference = str(o.Reference)
   if (reference) doc.number = reference
   const pay: PaymentApplied = {

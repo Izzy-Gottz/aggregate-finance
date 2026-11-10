@@ -105,10 +105,10 @@ export function Root({ api, now = Date.now }: RootProps) {
   const load = async () => {
     const started = epoch.current
     let m = await api.me()
-    // Shopify install started while signed out: hand back to Shopify's consent once (the server clears it on resume).
-    if (m?.pendingInstall === 'shopify' && !resumed.current) {
+    // A store install (Shopify, BigCommerce) started while signed out: finish it once (the server clears it on resume).
+    if ((m?.pendingInstall === 'shopify' || m?.pendingInstall === 'bigcommerce') && !resumed.current) {
       resumed.current = true
-      location.assign('/api/connectors/shopify/install/resume')
+      location.assign(`/api/connectors/${m.pendingInstall}/install/resume`)
       return
     }
     // Arrived from an invite email (/?invite=<id>): open the workspace they were invited to, greet them, tidy the URL.
@@ -339,8 +339,9 @@ export function Root({ api, now = Date.now }: RootProps) {
     document.title = `${t} · Aggregate`
   }, [route.page])
 
-  // Connecting a Shopify store: sign in (or sign up) with the store's staff email, which the link needs.
-  const shopifyNote = route.params.signin_for === 'shopify' ? 'Use your Shopify email: sign in or sign up with the email you use for your Shopify store, then the store connects.' : undefined
+  // Connecting a Shopify or BigCommerce store: sign in (or sign up) with the store's own email, which the link needs.
+  const storeNote = { shopify: 'Shopify', bigcommerce: 'BigCommerce' }[String(route.params.signin_for)]
+  const shopifyNote = storeNote ? `Use your ${storeNote} email: sign in or sign up with the email you use for your ${storeNote} store, then the store connects.` : undefined
   const prefill = typeof route.params.signin_email === 'string' && /^[^@\s]+@[^@\s]+$/.test(route.params.signin_email) ? route.params.signin_email : undefined
   // On an AI's OAuth login page (#/sign-in?client_id=…, query exactly as Better Auth signed it), signing in carries on
   // the authorization to the consent page instead of landing in the Workspace. Passkey and reviewer code sign in here;

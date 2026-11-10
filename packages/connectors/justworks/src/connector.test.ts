@@ -163,3 +163,23 @@ describe('justworks connector (partner API, doc-shaped fixtures)', () => {
     await expect(connector.disconnect!(conn)).resolves.toEqual({ notRevoked: expect.stringContaining('Justworks') })
   })
 })
+
+
+describe('justworks: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/v1/payrolls', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/v1/payrolls', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})
+
+
+describe('justworks pagination completeness: a partial list is never summed as complete', () => {
+  it('a paystub list that never stops paging fails visibly instead of summing a partial payroll', async () => {
+    const { connector, conn } = make([{ match: /\/v1\/payrolls\/[^/]+\/paystubs/, respond: { json: { items: [], next_cursor: 'c' } } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow(/page through/)
+  })
+})

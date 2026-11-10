@@ -36,7 +36,7 @@ records, so your AI may add entries to the sample data (undo them in the app, or
 ## Bots and scripts
 
 Clients that can only start a local command can bridge over stdio with an agent key (`agfn_live_…`, made in
-**Connect your AI → A bot or script**):
+**Connect your AI → + Connect another AI → A key for a bot → Make a key**):
 
 ```sh
 npx aggregate-finance mcp --print-config --url https://app.aggregate.finance/mcp

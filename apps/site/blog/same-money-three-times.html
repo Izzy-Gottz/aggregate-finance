@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Give an AI your bank feed and it counts the same money three times · Aggregate</title>
+<meta name="description" content="Two examples of how an AI reading raw bank and Stripe data gets a business's numbers wrong, and what it takes to count each dollar once.">
+<meta name="theme-color" content="#FCFCFB">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="Give an AI your bank feed and it counts the same money three times">
+<meta property="og:description" content="Two examples of how an AI reading raw bank and Stripe data gets a business's numbers wrong.">
+<meta property="og:image" content="https://aggregate.finance/og.png">
+<meta property="og:url" content="https://aggregate.finance/blog/same-money-three-times">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://aggregate.finance/blog/same-money-three-times">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,300&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Same light palette and type pair as the homepage and /trust. Numbers are synthetic demo data
+     (sources: ~/aggregate-drafts/launch/hn-writeup-facts.md sections 1.2 and 1.3). */
+  :root { --bg: #FCFCFB; --ink: #111110; --muted: #5F5E5A; --faint: #74736E; --hairline: #EEEDEA; --underline: #D5D4D0; color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { color: var(--ink); font-family: Geist, ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ink); text-decoration-color: var(--underline); text-underline-offset: 4px; }
+  a:hover { text-decoration-color: var(--ink); }
+  a:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 24px clamp(16px, 4vw, 40px); }
+  .home { display: flex; align-items: center; gap: 11px; text-decoration: none; padding: 10px 0; }
+  .home span { font-size: 23px; font-weight: 500; letter-spacing: -.012em; }
+  .quiet { color: var(--muted); text-decoration: none; font-size: 14px; padding: 12px 0; }
+  .quiet:hover { color: var(--ink); }
+  header .links { display: flex; gap: 24px; }
+  article { max-width: 660px; margin: 0 auto; padding: 32px 16px 72px; }
+  h1 { margin: 0; font-family: Newsreader, Georgia, serif; font-weight: 300; font-style: italic; font-size: clamp(34px, 4.6vw, 52px); line-height: 1.1; letter-spacing: -.018em; text-wrap: balance; }
+  .meta { margin: 16px 0 0; font-size: 14px; color: var(--faint); }
+  h2 { margin: 44px 0 0; font-size: 21px; font-weight: 500; letter-spacing: -.01em; }
+  p, li { font-size: 17px; line-height: 1.7; }
+  p { margin: 16px 0 0; }
+  ul { margin: 16px 0 0; padding-left: 22px; }
+  li + li { margin-top: 4px; }
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--hairline); font-size: 15px; color: var(--muted); }
+  .try { font-weight: 500; }
+  footer { max-width: 660px; margin: 0 auto; padding: 0 16px 28px; font-size: 12px; color: var(--faint); }
+  @media (max-width: 520px) { header { padding: 16px; } p, li { font-size: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="/" aria-label="Aggregate home">
+    <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#111110" stroke-width="5" stroke-linecap="round"><path d="M50 10V90"/><path d="M50 10 32 90"/><path d="M50 10 68 90"/><path d="M50 10 14 90"/><path d="M50 10 86 90"/></g></svg>
+    <span>Aggregate</span>
+  </a>
+  <div class="links">
+    <a class="quiet" href="https://docs.aggregate.finance">Docs</a>
+    <a class="quiet" href="https://app.aggregate.finance/try">Try it</a>
+  </div>
+</header>
+<article>
+  <h1>Give an AI your bank feed and it counts the same money three times</h1>
+  <p class="meta">Yisrael · November 2026</p>
+
+  <p>People are starting to connect their AI assistants to their bank accounts and ask plain questions. How much did we make last month? What's our runway? Can I afford this hire? The data is all there, and the answers come back sounding sure of themselves. Some of them are wrong, and nothing in the answer tells you so.</p>
+  <p>I build Aggregate, which connects any AI assistant or agent to a business's banks, cards, payment processors, books and payroll. Most of the work turned out to be counting: making sure each dollar shows up once before anything reads it. Here are two examples from our demo companies. The companies are made up, but the way the money moves is how real bank and Stripe data looks.</p>
+
+  <h2>One sale, three different answers</h2>
+  <p>Northwind Labs is a small software company that bills its customers through Stripe. One day it made a <span class="num">$1,499.00</span> sale. Stripe kept a <span class="num">$43.77</span> fee, and the same day Northwind refunded a different customer <span class="num">$99.00</span>. The next day Stripe paid out what was left, <span class="num">$1,356.23</span>, and it landed in the bank as a single deposit.</p>
+  <p>Give an AI both the Stripe data and the bank feed and ask what came in. If it adds up everything positive, it gets <span class="num">$1,499.00 + $1,356.23 = $2,855.23</span>. That's the same money counted twice: once when the customer paid, and again when Stripe moved it to the bank.</p>
+  <p>Give it only the bank feed and it says <span class="num">$1,356.23</span>. That's closer, but the fee and the refund have vanished into one net number, so you can't see what you sold or what card payments cost you.</p>
+  <p>The right answer is three lines: <span class="num">$1,499.00</span> in sales, <span class="num">$99.00</span> refunded and <span class="num">$43.77</span> in fees. The deposit itself isn't income. It's money moving from one of your accounts (your Stripe balance) to another (your bank).</p>
+
+  <h2>Your own money looks like income</h2>
+  <p>Harbor Coffee is a café with a card reader, an online shop and a cash drawer. On one day in March (in the demo as it stands in November 2026; its dates roll forward each month) its checking account took in <span class="num">$19,710.45</span>:</p>
+  <ul>
+    <li><span class="num">$15,000.00</span> from the café's own savings account</li>
+    <li><span class="num">$2,304.77</span>, a Stripe payout for the previous day's card sales</li>
+    <li><span class="num">$1,275.78</span>, the weekly Shopify payout</li>
+    <li><span class="num">$1,129.90</span> in cash, already counted at the register</li>
+  </ul>
+  <p>None of it was new revenue that day. The card and online sales were counted when customers paid, and the cash was counted at the drawer. The <span class="num">$15,000</span> was the café moving its own money, and nothing ties the two bank rows together: one says "ONLINE TRANSFER TO CHK" and the other "ONLINE TRANSFER FROM SAV". An AI reading the checking account sees a <span class="num">$19,710.45</span> day, and if you ask it for March revenue it can easily add the <span class="num">$15,000</span>.</p>
+
+  <h2>What we do about it</h2>
+  <p>Before an assistant sees anything, Aggregate tries to match every deposit to where it came from. When the bank row carries Stripe's payout id, that settles it. When it doesn't (Harbor's bank doesn't), a payout matches a deposit only when the amounts are equal to the cent and the deposit lands within a week of the payout. Without a shared reference, a transfer needs two opposite rows of the same amount in different accounts within four days. A transfer between currencies is only suggested, for a person to confirm. A clear match is confirmed automatically. Anything less certain waits for a person to confirm. If an account has never reported, or part of the period hasn't synced, the figure comes back as unknown, with the reason, instead of <span class="num">$0</span>.</p>
+  <p>Some cases still don't match. Several payouts bundled into one deposit don't, and neither do payouts converted from another currency; those wait for a person. Everything above is synthetic demo data, and nobody outside Aggregate has audited our numbers.</p>
+
+  <p class="note try">You can try it on a made-up company, no signup: <a href="https://app.aggregate.finance/try">app.aggregate.finance/try</a></p>
+</article>
+<footer>© 2026 Aggregate Finance LLC · Names belong to their owners; no endorsement</footer>
+</body>
+</html>

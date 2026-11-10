@@ -5,7 +5,7 @@ description: How Aggregate's MCP server maps to the OWASP MCP Top 10, its MCP se
 # MCP security: how Aggregate maps to the OWASP MCP Top 10
 
 **Short answer:** this is our own assessment of Aggregate's MCP server against the
-[OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/) (2025, beta). OWASP hasn't reviewed it, nobody has certified
+[OWASP MCP Top 10](https://owasp.org/projects/mcp-top-10) (2025, beta). OWASP hasn't reviewed it, nobody has certified
 it, and no MCP certification exists. Each row says what we do and what's left, and the longer versions link to the code.
 
 ## The OWASP MCP Top 10

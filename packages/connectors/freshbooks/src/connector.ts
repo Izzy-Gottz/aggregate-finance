@@ -143,8 +143,10 @@ function withExpiry(tokens: OAuthTokens): OAuthTokens {
 
 /** Accounting lists wrap their rows in response.result; the newer endpoints answer bare. */
 function result(data: unknown): FbObject {
-  const d = isRecord(data) ? data : {}
-  const response = isRecord(d.response) ? d.response : d
+  // A present object is read as-is (an empty list key is a real empty page); a null/non-object body (an empty body, or
+  // the sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero.
+  if (!isRecord(data)) throw new ConnectorError('transient', 'FreshBooks sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+  const response = isRecord(data.response) ? data.response : data
   return isRecord(response.result) ? response.result : response
 }
 const rows = (r: FbObject, key: string): FbObject[] => (Array.isArray(r[key]) ? r[key].filter(isRecord) : [])

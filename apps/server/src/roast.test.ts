@@ -53,6 +53,14 @@ describe('roast facts and lines', () => {
     expect(f.spendChangePct).toBeGreaterThan(10)
   })
 
+  it('the same fee twice on one day is two sales, not a double charge', () => {
+    const withFees = [...rows]
+    for (let i = 0; i < 5; i++) withFees.push(row('2026-09-04', -1_87, 'processor_fees', 'Stripe'))
+    const p = pnlFor(m.now)
+    const g = factsFrom(withFees, m, { now: { ...p, spend: { ...p.spend, processor_fees: 5 * 1_87 } }, before: pnlFor(m.before) }, 14)
+    expect(g.doubles).toEqual({ name: 'Figma', count: 1 })
+  })
+
   it('reads the P&L sections by role (cost of revenue and operating expenses are spending)', () => {
     const usd = (minor: number) => ({ minor, currency: 'USD' })
     const report = { kind: 'profit_and_loss', entityId: 'e', from: '2026-07-01', to: '2026-09-30', basis: 'accrual', currency: 'USD', total: usd(0), sections: [

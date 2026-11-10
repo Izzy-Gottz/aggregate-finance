@@ -17,8 +17,7 @@ apps in ChatGPT".
 
 ### 1. Connect your sources
 
-Sign up at [app.aggregate.finance](https://app.aggregate.finance), then open **Workspace → Connections → + More
-connections**.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance), then open **Workspace → Connections → + Add a connection**.
 
 - **Bank and cards:** choose your bank and sign in through Plaid.
 - **Stripe:** sign in to Stripe and approve read access. You can connect more than one account.

@@ -37,6 +37,7 @@ import type {
 } from '@agfn/contracts'
 import { WriteRejected } from '@agfn/contracts'
 import { detectPayroll, parsePayrollRegister, type RegisterIssue } from '@agfn/connector-payroll-detect'
+import { DEFAULT_TIME_ZONE, localDate } from '@agfn/core'
 import { newId } from '@agfn/db'
 import type { Kysely } from 'kysely'
 import { aging, AGING_BUCKETS } from './aging.ts'
@@ -112,6 +113,9 @@ export interface BooksDeps {
    * `recordId` is the ledger record id; settlement links need it (looked up by connection + external id if absent).
    */
   bankRows?: (workspaceId: WorkspaceId, entityId: EntityId, since: IsoDate) => Promise<Array<TxnUpsert & { recordId?: string }>>
+  /** The workspace's IANA time zone (null = America/New_York). A payroll run's stored pay_date is its business date in
+   *  this zone, so it matches the ledger (which dates the run the same way); see planRun. */
+  timeZone?: (workspaceId: WorkspaceId) => Promise<string | null>
   clock?: { now(): number }
   /** Connector key → display name for "source" labels. */
   sourceNames?: Record<string, string>
@@ -134,6 +138,11 @@ const SOURCE_NAMES: Record<string, string> = {
 }
 
 const n = (v: number | string | bigint | null): number => (v === null ? 0 : Number(v))
+/** Minor units as a plain amount in the currency's own decimals: 10000 USD → "100.00", 10000 JPY → "10000", 1250 KWD → "1.250". */
+export const amountIn = (minor: number, currency: string): string => {
+  const exp = new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2
+  return (minor / 10 ** exp).toFixed(exp)
+}
 const stable = (e: object): string => {
   const { rawRef: _r, ...rest } = e as { rawRef?: unknown }
   return JSON.stringify(rest)
@@ -207,6 +216,7 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
   const now = (): string => new Date(clock.now()).toISOString()
   const today = (): IsoDate => now().slice(0, 10)
   const names = { ...SOURCE_NAMES, ...deps.sourceNames }
+  const zoneOf = async (ws: WorkspaceId): Promise<string> => (deps.timeZone ? (await deps.timeZone(ws)) ?? DEFAULT_TIME_ZONE : DEFAULT_TIME_ZONE)
 
   // ---------- ingest ----------
 
@@ -277,13 +287,21 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
   }
 
   /** What ingesting one payroll run does, given the row already kept for it (see planDoc). */
-  function planRun(ws: WorkspaceId, entityId: EntityId, r: PayrollRun, sourceKey: string, existing: { id: string; event_json: string } | undefined) {
-    if (existing && stable(JSON.parse(existing.event_json) as object) === stable(r)) return { id: existing.id, changed: false as const }
+  function planRun(ws: WorkspaceId, entityId: EntityId, r: PayrollRun, sourceKey: string, existing: { id: string; event_json: string; pay_date: string } | undefined, tz: string) {
+    // Date the run by its business date in the workspace's zone when the provider gave a real instant, exactly as the
+    // ledger dates it (core eventDate). Without an instant the provider's pay date stands. Keeps every reader — the
+    // payroll screen, get_payroll, the bank-payroll estimate — on the one date the ledger uses.
+    const payDate = r.at ? localDate(r.at, tz) : r.payDate
+    // Skip only when nothing a reader sees would change. The event alone isn't enough: pay_date is derived from `at` and
+    // the workspace zone, so a row booked before this dating rule (or before a zone change) can hold the same event yet a
+    // stale pay_date. Re-deriving here is what lets a re-import re-date those rows (staging's Deel split runs: the event
+    // already carried `at`, but pay_date stuck on the UTC slice because the old code stored r.payDate).
+    if (existing && existing.pay_date === payDate && stable(JSON.parse(existing.event_json) as object) === stable(r)) return { id: existing.id, changed: false as const }
     const at = now()
     const cols = {
       source: r.source ?? 'provider',
       provider: r.provider ?? null,
-      pay_date: r.payDate,
+      pay_date: payDate,
       status: r.status ?? 'paid',
       estimated: r.estimated ? 1 : 0,
       gross_minor: r.gross.minor,
@@ -297,7 +315,7 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
       updated_at: at,
     }
     const id = existing?.id ?? newId()
-    const kept = { id, event_json: cols.event_json }
+    const kept = { id, event_json: cols.event_json, pay_date: cols.pay_date }
     if (existing) return { id, changed: true as const, update: cols, kept }
     return { id, changed: true as const, insert: { id, workspace_id: ws, entity_id: entityId, connection_id: /^(detect|register):/.test(sourceKey) ? null : r.connectionId, source_key: sourceKey, external_id: r.externalId, ...cols, created_at: at }, kept }
   }
@@ -305,12 +323,12 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
   async function ingestRun(ws: WorkspaceId, entityId: EntityId, r: PayrollRun, sourceKey: string, post = true): Promise<IngestResult> {
     const existing = await db
       .selectFrom('payroll_runs')
-      .select(['id', 'event_json'])
+      .select(['id', 'event_json', 'pay_date'])
       .where('workspace_id', '=', ws)
       .where('source_key', '=', sourceKey)
       .where('external_id', '=', r.externalId)
       .executeTakeFirst()
-    const plan = planRun(ws, entityId, r, sourceKey, existing)
+    const plan = planRun(ws, entityId, r, sourceKey, existing, await zoneOf(ws))
     if (!plan.changed) return { recordId: plan.id, changed: false, posted: false }
     if (plan.update) await db.updateTable('payroll_runs').set(plan.update).where('id', '=', plan.id).execute()
     else await db.insertInto('payroll_runs').values(plan.insert).execute()
@@ -367,19 +385,20 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
     for (const part of chunks(docInserts)) await db.insertInto('books_documents').values(part).execute()
     // Payroll runs, the same way.
     const runs = events.flatMap((e, i) => (e.type === 'payroll.run' ? [[e as PayrollRun, i] as const] : []))
-    const keptRuns = new Map<string, { id: string; event_json: string }>()
+    const keptRuns = new Map<string, { id: string; event_json: string; pay_date: string }>()
     const bySource = new Map<string, Set<string>>()
     for (const [r] of runs) bySource.set(r.connectionId, (bySource.get(r.connectionId) ?? new Set<string>()).add(r.externalId))
     for (const [source, ids] of bySource) {
       for (const part of chunks([...ids])) {
-        const rows = await db.selectFrom('payroll_runs').select(['id', 'event_json', 'external_id']).where('workspace_id', '=', ws).where('source_key', '=', source).where('external_id', 'in', part).execute()
-        for (const r of rows) keptRuns.set(`${source}\0${r.external_id}`, { id: r.id, event_json: r.event_json })
+        const rows = await db.selectFrom('payroll_runs').select(['id', 'event_json', 'external_id', 'pay_date']).where('workspace_id', '=', ws).where('source_key', '=', source).where('external_id', 'in', part).execute()
+        for (const r of rows) keptRuns.set(`${source}\0${r.external_id}`, { id: r.id, event_json: r.event_json, pay_date: r.pay_date })
       }
     }
     const runInserts: Array<NonNullable<ReturnType<typeof planRun>['insert']>> = []
+    const runTz = runs.length ? await zoneOf(ws) : DEFAULT_TIME_ZONE
     for (const [r, i] of runs) {
       const key = `${r.connectionId}\0${r.externalId}`
-      const plan = planRun(ws, entityId, r, r.connectionId, keptRuns.get(key))
+      const plan = planRun(ws, entityId, r, r.connectionId, keptRuns.get(key), runTz)
       results[i] = { recordId: plan.id, changed: plan.changed, posted: false }
       if (!plan.changed) continue
       changedAt.push(i)
@@ -644,7 +663,7 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
       const v = ledger.view(docKey(e.connectionId, e.externalId), '9999-12-31')
       if (!v || v.status === 'void' || v.status === 'draft') throw new WriteRejected(`${a.invoiceId} is ${v?.status ?? 'missing'} and can't take a payment.`, 'not_open')
       if (a.amountMinor > v.remaining.minor) {
-        throw new WriteRejected(`That's more than is still open on ${d.number ?? a.invoiceId} (${v.remaining.minor / 100} ${p.currency}). Apply the rest elsewhere or leave it unapplied.`, 'overpayment')
+        throw new WriteRejected(`That's more than is still open on ${d.number ?? a.invoiceId} (${amountIn(v.remaining.minor, p.currency)} ${p.currency}). Apply the rest elsewhere or leave it unapplied.`, 'overpayment')
       }
       const list = groups.get(e.connectionId) ?? []
       list.push({ externalId: e.externalId, amountMinor: a.amountMinor })
@@ -688,7 +707,7 @@ export function createBooks<DB extends BooksTables>(database: Kysely<DB>, deps: 
       cashImpact: [],
       suggestedLinks,
       possibleDuplicates: [],
-      summary: `Payment of ${p.amountMinor / 100} ${p.currency} applied to ${p.applications.length} ${p.direction === 'receivable' ? 'invoice' : 'bill'}${p.applications.length === 1 ? '' : 's'}${p.unappliedMinor > 0 ? `, ${p.unappliedMinor / 100} left as credit` : ''}.`,
+      summary: `Payment of ${amountIn(p.amountMinor, p.currency)} ${p.currency} applied to ${p.applications.length} ${p.direction === 'receivable' ? 'invoice' : 'bill'}${p.applications.length === 1 ? '' : 's'}${p.unappliedMinor > 0 ? `, ${amountIn(p.unappliedMinor, p.currency)} left as credit` : ''}.`,
     }
   }
 

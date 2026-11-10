@@ -12,10 +12,12 @@ import { setupCommand } from './setup.ts'
 import { syncCommand } from './sync.ts'
 import { keysCommand } from './keys.ts'
 import { usageCommand } from './usage.ts'
+import { connectionRequestsCommand } from './connection-requests.ts'
 import { backupCommand } from './backup.ts'
 import { exportCommand } from './export.ts'
 import { wipeCommand } from './wipe.ts'
 import { challengeCheckFlagCommand, challengeQaCommand, challengeResetCommand } from './challenge-qa.ts'
+import { anonymizeDeletedCommand } from './anonymize-deleted.ts'
 import { rebuildCommand } from './rebuild.ts'
 
 export { doctorCommand, runChecks, type Check } from './doctor.ts'
@@ -38,6 +40,8 @@ export const HELP = `agfn: Aggregate, the open-source finance MCP
   agfn sync <connectionId>     Sync one connection now (or --all).
   agfn usage [--workspace ID] [--days N] [--json] [--reason WHY]
                                What each workspace costs to run: Plaid Items, syncs, storage, MCP calls.
+  agfn connection-requests [--json] [--reason WHY]
+                               Apps people asked for in Add a connection, and how many workspaces asked.
   agfn keys reseal [--apply --confirm RESEAL] [--reason WHY]
                                Stored secrets per master key; --apply moves them to the current key (dry run by default).
   agfn backup now | list | restore <key> [--to FILE]
@@ -58,6 +62,8 @@ export const HELP = `agfn: Aggregate, the open-source finance MCP
                                Challenge deployment only: run the nightly reset now; check a reported flag.
   agfn ledger-rebuild [--workspace ID] [--apply --confirm REBUILD] [--reason WHY]
                                Re-post every entry from its records after a posting-rule change; checks totals.
+  agfn anonymize-deleted [--apply]
+                               Tombstone a lingering email on an orphaned deleted-account row (dry run by default).
   agfn demo --email EMAIL      Fill a demo workspace (3 made-up companies + Personal) for someone who signed in.
   agfn setup [--url URL] [--client cursor,vscode,…] [--yes] [--force]
                                Add Aggregate to the AI apps on this machine (Claude Code, Codex CLI, Cursor,
@@ -91,6 +97,8 @@ export async function run(argv: string[], io: Io): Promise<number | null> {
         return await withBypass('cli:keys', () => keysCommand(rest, io))
       case 'usage':
         return await withBypass('cli:usage', () => usageCommand(rest, io))
+      case 'connection-requests':
+        return await withBypass('cli:connection-requests', () => connectionRequestsCommand(rest, io))
       case 'export':
         return await withBypass('cli:export', () => exportCommand(rest, io))
       case 'demo':
@@ -115,6 +123,8 @@ export async function run(argv: string[], io: Io): Promise<number | null> {
         return await withBypass('cli:challenge-flag', () => challengeCheckFlagCommand(rest, io))
       case 'ledger-rebuild':
         return await withBypass('cli:ledger-rebuild', () => rebuildCommand(rest, io))
+      case 'anonymize-deleted':
+        return await withBypass('cli:anonymize-deleted', () => anonymizeDeletedCommand(rest, io))
       case 'mcp': {
         const printOnly = rest.includes('--print-config')
         const code = await mcpCommand(rest, io)

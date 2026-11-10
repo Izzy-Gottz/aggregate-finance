@@ -260,6 +260,48 @@ describe('plaid mapping', () => {
   })
 })
 
+describe('plaid freshness', () => {
+  it("stores /item/get's product times and each balance's last update, oldest as the connection's", async () => {
+    const accounts = (fx.accounts_get as { accounts: Array<{ account_id: string; balances: object }> }).accounts.map((a) =>
+      a.account_id === 'acc_card' ? { ...a, balances: { ...a.balances, last_updated_datetime: '2026-10-08T03:00:00Z' } }
+        : a.account_id === 'acc_checking' ? { ...a, balances: { ...a.balances, last_updated_datetime: '2026-10-09T06:00:00Z' } } : a)
+    const status = { transactions: { last_successful_update: '2026-10-09T10:00:00Z', last_failed_update: '2026-10-07T10:00:00Z' }, investments: { last_successful_update: '2026-10-09T09:00:00Z', last_failed_update: null } }
+    const { connector, calls } = make([
+      { match: '/accounts/get', respond: { json: { ...(fx.accounts_get as object), accounts } } },
+      { match: '/item/get', respond: { json: { ...(fx.item_get as object), status } } },
+    ])
+    const r = await runSync(connector, conn, null)
+    expect(r.freshness).toEqual({
+      checkedAt: '2026-10-09T12:00:00.000Z',
+      transactionsLastSuccessAt: '2026-10-09T10:00:00Z',
+      transactionsLastFailedAt: '2026-10-07T10:00:00Z',
+      investmentsLastSuccessAt: '2026-10-09T09:00:00Z',
+      balancesUpdatedAt: '2026-10-08T03:00:00Z',
+      balancesUpdatedAtByAccount: { acc_card: '2026-10-08T03:00:00Z', acc_checking: '2026-10-09T06:00:00Z' },
+    })
+    const paths = calls.map((c) => new URL(c.url).pathname)
+    expect(paths.filter((p) => p === '/item/get')).toHaveLength(1)
+    for (const billed of PER_CALL_ENDPOINTS) expect(paths).not.toContain(billed)
+  })
+
+  it("keeps the Item's error code (never its message) when Plaid reports one", async () => {
+    const error = { error_type: 'ITEM_ERROR', error_code: 'ITEM_LOGIN_REQUIRED', error_message: 'the login details of this item have changed', display_message: 'Sign in again' }
+    const { connector } = make([{ match: '/item/get', respond: { json: { ...(fx.item_get as object), item: { ...(fx.item_get as { item: object }).item, error }, status: { transactions: { last_successful_update: '2026-11-02T01:18:27Z', last_failed_update: '2026-11-03T08:07:10Z' } } } } }])
+    const r = await runSync(connector, conn, null)
+    expect(r.freshness).toMatchObject({ providerErrorCode: 'ITEM_LOGIN_REQUIRED', transactionsLastSuccessAt: '2026-11-02T01:18:27Z', transactionsLastFailedAt: '2026-11-03T08:07:10Z' })
+    expect(JSON.stringify(r.freshness)).not.toMatch(/login details|Sign in again/)
+    const odd = make([{ match: '/item/get', respond: { json: { ...(fx.item_get as object), item: { ...(fx.item_get as { item: object }).item, error: { ...error, error_code: 'not a <code>' } } } } }])
+    expect((await runSync(odd.connector, conn, null)).freshness?.providerErrorCode).toBeUndefined()
+  })
+
+  it('a failing /item/get leaves the product times out, never the sync', async () => {
+    const { connector } = make([{ match: '/item/get', respond: { status: 500, json: { error_type: 'API_ERROR', error_code: 'INTERNAL_SERVER_ERROR', error_message: 'x' } } }])
+    const r = await runSync(connector, conn, null)
+    expect(r.complete).toBe(true)
+    expect(r.freshness).toEqual({ checkedAt: '2026-10-09T12:00:00.000Z' })
+  })
+})
+
 describe('plaid relink and errors', () => {
   const loginRequired = { status: 400, json: { error_type: 'ITEM_ERROR', error_code: 'ITEM_LOGIN_REQUIRED', error_message: 'the login details of this item have changed', display_message: 'Please reconnect your bank.' } }
 
@@ -527,6 +569,23 @@ describe('interest the bank names, when Plaid is unsure', () => {
     expect(categoryHint(t('MISC DEPOSIT', -20, 'HIGH', 'INCOME', 'INCOME_OTHER'))).toBe('INCOME_OTHER_INCOME')
     expect(categoryHint(t('LOAN PROCEEDS', -5000, 'HIGH', 'LOAN_DISBURSEMENTS', 'LOAN_DISBURSEMENTS_OTHER_DISBURSEMENT'))).toBe('TRANSFER_IN_CASH_ADVANCES_AND_LOANS')
     expect(categoryHint(t('DFAS MIL PAY', -3000, 'HIGH', 'INCOME', 'INCOME_MILITARY'))).toBe('INCOME_MILITARY')
+  })
+})
+
+describe('a hosting charge Plaid reads as an airline (FLY.IO)', () => {
+  // Shaped like the Capital One rows: Plaid called the 2026-11-02 Fly.io charge TRAVEL_FLIGHTS. The mapper passes the
+  // guess on as a hint; core's known-vendors list (known-vendors.test.ts, same rows) books it to Cloud by its name.
+  it('keeps the name and the raw text the vendor rule reads, and passes the guess on only as a hint', () => {
+    const e = mapTxn({
+      account_id: 'acc_c1', transaction_id: 't_fly_nov', date: '2026-11-02', amount: 132.59, iso_currency_code: 'USD', unofficial_currency_code: null,
+      name: 'FLY.IO', merchant_name: 'Fly.io', original_description: 'FLY.IO 8445759466 DE', pending: false, pending_transaction_id: null,
+      payment_channel: 'online', counterparties: [{ name: 'Fly.io', type: 'merchant', confidence_level: 'HIGH' }],
+      personal_finance_category: { primary: 'TRAVEL', detailed: 'TRAVEL_FLIGHTS', confidence_level: 'LOW' },
+    } as never, 'c1', 'r1', 'USD')
+    expect(e.amount).toEqual({ minor: -13259, currency: 'USD' })
+    expect(e.counterparty).toBe('Fly.io')
+    expect(e.rawText).toBe('FLY.IO 8445759466 DE')
+    expect(e.categoryHint).toBe('TRAVEL_FLIGHTS')
   })
 })
 

@@ -195,6 +195,9 @@ export function createPayPalConnector(opts: PayPalConnectorOptions, deps: Connec
     const day = isoTimestamp(now).slice(0, 10)
     const events: NormalizedEvent[] = []
     const curs: string[] = []
+    // A present object with the list omitted/empty is a real empty result; a null/non-object body (an empty body, or
+    // the sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero.
+    if (!isRecord(res as unknown)) throw new ConnectorError('transient', 'PayPal sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'paypal' })
     for (const b of res.balances ?? []) {
       const cur = normalizeCurrency(b.currency)
       const rawRef = await deps.raw.put(conn.id, 'paypal.balance', `${acct}:${cur}@${day}`, b)
@@ -240,6 +243,7 @@ export function createPayPalConnector(opts: PayPalConnectorOptions, deps: Connec
     }
     const events: NormalizedEvent[] = []
     const curs = [...state.curs]
+    if (!isRecord(res as unknown)) throw new ConnectorError('transient', 'PayPal sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'paypal' })
     for (const d of res.transaction_details ?? []) {
       const id = d.transaction_info?.transaction_id
       if (!id) continue
@@ -285,6 +289,7 @@ export function createPayPalConnector(opts: PayPalConnectorOptions, deps: Connec
     }
     const events: NormalizedEvent[] = []
     const fallback = (state.until ?? rfc(clock.now())).slice(0, 10)
+    if (!isRecord(res as unknown)) throw new ConnectorError('transient', 'PayPal sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'paypal' })
     for (const inv of res.items ?? []) {
       const rawRef = await deps.raw.put(conn.id, 'paypal.invoice', inv.id, inv)
       events.push(mapInvoice(inv, conn.id, rawRef, fallback))

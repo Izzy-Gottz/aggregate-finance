@@ -170,8 +170,14 @@ describe('sales reported by the store, in the connection details', () => {
           cash: await ai.try('get_reports', { kind: 'profit_and_loss', company: 'Demo Company', from: '2026-10-01', to: '2026-10-31', basis: 'cash' }),
           coverage: await ai.try('get_coverage'),
         })
-        // Only the clock may differ: as_of, and the "synced … ago" under freshness, in the data and quoted in the text.
-        const stable = (x: unknown) => JSON.stringify(x).replace(/as_of[\\":]+[^"\\]+/g, 'as_of').replace(/freshness[\\":{]+[^}]*\}/g, 'freshness')
+        // Only the clock may differ: as_of, the "synced … ago" under freshness, and the per-source freshness block and
+        // its "Data as of" line (last_checked/data_as_of timestamps), in the data and quoted in the text.
+        const stable = (x: unknown) =>
+          JSON.stringify(x)
+            .replace(/as_of[\\":]+[^"\\]+/g, 'as_of')
+            .replace(/freshness[\\":{]+[^}]*\}/g, 'freshness')
+            .replace(/\\?"sources\\?":\[[^\]]*\]/g, 'sources')
+            .replace(/Data as of: [^\\]*/g, 'Data as of')
         // Synced once with nothing, so the only change below is the snapshots themselves.
         store.push(() => [])
         await store.sync()

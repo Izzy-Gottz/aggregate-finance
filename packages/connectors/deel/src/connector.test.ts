@@ -55,6 +55,8 @@ describe('deel connector (docs-shaped fixtures)', () => {
         { person: 'Dana Sample', gross: { minor: 390_000, currency: 'USD' }, kind: 'employee' },
       ],
     })
+    // paid_at is a real instant, carried as `at` so the engine dates the run in the workspace tz.
+    expect((events[0] as PayrollRun).at).toMatch(/^2026-09-30T\d\d:\d\d/)
   })
 
   it('a paid receipt of zero with no worker lines is not a run', async () => {
@@ -224,5 +226,25 @@ describe('deel worker vs fee lines (by contract type)', () => {
     const out = await syncAll(connector, conn)
     expect(out.events).toHaveLength(0)
     expect(out.warnings).toEqual([])
+  })
+})
+
+describe('deel: unreadable responses stop the sync; a real empty period still succeeds (risk: silent $0)', () => {
+  const payments = (respond: FixtureRoute['respond']): FixtureRoute => ({ match: (u) => u.pathname.endsWith('/payments'), respond })
+
+  it('an empty payments list is a clean zero-row success, not a failure', async () => {
+    const { connector, conn } = make([payments({ json: { data: [] } })])
+    const { events } = await runSync(connector, conn, null)
+    expect(events).toEqual([])
+  })
+
+  it('an empty body (a followed-redirect sign-in or error page) fails visibly, never reads as zero receipts', async () => {
+    const { connector, conn } = make([payments({ text: '' })])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make([payments({ json: 5 })])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
   })
 })

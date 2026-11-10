@@ -1,4 +1,6 @@
 import { makeSharePort } from './share.ts'
+import { makeConnectPort } from './connect-source.ts'
+import { makeSourcesPort } from './freshness.ts'
 import { errorForLog } from './log-safe.ts'
 import type { Kysely } from 'kysely'
 import { LedgerEngine, KyselyLedgerStore, KyselyDirectory, DbScope, CachedRateSource, FrankfurterRateSource } from '@agfn/core'
@@ -36,10 +38,10 @@ export async function loadInstalledModules(env: NodeJS.ProcessEnv, given?: { reg
   return out
 }
 
-export function ledgerFor(db: Kysely<CoreTables>, config: { setAsides?: boolean } = {}): LedgerEngine {
+export function ledgerFor(db: Kysely<CoreTables>, config: { setAsides?: boolean; staleAfterHours?: (connectorKey: string) => number | undefined } = {}): LedgerEngine {
   const scope = new DbScope(db as never)
   const store = new KyselyLedgerStore(scope)
-  const engine = new LedgerEngine({ store, directory: new KyselyDirectory(scope), rates: new CachedRateSource(store, new FrankfurterRateSource()), ...(config.setAsides ? { setAsides: true } : {}) })
+  const engine = new LedgerEngine({ store, directory: new KyselyDirectory(scope, config.staleAfterHours ? { staleAfterHours: config.staleAfterHours } : {}), rates: new CachedRateSource(store, new FrankfurterRateSource()), ...(config.setAsides ? { setAsides: true } : {}) })
   // S6 answers get_metric('fully_diluted') from the cap table.
   engine.registerMetricProvider('fully_diluted', equityFor({ db, ledger: engine as never }).fullyDilutedMetric)
   return engine
@@ -133,6 +135,11 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
       // get_investments only when turned on (AGFN_TOOL_INVESTMENTS=1): a new tool, so after both directory reviews close.
       ...(config.toolInvestments ? { investments: true } : {}),
       ...(config.setAsides ? { setAsides: true } : {}),
+      // Per-source freshness on every read (the `sources` block + "Data as of" line). Not flag-gated. The ledger
+      // reader (when present) gives file sources their statement closing date via coverage.
+      sources: makeSourcesPort(s, books?.reader),
+      // connect_source only when turned on (AGFN_CONNECT_FROM_CHAT=1): a new tool, so after the directory reviews close.
+      ...(config.connectFromChat ? { connectFromChat: true, connect: makeConnectPort(s, config) } : {}),
       appUrl: config.baseUrl,
       // Postgres means hosted, possibly several instances: share the limits through the database.
       ...(config.databaseUrl.startsWith('postgres') ? { rateLimiter: new DbRateLimiter(db) } : {}),
@@ -169,7 +176,8 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
       authenticatePerson: async (req) => {
         const session = await s.auth.api.getSession({ headers: req.headers })
         if (!session) return null
-        const person = await db.selectFrom('people').select(['id', 'email']).where('auth_user_id', '=', session.user.id).executeTakeFirst()
+        // Identity lookup before any workspace is known: a named bypass, since people is workspace-scoped by membership.
+        const person = await withBypass('auth:mcp-person', () => db.selectFrom('people').select(['id', 'email']).where('auth_user_id', '=', session.user.id).executeTakeFirst())
         if (!person) return null
         // Reviewer sessions (reviewer.ts): their demo workspace only, never "the first workspace", and not the pause switch.
         if (isReviewerEmail(person.email)) {
@@ -200,7 +208,9 @@ export function mcpFor(s: Omit<Services, 'mcp'>, books?: { reader: FinanceReader
       : undefined
   // The calling connection is passed so its own still-running job is not counted as busy.
   const seedIfReady = async (ws: string, connectionId: string) => {
-    await seedDemoAiWhenReady({ db, seed: (input) => seed.seedDemoAi(input), ...(tidy ? { tidy } : {}), warm: async (w) => warmerFor(s)?.now(w, DEMO_WARM_MAX_MS), log: (m, f) => console.warn(`[agfn] ${m}`, f) }, ws, connectionId)
+    // On the challenge deployment, fill the player's books but don't pre-connect a demo AI or make its sample write
+    // (ai.ts): a seeded "AI write" would mislead tier-C judging, which reads challenge_activity.
+    await seedDemoAiWhenReady({ db, seed: (input) => seed.seedDemoAi(input), ...(tidy ? { tidy } : {}), warm: async (w) => warmerFor(s)?.now(w, DEMO_WARM_MAX_MS), log: (m, f) => console.warn(`[agfn] ${m}`, f) }, ws, connectionId, { seedAi: config.challenge !== true })
   }
   ;(s.syncDeps.afterSync ??= []).push(seedIfReady)
   // The last demo import failing still lets the rest of the demo show as ready.

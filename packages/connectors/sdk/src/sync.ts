@@ -1,7 +1,7 @@
 // Cursor-based sync runner. Calls connector.sync() page by page until hasMore is false, checkpointing after each
 // page (the caller persists events + cursor atomically in onPage), so a crash resumes from the last good page.
 
-import type { Connector, ConnectionRef, ConnectorHealth, NormalizedEvent, SyncResult } from '@agfn/contracts'
+import type { Connector, ConnectionRef, ConnectorHealth, NormalizedEvent, ProviderFreshness, SyncResult } from '@agfn/contracts'
 import { ConnectorError, isConnectorError } from './errors.ts'
 import type { Clock, FetchLike } from './http.ts'
 import type { RawSink } from './raw.ts'
@@ -41,6 +41,8 @@ export interface RunSyncResult {
   updatedSecret?: unknown
   /** Shortest SyncResult.syncAgainInMs any page asked for. */
   syncAgainInMs?: number
+  /** SyncResult.freshness merged across pages, later pages winning per field. */
+  freshness?: ProviderFreshness
 }
 
 export async function runSync(
@@ -56,6 +58,7 @@ export async function runSync(
   let restarted = false
   let updatedSecret: unknown
   let syncAgainInMs: number | undefined
+  let freshness: ProviderFreshness | undefined
   let current = conn
 
   while (pages < maxPages) {
@@ -81,6 +84,7 @@ export async function runSync(
     }
     await opts.onPage?.(page, pages)
     if (typeof page.syncAgainInMs === 'number' && page.syncAgainInMs > 0) syncAgainInMs = Math.min(syncAgainInMs ?? Infinity, page.syncAgainInMs)
+    if (page.freshness) freshness = mergeFreshness(freshness, page.freshness)
     pages++
     events.push(...page.events)
     if (page.hasMore && page.cursor === cursor) {
@@ -90,10 +94,32 @@ export async function runSync(
     }
     cursor = page.cursor
     if (!page.hasMore) {
-      return { events, cursor, pages, complete: true, restarted, ...(updatedSecret !== undefined ? { updatedSecret } : {}), ...(syncAgainInMs !== undefined ? { syncAgainInMs } : {}) }
+      return { events, cursor, pages, complete: true, restarted, ...(updatedSecret !== undefined ? { updatedSecret } : {}), ...(syncAgainInMs !== undefined ? { syncAgainInMs } : {}), ...(freshness ? { freshness } : {}) }
     }
   }
-  return { events, cursor, pages, complete: false, restarted, ...(updatedSecret !== undefined ? { updatedSecret } : {}), ...(syncAgainInMs !== undefined ? { syncAgainInMs } : {}) }
+  return { events, cursor, pages, complete: false, restarted, ...(updatedSecret !== undefined ? { updatedSecret } : {}), ...(syncAgainInMs !== undefined ? { syncAgainInMs } : {}), ...(freshness ? { freshness } : {}) }
+}
+
+/** Later fields win; per-account balance times are merged, and the oldest of them is the connection's balancesUpdatedAt. */
+export function mergeFreshness(a: ProviderFreshness | undefined, b: ProviderFreshness): ProviderFreshness {
+  const out: ProviderFreshness = { ...a, ...b }
+  if (a?.balancesUpdatedAtByAccount || b.balancesUpdatedAtByAccount) {
+    out.balancesUpdatedAtByAccount = { ...a?.balancesUpdatedAtByAccount, ...b.balancesUpdatedAtByAccount }
+    const oldest = oldestIso(Object.values(out.balancesUpdatedAtByAccount))
+    if (oldest) out.balancesUpdatedAt = oldest
+  }
+  return out
+}
+
+/** The earliest of some ISO timestamps (unparseable ones ignored), or undefined. */
+export function oldestIso(times: Iterable<string>): string | undefined {
+  let best: string | undefined
+  let bestMs = Infinity
+  for (const t of times) {
+    const ms = Date.parse(t)
+    if (Number.isFinite(ms) && ms < bestMs) (best = t), (bestMs = ms)
+  }
+  return best
 }
 
 /** Keep the last event per (type, externalId): a page can mention one object twice (added then modified). */
@@ -143,4 +169,21 @@ export function isoTimestamp(v: string | number | Date): string {
   const d = typeof v === 'number' ? new Date(v < 1e12 ? v * 1000 : v) : new Date(v)
   if (Number.isNaN(d.getTime())) throw new ConnectorError('invalid_input', `bad timestamp: ${String(v).slice(0, 40)}`, { provider: 'sdk' })
   return d.toISOString()
+}
+
+/**
+ * The instant to hand the engine on a txn/invoice/payroll event so it dates the row in the workspace's own time zone —
+ * but only when the provider gave a REAL intraday moment. Returns undefined for a missing/unparseable value, a date-only
+ * string, or an exact UTC-midnight stamp: carrying one of those as `at` would move the row to the day before in a
+ * Western workspace, so the connector's own date field (UTC calendar date) must stand instead.
+ */
+export function instantAt(v: string | number | null | undefined): string | undefined {
+  if (v === null || v === undefined || v === '') return undefined
+  let iso: string
+  try {
+    iso = isoTimestamp(v)
+  } catch {
+    return undefined
+  }
+  return iso.endsWith('T00:00:00.000Z') ? undefined : iso
 }

@@ -1,0 +1,4 @@
+# Cloudflare Workers static-asset redirects (was vercel.json "redirects"; Vercel's permanent:false = 307).
+# www.aggregate.finance → apex is not here (_redirects can't match on host); see ../site-www-redirect.
+/pricing / 307
+/security https://app.aggregate.finance/security 307

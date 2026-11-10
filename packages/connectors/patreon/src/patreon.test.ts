@@ -366,3 +366,15 @@ describe('classifyPatreonError', () => {
     expect(classifyPatreonError(500, 'nope')).toBeInstanceOf(ConnectorError)
   })
 })
+
+
+describe('patreon: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector } = make({}, [{ match: (u: URL) => u.pathname === '/api/oauth2/v2/campaigns', respond: { text: '' } }, ...routes()])
+    await expect(runSync(connector, conn(), null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector } = make({}, [{ match: (u: URL) => u.pathname === '/api/oauth2/v2/campaigns', respond: { json: 5 } }, ...routes()])
+    await expect(runSync(connector, conn(), null)).rejects.toThrow()
+  })
+})

@@ -12,14 +12,14 @@ import { loadKeyRing, type KeyRing } from '@agfn/security'
 import { createAuth, createPendingGrants, createPermissions, createReauth, migrateAuth, type AuthConfig, type Mailer } from '@agfn/auth'
 import { ConnectorRegistry, SyncEngine, SYNC_JOB, applyPendingReassignments, type ConnectorFactory } from '@agfn/sync'
 import { eraseRevoked } from './retire.ts'
-import { hostedConfigProblems, type ServerConfig } from './config.ts'
+import { hostedConfigProblems, releaseOf, type ServerConfig } from './config.ts'
 import type { McpModule, Services } from './services.ts'
 import { consoleMailer, mailFromProblem, smtpMailer, withMailAllowList, withTestAddressesLogged } from './mailer.ts'
 import { UsageMeter } from './usage.ts'
 import { nextDemoImport, stalledDemoImports } from '@agfn/demo'
 import { reseedReviewerDemos, serverDemoBuilder } from './reviewer.ts'
 import { challengeConfigProblems } from './challenge/guard.ts'
-import { startOutboundLog } from './challenge/outbound.ts'
+import { createOutboundSink, startOutboundLog } from './challenge/outbound.ts'
 import { resetChallenge } from './challenge/reset.ts'
 import { admitDemoFillsNow, startDemoWorkspace, topUpDemoPool } from './demo-start.ts'
 import { PublicDemo, resyncConnections } from './public-demo.ts'
@@ -62,7 +62,8 @@ export interface BootOptions {
   mailer?: Mailer
   /** Connector factories, or a function that builds them once platform services (the upload queue) exist. */
   connectors?: ConnectorFactory[] | ((ctx: { fileSource: Documents['fileSource'] }) => ConnectorFactory[])
-  ledger?: (db: DbHandle<CoreTables>, config: Pick<ServerConfig, 'setAsides'>) => Ledger
+  /** staleAfterHours: each installed connector's cap on data age, from its description (read when asked). */
+  ledger?: (db: DbHandle<CoreTables>, config: Pick<ServerConfig, 'setAsides'> & { staleAfterHours?: (connectorKey: string) => number | undefined }) => Ledger
   mcp?: (s: Omit<Services, 'mcp'>) => McpModule
   fileStore?: FileStore
   /** Where nightly backups go (tests). Default: BACKUP_S3_* when set, otherwise no backups. */
@@ -76,8 +77,7 @@ export const READY_GATE_MAX_MS = 45_000
 /** The nightly backup's time: 07:00 UTC (3 am Eastern, midnight Pacific), the quietest hour for US traffic. */
 export const BACKUP_AT_UTC_MINUTES = 7 * 60
 
-/** This process's release for the job queue's release guard (jobs.ts): AGFN_RELEASE, else Fly's FLY_IMAGE_REF. */
-export const releaseOf = (env: Record<string, string | undefined>): string | undefined => env.AGFN_RELEASE || env.FLY_IMAGE_REF || undefined
+export { releaseOf } from './config.ts'
 
 /**
  * AGFN_READY_GATE=1, for a process about to serve (main.ts only: the release step boots and shuts down at once, and a
@@ -178,19 +178,31 @@ export async function boot(opts: BootOptions): Promise<Booted> {
     const problems = challengeConfigProblems(opts.env ?? process.env)
     if (problems.length) throw new Error(`Challenge deployment misconfigured. Refusing to start:\n- ${problems.join('\n- ')}`)
   }
-  // Hosted (AGFN_HOSTED=1 or a Neon database) never runs with a setting missing that protects its users.
+  // Hosted (AGFN_HOSTED=1 or a Neon or RDS database) never runs with a setting missing that protects its users.
   const hostedProblems = hostedConfigProblems(opts.env ?? process.env, config)
-  if (hostedProblems.length) throw new Error(`Hosted Aggregate is missing configuration (is this machine missing its fly.toml [env] block?). Refusing to start:\n- ${hostedProblems.join('\n- ')}`)
+  if (hostedProblems.length) throw new Error(`Hosted Aggregate is missing configuration (is this machine missing its fly.toml [env] block or env file?). Refusing to start:\n- ${hostedProblems.join('\n- ')}`)
   if (config.databaseUrl.startsWith('sqlite:') && !config.databaseUrl.includes(':memory:')) mkdirSync(config.dataDir, { recursive: true, mode: 0o700 })
   const keys = opts.keys ?? loadKeyRing(opts.env ?? process.env, config.dataDir)
   const handle = opts.db ?? connect<CoreTables>(config.databaseUrl)
   await withBypass('migrate', () => migrateToLatest(handle.db))
-  // The challenge: every outbound HTTP call is recorded (tier A evidence), never bodies or headers.
+  // The challenge: every outbound HTTP call is recorded (tier A/C evidence), never bodies or headers. The sink persists
+  // durably — a transient DB hiccup is retried once, with a bounded queue so a real outage drops oldest instead of
+  // growing memory — and never blocks the request (record just enqueues).
   const stopOutbound = config.challenge
-    ? startOutboundLog((call) => {
-        void withBypass('challenge:outbound', () => handle.db.insertInto('outbound_calls').values({ id: newId(), ...call }).execute()).catch(() => undefined)
-        console.warn('[agfn] outbound', call.method, call.host, call.path, call.status ?? 'error', call.ws ?? '')
-      })
+    ? (() => {
+        const sink = createOutboundSink(
+          (calls) => withBypass('challenge:outbound', () => handle.db.insertInto('outbound_calls').values(calls.map((c) => ({ id: newId(), ...c }))).execute()),
+          { onDrop: (total) => console.warn('[agfn] outbound log dropped rows (db unavailable), total since boot:', total) },
+        )
+        const stop = startOutboundLog((call) => {
+          sink.record(call)
+          console.warn('[agfn] outbound', call.method, call.host, call.path, call.status ?? 'error', call.ws ?? '')
+        })
+        return async () => {
+          stop()
+          await sink.flush()
+        }
+      })()
     : undefined
   // Fails closed (rls.ts bootRls): missing or contradictory config refuses to start instead of turning isolation off.
   if (handle.kind === 'postgres') await withBypass('rls', () => bootRls(handle.db, opts.env ?? process.env, config.databaseUrl))
@@ -266,7 +278,8 @@ export async function boot(opts: BootOptions): Promise<Booted> {
   await withBypass('auth:seed', () => auth.$context)
 
   const registry = new ConnectorRegistry()
-  const ledger = opts.ledger ? opts.ledger(handle, config) : emptyLedger
+  // The registry fills in below; the lookup reads it when a figure is asked for, by then complete.
+  const ledger = opts.ledger ? opts.ledger(handle, { ...config, staleAfterHours: (key) => registry.describe(key)?.staleAfterHours }) : emptyLedger
   // Accounts given a company by a migration (0301) are re-posted once, the same way as /api/accounts/assign.
   await withBypass('migrate:reassign', () => applyPendingReassignments(handle.db, ledger))
   const queue = new JobQueue(handle.db)
@@ -276,6 +289,9 @@ export async function boot(opts: BootOptions): Promise<Booted> {
   // Live balance checks are billed per call by Plaid: a daily per-workspace cap (AGFN_LIVE_BALANCE_DAILY_CAP, default 20),
   // and each real call is metered.
   const liveCap = Number((opts.env ?? process.env).AGFN_LIVE_BALANCE_DAILY_CAP)
+  // Cap concurrent syncs so a burst (hourly sync.all, a post-deploy resync of every connection) can't put more in
+  // flight than the database pool can serve. Off by default; set AGFN_SYNC_CONCURRENCY at or below the pool size.
+  const syncCap = Number((opts.env ?? process.env).AGFN_SYNC_CONCURRENCY)
   const syncDeps = {
     db: handle.db,
     keys,
@@ -286,17 +302,18 @@ export async function boot(opts: BootOptions): Promise<Booted> {
     afterSync: [] as NonNullable<import('@agfn/sync').SyncEngineDeps['afterSync']>,
     afterFailure: [] as NonNullable<import('@agfn/sync').SyncEngineDeps['afterFailure']>,
     liveBalance: { ...(Number.isInteger(liveCap) && liveCap >= 0 ? { dailyCap: liveCap } : {}), onCall: (ws: string) => usage.sample(ws, 'live_balance') },
+    ...(Number.isInteger(syncCap) && syncCap > 0 ? { maxConcurrentSyncs: syncCap } : {}),
   }
   const sync = new SyncEngine(syncDeps)
   // Demo connections import one after another: when one catches up, the next starts. Registered first, so the demo's
   // "ready" check (a later hook) already sees the next import queued.
   syncDeps.afterSync.push(async (ws, connectionId) => {
-    const next = await nextDemoImport(handle.db, ws, connectionId, new Date().toISOString().slice(0, 10))
+    const next = await nextDemoImport(handle.db, ws, connectionId, new Date())
     if (next) await sync.request(ws, next)
   })
   // A failed demo import doesn't stop the others.
   syncDeps.afterFailure.push(async (ws, connectionId) => {
-    const next = await nextDemoImport(handle.db, ws, connectionId, new Date().toISOString().slice(0, 10), { failed: true })
+    const next = await nextDemoImport(handle.db, ws, connectionId, new Date(), { failed: true })
     if (next) await sync.request(ws, next)
   })
   // Hosted sets FILES_S3_BUCKET (S3/R2); self-host keeps files on the data volume.
@@ -509,7 +526,8 @@ export async function boot(opts: BootOptions): Promise<Booted> {
     handle,
     ...(worker ? { worker } : {}),
     async shutdown() {
-      stopOutbound?.()
+      // Await the flush so queued outbound rows reach the database before it closes.
+      await stopOutbound?.()
       await worker?.stop()
       await handle.close()
     },

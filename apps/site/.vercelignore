@@ -1,0 +1,2 @@
+# The Vercel copy is the rollback target until the project is deleted (~2026-11-20). Keep in step with .assetsignore.
+**/README.md

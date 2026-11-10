@@ -17,7 +17,7 @@ import { deleteIfMemberless } from '../orphans.ts'
 import { challengeConfigProblems } from './guard.ts'
 import { startOutboundLog, type OutboundCall } from './outbound.ts'
 import { checkFlag, CHALLENGE_SYSTEM_DOMAIN, resetChallenge } from './reset.ts'
-import { mintQaPlayer } from './qa-player.ts'
+import { mintQaPlayer, mintQaWebSession } from './qa-player.ts'
 
 const BASE = 'http://localhost:8787'
 let booted: Booted | undefined
@@ -48,7 +48,7 @@ describe('the challenge never holds a real key', () => {
 
   it('refuses any real provider key, production Plaid, the real domain, or missing GitHub sign-in', () => {
     const ok = { ...tomlEnv(), ...SECRETS }
-    for (const k of ['STRIPE_APP_SECRET_KEY_LIVE', 'SQUARE_CLIENT_SECRET', 'QUICKBOOKS_CLIENT_SECRET', 'XERO_CLIENT_SECRET', 'SMTP_URL', 'RESEND_API_KEY', 'BACKUP_S3_BUCKET', 'AGFN_REVIEWER_LINKS']) {
+    for (const k of ['STRIPE_APP_SECRET_KEY_LIVE', 'SQUARE_CLIENT_SECRET', 'QUICKBOOKS_CLIENT_SECRET', 'XERO_CLIENT_SECRET', 'SMTP_URL', 'RESEND_API_KEY', 'BACKUP_S3_BUCKET', 'AGFN_REVIEWER_LINKS', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY']) {
       expect(challengeConfigProblems({ ...ok, [k]: 'x' }).join(), k).toContain(k)
     }
     expect(challengeConfigProblems({ ...ok, PLAID_ENV: 'production' }).join()).toMatch(/sandbox/)
@@ -58,7 +58,8 @@ describe('the challenge never holds a real key', () => {
 
   it('passes the hosted checks without mail or a file bucket (it sends no email), but still needs the RLS role', async () => {
     const { hostedConfigProblems } = await import('../config.ts')
-    const env = { ...tomlEnv(), ...SECRETS }
+    // FLY_APP_NAME and FLY_IMAGE_REF: what Fly sets on the machine (the client-IP header; the job release id).
+    const env = { ...tomlEnv(), ...SECRETS, FLY_APP_NAME: 'aggregate-chal', FLY_IMAGE_REF: 'registry.fly.io/aggregate-chal:deployment-01' }
     expect(hostedConfigProblems(env, loadConfig(env))).toEqual([])
     expect(hostedConfigProblems({ ...env, AGFN_PG_RLS_ROLE: undefined }, loadConfig(env)).join()).toMatch(/AGFN_PG_RLS_ROLE/)
   })
@@ -157,6 +158,9 @@ describe('challenge mode', () => {
     expect(await checkFlag(db, 'FLAG-test-vault')).toBe('vault')
     expect(await checkFlag(db, ' FLAG-test-neighbor ')).toBe('neighbor')
     expect(await checkFlag(db, 'FLAG-guess')).toBeNull()
+    // Odd input is just a miss, never a throw (the constant-time compare guards buffer lengths).
+    expect(await checkFlag(db, '')).toBeNull()
+    expect(await checkFlag(db, 'x'.repeat(5000))).toBeNull()
     const flags = await db.selectFrom('challenge_flags').selectAll().execute()
     expect(flags.map((f) => f.sha256).join()).not.toContain('FLAG')
     for (const f of flags) {
@@ -203,5 +207,55 @@ describe('challenge mode', () => {
     const mine = await db.selectFrom('memberships').innerJoin('people', 'people.id', 'memberships.person_id').select('memberships.workspace_id').where('people.email', '=', qa.email).where('memberships.revoked_at', 'is', null).execute()
     expect(mine.length).toBe(1)
     expect(mine[0]!.workspace_id).not.toBe(qa.workspaceId)
+  })
+
+  it('a QA web session signs the player in to the web routes (so 43 can run web payloads)', async () => {
+    const t = await startChallenge({ mcp: true })
+    const { db } = t
+    const build = async (personId: string) => (await createWorkspace(db, { personId, workspaceName: 'Demo', firstCompanyName: 'Northwind' })).workspaceId
+    const qa = await mintQaPlayer({ db, buildDemo: build, control: t.s.mcp!.control }, { label: 'web run', challenge: true })
+    const cookie = await mintQaWebSession({ auth: t.s.auth, baseUrl: BASE }, qa.email)
+    expect(cookie).toContain('session_token')
+    // The cookie is a working browser session for the player: /api/me resolves it and returns the player's workspace.
+    const me = await t.app.request('/api/me', { headers: { cookie } })
+    expect(me.status, await me.clone().text()).toBe(200)
+    expect(JSON.stringify(await me.json())).toContain(qa.workspaceId)
+    // No cookie: no session.
+    expect((await t.app.request('/api/me')).status).toBe(401)
+  })
+
+  it('the archive drops the caller IP and user agent (judging needs neither)', async () => {
+    const t = await startChallenge()
+    const { db } = t
+    const build = async (personId: string) => (await createWorkspace(db, { personId, workspaceName: 'Demo', firstCompanyName: 'Northwind' })).workspaceId
+    const player = newId()
+    await db.insertInto('people').values({ id: player, auth_user_id: 'gh-user-2', name: 'Player', email: 'p2@example.com', created_at: nowIso() }).execute()
+    const old = await build(player)
+    await withWorkspace(old, () => appendActivity(db as never, { workspaceId: old, actorKind: 'agent', personId: player, actorLabel: 'Claude', action: 'tool.get_overview', status: 'ok', detail: 'looked around', ip: '203.0.113.9', userAgent: 'SomeAgent/9.9' }, new Date()))
+    await resetChallenge({ db, buildDemo: build, cleanup: (ids: string[]) => deleteIfMemberless({ db, files: t.s.files, sync: t.s.sync }, ids), flagValue: (n: string) => `FLAG-test-${n}` })
+    const kept = await db.selectFrom('challenge_activity').select('row_json').where('ws', '=', old).execute()
+    const joined = kept.map((k) => k.row_json).join()
+    expect(joined).toContain('looked around') // the action is kept
+    expect(joined).not.toContain('203.0.113.9') // the IP is not
+    expect(joined).not.toContain('SomeAgent/9.9') // nor the user agent
+    for (const k of kept) {
+      const row = JSON.parse(k.row_json) as Record<string, unknown>
+      expect('ip' in row).toBe(false)
+      expect('user_agent' in row).toBe(false)
+    }
+  })
+
+  it('migration 0912 strips ip/user_agent from rows archived before the fix', async () => {
+    const t = await startChallenge()
+    const { db } = t
+    const { up } = (await import('../../../../packages/db/migrations/0912_challenge_activity_drop_pii.ts')) as { up: (d: unknown) => Promise<void> }
+    const stale = { id: 'a1', seq: 1, at: nowIso(), action: 'tool.get_overview', detail: 'old row', ip: '198.51.100.7', user_agent: 'OldAgent/1.0', grant_person_id: 'p1' }
+    await db.insertInto('challenge_activity').values({ id: newId(), ws: 'ws-old', at: stale.at, row_json: JSON.stringify(stale) }).execute()
+    await up(db)
+    const row = JSON.parse((await db.selectFrom('challenge_activity').select('row_json').where('ws', '=', 'ws-old').executeTakeFirstOrThrow()).row_json) as Record<string, unknown>
+    expect(row.action).toBe('tool.get_overview') // kept
+    expect(row.grant_person_id).toBe('p1') // kept
+    expect('ip' in row).toBe(false)
+    expect('user_agent' in row).toBe(false)
   })
 })

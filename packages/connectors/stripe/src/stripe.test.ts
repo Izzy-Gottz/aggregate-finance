@@ -241,6 +241,7 @@ describe('stripe mapping', () => {
       number: 'EX-0002',
       counterparty: 'Example Customer Two',
       issueDate: '2026-10-03',
+      at: '2026-10-03T10:01:40.000Z',
       dueDate: '2026-11-01',
       total: { minor: 33000, currency: 'USD' },
       amountPaid: { minor: 10000, currency: 'USD' },
@@ -579,6 +580,12 @@ describe('stripe subscription history in sync', () => {
     expect(byId<SubscriptionUpsert>(first.events, 'subscription.upsert', 'sub_test_monthly')).not.toHaveProperty('changes')
     const again = await runSync(connector, conn, first.cursor)
     expect(byId<SubscriptionUpsert>(again.events, 'subscription.upsert', 'sub_test_yearly')).not.toHaveProperty('changes')
+  })
+
+  it('zero- and three-decimal currencies stay in their own minor units (Stripe sends ¥1,000 as 1000, not 100000)', () => {
+    const t = (currency: string, amount: number, fee: number) => ({ id: `txn_${currency}`, object: 'balance_transaction', amount, fee, net: amount - fee, currency, created: Y2, type: 'charge' }) as StripeBalanceTransaction
+    expect(mapBalanceTxn(t('jpy', 1_000, 36), 'acct_1', 'c1', 'raw')).toMatchObject({ gross: { minor: 1_000, currency: 'JPY' }, fee: { minor: 36 }, net: { minor: 964 } })
+    expect(mapBalanceTxn(t('kwd', 12_340, 370), 'acct_1', 'c1', 'raw')).toMatchObject({ gross: { minor: 12_340, currency: 'KWD' }, net: { minor: 11_970 } })
   })
 
   it("rows carry Stripe's own description, keys scrubbed", () => {

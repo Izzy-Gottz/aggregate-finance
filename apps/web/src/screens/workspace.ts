@@ -199,6 +199,30 @@ const HEALTH_LABEL: Record<WorkspaceHealth['items'][number]['kind'], string> = {
   unexplained: 'Not explained yet',
   stale_source: 'Not syncing',
   missing_statement: 'Missing month',
+  possible_duplicate: 'Maybe connected twice',
+}
+
+/** The two choices on a "maybe connected twice" item: it's the same account (count once) or they're different (dismiss). */
+export function DuplicateActions({ item }: { item: WorkspaceHealth['items'][number] }) {
+  const app = useApp()
+  const subjectId = item.refId
+  const relatedId = item.relatedId
+  const dupKey = item.dupKey
+  if (!subjectId || !relatedId || !dupKey) return null
+  const markOne = async () => {
+    await app.api.markDuplicate(relatedId, subjectId)
+    app.toast({ text: 'Marked as the same account — it now counts once.' })
+    await app.reload()
+  }
+  const different = async () => {
+    await app.api.dismissDuplicate(subjectId, relatedId, dupKey)
+    app.toast({ text: 'Thanks — we’ll treat those as two different accounts.' })
+    await app.reload()
+  }
+  return html`<span class="dup-actions">
+    <${Button} quiet onClick=${markOne}>Mark one a duplicate</${Button}>
+    <${Button} quiet onClick=${different}>Different accounts</${Button}>
+  </span>`
 }
 
 export function HealthView({ onClose, onBack }: { onClose: () => void; onBack: (() => void) | null }) {
@@ -221,10 +245,12 @@ export function HealthView({ onClose, onBack }: { onClose: () => void; onBack: (
     <${Rows} label="Things to look at" wrap>
       ${(h?.items ?? []).map((i) => {
         const where = name(i.entityId)
-        const clickable = i.kind === 'review' || !!i.entityId || (i.kind === 'stale_source' && !!i.refId) || (i.kind === 'missing_statement' && i.text.startsWith('Statement for'))
+        const clickable = i.kind === 'review' || (i.kind !== 'possible_duplicate' && !!i.entityId) || (i.kind === 'stale_source' && !!i.refId) || (i.kind === 'missing_statement' && i.text.startsWith('Statement for'))
         // stale_source names a connection that isn't syncing, or one account that hasn't sent a balance yet.
         const label = i.kind === 'stale_source' && i.refId && !app.ws?.connections.some((c) => c.id === i.refId) ? 'No balance yet' : HEALTH_LABEL[i.kind]
-        return html`<${Row} name=${i.text} line=${where ? `${label} · ${where}` : label} onClick=${clickable ? () => go(i) : undefined} label=${i.text} />`
+        // A possible duplicate is resolved in place with its own two choices, not by navigating away.
+        const right = i.kind === 'possible_duplicate' ? html`<${DuplicateActions} item=${i} />` : undefined
+        return html`<${Row} name=${i.text} line=${where ? `${label} · ${where}` : label} onClick=${clickable ? () => go(i) : undefined} right=${right} label=${i.text} />`
       })}
     </${Rows}>
   </${Drawer}>`

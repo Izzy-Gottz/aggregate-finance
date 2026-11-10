@@ -44,6 +44,8 @@ function routes(extra: FixtureRoute[] = []): FixtureRoute[] {
     },
     { match: (u) => u.pathname.startsWith('/.well-known/openid'), respond: { json: DISCOVERY } },
     { match: '/reports/ProfitAndLoss', respond: { json: FIX.ProfitAndLoss } },
+    // No sales tax centre payments in these recordings.
+    { match: '/reports/TransactionList', respond: { json: {} } },
     { match: '/companyinfo/', respond: { json: { CompanyInfo: { CompanyName: 'Example Co' } } } },
     { match: '/preferences', respond: { json: { Preferences: { CurrencyPrefs: { HomeCurrency: { value: 'USD' } } } } } },
   ]
@@ -203,6 +205,16 @@ describe('quickbooks connector', () => {
     // Our own app credentials refused is never the person's revoke.
     const client = make({ tokens: { expiresAt: NOW - 1 }, extra: [{ method: 'POST', match: '/oauth2/v1/tokens/bearer', respond: { status: 401, json: { error: 'invalid_client' } } }] })
     await expect(client.connector.sync(client.conn, null)).rejects.toMatchObject({ code: 'invalid_client' })
+  })
+
+  it('a transient failure while refreshing (token endpoint 5xx) does not revoke or wipe the credential', async () => {
+    // Intuit is down, not the token: this must surface as transient (the connection stays, retries later), never as a
+    // revoke/needs_reauth, and the sync throws so no rotated secret is persisted — the stored refresh token survives.
+    const down = make({ tokens: { expiresAt: NOW - 1 }, extra: [{ method: 'POST', match: '/oauth2/v1/tokens/bearer', respond: { status: 503, json: { error: 'server_error' } } }] })
+    const e = await down.connector.sync(down.conn, null).then(() => null, (err: unknown) => err)
+    expect(e).toMatchObject({ kind: 'transient' })
+    expect((e as { code?: string }).code).not.toBe('revoked')
+    expect((e as { code?: string }).code).not.toBe('invalid_grant')
   })
 
   it('refreshes an expired token and hands back the rotated secret', async () => {
@@ -434,3 +446,15 @@ describe('QuickBooks full listings and its own exchange rates', () => {
   })
 })
 
+
+
+describe('quickbooks: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: (u) => u.pathname.endsWith('/query'), respond: { text: '' } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: (u) => u.pathname.endsWith('/query'), respond: { json: 5 } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

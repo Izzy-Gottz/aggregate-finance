@@ -11,6 +11,9 @@ import { appendActivity } from '@agfn/mcp'
 import type { Services } from './services.ts'
 import { financeFor } from './finance.ts'
 
+/** settings key (per account) recording that the person explicitly uploaded a statement "as a new, separate account". */
+export const keepSeparateKey = (accountId: string) => `stmt:keep_separate:${accountId}`
+
 type Deps = Pick<Services, 'db' | 'ledger' | 'syncDeps'>
 
 /**
@@ -56,9 +59,15 @@ export async function retireDeleted(s: Deps, ws: string, connectionId: string): 
 /**
  * Providers whose terms require their data deleted when the person disconnects (Wefunder's acceptable use; Intuit's
  * Developer Terms 8.2(f), within 30 days of a disconnect): on disconnect everything the connection brought is deleted,
- * not just retired. Raw payloads too (the route).
+ * not just retired. Raw payloads too (the route). BigCommerce's API Terms s.2.1 (revised 2025-07-31): "You must delete all
+ * personal data you have collected from Your User through your API client (i) upon request from Your User, or (ii) when
+ * Your User deauthorizes your application or closes its account with you." Amazon's Data Protection Policy s.1.7: delete all
+ * Information within 30 days of the earliest of Amazon's notice, the seller revoking authorization or "otherwise
+ * remov[ing]" our access, or our own access ending (a disconnect is that). Etsy's API Terms: Aggregate acts as the
+ * seller's service provider (s.4), keeps Etsy content no longer than reasonably necessary to serve them (s.5), and stops
+ * using it when access ends (s.6); a disconnect is that end. (Section numbers unconfirmed: packages/connectors/etsy/README.md.)
  */
-export const ERASE_ON_DISCONNECT: ReadonlySet<string> = new Set(['wefunder', 'quickbooks', 'freshbooks', 'squarespace', 'youtube', 'pinterest', 'whop'])
+export const ERASE_ON_DISCONNECT: ReadonlySet<string> = new Set(['wefunder', 'quickbooks', 'freshbooks', 'squarespace', 'youtube', 'pinterest', 'whop', 'bigcommerce', 'amazon', 'etsy'])
 
 /** Shown in the activity log when a store uninstalls the Shopify app. */
 export const SHOPIFY_ERASE_WARNING =
@@ -228,8 +237,13 @@ export async function adoptStatementAccounts(s: Deps, ws: string, connectionId: 
     .where('accounts.duplicate_of', 'is', null)
     .where('accounts.closed_at', 'is', null)
     .execute()
+  // Accounts the person explicitly uploaded "as a new, separate account" are never adopted: they chose to keep them
+  // apart, so a later bank sync must not merge them and hide their balance (43's case — an explicit "new" OFX with no
+  // bank name became a duplicate of the Plaid ••0000, its $1,234.56 dropped from cash). 3b still flags a true match.
+  const keptSeparate = new Set((await db.selectFrom('settings').select('key').where('workspace_id', '=', ws).where('key', 'like', 'stmt:keep_separate:%').execute()).map((r) => r.key.slice('stmt:keep_separate:'.length)))
   let n = 0
   for (const u of uploaded) {
+    if (keptSeparate.has(u.id)) continue
     const twin = synced.find((a) => a.mask && a.mask === u.mask && a.account_type === u.account_type && a.currency === u.currency && a.entity_id === u.entity_id && sameBank(a.institution, u.institution))
     if (!twin) continue
     await db.updateTable('accounts').set({ duplicate_of: twin.id, include_in_cash: 0 }).where('id', '=', u.id).execute()

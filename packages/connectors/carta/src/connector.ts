@@ -116,6 +116,9 @@ export function createCartaConnector(opts: CartaOptions): Connector & { authoriz
     let token: string | undefined
     for (let n = 0; n < MAX_PAGES; n++) {
       const res = await http.request<Record<string, unknown>>({ path, query: token ? { pageToken: token } : {} })
+      // A present object with the key omitted/empty is a real empty page; a null/non-object body (an empty body, or the
+      // sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero.
+      if (!isRecord(res.data)) throw new ConnectorError('transient', 'Carta sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       const items = res.data[key]
       // A page that repeats items (Carta's mock serves the same page for every token) adds nothing twice.
       for (const it of Array.isArray(items) ? items.filter(isRecord) : []) {
@@ -123,10 +126,12 @@ export function createCartaConnector(opts: CartaOptions): Connector & { authoriz
         if (!ids.has(id)) out.push(it), ids.add(id)
       }
       token = str(res.data.nextPageToken)
-      if (!token || seen.has(token) || !Array.isArray(items) || !items.length) break
+      if (!token || seen.has(token) || !Array.isArray(items) || !items.length) return out
       seen.add(token)
     }
-    return out
+    // Still a fresh next-page token after the cap: stop visibly. A partial list here would feed listing.complete and
+    // wrongly void the holdings on the pages never fetched.
+    throw new ConnectorError('permanent', 'Carta returned more list pages than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: PROVIDER, forUser: true })
   }
 
   /** The companies one portfolio holds. */

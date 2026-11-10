@@ -41,6 +41,8 @@ async function connectorEvents(connectionId: string): Promise<NormalizedEvent[]>
     },
     { match: '/cdc', respond: { json: { CDCResponse: [] } } },
     { match: '/reports/ProfitAndLoss', respond: { json: FIX.ProfitAndLoss?.[0] ?? {} } },
+    // No sales tax centre payments in these recordings.
+    { match: '/reports/TransactionList', respond: { json: {} } },
   ])
   const c = createQuickBooksConnector({ deps: { raw: new MemoryRawSink(), fetch: ff.fetch, clock: fakeClock(Date.parse('2026-10-10T12:00:00Z')), random: () => 0.5 }, oauth: { clientId: 'c', clientSecret: 's', redirectUri: 'https://x/cb' }, pageSize: 1000 })
   const conn: ConnectionRef = { id: connectionId, workspaceId: 'ws', connectorKey: 'quickbooks', secret: { tokens: { accessToken: 'a', refreshToken: 'r', expiresAt: Date.parse('2026-10-11T00:00:00Z') } }, config: { realmId: '1', environment: 'sandbox', homeCurrency: 'USD', pnlMonths: 0 } }

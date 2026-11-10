@@ -225,6 +225,25 @@ describe('demo AI seed', () => {
     expect(calls[0]).toMatchObject({ workspaceId: ws.workspaceId, personId, write: { company: 'Harbor Coffee', date: '2026-10-07' } })
   })
 
+  it('on the challenge (seedAi:false) it tidies, warms and marks ready, but seeds no demo AI', async () => {
+    const { db, keys, sync, personId } = await setup()
+    const calls: unknown[] = []
+    const seed: SeedDemoAi = async (input) => void calls.push(input)
+    const ws = await createDemoWorkspace({ db, keys, now: () => NOW }, { personId, historyDays: 10 })
+    for (const id of ws.connections) await sync.sync(id)
+    let tidied = 0
+    let warmed = 0
+    const tidy = async () => void tidied++
+    const warm = async () => void warmed++
+    // The books finish filling (tidy + warm + ready marker) but no "Claude (demo)" grant or sample write is made, so
+    // tier-C judging never sees an AI write the player didn't cause.
+    expect(await seedDemoAiWhenReady({ db, seed, tidy, warm, now: () => NOW }, ws.workspaceId, undefined, { seedAi: false })).toBe(true)
+    expect(calls).toHaveLength(0)
+    expect(tidied).toBe(1)
+    expect(warmed).toBe(1)
+    expect(await isDemoReady(db, ws.workspaceId)).toBe(true)
+  })
+
   it('waits for other connections\' sync jobs to finish, not just their cursors', async () => {
     const { db, keys, sync, personId } = await setup()
     const seed: SeedDemoAi = async () => undefined
@@ -272,19 +291,18 @@ describe('demo AI seed', () => {
     const { db, keys, sync, personId } = await setup()
     const ws = await createDemoWorkspace({ db, keys, now: () => NOW }, { personId, historyDays: 10 })
     const [nw, bb, hc, pe] = ws.connections as [string, string, string, string]
-    const today = NOW.toISOString().slice(0, 10)
-    expect(await nextDemoImport(db, ws.workspaceId, nw, today)).toBeNull() // not caught up yet
+    expect(await nextDemoImport(db, ws.workspaceId, nw, NOW)).toBeNull() // not caught up yet
     const cursor = async (id: string) => (await db.selectFrom('connections').select('cursor').where('id', '=', id).executeTakeFirstOrThrow()).cursor
-    expect(demoImporting('demo', await cursor(bb), today)).toBe(true)
+    expect(demoImporting('demo', await cursor(bb), NOW)).toBe(true)
     await sync.sync(nw)
-    expect(await nextDemoImport(db, ws.workspaceId, nw, today)).toBe(bb)
+    expect(await nextDemoImport(db, ws.workspaceId, nw, NOW)).toBe(bb)
     await sync.sync(bb)
-    expect(await nextDemoImport(db, ws.workspaceId, bb, today)).toBe(hc)
+    expect(await nextDemoImport(db, ws.workspaceId, bb, NOW)).toBe(hc)
     await sync.sync(hc)
-    expect(await nextDemoImport(db, ws.workspaceId, hc, today)).toBe(pe)
+    expect(await nextDemoImport(db, ws.workspaceId, hc, NOW)).toBe(pe)
     await sync.sync(pe)
-    expect(await nextDemoImport(db, ws.workspaceId, pe, today)).toBeNull()
-    expect(demoImporting('demo', await cursor(pe), today)).toBe(false)
+    expect(await nextDemoImport(db, ws.workspaceId, pe, NOW)).toBeNull()
+    expect(demoImporting('demo', await cursor(pe), NOW)).toBe(false)
   })
 
   it('a failed import doesn’t stop the others: Bluebird fails, Harbor and Personal still import, and the demo is ready', async () => {
@@ -295,12 +313,11 @@ describe('demo AI seed', () => {
     const clock = { now: () => NOW.getTime(), sleep: async () => {} }
     registry.register((deps) => createDemoConnector({ ...deps, clock }), { raw: { put: async () => '' } })
     const queue = new JobQueue(db)
-    const today = NOW.toISOString().slice(0, 10)
     let engine: SyncEngine | undefined
     const seeded: string[] = []
     const ready = (ws: string, id: string) => seedDemoAiWhenReady({ db, seed: async (i) => void seeded.push(i.workspaceId), now: () => NOW }, ws, id).then(() => undefined)
     const next = (failed: boolean) => async (ws: string, id: string) => {
-      const n = await nextDemoImport(db, ws, id, today, { failed })
+      const n = await nextDemoImport(db, ws, id, NOW, { failed })
       if (n) await engine!.request(ws, n)
     }
     engine = new SyncEngine({ db, keys, registry, ledger: ledgerFor(db), queue, connectorDeps: { clock }, afterSync: [next(false), ready], afterFailure: [next(true), ready] })
@@ -334,12 +351,11 @@ describe('demo AI seed', () => {
     const registry = new ConnectorRegistry()
     const clock = { now: () => NOW.getTime(), sleep: async () => {} }
     registry.register((deps) => createDemoConnector({ ...deps, clock }), { raw: { put: async () => '' } })
-    const today = NOW.toISOString().slice(0, 10)
     let engine: SyncEngine | undefined
     const seeded: string[] = []
     const ready = (ws: string, id: string) => seedDemoAiWhenReady({ db, seed: async (i) => void seeded.push(i.workspaceId), now: () => NOW }, ws, id).then(() => undefined)
     const next = async (ws: string, id: string) => {
-      const n = await nextDemoImport(db, ws, id, today)
+      const n = await nextDemoImport(db, ws, id, NOW)
       if (n) await engine!.request(ws, n)
     }
     engine = new SyncEngine({ db, keys, registry, ledger: ledgerFor(db), queue: new JobQueue(db), connectorDeps: { clock }, afterSync: [next, ready] })
@@ -376,7 +392,7 @@ describe('demo AI seed', () => {
     expect(restart).toEqual({ workspaceId: ws.workspaceId, connectionId: bb })
     await engine.request(restart!.workspaceId, restart!.connectionId)
     await drain()
-    expect(demoImporting('demo', (await db.selectFrom('connections').select('cursor').where('id', '=', pe).executeTakeFirstOrThrow()).cursor, today)).toBe(false)
+    expect(demoImporting('demo', (await db.selectFrom('connections').select('cursor').where('id', '=', pe).executeTakeFirstOrThrow()).cursor, NOW)).toBe(false)
     expect(seeded).toEqual([ws.workspaceId])
     expect(await isDemoReady(db, ws.workspaceId, () => NOW)).toBe(true)
     expect(await stalledDemoImports(db, { now: later })).toEqual([])

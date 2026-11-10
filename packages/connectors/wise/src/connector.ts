@@ -124,6 +124,9 @@ export function createWiseConnector(opts: WiseConnectorOptions, deps: ConnectorD
     provides: ['balances', 'transactions'],
     freshness: webhook ? 'updates within minutes via webhooks' : 'updates every few hours',
     auth: 'api_key',
+    // 1: transactions carry a real `at` instant so the ledger dates them by the workspace's business day. Existing
+    // connections re-import once to re-date rows booked before the fix.
+    dataVersion: 1,
   }
 
   const profileIdOf = (conn: ConnectionRef): string => {

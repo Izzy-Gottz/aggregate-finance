@@ -16,9 +16,36 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
+      # The pinned, checksum-verified Caddy, so the client-IP red-team (scripts/caddy-client-ip.test.ts) and the real
+      # deploy-aws.sh swap test run here every time; AGFN_REQUIRE_CADDY=1 fails rather than skips without it.
+      - run: sh scripts/install-caddy.sh "$RUNNER_TEMP/bin" && echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - run: npm run typecheck
       - run: npx vitest run
+        env:
+          AGFN_REQUIRE_CADDY: '1'
+          AGFN_TEST_DEPLOY_DOCKER: '1'
       - run: npm run build -w @agfn/web
+  # AWS runs on Graviton (arm64); the test job above is amd64. Builds the production image for linux/arm64 (QEMU) and
+  # boots it: native modules load, the server answers /healthz, and the migrations run, all on arm64.
+  arm64-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - run: docker buildx build --platform linux/arm64 --load -t agfn:arm64 .
+      - name: Boot the arm64 image
+        run: |
+          docker run -d --name agfn-arm --platform linux/arm64 -p 127.0.0.1:8787:8787 \
+            -e AUTH_SECRET="$(openssl rand -hex 32)" -e AGFN_MASTER_KEY="$(openssl rand -base64 32)" -e DATABASE_URL=sqlite::memory: -e DATA_DIR=/tmp/agfn \
+            -e BASE_URL=http://localhost:8787 agfn:arm64
+          [ "$(docker exec agfn-arm uname -m)" = "aarch64" ]
+          for i in $(seq 1 90); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8787/healthz)" = "200" ] && { echo "healthy on arm64"; exit 0; }
+            sleep 2
+          done
+          docker logs --tail 60 agfn-arm
+          exit 1
   audit:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +55,33 @@ jobs:
           node-version: 22
       # Fails on high/critical advisories in anything that ships (dev-only tools excluded).
       - run: npm audit --omit=dev --audit-level=high
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # Build the production image and scan it for OS and library vulnerabilities. Fails on fixable high/critical; a
+      # base-image CVE with no fix available doesn't block (ignore-unfixed), since we can't patch what Alpine hasn't
+      # shipped. npm advisories are already covered by the `audit` job above and by the merge gate.
+      - run: docker build -t agfn:scan .
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: agfn:scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      # Malware scan of the same image (Amazon's Data Protection Policy asks for anti-malware on systems that hold its
+      # data). Unpacks the image's filesystem and runs ClamAV over it; any detection (exit 1) or scan error (exit 2)
+      # fails the job. If the signature update is refused, it scans with the signatures bundled in the pinned image.
+      - run: |
+          mkdir -p "$RUNNER_TEMP/rootfs"
+          docker create --name agfn-scan agfn:scan
+          docker export agfn-scan | tar -x -C "$RUNNER_TEMP/rootfs" --exclude='dev/*'
+          docker rm agfn-scan
+          docker run --rm -v "$RUNNER_TEMP/rootfs:/scan:ro" --entrypoint sh \
+            clamav/clamav:1.5.4@sha256:6d87c712e3391e13c1ba6e05dfb074d4b1ddb5a6834b23bb9da990d2a4ef042a \
+            -c 'freshclam --stdout || echo "freshclam failed; using bundled signatures"; clamscan --recursive --infected /scan'
   postgres:
     runs-on: ubuntu-latest
     services:

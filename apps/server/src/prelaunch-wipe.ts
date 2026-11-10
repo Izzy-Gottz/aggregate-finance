@@ -7,8 +7,8 @@
 // (AI access, sign-in records, identity emptied). Then sign-in leftovers nobody kept points at: unused auth users,
 // pending magic links, and dead reviewer links.
 //
-// planWipe only reads. Run it first (agfn prelaunch-wipe), read the list, then --apply. Run it on a Neon branch copy
-// before main, with a fresh backup taken first.
+// planWipe only reads. Run it first (agfn prelaunch-wipe), read the list, then --apply. Run it on a database copy (a
+// Neon branch, or an RDS snapshot restored to a new instance) before main, with a fresh backup taken first.
 
 import type { Kysely } from 'kysely'
 import { withBypass, withWorkspace, type CoreTables } from '@agfn/db'
@@ -112,7 +112,7 @@ export interface WipeResult {
 }
 
 /**
- * For a run on a Neon branch copy (agfn prelaunch-wipe --branch-copy): the copy shares live's provider tokens and file
+ * For a run on a database copy, a Neon branch or an RDS snapshot restore (agfn prelaunch-wipe --branch-copy): the copy shares live's provider tokens and file
  * bucket, so deps whose provider disconnect and file delete do nothing; only the copy's rows change.
  */
 export function rowsOnly<D extends Pick<DeleteAccountDeps, 'files' | 'sync'>>(deps: D): D {

@@ -101,6 +101,10 @@
     {
       "source": "/trust",
       "destination": "/trust.html"
+    },
+    {
+      "source": "/blog/same-money-three-times",
+      "destination": "/blog/same-money-three-times.html"
     }
   ]
 }

@@ -74,7 +74,6 @@ In 2024 the US Consumer Financial Protection Bureau wrote a rule for companies t
 | Resend | Sign-in links, invites, notices | Email addresses, links, summary figures in the weekly email | | In place |
 | Plaid | Connecting banks and cards | Account details, balances, transactions, holdings | | Being confirmed |
 | Google, Apple | Sign in with Google or Apple, if you choose it | Name and email at sign-in | | |
-| Vercel | Marketing website | Website traffic only | | |
 | Frankfurter | Exchange rates | Only currency codes and dates | | |
 
 Services you connect, such as Stripe, QuickBooks and Mercury, receive the requests needed to read your data. The AI app you connect receives what you grant it, under its provider's terms.
@@ -92,7 +91,7 @@ Services you connect, such as Stripe, QuickBooks and Mercury, receive the reques
 | Export files | Link lasts 1 hour; the file is deleted at your next export |
 | Backups | 25 days, so deleted data is gone from backups within 30 days |
 | Addresses you invite | Only a keyed hash, for 30 days |
-| Server logs | As long as our host keeps them; we haven't set a fixed period yet |
+| Server logs | 7 days (our host's log search keeps them that long) |
 
 We don't delete inactive workspaces automatically. If a workspace hasn't been used for 90 days, we email its owners. When you delete a workspace, its records and files go right away, and sign-in records go when you delete your account.
 

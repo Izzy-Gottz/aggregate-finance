@@ -4,7 +4,7 @@
 import { mrrMovements, mrrSeries, productList, valueAt } from './mrr.ts'
 import type { EntityId, Id, IsoDate, MetricAnswer, MetricName, MetricScope, Money } from '@agfn/contracts'
 import { cashRole, isExpenseRole, NON_CASH_EXPENSE_ROLES, PAYROLL_ROLES } from './coa.ts'
-import { openItems, runChecks, type CheckResult } from './checks.ts'
+import { dupName, openItems, runChecks, type CheckResult } from './checks.ts'
 import type { Basis, EntityInfo, SourceAccountInfo, SourceRecord } from './model.ts'
 import { formatMoney, NOT_MONEY } from './money.ts'
 import { addDays, addMonths, baseBalances, daysBetween, ledgerAccounts, monthEnd, monthStart, scopeEntities, sumLinesIn, today, trailingMonths, type ReadContext, todayFor, localDate, zoneOf, walkedLines } from './queries.ts'
@@ -14,7 +14,7 @@ import { dataHealth } from './health.ts'
 import { recurringSpend } from './buckets.ts'
 import { heldRows } from './set-aside.ts'
 import type { LineRow } from './store.ts'
-import { syncedLongAgo } from './store.ts'
+import { syncedLongAgo, type ConnectionInfo } from './store.ts'
 
 export interface MetricContext extends ReadContext {
   /** The engine, for metrics that need review items or registered providers. */
@@ -173,7 +173,8 @@ async function checkCaveats(s: Scope, a: MetricAnswer, checks: CheckResult[]): P
   const accountOf = (c: CheckResult) => c.accountId ?? c.subjectId
   if (balance) return [...new Set(failed.filter((c) => TIE_OUTS.includes(c.name) && (!a.includedAccounts.length || a.includedAccounts.includes(accountOf(c) as Id))).map((c) => c.message))]
   const flowChecks: readonly CheckResult['name'][] = [...TIE_OUTS, 'trial_balance', 'duplicate_source', 'provider_report']
-  return [...new Set(failed.filter((c) => flowChecks.includes(c.name)).map((c) => `${accounts.find((x) => x.id === accountOf(c))?.name ?? 'A check'} doesn't match, so this figure may be off`))]
+  // A provider's report names what its connection can't read; say that, not a bare "doesn't match".
+  return [...new Set(failed.filter((c) => flowChecks.includes(c.name)).map((c) => (c.name === 'provider_report' ? c.message : `${accounts.find((x) => x.id === accountOf(c))?.name ?? 'A check'} doesn't match, so this figure may be off`)))]
 }
 
 /**
@@ -300,6 +301,20 @@ const STALE_DAYS_MONTHLY = 35
 /** A period ending today or yesterday counts as synced through if the source synced in the last few days. */
 const RECENT_SYNC_DAYS = 3
 
+/**
+ * A connector whose terms cap data age (ConnectionInfo.staleAfterHours: Etsy 24) and hasn't synced successfully within
+ * it: the reason its current figures are left out ("Etsy last synced Nov 7; …"), else null. Only for a figure as of
+ * today or later; closed past periods keep what was recorded.
+ */
+function pastProviderLimit(conn: Pick<ConnectionInfo, 'staleAfterHours' | 'lastSuccessAt' | 'createdAt' | 'displayName'> | undefined, nowIso: string): string | null {
+  const hours = conn?.staleAfterHours
+  if (!conn || !hours) return null
+  const since = conn.lastSuccessAt ?? conn.createdAt
+  if (!since || Date.parse(nowIso) - Date.parse(since) <= hours * 3_600_000) return null
+  const when = conn.lastSuccessAt ? `last synced ${shortDate(conn.lastSuccessAt.slice(0, 10) as IsoDate)}` : 'hasn’t synced yet'
+  return `${conn.displayName} ${when}; out of date (over ${hours} hours), so not counted until it syncs again`
+}
+
 const BALANCE_METRICS: readonly MetricName[] = ['cash', 'card_balances', 'net_cash', 'available_cash']
 const FLOW_METRICS: readonly MetricName[] = ['gross_burn', 'net_burn', 'revenue', 'runway', 'payroll_cost', 'recurring_spend']
 
@@ -316,6 +331,8 @@ interface CovAccount {
   stale: boolean
   /** Synced by a connector (not by hand or from uploaded statements). */
   synced: boolean
+  /** Its provider caps data age and the last good sync is past it (pastProviderLimit): why current figures leave it out. */
+  late: string | null
 }
 
 async function coverageBlock(s: Scope): Promise<{ accounts: CovAccount[]; gaps: string[]; gapMonths: Map<Id, string[]>; today: IsoDate }> {
@@ -344,7 +361,7 @@ async function coverageBlock(s: Scope): Promise<{ accounts: CovAccount[]; gaps: 
     const balanceAsOf = handKept(a, conn) ? (kept ?? today) : synced ? (snap?.date ?? (row || ledgerKept ? lastSync : null)) : lastData
     const limit = synced ? STALE_DAYS_SYNCED : STALE_DAYS_MONTHLY
     const stale = balanceAsOf !== null && daysBetween(balanceAsOf, (await todayFor(rc))) > limit
-    accounts.push({ accountId: a.id, name: `${a.name}${a.mask ? ` ··${a.mask}` : ''}`, balanceAsOf, syncedThrough, stale, synced })
+    accounts.push({ accountId: a.id, name: `${a.name}${a.mask ? ` ··${a.mask}` : ''}`, balanceAsOf, syncedThrough, stale, synced, late: pastProviderLimit(conn, rc.now) })
   }
   // A stable order to show them in (accounts made in the same instant otherwise sort by a random id).
   accounts.sort((x, y) => x.name.localeCompare(y.name) || (x.accountId < y.accountId ? -1 : 1))
@@ -388,6 +405,9 @@ function honesty(a: MetricAnswer, s: Scope, cov: { accounts: CovAccount[]; gaps:
     if (cov.gaps.length) return unknown(cov.gaps.join('; '))
     const now = cov.today
     const recentEnd = daysBetween(s.to, now) <= 1
+    // A period running into today, with a source past its provider's data-age cap (Etsy, 24 hours): no current total.
+    const late = s.to >= now ? relevant.find((r) => r.synced && r.late) : undefined
+    if (late?.late) return unknown(late.late)
     for (const x of relevant.filter((r) => r.synced)) {
       const through = x.syncedThrough
       const ok = through !== null && (recentEnd ? daysBetween(through, now) <= RECENT_SYNC_DAYS : through >= s.to)
@@ -554,7 +574,7 @@ export async function cashHistory(rc: MetricContext, entityIds: EntityId[], days
   )
 }
 
-type CashFigures = { cash: number; cards: number; included: Id[]; cardIds: Id[]; excluded: Array<{ id: Id; reason: string }>; rows: Id[]; ledgerOnly: string[] }
+type CashFigures = { cash: number; cards: number; included: Id[]; cardIds: Id[]; excluded: Array<{ id: Id; reason: string }>; rows: Id[]; ledgerOnly: string[]; outOfDate: string[] }
 
 async function cashFigures(s: Scope): Promise<CashFigures> {
   // Cash, card balances and runway all start here; share one pass per request (copies: callers push to `excluded`).
@@ -570,10 +590,20 @@ async function computeCashFigures(s: Scope): Promise<CashFigures> {
   const cardIds: Id[] = []
   const rows: Id[] = []
   const ledgerOnly: string[] = []
+  const outOfDate: string[] = []
+  // A figure for today (or later) leaves out accounts whose provider caps data age and is past it (Etsy, 24 hours).
+  const current = s.asOf >= (await todayFor(s.rc))
+  const conns = current ? new Map((await memo(s.rc, 'connections|*', () => s.rc.directory.listConnections(s.rc.ws))).map((c) => [c.id, c])) : null
   for (const a of inScope) {
     const isCard = a.accountType === 'credit_card'
     if (!isCard && !a.includeInCash) {
       excluded.push({ id: a.id, reason: a.accountType === 'loan' ? 'loan account' : 'not counted as cash (setting)' })
+      continue
+    }
+    const late = conns && a.connectionId ? pastProviderLimit(conns.get(a.connectionId), s.rc.now) : null
+    if (late) {
+      excluded.push({ id: a.id, reason: late })
+      if (!outOfDate.includes(late)) outOfDate.push(late)
       continue
     }
     const b = await accountBalance(s, a)
@@ -588,7 +618,7 @@ async function computeCashFigures(s: Scope): Promise<CashFigures> {
       included.push(a.id)
     }
   }
-  return { cash, cards, included, cardIds, excluded, rows, ledgerOnly }
+  return { cash, cards, included, cardIds, excluded, rows, ledgerOnly, outOfDate }
 }
 
 // Plain words, no nested parentheses: it is read inside "cash unknown (…)" in tool answers (the web says it its own way).
@@ -608,13 +638,15 @@ async function balanceMetric(name: 'cash' | 'card_balances' | 'net_cash', s: Sco
   const hasAny = included.length > 0
   // No account counts as cash: the figure is unknown, never $0 (and runway with it).
   const noCash = !hasAny && name !== 'card_balances'
+  // Left out for being out of date (Etsy past 24 hours): the total says so, and is "stale" rather than "ok".
+  const late = name === 'card_balances' ? [] : f.outOfDate
   const answer = await finish(
     s,
     {
       name,
       value: hasAny ? money(value, s.currency) : null,
-      state: hasAny ? 'ok' : noCash ? 'unknown' : 'no_data',
-      ...(noCash ? { unknownReason: NO_CASH_ACCOUNT } : {}),
+      state: hasAny ? (late.length ? 'stale' : 'ok') : noCash ? 'unknown' : 'no_data',
+      ...(noCash ? { unknownReason: late.length ? late.join('; ') : NO_CASH_ACCOUNT } : late.length ? { unknownReason: late.join('; ') } : {}),
       basis: 'cash',
       asOf: s.asOf,
       includedAccounts: included,
@@ -627,7 +659,7 @@ async function balanceMetric(name: 'cash' | 'card_balances' | 'net_cash', s: Sco
     },
     f.rows,
   )
-  return hasAny && name !== 'card_balances' ? withGaps(answer, await inTransit(s)) : answer
+  return hasAny && name !== 'card_balances' ? withGaps(answer, [...(await inTransit(s)), ...(await possibleDuplicates(s, 'cash'))]) : answer
 }
 
 /** Payouts and transfers that left one account and haven't been seen arriving: in neither balance, so not in cash. */
@@ -729,6 +761,59 @@ async function looseCardPayments(s: Scope, from: IsoDate, to: IsoDate): Promise<
   return total ? [`${formatMoney(total, s.currency)} in credit card payments counts as spending in one lump, because no card is connected`] : []
 }
 
+/**
+ * Money out the bank calls a transfer (Plaid TRANSFER_OUT_*) with no other side found: it may be a move to an account
+ * that isn't connected, or a payment. Counted as spending until someone says, so the answer says how much.
+ */
+async function looseTransfers(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
+  const rows = (await s.rc.store.listRecords(s.rc.ws, { entityIds: s.entityIds, eventTypes: ['txn.upsert'], statuses: ['posted'], fromDate: from, toDate: to })).filter(
+    (r) => r.event.type === 'txn.upsert' && /^TRANSFER_OUT/.test(r.event.categoryHint ?? '') && r.amount && r.amount.minor < 0,
+  )
+  if (!rows.length) return []
+  const linked = new Set((await s.rc.store.listLinks(s.rc.ws, { statuses: ['confirmed', 'proposed'] })).flatMap((l) => [l.fromId, l.toId]))
+  const decided = new Set((await s.rc.store.listOverrides(s.rc.ws)).map((o) => o.recordId))
+  let total = 0
+  for (const r of rows) if (!linked.has(r.id) && !decided.has(r.id)) total += Math.abs((await s.rc.toCurrency(r.amount as Money, s.currency, r.date)).minor)
+  return total ? [`${formatMoney(total, s.currency)} the bank calls transfers to another account counts as spending, because no matching deposit was found in a connected account`] : []
+}
+
+/**
+ * Two accounts the possible_duplicate_account check thinks are one account seen twice: both still count (a wrong
+ * subtraction would hide real money), so every cash, burn and runway answer says how much may be counted twice: the
+ * smaller balance for cash, the smaller money out in the window for burn. Gone once one is marked a duplicate.
+ */
+async function possibleDuplicates(s: Scope, kind: 'cash' | 'burn', from?: IsoDate, to?: IsoDate): Promise<string[]> {
+  if (s.figureOnly) return []
+  // The pair is a standing flag: a past window's burn reads today's check (its evidence may be newer than the window).
+  const asOf = kind === 'cash' ? s.asOf : undefined
+  const checks = await memo(s.rc, `dupchecks|${[...s.entityIds].sort().join(',')}|${asOf ?? 'today'}`, () => runChecks(s.rc, { entityIds: s.entityIds, ...(asOf ? { asOf } : {}) }))
+  const pairs = checks.filter((c) => c.name === 'possible_duplicate_account' && c.subjectId && c.relatedId)
+  if (!pairs.length) return []
+  const byId = new Map((await s.rc.directory.listSourceAccounts(s.rc.ws)).map((a) => [a.id, a]))
+  const out: string[] = []
+  for (const c of pairs) {
+    const a = byId.get(c.subjectId as Id)
+    const b = byId.get(c.relatedId as Id)
+    if (!a || !b || a.duplicateOf || b.duplicateOf) continue
+    const amounts: number[] = []
+    for (const acct of [a, b]) {
+      if (kind === 'cash') {
+        const bal = await accountBalance(s, acct)
+        amounts.push((await s.rc.toCurrency({ minor: bal.minor, currency: bal.currency }, s.currency, s.asOf)).minor)
+      } else {
+        const rows = await s.rc.store.listRecords(s.rc.ws, { sourceAccountId: acct.id, eventTypes: ['txn.upsert'], statuses: ['posted'], fromDate: from, toDate: to })
+        let spent = 0
+        for (const r of rows) if (r.amount && r.amount.minor < 0) spent += Math.abs((await s.rc.toCurrency(r.amount, s.currency, r.date)).minor)
+        amounts.push(spent)
+      }
+    }
+    const overlap = Math.max(0, Math.min(...amounts))
+    const what = kind === 'cash' ? 'of cash' : 'of spending in this period'
+    out.push(`${dupName(a)} and ${dupName(b)} may be one account connected twice, so up to ${formatMoney(overlap, s.currency)} ${what} may be counted twice; mark one a duplicate, or dismiss it if they're two different accounts`)
+  }
+  return out
+}
+
 /** Payments onto a connected loan: all of it comes off the loan, so the interest inside isn't in burn. */
 async function loanPayments(s: Scope, from: IsoDate, to: IsoDate): Promise<string[]> {
   const accounts = await s.rc.directory.listSourceAccounts(s.rc.ws)
@@ -809,7 +894,8 @@ async function burnMetric(name: 'gross_burn' | 'net_burn', s: Scope, explicitPer
     },
     f.rows,
   )
-  return explicitPeriod || short ? answer : withGaps(answer, [...(await lateStarts(s, from)), ...(await looseCardPayments(s, from, to)), ...(await loanPayments(s, from, to))])
+  const dups = await possibleDuplicates(s, 'burn', from, to)
+  return explicitPeriod || short ? withGaps(answer, dups) : withGaps(answer, [...(await lateStarts(s, from)), ...(await looseCardPayments(s, from, to)), ...(await looseTransfers(s, from, to)), ...(await loanPayments(s, from, to)), ...dups])
 }
 
 /**
@@ -909,7 +995,10 @@ async function runwayMetric(s: Scope): Promise<CoreMetricAnswer> {
     rows,
   )
   const start = months[weights.indexOf(1)]?.from
-  return start ? withGaps(answer, [...(await lateStarts(s, start)), ...(await looseCardPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to)), ...(await loanPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to))]) : answer
+  // Runway is cash over burn: a pair seen twice can inflate both.
+  const dups = [...(await possibleDuplicates(s, 'cash')), ...(start ? await possibleDuplicates(s, 'burn', start, (months[months.length - 1] as { to: IsoDate }).to) : [])]
+  if (!start) return withGaps(answer, dups)
+  return withGaps(answer, [...(await lateStarts(s, start)), ...(await looseCardPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to)), ...(await looseTransfers(s, start, (months[months.length - 1] as { to: IsoDate }).to)), ...(await loanPayments(s, start, (months[months.length - 1] as { to: IsoDate }).to)), ...dups])
 }
 
 const TAX_BLIND: Record<string, string> = { shopify: 'Shopify sale', stripe: 'Stripe charge', square: 'Square payment', gumroad: 'Gumroad sale' }

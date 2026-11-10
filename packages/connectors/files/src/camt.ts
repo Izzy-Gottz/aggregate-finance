@@ -73,7 +73,7 @@ function signed(m: Money, ind: string | undefined, where: string): Money {
 /** <Dt>2026-09-30</Dt> or <DtTm>2026-09-30T23:59:59+02:00</DtTm> under `node`. */
 function dateOf(node: XmlNode | undefined): { date: string; at: string } | undefined {
   const d = textAt(node, 'Dt')
-  if (d && /^\d{4}-\d{2}-\d{2}/.test(d)) return { date: d.slice(0, 10), at: isoTimestamp(`${d.slice(0, 10)}T23:59:59Z`) }
+  if (d && /^\d{4}-\d{2}-\d{2}/.test(d)) return { date: d.slice(0, 10), at: isoTimestamp(`${d.slice(0, 10)}T12:00:00Z`) }
   const dt = textAt(node, 'DtTm')
   if (dt && /^\d{4}-\d{2}-\d{2}T/.test(dt)) return { date: dt.slice(0, 10), at: isoTimestamp(/[zZ]|[+-]\d\d:?\d\d$/.test(dt) ? dt : `${dt}Z`) }
   return undefined

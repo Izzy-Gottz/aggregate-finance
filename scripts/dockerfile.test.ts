@@ -26,4 +26,13 @@ it('the image carries the key command the runtime runs as node', () => {
   const docker = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8')
   const runtime = docker.slice(docker.indexOf('AS runtime'))
   expect(runtime).toContain('COPY scripts/kms-master-key.mjs ./scripts/kms-master-key.mjs')
+  // RDS's roots for NODE_EXTRA_CA_CERTS on AWS (certs/README.md): without them the app can't reach the database there.
+  expect(runtime).toContain('COPY certs/rds-global-bundle.pem ./certs/rds-global-bundle.pem')
+})
+
+it('the image puts `agfn` on PATH so the operator commands (challenge-ops.md) run as written', () => {
+  const docker = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8')
+  const runtime = docker.slice(docker.indexOf('AS runtime'))
+  expect(runtime).toContain('/usr/local/bin/agfn')
+  expect(runtime).toContain('node /app/packages/cli/src/main.ts')
 })

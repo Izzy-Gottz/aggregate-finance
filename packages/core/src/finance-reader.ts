@@ -352,7 +352,8 @@ export class LedgerFinanceReader implements FinanceReader {
     const next = runs.filter((r) => r.event.type === 'payroll.run' && r.event.status === 'scheduled' && r.date >= asOf).sort((a, b) => (a.date < b.date ? -1 : 1))[0]
     if (next && next.event.type === 'payroll.run') {
       const ev = next.event
-      return { date: ev.payDate, estimate: ev.companyDebit ?? money(ev.gross.minor + ev.employerTaxes.minor, ev.gross.currency) }
+      // next.date is the workspace-tz business date (= payDate unless the connector gave a real `at`); match the ledger.
+      return { date: next.date, estimate: ev.companyDebit ?? money(ev.gross.minor + ev.employerTaxes.minor, ev.gross.currency) }
     }
     return null
   }
@@ -610,7 +611,7 @@ export class LedgerFinanceReader implements FinanceReader {
         direction: inv.direction,
         ...(inv.number ? { number: inv.number } : {}),
         counterparty: inv.counterparty,
-        issueDate: inv.issueDate,
+        issueDate: r.date,
         ...(inv.dueDate ? { dueDate: inv.dueDate } : {}),
         total: inv.total,
         amountPaid: money(paid, inv.total.currency),
@@ -1100,7 +1101,7 @@ export class LedgerFinanceReader implements FinanceReader {
         const ev = r.event as Extract<SourceRecord['event'], { type: 'payroll.run' }>
         return {
           id: r.id,
-          payDate: ev.payDate,
+          payDate: r.date,
           gross: ev.gross,
           employerTaxes: ev.employerTaxes,
           net: ev.net,

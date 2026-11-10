@@ -275,7 +275,7 @@ async function importCsv(
   if (mapping.balance !== undefined) {
     balanceCheck.push(runningBalanceCheck(account.externalId, ordered))
     const last = [...ordered].reverse().find((r) => r.balance)
-    if (last?.balance) closing = { current: last.balance, at: isoTimestamp(`${last.date}T23:59:59Z`), date: last.date }
+    if (last?.balance) closing = { current: last.balance, at: isoTimestamp(`${last.date}T12:00:00Z`), date: last.date }
   }
 
   const events = await buildEvents({

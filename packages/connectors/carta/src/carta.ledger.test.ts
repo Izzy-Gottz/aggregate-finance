@@ -54,3 +54,30 @@ describe.each(['memory', 'sqlite'] as const)('carta into the ledger (%s)', (back
     expect(await k.tb(alex, 'accrual')).toBe(0)
   })
 })
+
+
+describe('carta: an unreadable 2xx stops the sync, never a silent $0', () => {
+  const NOW_U = Date.parse('2026-10-14T12:00:00Z')
+  const build = (respond: { text: string } | { json: unknown }) =>
+    createCartaConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: () => true, respond }]).fetch, clock: fakeClock(NOW_U), random: () => 0.5 },
+      oauth: { clientId: 'c', clientSecret: 's', redirectUri: 'https://app.example.com/api/connectors/carta/callback' },
+    })
+  const c: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'carta', secret: { tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_U + 3_600_000 } } satisfies CartaSecret, config: { portfolioId: '501' } }
+  it('an empty body fails visibly', async () => { await expect(runSync(build({ text: '' }), c, null)).rejects.toThrow() })
+  it('a non-object body fails visibly', async () => { await expect(runSync(build({ json: 5 }), c, null)).rejects.toThrow() })
+})
+
+
+describe('carta pagination completeness: a truncated listing must not void real holdings', () => {
+  const NOW_P = Date.parse('2026-10-12T12:00:00Z')
+  it('an issuer list that never stops paging fails visibly and emits no listing.complete', async () => {
+    const carta = createCartaConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: (u) => u.pathname.endsWith('/issuers'), respond: (u) => { const n = Number((u.searchParams.get('pageToken') ?? '0').replace(/\D/g, '')) || 0; return { json: { issuers: [{ id: 'iss' + n }], nextPageToken: 'p' + (n + 1) } } } }]).fetch, clock: fakeClock(NOW_P), random: () => 0.5 },
+      oauth: { clientId: 'c', clientSecret: 's', redirectUri: 'https://app.example.com/api/connectors/carta/callback' },
+    })
+    const conn: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'carta', secret: { tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_P + 3_600_000 } } satisfies CartaSecret, config: { portfolioId: '501' } }
+    // The throw happens inside listIssuers, before any listing.complete can be pushed — so a partial listing can never void holdings.
+    await expect(runSync(carta, conn, null)).rejects.toThrow(/page through/)
+  })
+})

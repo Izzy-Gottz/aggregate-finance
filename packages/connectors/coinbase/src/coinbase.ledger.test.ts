@@ -73,3 +73,29 @@ describe.each(['memory', 'sqlite'] as const)('coinbase into the ledger (%s)', (b
     expect(failed).toEqual([])
   })
 })
+
+
+describe('coinbase: an unreadable 2xx stops the sync, never a silent $0', () => {
+  const NOW_U = Date.parse('2026-10-14T12:00:00Z')
+  const build = (respond: { text: string } | { json: unknown }) =>
+    createCoinbaseConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: (u) => u.pathname === '/v2/accounts', respond }]).fetch, clock: fakeClock(NOW_U), random: () => 0.5 },
+      oauth: { clientId: 'x', clientSecret: 'y', redirectUri: 'https://app.example.com/api/connectors/coinbase/callback' },
+    })
+  const c: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'coinbase', secret: { kind: 'oauth', tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_U + 3_600_000 } } satisfies CoinbaseSecret, config: {} }
+  it('an empty body fails visibly', async () => { await expect(runSync(build({ text: '' }), c, null)).rejects.toThrow() })
+  it('a non-object body fails visibly', async () => { await expect(runSync(build({ json: 5 }), c, null)).rejects.toThrow() })
+})
+
+
+describe('coinbase pagination completeness: a partial account list never passes as complete', () => {
+  const NOW_P = Date.parse('2026-10-14T12:00:00Z')
+  it('an account list that never stops paging fails visibly instead of returning a partial list', async () => {
+    const cb = createCoinbaseConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: (u) => u.pathname === '/v2/accounts', respond: { json: { data: [], pagination: { next_uri: '/v2/accounts?c=1' } } } }]).fetch, clock: fakeClock(NOW_P), random: () => 0.5 },
+      oauth: { clientId: 'x', clientSecret: 'y', redirectUri: 'https://app.example.com/api/connectors/coinbase/callback' },
+    })
+    const conn: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'coinbase', secret: { kind: 'oauth', tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_P + 3_600_000 } } satisfies CoinbaseSecret, config: {} }
+    await expect(runSync(cb, conn, null)).rejects.toThrow(/page through/)
+  })
+})

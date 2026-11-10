@@ -21,6 +21,12 @@ describe('connector registry', () => {
     expect(c.describe()).toMatchObject({ name: 'WooCommerce', provides: ['reports'], auth: 'api_key' })
   })
 
+  it('BigCommerce is installed everywhere as a pasted read-only store token; config.ts holds it back on hosted', async () => {
+    expect(installedConnectorList({}).map((c) => c.key)).toContain('bigcommerce')
+    const c = installedConnectors({ AGFN_HOSTED: '1' }).find((f) => f(deps).describe().key === 'bigcommerce')!(deps)
+    expect(c.describe()).toMatchObject({ name: 'BigCommerce', provides: ['reports'], auth: 'api_key' })
+  })
+
   it('FreshBooks appears only with its OAuth app keys', () => {
     expect(installedConnectorList({}).map((c) => c.key)).not.toContain('freshbooks')
     expect(installedConnectorList({ FRESHBOOKS_CLIENT_ID: 'c', FRESHBOOKS_CLIENT_SECRET: 's' }).map((c) => c.key)).toContain('freshbooks')
@@ -114,6 +120,40 @@ describe('connector registry', () => {
     const u = new URL(b.url)
     expect(u.searchParams.get('scope')).toBe('website.transactions.read')
     expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/squarespace/callback')
+  })
+
+  it('Etsy: only with the keystring and shared secret; sign-in asks transactions_r shops_r with PKCE, back to the callback', async () => {
+    const full = { ETSY_CLIENT_ID: 'k', ETSY_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('etsy')
+    expect(installedConnectorList({ ...full, ETSY_CLIENT_ID: undefined }).map((c) => c.key)).not.toContain('etsy')
+    expect(installedConnectorList({ ...full, ETSY_CLIENT_SECRET: undefined }).map((c) => c.key)).not.toContain('etsy')
+    const b = (await begin(full, 'etsy')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.origin + u.pathname).toBe('https://www.etsy.com/oauth/connect')
+    expect(u.searchParams.get('scope')).toBe('transactions_r shops_r')
+    expect(u.searchParams.get('code_challenge_method')).toBe('S256')
+    expect(u.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/etsy/callback')
+    expect(u.searchParams.get('state')).toBe('st_123')
+  })
+
+  it('Amazon: only with the app id and both LWA keys; consent on Seller Central, version=beta until AMAZON_SPAPI_DRAFT=0', async () => {
+    const full = { AMAZON_SPAPI_APP_ID: 'amzn1.sellerapps.app.x', AMAZON_SPAPI_CLIENT_ID: 'c', AMAZON_SPAPI_CLIENT_SECRET: 's', BASE_URL: 'https://app.example.com' }
+    expect(installedConnectorList({}).map((c) => c.key)).not.toContain('amazon')
+    for (const k of ['AMAZON_SPAPI_APP_ID', 'AMAZON_SPAPI_CLIENT_ID', 'AMAZON_SPAPI_CLIENT_SECRET'] as const) {
+      expect(installedConnectorList({ ...full, [k]: undefined }).map((c) => c.key)).not.toContain('amazon')
+    }
+    const b = (await begin(full, 'amazon')) as { kind: string; url: string }
+    expect(b.kind).toBe('oauth')
+    const u = new URL(b.url)
+    expect(u.origin + u.pathname).toBe('https://sellercentral.amazon.com/apps/authorize/consent')
+    expect(u.searchParams.get('application_id')).toBe('amzn1.sellerapps.app.x')
+    expect(u.searchParams.get('version')).toBe('beta')
+    const published = new URL(((await begin({ ...full, AMAZON_SPAPI_DRAFT: '0' }, 'amazon')) as { url: string }).url)
+    expect(published.searchParams.has('version')).toBe(false)
+    const c = installedConnectors(full).find((f) => f(deps).describe().key === 'amazon')!(deps) as Connector & { loginRedirect(q: Record<string, string>, state: string): string | null }
+    const back = new URL(c.loginRedirect({ amazon_callback_uri: 'https://amazon.com/apps/authorize/confirm/amzn1.sellerapps.app.x', amazon_state: 'a' }, 'st')!)
+    expect(back.searchParams.get('redirect_uri')).toBe('https://app.example.com/api/connectors/amazon/callback')
   })
 
   it('Wix: no app, no connector; with one, the install link for that app, back to the callback', async () => {

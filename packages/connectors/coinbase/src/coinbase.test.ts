@@ -104,6 +104,8 @@ describe('coinbase: wallets, holdings and cash rows (hand-checked)', () => {
     expect(posted).toBe(630_00)
     // No crypto-side rows: they'd be not-money rounded to two decimals.
     expect((of(ev, 'txn.upsert') as TxnUpsert[]).every((t) => t.accountExternalId === 'acct-usd')).toBe(true)
+    // created_at is a real instant: every txn carries `at` (starting with its UTC date) for workspace-tz dating.
+    expect((of(ev, 'txn.upsert') as TxnUpsert[]).every((t) => typeof t.at === 'string' && t.at.startsWith(t.date))).toBe(true)
   })
 
   it('the next cycle reads back a week before the last one began (and stops there), and re-reads the same ids', async () => {
@@ -135,6 +137,14 @@ describe('coinbase: wallets, holdings and cash rows (hand-checked)', () => {
     const btc = (of(r.events, 'balance.snapshot') as BalanceSnapshot[]).find((s) => s.accountExternalId === 'acct-btc')
     expect(btc?.holdings?.[0]).toMatchObject({ quantity: '0.01530000', value: { minor: 0, currency: 'XXX' } })
     expect(r.warnings).toContain(COINBASE_NO_RATES_WARNING)
+    // Never a misleading USD $0: the unvalued holding is the non-money sentinel, and the cash balance isn't $0 either.
+    expect(btc?.holdings?.[0]?.value.currency).not.toBe('USD')
+    expect(btc?.current.currency).not.toBe('USD')
+  })
+
+  it('a revoked token (401) on the optional rates call still aborts the sync — only a flaky rates outage is swallowed', async () => {
+    const m = make({ extra: [{ match: (u) => u.pathname === '/v2/exchange-rates', respond: { status: 401, json: { errors: [{ id: 'authentication_error' }] } } }] })
+    await expect(m.connector.sync(m.conn, null)).rejects.toMatchObject({ kind: 'auth' })
   })
 
   it('usdValue rounds to the cent and refuses a missing or zero rate', () => {

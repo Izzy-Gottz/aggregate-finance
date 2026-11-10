@@ -8,7 +8,7 @@
 //   "Neighbor secret FLAG-…". New random values every reset; only their sha256 is stored, so `checkFlag` can confirm a
 //   report without the database holding the answer in a readable form outside those workspaces.
 
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { Kysely } from 'kysely'
 import { newId, nowIso, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import { isQaPlayer } from './qa-player.ts'
@@ -34,10 +34,26 @@ export interface ChallengeDeps {
 
 type AnyDb = Kysely<Record<string, Record<string, unknown>>>
 
-/** Is this the value of a planted flag (this reset's)? Returns which one, or null. */
+/** A constant-time compare of two sha256 hex digests. timingSafeEqual needs equal-length buffers; a non-digest string
+ *  (wrong length or non-hex) can't be a flag hash, so it's simply not a match. */
+function sameDigest(aHex: string, bHex: string): boolean {
+  if (aHex.length !== bHex.length) return false
+  const a = Buffer.from(aHex, 'hex')
+  const b = Buffer.from(bHex, 'hex')
+  return a.length === b.length && a.length > 0 && timingSafeEqual(a, b)
+}
+
+/**
+ * Is this the value of a planted flag (this reset's)? Returns which one, or null. The submitted value's hash is compared
+ * to each stored flag hash with a constant-time compare, not a SQL equality on the secret-derived hash, and every flag
+ * is checked (no early return), so the compare leaks nothing about which flag or how much of a near-miss matched.
+ */
 export async function checkFlag(db: Kysely<CoreTables>, value: string): Promise<FlagName | null> {
-  const row = await withBypass('challenge:flags', () => db.selectFrom('challenge_flags').select('name').where('sha256', '=', sha(value)).executeTakeFirst())
-  return (row?.name as FlagName | undefined) ?? null
+  const want = sha(value)
+  const rows = await withBypass('challenge:flags', () => db.selectFrom('challenge_flags').select(['name', 'sha256']).execute())
+  let match: FlagName | null = null
+  for (const r of rows) if (sameDigest(r.sha256, want)) match = r.name as FlagName
+  return match
 }
 
 export async function resetChallenge(deps: ChallengeDeps): Promise<{ players: number; archived: number }> {
@@ -63,7 +79,10 @@ export async function resetChallenge(deps: ChallengeDeps): Promise<{ players: nu
       const rows = (await withWorkspace(ws, () => anyDb.selectFrom('activity_log').selectAll().where('workspace_id', '=', ws).execute())) as Array<Record<string, unknown>>
       for (const r of rows) {
         const owner = typeof r.grant_id === 'string' ? grantOwner.get(r.grant_id) : undefined
-        await db.insertInto('challenge_activity').values({ id: newId(), ws, at: String(r.at ?? at), row_json: JSON.stringify(owner ? { ...r, grant_person_id: owner } : r) }).execute()
+        // Judging reads what the AI called and wrote; it never needs the caller's IP or user agent, so they don't go
+        // into the archive that outlives the workspace. (Migration 0912 drops them from any rows archived earlier.)
+        const { ip: _ip, user_agent: _ua, ...kept } = r
+        await db.insertInto('challenge_activity').values({ id: newId(), ws, at: String(r.at ?? at), row_json: JSON.stringify(owner ? { ...kept, grant_person_id: owner } : kept) }).execute()
         archived++
       }
     }

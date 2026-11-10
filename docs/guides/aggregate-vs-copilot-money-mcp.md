@@ -35,6 +35,6 @@ A note on names: community projects named "copilot-money-mcp" also exist and are
 
 1. [Copilot Money: Dispatch](https://www.copilot.money/dispatch), read 2026-11-01 (entries of 2026-05-15, 2026-08-12 and 2026-10-27).
 2. [Copilot Money on Threads](https://www.threads.com/@copilotmoney/post/DYXZsYpjnQr), 2026-05-15.
-3. [Copilot Money: MCP](https://www.copilot.money/mcp), read 2026-11-01.
+3. [Copilot Money: MCP](https://www.copilot.money/connector), read 2026-11-01.
 
 *Last checked 2026-11-01. Spotted something out of date? Open an issue.*

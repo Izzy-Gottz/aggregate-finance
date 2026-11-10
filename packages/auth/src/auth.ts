@@ -14,6 +14,14 @@ import { ownerOf, newId, nowIso, withBypass, type CoreTables, type DbKind } from
 import { inviteEmail, signInEmail } from './email.ts'
 import { codeHash, newCode } from './email-codes.ts'
 
+/**
+ * The header Better Auth reads for the client IP (its own per-IP rate limit and session.ipAddress). The server sets it
+ * from its trusted-proxy resolver (clientIp) and overwrites any value a client sends, so Better Auth gets the real IP
+ * even behind two proxy hops (Cloudflare in front of Fly) without ever trusting a forgeable header. A request that
+ * reaches the auth handler without this header set gets no IP, which is safe (it only coarsens IP tracking).
+ */
+export const TRUSTED_CLIENT_IP_HEADER = 'x-agfn-client-ip'
+
 /** Sends sign-in links. S9 provides SMTP/Resend; tests and dev use an in-memory outbox. */
 export interface Mailer {
   /** `html` is optional: transports that can't send it (the console) use `text`, which is always complete. */
@@ -143,7 +151,9 @@ export function authOptions(cfg: AuthConfig) {
     advanced: {
       useSecureCookies: cfg.baseUrl.startsWith('https://'),
       database: { generateId: () => newId() },
-      ipAddress: cfg.clientIpHeader ? { ipAddressHeaders: [cfg.clientIpHeader.toLowerCase()] } : { disableIpTracking: true },
+      // The server resolves the real client IP (Cloudflare-aware) and hands it to us on TRUSTED_CLIENT_IP_HEADER, which
+      // it always overwrites, so we never read a client-forgeable header directly.
+      ipAddress: cfg.clientIpHeader ? { ipAddressHeaders: [TRUSTED_CLIENT_IP_HEADER] } : { disableIpTracking: true },
     },
     rateLimit: { enabled: true, window: 60, max: 60, storage: 'database' },
     telemetry: { enabled: false },
@@ -160,7 +170,7 @@ export function authOptions(cfg: AuthConfig) {
         if (ctx.path.startsWith('/passkey/verify-registration')) {
           const uid = ctx.context.session?.user.id
           if (!uid) return
-          const person = await cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', uid).executeTakeFirst()
+          const person = await withBypass('auth:person-by-user', () => cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', uid).executeTakeFirst())
           if (!person) return
           const anyDb = cfg.db as unknown as Kysely<Record<string, Record<string, unknown>>>
           const count = (await ownerOf(anyDb).selectFrom('passkey').select((eb) => eb.fn.countAll().as('n')).where('userId', '=', uid).executeTakeFirst()) as { n: number | string } | undefined
@@ -177,7 +187,7 @@ export function authOptions(cfg: AuthConfig) {
               : null
         const userId = ctx.context.newSession?.user.id
         if (!method || !userId) return
-        const person = await cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', userId).executeTakeFirst()
+        const person = await withBypass('auth:person-by-user', () => cfg.db.selectFrom('people').select('id').where('auth_user_id', '=', userId).executeTakeFirst())
         if (person) await ownerOf(cfg.db).insertInto('reauth_events').values({ id: newId(), person_id: person.id, method, at: nowIso() }).execute()
       }),
     },
@@ -190,17 +200,21 @@ export function authOptions(cfg: AuthConfig) {
             const created = async (personId: string) => {
               await cfg.onPersonCreated?.(personId, headers).catch((err: unknown) => console.warn('[agfn] after sign-up hook failed', { error: err instanceof Error ? err.message : String(err) }))
             }
-            const existing = await cfg.db.selectFrom('people').select('id').where('email', '=', user.email.toLowerCase()).executeTakeFirst()
+            // Sign-up happens before any workspace: people lookups/writes here run under a named bypass (people is
+            // visible only through a workspace membership otherwise).
+            const existing = await withBypass('auth:person-by-email', () => cfg.db.selectFrom('people').select('id').where('email', '=', user.email.toLowerCase()).executeTakeFirst())
             if (existing) {
-              const linked = await cfg.db.updateTable('people').set({ auth_user_id: user.id }).where('id', '=', existing.id).where('auth_user_id', 'is', null).executeTakeFirst()
+              const linked = await withBypass('auth:link-person', () => cfg.db.updateTable('people').set({ auth_user_id: user.id }).where('id', '=', existing.id).where('auth_user_id', 'is', null).executeTakeFirst())
               if (Number(linked.numUpdatedRows ?? 0) > 0) await created(existing.id)
               return
             }
             const id = newId()
-            await cfg.db
-              .insertInto('people')
-              .values({ id, auth_user_id: user.id, name: user.name || user.email.split('@')[0] || 'You', email: user.email.toLowerCase(), created_at: nowIso() })
-              .execute()
+            await withBypass('auth:create-person', () =>
+              cfg.db
+                .insertInto('people')
+                .values({ id, auth_user_id: user.id, name: user.name || user.email.split('@')[0] || 'You', email: user.email.toLowerCase(), created_at: nowIso() })
+                .execute(),
+            )
             await created(id)
           },
         },
@@ -216,9 +230,13 @@ export function authOptions(cfg: AuthConfig) {
         rateLimit: { window: 60, max: 20 },
         disableSignUp: false,
         sendMagicLink: async ({ email, url }) => {
-          // A reviewer access link signs in through this same flow, but the link is handed back, never emailed.
+          // `*.aggregate.invalid` addresses are reserved (reviewer links, challenge QA web sessions): never deliverable,
+          // only ever signed in by server-side operator code running inside captureMagicLink. Inside that capture the
+          // link is handed back to the caller, never emailed. Any OTHER request for such an address — a public sign-in
+          // or sign-up — is refused here, before a link is created, so the link is never emailed, returned or logged.
           const capture = magicLinkCapture.getStore()
-          if (capture && email.toLowerCase().endsWith(`@${REVIEWER_EMAIL_DOMAIN}`)) {
+          if (email.toLowerCase().endsWith('.aggregate.invalid')) {
+            if (!capture) throw new Error('That address is reserved and cannot be signed in to.')
             capture.url = url
             return
           }
@@ -340,8 +358,11 @@ const magicLinkCapture = new AsyncLocalStorage<{ url?: string }>()
 /** Set around a sign-in request from a browser: the hashed nonce its cookie carries, so the emailed code works only there. */
 export const signInPending = new AsyncLocalStorage<{ nonceHash: string }>()
 
-/** Run fn, returning the magic link Better Auth would have emailed to a reviewer address (reviewer access only). */
-export async function captureReviewerMagicLink(fn: () => Promise<unknown>): Promise<string | undefined> {
+/**
+ * Run fn, returning the magic link Better Auth would have emailed, instead of emailing it — for an operator minting a
+ * session for a non-deliverable `*.aggregate.invalid` account (a reviewer link, or a challenge QA web session).
+ */
+export async function captureMagicLink(fn: () => Promise<unknown>): Promise<string | undefined> {
   const box: { url?: string } = {}
   await magicLinkCapture.run(box, fn)
   return box.url

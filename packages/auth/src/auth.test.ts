@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { connect, migrateToLatest, type CoreTables, type DbHandle } from '@agfn/db'
-import { createAuth, migrateAuth, oauthProviderAuthServerMetadata, type AuthConfig } from './index.ts'
+import { captureMagicLink, createAuth, migrateAuth, oauthProviderAuthServerMetadata, type AuthConfig } from './index.ts'
 
 let h: DbHandle<CoreTables>
 let outbox: Array<{ to: string; text: string }>
@@ -48,6 +48,33 @@ describe('auth', () => {
 
     const session = await auth.api.getSession({ headers: new Headers({ cookie: cookie!.split(';')[0]! }) })
     expect(session?.user.email).toBe('founder@example.com')
+  })
+
+  it('refuses a public sign-in for a reserved *.aggregate.invalid address, emailing and leaking no link', async () => {
+    const auth = createAuth(cfg)
+    for (const email of ['qa-abc@challenge-qa.aggregate.invalid', 'reviewer-abc@reviewers.aggregate.invalid']) {
+      const res = await auth.handler(
+        new Request('http://localhost:8787/api/auth/sign-in/magic-link', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', origin: 'http://localhost:8787' },
+          body: JSON.stringify({ email, callbackURL: '/' }),
+        }),
+      )
+      expect(res.status, email).toBeGreaterThanOrEqual(400) // refused
+      expect((await res.text()).match(/https?:\/\/\S+/), email).toBeNull() // no link in the response
+    }
+    expect(outbox).toHaveLength(0) // nothing emailed to a reserved address
+    expect(await h.db.selectFrom('people').selectAll().execute()).toHaveLength(0) // no account created
+  })
+
+  it('hands a reserved-address link only to the in-process captureMagicLink caller, never emailing it', async () => {
+    const auth = createAuth(cfg)
+    const link = await captureMagicLink(() => auth.api.signInMagicLink({ body: { email: 'qa-def@challenge-qa.aggregate.invalid', callbackURL: '/' }, headers: new Headers({ origin: 'http://localhost:8787' }) }))
+    expect(link).toMatch(/token=/) // the operator got the link back
+    expect(outbox).toHaveLength(0) // and it was never emailed
+    // It is a real, usable sign-in link: verifying it yields a session.
+    const verify = await auth.handler(new Request(link!, { headers: { origin: 'http://localhost:8787' } }))
+    expect(verify.headers.get('set-cookie')).toMatch(/session_token/)
   })
 
   it('serves OAuth authorization server metadata for MCP clients', async () => {

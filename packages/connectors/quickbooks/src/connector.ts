@@ -34,7 +34,7 @@ import {
   type WebhookOutcome,
   type WebhookRequest,
 } from '@agfn/connector-sdk'
-import { accountIndex, itemIndex, mapInvoiceEvents, mapJournalEntry, deletedJournal, voidCogs, CASH_ENTITIES, deletedCashEvents, deletedEvent, mapAccount, mapBillEvents, mapCashEntity, mapCredit, mapPayment, mapProfitAndLoss, type CashEntity, type MapContext, type QboAccountInfo, type QboObject } from './map.ts'
+import { accountIndex, itemIndex, mapInvoiceEvents, mapSalesTaxPayments, mapJournalEntry, deletedJournal, voidCogs, CASH_ENTITIES, deletedCashEvents, deletedEvent, mapAccount, mapBillEvents, mapCashEntity, mapCredit, mapPayment, mapProfitAndLoss, type CashEntity, type MapContext, type QboAccountInfo, type QboObject } from './map.ts'
 
 export const PROVIDER = 'quickbooks'
 /** Response header with the provider's request id, quoted to provider support. */
@@ -80,7 +80,7 @@ const CDC_CAP = 1000
 // JournalEntry: manual journals (depreciation, accruals, payroll postings) that touch the P&L.
 const ENTITIES = ['Account', 'Invoice', 'CreditMemo', 'Payment', 'Bill', 'VendorCredit', 'BillPayment', 'Purchase', 'SalesReceipt', 'RefundReceipt', 'Deposit', 'JournalEntry'] as const
 type Entity = (typeof ENTITIES)[number]
-const PHASES = [...ENTITIES, 'cdc', 'pnl'] as const
+const PHASES = [...ENTITIES, 'cdc', 'pnl', 'salestax'] as const
 
 export interface QuickBooksSecret {
   tokens: OAuthTokens
@@ -122,7 +122,7 @@ const isState = (v: unknown): v is CursorState =>
   isRecord(v) && typeof v.p === 'number' && typeof v.s === 'number' && (v.since === null || typeof v.since === 'string') && typeof v.mark === 'string' && (v.skip === undefined || (Array.isArray(v.skip) && v.skip.every((x) => typeof x === 'string')))
 
 /** What a person reads when their plan leaves something out: those numbers are unknown here, never zero. */
-const PLAN_NAMES: Record<string, string> = { Bill: 'bills', BillPayment: 'bill payments', VendorCredit: 'vendor credits', Purchase: 'expenses', Deposit: 'deposits', SalesReceipt: 'sales receipts', RefundReceipt: 'refund receipts', CreditMemo: 'credit memos', Payment: 'customer payments', Invoice: 'invoices', JournalEntry: 'journal entries', pnl: 'the profit and loss report' }
+const PLAN_NAMES: Record<string, string> = { Bill: 'bills', BillPayment: 'bill payments', VendorCredit: 'vendor credits', Purchase: 'expenses', Deposit: 'deposits', SalesReceipt: 'sales receipts', RefundReceipt: 'refund receipts', CreditMemo: 'credit memos', Payment: 'customer payments', Invoice: 'invoices', JournalEntry: 'journal entries', pnl: 'the profit and loss report', salestax: 'sales tax payments' }
 export const planLimitWarning = (what: string) => `Your QuickBooks plan doesn't include ${PLAN_NAMES[what] ?? what}, so Aggregate can't read them: they're unknown here, not zero.`
 /**
  * Mapping version. Bump it whenever what the sync reads or how it maps changes: an existing connection's older
@@ -286,7 +286,7 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
     name: 'QuickBooks',
     group: 'accounting',
     provides: ['invoices', 'bills', 'reports'],
-    freshness: 'syncs every few hours, and within minutes when QuickBooks sends a change notice',
+    freshness: 'syncs every few hours, and within minutes when QuickBooks sends a change notice; bank-feed lines are only as current as the bank feed (a few times a day)',
     auth: 'oauth',
     dataVersion: MAPPING_VERSION,
   }
@@ -344,9 +344,9 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
 
       const phase = PHASES[state.p] as (typeof PHASES)[number]
       // Lines need each account's QBO type to land in the right P&L section (one small query per run).
-      const accounts = phase === 'Account' || phase === 'pnl' ? undefined : await chart(http)
+      const accounts = phase === 'Account' || phase === 'pnl' || phase === 'salestax' ? undefined : await chart(http)
       // Items: which lines buy or sell inventory, and at what cost.
-      const items = phase === 'Account' || phase === 'pnl' || phase === 'cdc' ? undefined : await itemList(http, cfg.homeCurrency)
+      const items = phase === 'Account' || phase === 'pnl' || phase === 'cdc' || phase === 'salestax' ? undefined : await itemList(http, cfg.homeCurrency)
       const ctx: MapContext = { connectionId: conn.id, homeCurrency: cfg.homeCurrency, ...(accounts ? { accounts } : {}), ...(items ? { items } : {}) }
       const events: NormalizedEvent[] = []
       const warnings: string[] = []
@@ -374,6 +374,16 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
           if (!isPlanLimitError(e)) throw e
           next = skipped('pnl')
         }
+      } else if (phase === 'salestax') {
+        try {
+          const r = await salesTaxPayments(http, conn, ctx, state.since, now)
+          events.push(...r.events)
+          if (r.unposted) warnings.push(`QuickBooks listed ${r.unposted} sales tax payment${r.unposted === 1 ? '' : 's'} Aggregate couldn't read, so sales tax owed here may be higher than in QuickBooks.`)
+          next = { ...state, p: state.p + 1, s: 1 }
+        } catch (e) {
+          if (!isPlanLimitError(e)) throw e
+          next = skipped('salestax')
+        }
       } else {
         // Inactive accounts still carry history: without them their lines would lose their P&L section.
         const filters = [...(phase === 'Account' ? ['Active IN (true,false)'] : []), ...(state.since ? [`MetaData.LastUpdatedTime >= '${state.since}'`] : [])]
@@ -381,7 +391,10 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
         const query = `SELECT * FROM ${phase}${where} ORDERBY Id STARTPOSITION ${state.s} MAXRESULTS ${pageSize}`
         try {
           const res = await http.request<QboObject>({ path: '/query', query: { query, minorversion: MINOR_VERSION } })
-          const qr = isRecord(res.data.QueryResponse) ? res.data.QueryResponse : {}
+          // QuickBooks keeps the QueryResponse envelope and omits the entity key when a query is empty, so a missing
+          // entity key is a real empty page; a missing envelope or a null/non-object body is unreadable and must stop.
+          if (!isRecord(res.data) || !isRecord(res.data.QueryResponse)) throw new ConnectorError('transient', 'QuickBooks sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+          const qr = res.data.QueryResponse
           const items = Array.isArray(qr[phase]) ? (qr[phase] as unknown[]).filter(isRecord) : []
           for (const o of items) events.push(...(await mapEntity(phase, o, conn, ctx)))
           next = items.length >= pageSize ? { ...state, s: state.s + items.length } : { ...state, p: state.p + 1, s: 1 }
@@ -394,7 +407,7 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
       const done = next.p >= PHASES.length
       // A full pass that listed every entity: the ledger voids what QuickBooks no longer has (deleted while CDC
       // couldn't see it, after 30 days). Not when the plan left an entity out: its documents weren't listed.
-      if (done && next.since === null && next.started && !(next.skip ?? []).some((x) => x !== 'pnl')) {
+      if (done && next.since === null && next.started && !(next.skip ?? []).some((x) => x !== 'pnl' && x !== 'salestax')) {
         events.push({ type: 'listing.complete', externalId: `listing:${next.started}`, connectionId: conn.id, kinds: ['invoice', 'bill', 'payment', 'journal', 'credit_note'], startedAt: next.started })
       }
       const result: SyncResultWithSecret = {
@@ -541,7 +554,8 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
     itemCache = { at: clock.now(), map: out }
     for (let start = 1; ; start += 1000) {
       const res = await http.request<QboObject>({ path: '/query', query: { query: `SELECT * FROM Item WHERE Active IN (true,false) ORDERBY Id STARTPOSITION ${start} MAXRESULTS 1000`, minorversion: MINOR_VERSION } })
-      const qr = isRecord(res.data.QueryResponse) ? res.data.QueryResponse : {}
+      if (!isRecord(res.data) || !isRecord(res.data.QueryResponse)) throw new ConnectorError('transient', 'QuickBooks sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+      const qr = res.data.QueryResponse
       const rows = Array.isArray(qr.Item) ? (qr.Item as unknown[]).filter(isRecord) : []
       for (const [k, v] of itemIndex(rows, currency)) out.set(k, v)
       if (rows.length < 1000) return out
@@ -555,7 +569,8 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
     chartCache = { at: clock.now(), map: out }
     for (let start = 1; ; start += 1000) {
       const res = await http.request<QboObject>({ path: '/query', query: { query: `SELECT * FROM Account WHERE Active IN (true,false) ORDERBY Id STARTPOSITION ${start} MAXRESULTS 1000`, minorversion: MINOR_VERSION } })
-      const qr = isRecord(res.data.QueryResponse) ? res.data.QueryResponse : {}
+      if (!isRecord(res.data) || !isRecord(res.data.QueryResponse)) throw new ConnectorError('transient', 'QuickBooks sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+      const qr = res.data.QueryResponse
       const rows = Array.isArray(qr.Account) ? (qr.Account as unknown[]).filter(isRecord) : []
       for (const [k, v] of accountIndex(rows)) out.set(k, v)
       if (rows.length < 1000) return out
@@ -610,6 +625,21 @@ export function createQuickBooksConnector(opts: QuickBooksOptions): Connector & 
       if (count >= CDC_CAP) warnings.push(`QuickBooks changed more ${PLAN_NAMES[entity] ?? entity} than it reports at once (1,000), so some deleted in QuickBooks may still count here. They're picked up when they change again.`)
     }
     return { events: out, warnings }
+  }
+
+  /**
+   * Sales tax payments (see mapSalesTaxPayments). A full pass reads all of history, so the listing that voids what
+   * QuickBooks no longer has sees every one; an incremental pass re-reads from 30 days before its start.
+   */
+  async function salesTaxPayments(http: HttpClient, conn: ConnectionRef, ctx: MapContext, since: string | null, now: number) {
+    const from = since ? new Date(Date.parse(since) - CDC_MAX_DAYS * 86_400_000).toISOString().slice(0, 10) : '2000-01-01'
+    const to = localDay(now, conn.timeZone)
+    const res = await http.request<QboObject>({
+      path: '/reports/TransactionList',
+      query: { start_date: from, end_date: to, accounting_method: 'Accrual', columns: 'tx_date,txn_type,memo,subt_nat_amount,is_no_post', minorversion: MINOR_VERSION },
+    })
+    const rawRef = await deps.raw.put(conn.id, `${PROVIDER}.TransactionList`, `${from}:${to}`, res.data)
+    return mapSalesTaxPayments(res.data, { ...ctx, rawRef })
   }
 
   async function profitAndLoss(http: HttpClient, conn: ConnectionRef, ctx: MapContext, cfg: QuickBooksConfig, now: number): Promise<NormalizedEvent[]> {

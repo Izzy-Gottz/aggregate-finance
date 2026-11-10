@@ -10,7 +10,7 @@ import type {
   ProcessorBalanceTxn,
   SubscriptionUpsert,
 } from '@agfn/contracts'
-import { isoDate, isoTimestamp, minorMoney, normalizeCurrency } from '@agfn/connector-sdk'
+import { instantAt, isoDate, isoTimestamp, minorMoney, normalizeCurrency } from '@agfn/connector-sdk'
 import { subscriptionInterval, subscriptionMrr, type CouponLookup } from './mrr.ts'
 import type {
   StripeBalance,
@@ -243,6 +243,7 @@ export function mapInvoice(
     counterparty: counterparty.slice(0, 120),
     ...(paymentRefsOf(inv).length ? { paymentRefs: paymentRefsOf(inv) } : {}),
     issueDate: isoDate(inv.status_transitions?.finalized_at ?? inv.created),
+    ...(instantAt(inv.status_transitions?.finalized_at ?? inv.created) ? { at: instantAt(inv.status_transitions?.finalized_at ?? inv.created) } : {}),
     ...(typeof inv.due_date === 'number' ? { dueDate: isoDate(inv.due_date) } : {}),
     total: minorMoney(inv.total, cur),
     amountPaid: minorMoney(inv.amount_paid, cur),

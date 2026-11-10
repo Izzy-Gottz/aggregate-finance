@@ -291,7 +291,8 @@ describe('a shape that doesn’t match stops the sync; nothing counts as zero', 
     ['history with no links', '/history', { json: { items: [] } }],
     ['history as a list', '/history', { json: [] }],
   ])('a 200 that isn’t a list never reads as a month of nothing: %s', async (_n, path, response) => {
-    await stops(sumup({ hook: (u) => (u.pathname.endsWith(path) ? (response as FixtureResponse) : undefined) }), /can’t read/)
+    // A non-JSON body is now caught by the shared client (non-JSON response); a wrong JSON shape by sumup (can’t read).
+    await stops(sumup({ hook: (u) => (u.pathname.endsWith(path) ? (response as FixtureResponse) : undefined) }), /can’t read|non-JSON/)
   })
   it('stop or no stop, no snapshot is emitted on the way there', async () => {
     const m = make(sumup({ payouts: [], transactions: [tx({ type: 'TIP' })] }))

@@ -166,9 +166,24 @@ export function createFinchConnector(opts: FinchOptions): Connector {
       const accessToken = str(res.data.access_token)
       if (!accessToken) throw new ConnectorError('auth', 'Finch did not return an access token', { provider: PROVIDER })
       const config: Record<string, unknown> = {}
-      for (const k of ['connection_id', 'company_id', 'provider_id', 'connection_type', 'client_type'] as const) {
+      // NB: client_type on the token is the app environment (production/development/sandbox), NOT the plan. connection_id
+      // and provider_id are the useful identifiers here.
+      for (const k of ['connection_id', 'company_id', 'provider_id'] as const) {
         const v = str(res.data[k])
         if (v) config[k.replace(/_([a-z])/g, (_, ch: string) => ch.toUpperCase())] = v
+      }
+      // Whether this is an assisted (human-ingested, ~weekly) connection or an automated API one (~daily) decides how
+      // soon its data is "stale". Finch's documented signal is /introspect authentication_methods[].type === 'assisted'
+      // (the old provider-level flag is deprecated). connection_type 'finch' is NOT documented to mean assisted — the
+      // docs point only to authentication_methods — so we don't use it for the plan, just record it. Best-effort.
+      try {
+        const intro = (await http(accessToken).request<Obj>({ path: '/introspect' })).data
+        const methods = Array.isArray(intro.authentication_methods) ? intro.authentication_methods.filter(isRecord) : []
+        config.assisted = methods.some((m) => str(m.type) === 'assisted')
+        const ct = str(intro.connection_type)
+        if (ct) config.connectionType = ct
+      } catch {
+        /* introspect unavailable → leave the plan unknown; freshness falls back to the manifest cadence string */
       }
       const secret: FinchSecret = { accessToken }
       return { secret, config }
@@ -185,7 +200,10 @@ export function createFinchConnector(opts: FinchOptions): Connector {
       const providerName = str(conn.config.providerId) ?? 'Finch'
 
       const payments = await get<unknown>(c, '/employer/payment', { start_date: w.from, end_date: w.to })
-      const list = (Array.isArray(payments) ? payments : []).filter(isRecord)
+      // /employer/payment is a top-level array; an empty array is a real empty window, but a null/non-array body (an
+      // empty body, or the sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop.
+      if (!Array.isArray(payments)) throw new ConnectorError('transient', 'Finch sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+      const list = payments.filter(isRecord)
       const events: NormalizedEvent[] = []
       const detail = list.length > 0 && conn.config.individualDetail !== false ? await statements(c, list.map((p) => str(p.id)).filter((x): x is string => !!x)) : new Map()
       const names = detail.size > 0 ? await directory(c) : new Map<string, string>()
@@ -282,6 +300,7 @@ export function createFinchConnector(opts: FinchOptions): Connector {
       const batch = paymentIds.slice(i, i + 10)
       try {
         const res = await c.request<Obj>({ method: 'POST', path: '/employer/pay-statement', json: { requests: batch.map((payment_id) => ({ payment_id, limit: 5000, offset: 0 })) }, idempotent: true })
+        if (!isRecord(res.data)) throw new ConnectorError('transient', 'Finch sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
         const responses = Array.isArray(res.data.responses) ? res.data.responses.filter(isRecord) : []
         for (const r of responses) {
           const pid = str(r.payment_id)
@@ -300,6 +319,7 @@ export function createFinchConnector(opts: FinchOptions): Connector {
     const names = new Map<string, string>()
     try {
       const d = await get<Obj>(c, '/employer/directory', { limit: 10_000, offset: 0 })
+      if (!isRecord(d)) throw new ConnectorError('transient', 'Finch sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       for (const p of Array.isArray(d.individuals) ? d.individuals.filter(isRecord) : []) {
         const id = str(p.id)
         const name = [str(p.first_name), str(p.last_name)].filter(Boolean).join(' ')

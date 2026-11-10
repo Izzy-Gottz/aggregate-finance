@@ -22,6 +22,18 @@ const prov: Provenance = { writeRequestId: 'wr_1', actorKind: 'agent', label: 'C
 // ---------- composition rules (no database) ----------
 
 describe('composeFinance', () => {
+  it('bills due in 30 days counts a euro subscription at the day rate, never leaves it out', async () => {
+    const rows = ['2026-06-20', '2026-07-20', '2026-08-20', '2026-09-20'].map((date, i) => ({ id: `t${i}`, entityId: ACME, date, amount: { minor: -4_900, currency: 'EUR' }, counterparty: 'Hetzner', kind: 'expense', status: 'posted', links: [] }))
+    const reader = {
+      overview: async () => ({ asOf: '2026-10-09T12:00:00Z', homeCurrency: 'USD', entities: [{ entityId: ACME, billsDue30d: usd(10_000) }], attention: [], failingChecks: [] }),
+      searchTransactions: async () => ({ rows, totalCount: rows.length, nextCursor: null }),
+      searchInvoices: async () => ({ rows: [], totalCount: 0, nextCursor: null }),
+    } as never
+    const toCurrency = async (_ws: string, m: { minor: number; currency: string }, to: string) => ({ minor: m.currency === to ? m.minor : Math.round(m.minor * 1.1), currency: to })
+    const f = composeFinance({ core: { reader, writer: {} as never, owns: async () => false, toCurrency }, today: async () => '2026-10-09' })
+    const ov = await f.reader.overview({ workspaceId: WS, entityIds: [ACME] })
+    expect(ov.entities[0]!.billsDue30d).toEqual(usd(10_000 + 5_390))
+  })
   it('passes the ledger reader’s coverage through, so MCP can list get_coverage', async () => {
     const view = [{ accountId: 'a1' }] as never
     const withIt = composeFinance({ core: { reader: { coverage: async () => view } as never, writer: {} as never, owns: async () => false } })

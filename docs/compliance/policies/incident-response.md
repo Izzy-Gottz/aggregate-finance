@@ -1,8 +1,8 @@
 # Incident response policy
 
-Status: Approved by the founder 2026-11-01; next review due 2027-11-01.
+Status: Approved by the founder 2026-11-01; reviewed every 6 months; next review due 2027-05-04.
 
-Owner: the founder. Review date: 2027-11-01.
+Owner: the founder. Review date: 2027-05-04.
 
 ## Purpose
 
@@ -18,8 +18,27 @@ notice from a vendor such as Plaid or the host.
 
 ## Roles
 
-- **Incident lead:** the founder. He does every step below.
-- **Backup contact:** None yet. The founder accepts this risk; a backup contact will be named soon.
+Amazon and other partners ask for defined incident-response roles. Today the founder holds all of them; this is stated
+honestly, and the roles will be split as the team grows. Agent sessions (the AI operators) assist under the founder's
+direction — they investigate, draft, and prepare changes — but they do not decide severity, notify anyone, or take
+production action on their own.
+
+- **Incident lead:** the founder. Declares the incident, sets severity, and owns the response end to end.
+- **Technical responder:** the founder, assisted by agent sessions under his direction. Investigates, contains and
+  fixes (the Contain, Preserve and Recover steps).
+- **Communications:** the founder. Every outside notice — to customers, and to partners and regulators (Amazon, Plaid,
+  the host, others) — is sent or approved by him.
+- **Recorder:** the founder. Keeps the incident log: timestamped notes from detection to close.
+
+**Who decides on customer notice:** the founder, and only the founder, decides whether and when customers are told, on
+a lawyer's advice once one is engaged. An agent session may draft the notice; it never sends it.
+
+**If the founder is unreachable:** there is no second responder yet (see Gaps), and the founder accepts that risk. Until
+a backup is named, the standing rule is — whoever notices (an agent session or anyone else) opens an incident-log entry
+with everything known and keeps trying every channel to reach the founder (phone, email, messaging). No customer,
+partner or regulator notice goes out, and no irreversible production action is taken, without him. Containment that only
+reduces harm and is reversible — pausing an AI grant, disconnecting a provider — may proceed, and is logged. Naming a
+backup contact is the top gap to close.
 
 ## Severity
 
@@ -52,8 +71,18 @@ notice from a vendor such as Plaid or the host.
      (`apps/server/src/routes/ai.ts`).
    - Disconnect a provider connection. This revokes access at the provider when the connector supports it, such as
      Plaid `/item/remove`, and wipes the stored secret (`SyncEngine.disconnect` in `packages/sync/src/engine.ts`).
-   - Rotate the master key: set the new key, move the old one to `AGFN_OLD_MASTER_KEYS`, and run
-     `agfn keys reseal --apply --confirm RESEAL`. This has not been rehearsed on staging yet.
+   - Rotate the master key, in this order. Rehearsed on staging 2026-11-04 (incident log): 500 secrets moved in about
+     6 seconds, 0 failed.
+     1. **Save the current key first,** to a mode-600 file somewhere safe (never printed, never in the repo). Older
+        backups and database snapshots need it to restore, and Fly can't give back a secret once it's unset. Keep it
+        until every older backup and snapshot has aged out.
+     2. Take a database snapshot.
+     3. Load the new key as `AGFN_MASTER_KEY` and the current one as `AGFN_OLD_MASTER_KEYS`, in one restart.
+     4. `AGFN_OPERATOR=<you> agfn keys reseal --reason "<why>"` (dry run), then the same with
+        `--apply --confirm RESEAL`, then the dry run again: every row on the new key.
+     5. `AGFN_OPERATOR=<you> sh scripts/unset-old-master-key.sh <app> <saved key file>`. It refuses unless the file is
+        mode 600 and holds every loaded old key (checked by key id), and no row is left on an old key. Then sync one
+        connection.
    - Rotate `AUTH_SECRET` to end all sessions, and rotate any provider API secret (Plaid and others) in that
      provider's dashboard.
      Before rotating it, plan a re-key: `AUTH_SECRET` also signs invite opt-out and stop links and keys the
@@ -62,10 +91,13 @@ notice from a vendor such as Plaid or the host.
    - Take the service offline at the host if data is actively leaking.
 5. **Preserve evidence.** Before wiping anything, save the relevant logs, the activity log rows and the cloud
    provider's audit log, if any.
-6. **Notify.** Target timelines for High, and Medium once confirmed:
+6. **Notify.** Target timelines for High, and Medium once confirmed. When a partner's data is involved, that partner's
+   notice window governs if it is shorter than ours (Amazon: 24 hours).
    - **Plaid:** email security@plaid.com promptly, as the Plaid Developer Policy requires, for any incident that
      involves Plaid data or Plaid credentials. Target: within 24 hours of confirming it.
      Within 24 hours, or sooner if the Plaid agreement requires.
+   - **Amazon:** for any incident involving Amazon Information (data from the Selling Partner API), email
+     security@amazon.com within 24 hours of detecting it, as Amazon's Data Protection Policy requires.
    - **Providers whose terms require incident notice:** within the deadline in that provider's terms, 30 days at
      the latest.
    - **Other providers** whose data or credentials are involved: as their terms require.
@@ -81,9 +113,11 @@ notice from a vendor such as Plaid or the host.
 
 ## How it is checked
 
-- Planned: one tabletop exercise. The founder walks through "the master key leaked" and
-  "Plaid notifies us of suspicious access", times each step, and fixes what was missing.
-- After that, one tabletop a year, recorded in the incident log.
+- A paper tabletop of both "the master key leaked" and "Plaid notifies us of suspicious access" was run 2026-11-03 and
+  recorded in the incident log, pending the founder's sign-off. The master-key reseal it surfaced as never done was
+  rehearsed live on staging 2026-11-04 (incident log).
+- One tabletop a year after that, recorded in the incident log.
+- This policy is reviewed every 6 months, at the dates on the Status line.
 - Every incident and near miss is in the incident log. An empty log at review time is fine; a known incident
   missing from it is not.
 
@@ -91,7 +125,7 @@ notice from a vendor such as Plaid or the host.
 
 - The incident log was started 2026-11-02.
 - No backup contact named.
-- No tabletop exercise done.
+- Paper tabletop done 2026-11-03 and master-key reseal rehearsed on staging 2026-11-04 (incident log). Not yet run on live.
 - Legal notification duties haven't been reviewed by a lawyer.
 - The security inbox isn't on a dedicated company mail system yet.
 - Live logs aren't shipped anywhere and auth routes aren't logged, so a sign-in investigation can have no record (seen 2026-11-01).

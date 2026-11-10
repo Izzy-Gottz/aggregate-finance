@@ -26,7 +26,7 @@ balances are checked against the source, and a number it doesn't know is reporte
 ## Set it up
 
 1. **Sign up** at [app.aggregate.finance](https://app.aggregate.finance).
-2. **Connect your sources.** Open **Workspace → Connections → + More connections**. You sign in on each provider's own
+2. **Connect your sources.** Open **Workspace → Connections → + Add a connection**. You sign in on each provider's own
    page, and Aggregate never sees your bank password.
 3. **Add Aggregate to your AI** with the link above: [Claude](connect-claude.md), [ChatGPT](connect-chatgpt.md),
    [Perplexity](connect-perplexity.md), [Cursor](connect-cursor.md), [Claude Code and other command-line

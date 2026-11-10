@@ -89,10 +89,10 @@ export async function admitDemoFillsNow(s: Pick<Services, 'db' | 'sync' | 'confi
 
 /** Requests a sync for each demo connection in these workspaces whose history stops before today (demoImporting). */
 async function catchUpDemo(s: Pick<Services, 'db' | 'sync'>, workspaceIds: string[]): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
   for (const ws of workspaceIds) {
     const conns = await withWorkspace(ws, () => s.db.selectFrom('connections').select(['id', 'connector_key', 'cursor']).where('workspace_id', '=', ws).where('status', '=', 'active').execute())
-    for (const c of conns.filter((x) => demoImporting(x.connector_key, x.cursor, today))) await withWorkspace(ws, () => s.sync.request(ws, c.id))
+    for (const c of conns.filter((x) => demoImporting(x.connector_key, x.cursor, now))) await withWorkspace(ws, () => s.sync.request(ws, c.id))
   }
 }
 

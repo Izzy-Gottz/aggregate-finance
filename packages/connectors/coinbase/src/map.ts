@@ -12,7 +12,7 @@
 // left unhinted so it pairs with that row as a transfer. A sell paid out the same way mirrors it.
 
 import type { AccountUpsert, BalanceSnapshot, TxnUpsert } from '@agfn/contracts'
-import { ConnectorError, isoDate, money, normalizeCurrency, toMinor } from '@agfn/connector-sdk'
+import { ConnectorError, instantAt, isoDate, money, normalizeCurrency, toMinor } from '@agfn/connector-sdk'
 import { PROVIDER } from './client.ts'
 import type { CoinbaseAccount, CoinbaseTransaction } from './types.ts'
 
@@ -138,6 +138,7 @@ export function mapTxn(t: CoinbaseTransaction, walletId: string, walletCurrency:
     rawRef,
     accountExternalId: walletId,
     date: isoDate(t.created_at),
+    ...(instantAt(t.created_at) ? { at: instantAt(t.created_at) } : {}),
     amount,
     status,
     counterparty: 'Coinbase',

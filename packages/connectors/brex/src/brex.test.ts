@@ -370,3 +370,16 @@ describe('brex partner sign-in (OAuth)', () => {
     expect(g.saved).toHaveLength(0)
   })
 })
+
+
+describe('brex pagination completeness: a partial account list never passes as complete', () => {
+  it('a cash-account list that never stops paging fails visibly instead of recording a partial list', async () => {
+    const { connector } = make([{ match: (u) => u.pathname === '/v2/accounts/cash', respond: { json: { items: [], next_cursor: 'c' } } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow(/page through/)
+  })
+  it('a failure on a later cash-account page aborts the sync, never keeps the earlier pages as a complete list', async () => {
+    let n = 0
+    const { connector } = make([{ match: (u) => u.pathname === '/v2/accounts/cash', respond: () => (n++ === 0 ? { json: { items: [], next_cursor: 'c' } } : { status: 500, json: { message: 'boom' } }) }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

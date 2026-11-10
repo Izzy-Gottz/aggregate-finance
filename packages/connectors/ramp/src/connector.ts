@@ -179,6 +179,9 @@ export function createRampConnector(opts: RampConnectorOptions, deps: ConnectorD
     provides: wantBills ? ['balances', 'transactions', 'bills'] : ['balances', 'transactions'],
     freshness: webhook ? 'updates within minutes via webhooks' : 'updates every few hours',
     auth: oauthApp ? 'oauth' : 'api_key',
+    // 1: transactions carry a real `at` instant so the ledger dates them by the workspace's business day. Existing
+    // connections re-import once to re-date rows booked before the fix.
+    dataVersion: 1,
   }
 
   /** Optional resources: 403 (scope not granted) skips them; `denied` lets the page say so in a warning. */

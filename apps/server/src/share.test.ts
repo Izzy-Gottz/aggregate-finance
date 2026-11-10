@@ -37,7 +37,7 @@ beforeAll(async () => {
   const s = booted.services
   cookie = await signIn('owner@example.com')
   const person = await s.db.selectFrom('people').select('id').where('email', '=', 'owner@example.com').executeTakeFirstOrThrow()
-  const demo = await createDemoWorkspace({ db: s.db, keys: s.keys }, { personId: person.id, historyDays: 120 })
+  const demo = await createDemoWorkspace({ db: s.db, keys: s.keys }, { personId: person.id, historyDays: 400 }) // a year and more: the cash card needs twelve known month-ends
   ws = demo.workspaceId
   for (const id of demo.connections) {
     await s.sync.sync(id)
@@ -157,5 +157,9 @@ describe('card words', () => {
     expect(compactMoney({ minor: 8_000_000, currency: 'USD' })).toBe('$80K')
     expect(compactMoney({ minor: 950_00, currency: 'USD' })).toBe('$950')
     expect(compactMoney({ minor: 2_500_000_000_00, currency: 'EUR' })).toBe('€2.5B')
+    // Yen have no minor unit and dinars have three: never 100× or 10× off.
+    expect(compactMoney({ minor: 1_000_000, currency: 'JPY' })).toBe('¥1M')
+    expect(compactMoney({ minor: 12_345_000, currency: 'KWD' })).toBe('KWD12K')
+    expect(compactMoney({ minor: 1_000 * 10, currency: 'USD' })).toBe('$100')
   })
 })

@@ -4,8 +4,8 @@ description: Add Aggregate to Claude as a custom connector: step-by-step setup f
 
 # Connect Claude to Aggregate
 
-Works in claude.ai, the Claude desktop app and the Claude iPhone and Android apps. Custom connectors need a paid
-Claude plan (Pro, Max, Team or Enterprise).
+Works in claude.ai, the Claude desktop app and the Claude iPhone and Android apps. Custom connectors work on Free,
+Pro, Max, Ultra, Team and Enterprise plans; Free allows one ([Anthropic's help page](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp), checked 2026-11-04).
 
 ## Desktop and web
 

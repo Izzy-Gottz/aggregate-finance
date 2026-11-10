@@ -8,6 +8,8 @@ Aggregate only ever reads from your providers and has no way to move money.
 it's offered on the hosted app and built to the provider's documentation, but still being checked with real
 accounts. **Self-host** means it works when you run Aggregate yourself
 ([source on GitHub](https://github.com/Izzy-Gottz/aggregate-finance)) and isn't offered on the hosted app yet.
+**In development** means it's built from the provider's documentation but hasn't been tried with a real account, and
+isn't offered on the hosted app.
 
 ## Banks and cards
 
@@ -35,6 +37,9 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | PayPal, Lemon Squeezy, Chargebee | Sales and payouts | Self-host |
 | Patreon | Memberships and MRR | Self-host |
 | WooCommerce | Monthly sales reported by the store, with refunds, shipping and sales tax apart. Not booked revenue: the money arrives through Stripe, PayPal or your bank | Self-host |
+| BigCommerce | Monthly orders less refunds, in each currency, by the store's own time zone. Totals only, no customer details. Includes tax and shipping. No fees: BigCommerce doesn't share them. Not booked revenue: the money arrives through your payment provider | Self-host |
+| Amazon | Each settlement Amazon paid you (US store): sales, Amazon's fees, refunds, chargebacks, other adjustments and the payout to your bank, in each currency. Each settlement is checked to add up to what Amazon paid before anything is recorded. Marketplace tax Amazon collects and remits is kept out of revenue. Read-only; no buyer names, addresses or other personal data | In development |
+| Etsy | Every entry in your Etsy Payments account: sales, Etsy's fees, refunds and each deposit to your bank, with the sales tax Etsy collects and remits recorded as tax, not revenue. Each entry is checked against Etsy's running balance before anything is recorded. Read-only; no buyer names, addresses or messages | In development |
 | Lightspeed Retail (X-Series) | Monthly sales reported by the store, with refunds and sales tax apart. Totals only, no item-level data. Not booked revenue: the money arrives through your bank or processor | Self-host |
 | Mollie | Mollie's own monthly balance report per currency: payments, refunds, chargebacks, Mollie fees and their net, other balance moves, payouts to your bank, and the balance at month end. Each month is checked from opening to closing balance. Totals only, no customer details. Months on Amsterdam time | Self-host |
 | Whop | Whop's own monthly income statement per currency: payments, refunds, disputes, fees and the other families Whop groups its ledger into, and their net. Totals only, no buyer details. Not posted: payouts reach your bank | Self-host |
@@ -46,6 +51,8 @@ accounts. **Self-host** means it works when you run Aggregate yourself
 | Google AdSense | Monthly estimated earnings and payments received in each currency, each on its own line. Totals only, no site or ad unit detail. Estimates can change, and the unpaid balance is left out. Not booked revenue: the money arrives through your bank | Self-host |
 | SumUp | Monthly gross sales, cash sales, refunds and chargebacks, and payouts, fees and deductions in each currency, each on its own line. Totals only, no customer or card details. Not booked revenue: the money arrives through your bank | Self-host |
 | RevenueCat | MRR and churn for app subscriptions | Self-host |
+
+The term 'Etsy' is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.
 
 ## Accounting and bills
 

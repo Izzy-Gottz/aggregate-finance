@@ -82,8 +82,9 @@ export interface LinkFilter {
 }
 
 export interface LedgerStore {
-  /** Run `fn` atomically. Nested calls join the outer transaction. */
-  transaction<T>(fn: (store: LedgerStore) => Promise<T>): Promise<T>
+  /** Run `fn` atomically. Nested calls join the outer transaction. `readOnly` makes any write inside fail (Postgres
+   *  SET TRANSACTION READ ONLY; a no-op where the backend can't enforce it). */
+  transaction<T>(fn: (store: LedgerStore) => Promise<T>, opts?: { readOnly?: boolean }): Promise<T>
   /** True while inside transaction() (diagnostics and tests). */
   inTransaction?(): boolean
   /**
@@ -93,6 +94,11 @@ export interface LedgerStore {
   lockWorkspace(workspaceId: WorkspaceId): Promise<void>
   /** Posted or recorded bank/processor rows per account per month ('YYYY-MM'). */
   monthlyRowCounts(workspaceId: WorkspaceId, accountIds: Id[]): Promise<Array<{ accountId: Id; month: string; rows: number }>>
+  /**
+   * The latest posted/recorded row date ('YYYY-MM-DD') per account — the account's last transaction, exact day.
+   * `onOrBefore` (a 'YYYY-MM-DD' day) excludes rows dated after it, so a future-dated (scheduled) row can't set it.
+   */
+  lastRowDates(workspaceId: WorkspaceId, accountIds: Id[], onOrBefore?: string): Promise<Array<{ accountId: Id; date: string }>>
   saveAssertion(a: BalanceAssertion): Promise<void>
   savePeriodLock(l: PeriodLock): Promise<void>
   addMrrPoint(p: MrrPoint): Promise<void>
@@ -112,6 +118,11 @@ export interface LedgerStore {
   lastSeen(workspaceId: WorkspaceId, connectionId: Id, eventTypes: string[]): Promise<Map<Id, IsoTimestamp>>
   saveListing(l: ListingOutcome): Promise<void>
   listListings(workspaceId: WorkspaceId): Promise<ListingOutcome[]>
+  /** Possible-duplicate account pairs the person has dismissed as genuinely different. Keyed by `dupKey`, which
+   *  carries the pair and the KIND of evidence (not the matching dates), so adding more matching days keeps a pair
+   *  dismissed and only a new kind of evidence raises it again (see possibleDuplicateAccounts). */
+  saveDuplicateDismissal(d: DuplicateDismissal): Promise<void>
+  listDuplicateDismissals(workspaceId: WorkspaceId): Promise<DuplicateDismissal[]>
   markUnsettled(workspaceId: WorkspaceId, connectionId: Id, since: IsoTimestamp): Promise<void>
   unsettledSince(workspaceId: WorkspaceId, connectionId: Id): Promise<IsoTimestamp | null>
   clearUnsettled(workspaceId: WorkspaceId, connectionId: Id): Promise<void>
@@ -220,6 +231,8 @@ export interface ConnectionInfo {
   entityId: EntityId | null
   /** When it was connected (a first import within a day isn't "stale"). */
   createdAt?: IsoTimestamp
+  /** The connector's cap on data age (ConnectorDescription.staleAfterHours: Etsy 24), when it has one. */
+  staleAfterHours?: number
 }
 
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000
@@ -285,6 +298,17 @@ export interface ListingOutcome {
   voided: number
   /** Set when the safety limits stopped the void (nothing was voided). */
   skippedReason: string | null
+}
+
+/** A possible-duplicate pair the person dismissed as two genuinely different accounts. One row per pair; a later
+ *  dismissal of the same pair replaces it. `dupKey` carries the pair and the evidence kind, so the check re-raises the
+ *  pair only when a new kind of evidence appears, not as more matching days accrue. */
+export interface DuplicateDismissal {
+  workspaceId: WorkspaceId
+  subjectId: Id
+  relatedId: Id
+  dupKey: string
+  dismissedAt: IsoTimestamp
 }
 
 /** See LedgerStore.recordSortKeys. */

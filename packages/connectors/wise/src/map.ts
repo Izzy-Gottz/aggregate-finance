@@ -3,7 +3,7 @@
 // both legs get linkRefs.transfer = referenceNumber and an externalId suffixed with the currency (unique per leg).
 
 import type { AccountUpsert, BalanceSnapshot, TxnUpsert } from '@agfn/contracts'
-import { isoDate, money, normalizeCurrency } from '@agfn/connector-sdk'
+import { instantAt, isoDate, money, normalizeCurrency } from '@agfn/connector-sdk'
 import type { WiseBalance, WiseProfile, WiseStatementTxn } from './types.ts'
 
 export const balanceAccountId = (profileId: number | string, currency: string) => `${profileId}:${normalizeCurrency(currency)}`
@@ -67,6 +67,7 @@ export function mapStatementTxn(t: WiseStatementTxn, accountId: string, connecti
     rawRef,
     accountExternalId: accountId,
     date: isoDate(t.date),
+    ...(instantAt(t.date) ? { at: instantAt(t.date) } : {}),
     amount: money(t.amount.value, normalizeCurrency(t.amount.currency)),
     // Statements list completed movements only.
     status: 'posted',

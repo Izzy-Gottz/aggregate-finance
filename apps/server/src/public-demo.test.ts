@@ -306,7 +306,7 @@ describe('public demo (/demo/mcp)', () => {
   })
 
   it('the demo app passes the hosted checks without mail or a file bucket, but still needs the RLS role', () => {
-    const env = { AUTH_SECRET: 'x'.repeat(40), AGFN_ROLE: 'demo', DATABASE_URL: 'postgres://u:p@ep-d.neon.tech/demo', BASE_URL: 'https://demo.aggregate.finance', AGFN_PG_RLS_ROLE: 'agfn_app' }
+    const env = { AUTH_SECRET: 'x'.repeat(40), AGFN_ROLE: 'demo', DATABASE_URL: 'postgres://u:p@ep-d.neon.tech/demo', BASE_URL: 'https://demo.aggregate.finance', AGFN_PG_RLS_ROLE: 'agfn_app', FLY_APP_NAME: 'aggregate-demo', FLY_IMAGE_REF: 'registry.fly.io/aggregate-demo:deployment-01' }
     const cfg = loadConfig(env)
     expect(cfg.publicDemo).toBe(true)
     expect(hostedConfigProblems(env, cfg)).toEqual([])

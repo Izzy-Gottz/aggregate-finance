@@ -1,5 +1,6 @@
 ---
 description: How Aggregate checks its numbers: what gets reconciled, which checks run, when a figure says unknown, how it's tested, and what can still be wrong.
+updated: 2026-11-02
 ---
 
 # How we check our numbers

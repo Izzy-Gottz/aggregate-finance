@@ -26,7 +26,7 @@ import type {
   SourceRecord,
   WriteLogEntry,
 } from './model.ts'
-import type { AccountDirectory, AccountTotal, ConnectionInfo, LedgerStore, LineFilter, LineRow, LinkFilter, ListingKind, ListingOutcome, RecordFilter } from './store.ts'
+import type { AccountDirectory, AccountTotal, ConnectionInfo, DuplicateDismissal, LedgerStore, LineFilter, LineRow, LinkFilter, ListingKind, ListingOutcome, RecordFilter } from './store.ts'
 import { sortKey } from './store.ts'
 import { assertEntryBalanced } from './validate.ts'
 import { mapYielding } from './yield.ts'
@@ -355,15 +355,19 @@ export class DbScope {
     this.#als.getStore()?.beforeCommit.push(fn)
   }
 
-  async transaction<T>(fn: () => Promise<T>): Promise<T> {
+  async transaction<T>(fn: () => Promise<T>, opts: { readOnly?: boolean } = {}): Promise<T> {
     if (this.#als.getStore()) return fn()
     const t0 = performance.now()
     let watch: TxWatch | undefined
+    // SET TRANSACTION READ ONLY makes any write inside the transaction fail; only Postgres supports it (SQLite has no
+    // such statement, and a read-only dry run there writes nothing by construction anyway).
+    const readOnly = !!opts.readOnly && this.db.getExecutor().adapter instanceof PostgresAdapter
     try {
       return await this.db.transaction().execute((trx) => {
         const w: TxWatch = { trx, started: t0, last: performance.now(), maxGap: 0, resumedAt: null, beforeCommit: [] }
         watch = w
         return holdingConnection(() => this.#als.run(w, async () => {
+          if (readOnly) await sql`set transaction read only`.execute(trx)
           const out = await fn()
           for (const f of w.beforeCommit) await f()
           return out
@@ -508,6 +512,9 @@ function toBucket(r: LedgerBucketsTable): Bucket {
   }
 }
 
+/** settings-table key prefix for a dismissed possible-duplicate pair (one row per pair). */
+const DUP_DISMISS_PREFIX = 'dup_dismiss:'
+
 export class KyselyLedgerStore implements LedgerStore {
   readonly scope: DbScope
 
@@ -519,8 +526,8 @@ export class KyselyLedgerStore implements LedgerStore {
     return this.scope.q()
   }
 
-  transaction<T>(fn: (store: LedgerStore) => Promise<T>): Promise<T> {
-    return this.scope.transaction(() => fn(this))
+  transaction<T>(fn: (store: LedgerStore) => Promise<T>, opts: { readOnly?: boolean } = {}): Promise<T> {
+    return this.scope.transaction(() => fn(this), opts)
   }
 
   inTransaction(): boolean {
@@ -700,6 +707,21 @@ export class KyselyLedgerStore implements LedgerStore {
     return rows.map((r) => ({ accountId: r.source_account_id as Id, month: r.month, rows: num(r.n) }))
   }
 
+  async lastRowDates(ws: WorkspaceId, accountIds: Id[], onOrBefore?: string): Promise<Array<{ accountId: Id; date: string }>> {
+    await this.#flushRecords()
+    if (accountIds.length === 0) return []
+    let q = this.#q()
+      .selectFrom('ledger_records')
+      .select((eb) => ['source_account_id', eb.fn.max<string>('date').as('last')])
+      .where('workspace_id', '=', ws)
+      .where('source_account_id', 'in', accountIds)
+      .where('event_type', 'in', ['txn.upsert', 'processor.balance_txn'])
+      .where('status', 'in', ['posted', 'recorded'])
+    if (onOrBefore) q = q.where('date', '<=', onOrBefore)
+    const rows = await q.groupBy('source_account_id').execute()
+    return rows.map((r) => ({ accountId: r.source_account_id as Id, date: r.last })).filter((r) => !!r.date)
+  }
+
   async addMrrPoint(p: MrrPoint): Promise<void> {
     const row: LedgerMrrPointsTable = { id: p.id, workspace_id: p.workspaceId, record_id: p.recordId, date: p.date, mrr_minor: p.mrr.minor, currency: p.mrr.currency, created_at: p.createdAt }
     // In a transaction (a page of subscriptions): written together at commit, or before they're read.
@@ -788,6 +810,23 @@ export class KyselyLedgerStore implements LedgerStore {
   async listListings(ws: WorkspaceId): Promise<ListingOutcome[]> {
     const rows = await this.#q().selectFrom('ledger_listings').selectAll().where('workspace_id', '=', ws).orderBy('connection_id').orderBy('kind').execute()
     return rows.map((r) => ({ workspaceId: r.workspace_id as WorkspaceId, connectionId: r.connection_id, kind: r.kind as ListingKind, startedAt: r.started_at, appliedAt: r.applied_at, seen: Number(r.seen), voided: Number(r.voided), skippedReason: r.skipped_reason }))
+  }
+
+  // Dismissals ride the settings table (one row per pair, keyed by the accounts), so no migration is needed for a
+  // rarely-written, low-cardinality signal.
+  async saveDuplicateDismissal(d: DuplicateDismissal): Promise<void> {
+    const key = `${DUP_DISMISS_PREFIX}${d.subjectId}:${d.relatedId}`
+    const value_json = JSON.stringify(d)
+    await this.#q()
+      .insertInto('settings')
+      .values({ workspace_id: d.workspaceId, key, value_json, updated_at: nowIso() })
+      .onConflict((oc) => oc.columns(['workspace_id', 'key']).doUpdateSet({ value_json, updated_at: nowIso() }))
+      .execute()
+  }
+
+  async listDuplicateDismissals(ws: WorkspaceId): Promise<DuplicateDismissal[]> {
+    const rows = await this.#q().selectFrom('settings').select('value_json').where('workspace_id', '=', ws).where('key', 'like', `${DUP_DISMISS_PREFIX}%`).execute()
+    return rows.map((r) => JSON.parse(r.value_json) as DuplicateDismissal)
   }
 
   async markUnsettled(ws: WorkspaceId, connectionId: Id, since: IsoTimestamp): Promise<void> {
@@ -1954,9 +1993,12 @@ export class KyselyLedgerStore implements LedgerStore {
 /** AccountDirectory over S0's tables (workspaces, entities, accounts, connections). */
 export class KyselyDirectory implements AccountDirectory {
   readonly scope: DbScope
+  readonly #staleAfterHours: (connectorKey: string) => number | undefined
 
-  constructor(scope: DbScope | Kysely<DB>) {
+  /** staleAfterHours: each connector's cap on data age (the server reads it from the connector's description). */
+  constructor(scope: DbScope | Kysely<DB>, opts: { staleAfterHours?: (connectorKey: string) => number | undefined } = {}) {
     this.scope = scope instanceof DbScope ? scope : new DbScope(scope)
+    this.#staleAfterHours = opts.staleAfterHours ?? (() => undefined)
   }
 
   #q(): Q {
@@ -2054,7 +2096,8 @@ export class KyselyDirectory implements AccountDirectory {
   }
 
   #connection(r: CoreTables['connections']): ConnectionInfo {
-    return { id: r.id, connectorKey: r.connector_key, displayName: r.display_name, status: r.status, lastSuccessAt: r.last_success_at, entityId: r.entity_id ?? null, createdAt: r.created_at }
+    const limit = this.#staleAfterHours(r.connector_key)
+    return { id: r.id, connectorKey: r.connector_key, displayName: r.display_name, status: r.status, lastSuccessAt: r.last_success_at, entityId: r.entity_id ?? null, createdAt: r.created_at, ...(limit ? { staleAfterHours: limit } : {}) }
   }
 
   async getConnection(ws: WorkspaceId, id: Id): Promise<ConnectionInfo | null> {

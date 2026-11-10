@@ -3,8 +3,8 @@
 // revealing anything, and the victim's data and settings must be exactly as before.
 import { describe, expect, it } from 'vitest'
 import { withWorkspace } from '@agfn/db'
-import { startServer } from '../scenarios/harness.ts'
-import { attackerWorld, leaks, PDF, upload, victimState, victimWorld } from './world.ts'
+import { signIn, startServer } from '../scenarios/harness.ts'
+import { asTest, attackerWorld, leaks, PDF, upload, victimState, victimWorld } from './world.ts'
 
 describe('red team: cross-workspace id guessing', () => {
   it('no session route, tool or REST call reaches another workspace', async () => {
@@ -36,6 +36,8 @@ describe('red team: cross-workspace id guessing', () => {
         [`/api/connections/${v.bankId}/sync`, {}],
         [`/api/connections/${v.bankId}/disconnect`, {}],
         ['/api/accounts/assign', { assignments: [{ accountId: v.accountId, entityId: m.entityId }] }],
+        ['/api/accounts/dismiss-duplicate', { subjectId: v.accountId, relatedId: v.personalId, dupKey: 'x' }],
+        ['/api/accounts/mark-duplicate', { duplicateId: v.accountId, ofId: v.personalId }],
         [`/api/entities/${v.entityId}/equity/events`, { kind: 'issuance', date: '2026-01-01', stakeholder: 'Mallory', shares: 1_000_000 }],
         [`/api/ai/${v.grantId}/pause`, {}],
         [`/api/ai/${v.grantId}/revoke`, {}],
@@ -126,6 +128,106 @@ describe('red team: cross-workspace id guessing', () => {
         })
         expect(await victimState(srv, v)).toEqual(before)
       }
+    } finally {
+      await srv.close()
+    }
+  }, 120_000)
+
+  // Threat model #6, the tables outside row-level security (docs/security/threat-model.md): people, workspaces and the
+  // membership link aren't workspace_id tables, so can() in app code is their only backstop. An attacker who is a real
+  // user aims the people-management and workspace-scoped routes at the victim's person and workspace ids; every attempt
+  // must be refused or fall back to the attacker's own, and the victim's membership must be untouched. (The member
+  // invite link /api/invites/:id is a 144-bit capability URL, like the export link in #10, not an id-guessing surface,
+  // so it is out of scope here; friend-invite ids have no read-by-id route at all — covered in the next test.)
+  it('another workspace’s people and workspace stay unreachable by id', async () => {
+    const srv = await startServer()
+    try {
+      const v = await victimWorld(srv)
+      const m = await attackerWorld(srv)
+      const db = srv.booted.services.db
+
+      // The victim invites a teammate, so there is a pending person and a membership to aim at.
+      const invited = await v.s.post<{ id?: string }>('/api/people', { email: 'victim-pawn@a.example', role: 'employee', entityIds: 'all' })
+      expect(invited.status, JSON.stringify(invited.body)).toBeLessThan(400)
+      const victimOwnerId = (await asTest(() => db.selectFrom('people').select('id').where('email', '=', 'victim@a.example').executeTakeFirstOrThrow())).id
+      const invitedId = (await asTest(() => db.selectFrom('people').select('id').where('email', '=', 'victim-pawn@a.example').executeTakeFirstOrThrow())).id
+      const beforeMembers = await asTest(() => db.selectFrom('memberships').select(['person_id', 'role', 'revoked_at']).where('workspace_id', '=', v.ws).orderBy('person_id').execute())
+      const beforeState = await victimState(srv, v)
+
+      // ---- people-management routes aimed at the victim's person ids (the attacker is owner of their own workspace) ----
+      for (const [method, path, body] of [
+        ['PATCH', `/api/people/${victimOwnerId}`, { role: 'employee' }],
+        ['PATCH', `/api/people/${invitedId}`, { name: 'pwned', role: 'admin' }],
+        ['DELETE', `/api/people/${victimOwnerId}`, undefined],
+        ['DELETE', `/api/people/${invitedId}`, undefined],
+        ['POST', `/api/people/${invitedId}/resend`, {}],
+      ] as const) {
+        const r = await m.s.send(method, path, body)
+        expect(r.status, `${method} ${path}`).toBeGreaterThanOrEqual(400)
+        expect(leaks(r.body), `${method} ${path}`).toBeNull()
+        expect(JSON.stringify(r.body).includes('victim@a.example') || JSON.stringify(r.body).includes('victim-pawn@a.example'), `${method} ${path} leaked a victim email`).toBe(false)
+      }
+
+      // ---- workspace-scoped reads, pointed at the victim's workspace by header: must fall back to the attacker's own ----
+      for (const path of ['/api/preferences', '/api/workspace', '/api/usage']) {
+        const r = await m.s.send('GET', path, undefined, { 'x-agfn-workspace': v.ws })
+        const body = JSON.stringify(r.body)
+        expect(leaks(r.body), `GET ${path}`).toBeNull()
+        expect(body.includes('victim@a.example') || body.includes('victim-pawn@a.example'), `GET ${path} leaked a victim email`).toBe(false)
+      }
+
+      // An unknown member-invite id is a plain 404 (the capability itself is a 144-bit secret, tested as a control).
+      const bogus = await m.s.get('/api/invites/' + 'A'.repeat(24))
+      expect(bogus.status).toBe(404)
+      expect(leaks(bogus.body)).toBeNull()
+
+      // ---- the REST mirror and MCP expose no people/workspace-by-id surface ----
+      for (const path of ['/v1/people', '/v1/members', `/v1/workspaces/${v.ws}`, `/v1/people/${victimOwnerId}`]) {
+        const res = await srv.app.request(path, { headers: { authorization: `Bearer ${m.ai.key}` } })
+        const text = await res.text()
+        expect(leaks(text, path), `GET ${path}`).toBeNull()
+        expect(text.includes('victim@a.example'), `GET ${path}`).toBe(false)
+      }
+      const who = await m.ai.try('whoami', {}).catch(() => ({ isError: true, text: '', data: undefined }))
+      expect(JSON.stringify(who.data ?? who)).not.toContain('Victim Co')
+      expect(JSON.stringify(who.data ?? who)).not.toContain('victim@a.example')
+
+      // ---- nothing changed in the victim's workspace ----
+      expect(await asTest(() => db.selectFrom('memberships').select(['person_id', 'role', 'revoked_at']).where('workspace_id', '=', v.ws).orderBy('person_id').execute())).toEqual(beforeMembers)
+      expect(await victimState(srv, v)).toEqual(beforeState)
+
+      // With RLS on, the membership link (a workspace_id table) is a second wall: the victim's memberships don't exist
+      // inside the attacker's workspace. people and workspaces are NOT workspace_id tables, so RLS doesn't cover them —
+      // that is the point of the threat-model note, and can() above is their backstop.
+      if (process.env.AGFN_TEST_PG_RLS === '1') {
+        await withWorkspace(m.s.workspaceId, async () => {
+          expect(await db.selectFrom('memberships').select('id').where('workspace_id', '=', v.ws).execute()).toEqual([])
+        })
+      }
+    } finally {
+      await srv.close()
+    }
+  }, 120_000)
+
+  // friend_* invites are person-scoped and store only hashed addresses; there is no read-by-id route, so B's ids give
+  // no surface to aim at. The only GET returns the caller's own invite link, derived from the session.
+  it('friend invites have no cross-person read surface', async () => {
+    const srv = await startServer({ env: { AGFN_FRIEND_INVITES: '1' } })
+    try {
+      const a = await signIn(srv, 'alice@a.example', 'Alice Co')
+      const b = await signIn(srv, 'bob@b.example', 'Bob Co')
+      const aLink = (await a.get<{ link?: string }>('/api/friend-invite')).body.link ?? ''
+      const bLink = (await b.get<{ link?: string }>('/api/friend-invite')).body.link ?? ''
+      // Each person's link carries only their own code; it is session-derived and takes no id, so B can't request A's.
+      expect(aLink).toMatch(/from=[a-f0-9]{16}$/)
+      expect(bLink).toMatch(/from=[a-f0-9]{16}$/)
+      expect(aLink).not.toEqual(bLink)
+      const aCode = /from=([a-f0-9]{16})/.exec(aLink)?.[1] ?? 'a'
+      expect((await b.get<{ link?: string }>('/api/friend-invite')).body.link ?? '').not.toContain(aCode)
+      // The opt-out/stop link is a signed capability: a guessed hash and signature are refused, so an address can't be
+      // opted out (or its state read) by anyone who doesn't hold the signed link.
+      const stop = await b.send('POST', '/invites/stop', { h: 'a'.repeat(64), s: 'b'.repeat(64) })
+      expect(stop.status).toBeGreaterThanOrEqual(400)
     } finally {
       await srv.close()
     }

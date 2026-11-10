@@ -1,7 +1,7 @@
 // Mercury → NormalizedEvent mapping. Mercury amounts are already signed + in / − out, in USD dollars.
 
 import type { AccountType, AccountUpsert, BalanceSnapshot, TxnUpsert } from '@agfn/contracts'
-import { isoDate, money } from '@agfn/connector-sdk'
+import { instantAt, isoDate, money } from '@agfn/connector-sdk'
 import type { MercuryAccount, MercuryCreditAccount, MercuryTransaction, MercuryTreasuryAccount } from './types.ts'
 
 /** Mercury accounts are USD. */
@@ -103,6 +103,7 @@ export function mapTxn(t: MercuryTransaction, accountId: string, connectionId: s
     rawRef,
     accountExternalId: accountId,
     date: isoDate(t.postedAt || t.createdAt),
+    ...(instantAt(t.postedAt || t.createdAt) ? { at: instantAt(t.postedAt || t.createdAt) } : {}),
     amount: money(t.amount, CURRENCY),
     status: mapStatus(t.status),
     ...(counterparty ? { counterparty: counterparty.slice(0, 120) } : {}),

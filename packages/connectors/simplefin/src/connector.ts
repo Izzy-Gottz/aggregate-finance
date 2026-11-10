@@ -7,8 +7,8 @@
 // requested: their ids may change when they post, which would double-count. The Bridge allows about 24 requests a
 // day per token and refreshes once a day, so a cycle that starts within `minIntervalMs` of the last one is skipped.
 
-import type { ConnectBegin, Connector, ConnectionRef, ConnectorDescription, ConnectorHealth, NormalizedEvent, SyncResult } from '@agfn/contracts'
-import { ConnectorError, cursorCodec, healthFromError, isRecord, requireSecret, str, systemClock, type Clock, type ConnectorDeps } from '@agfn/connector-sdk'
+import type { ConnectBegin, Connector, ConnectionRef, ConnectorDescription, ConnectorHealth, NormalizedEvent, ProviderFreshness, SyncResult } from '@agfn/contracts'
+import { ConnectorError, cursorCodec, healthFromError, isRecord, isoTimestamp, oldestIso, requireSecret, str, systemClock, type Clock, type ConnectorDeps } from '@agfn/connector-sdk'
 import { SimplefinClient, claimAccessUrl, claimUrlOf, parseAccessUrl } from './client.ts'
 import { accountKey, errorWarnings, mapAccount, mapBalance, mapTxn, needsBridgeFix } from './map.ts'
 import type { SfAccountSet } from './types.ts'
@@ -111,15 +111,22 @@ export function createSimplefinConnector(opts: SimplefinConnectorOptions, deps: 
     }
     const warnings = errorWarnings(set.errlist, set.errors)
     if (needsBridgeFix(set.errlist)) warnings.push('A bank needs to be reconnected inside SimpleFIN Bridge (sign in there and fix the connection); Aggregate will pick it up on the next sync.')
+    // SimpleFIN's balance-date per account: the Bridge's own word on how current each balance is.
+    const byAccount: Record<string, string> = {}
+    for (const a of set.accounts ?? []) if (Number.isFinite(a['balance-date'])) byAccount[accountKey(a)] = new Date(a['balance-date'] * 1000).toISOString()
+    const freshness: ProviderFreshness | undefined = Object.keys(byAccount).length
+      ? { checkedAt: isoTimestamp(clock.now()), balancesUpdatedAtByAccount: byAccount, balancesUpdatedAt: oldestIso(Object.values(byAccount))! }
+      : undefined
+    const fresh = freshness ? { freshness } : {}
     const done = we >= s.end
     const base: SimplefinCursor = done ? { stage: 'idle', start: s.start, end: s.end, last: s.end, ranAt: clock.now() } : { ...s, start: we }
     // The Bridge says we're near its daily limit (in errors[]): stop here, and don't ask again for a while.
     if ((set.errors ?? []).some((e) => QUOTA_WORDS.test(e))) {
       warnings.push('SimpleFIN asked Aggregate to slow down; the next sync is in about 12 hours.')
-      return { events, cursor: codec.encode({ ...base, slowUntil: clock.now() + QUOTA_PAUSE_MS }), hasMore: false, warnings }
+      return { events, cursor: codec.encode({ ...base, slowUntil: clock.now() + QUOTA_PAUSE_MS }), hasMore: false, warnings, ...fresh }
     }
     const { slowUntil: _drop, ...next } = base
-    return { events, cursor: codec.encode(next), hasMore: !done, ...(warnings.length ? { warnings } : {}) }
+    return { events, cursor: codec.encode(next), hasMore: !done, ...(warnings.length ? { warnings } : {}), ...fresh }
   }
 
   return {
@@ -130,7 +137,7 @@ export function createSimplefinConnector(opts: SimplefinConnectorOptions, deps: 
         kind: 'api_key',
         label: 'SimpleFIN Setup Token',
         steps: [
-          'Connect banks through SimpleFIN, about $15/year, paid to them: open SimpleFIN Bridge (bridge.simplefin.org), sign up and link your banks there.',
+          'Connect banks through SimpleFIN, about $15/year, paid to them: open SimpleFIN Bridge (beta-bridge.simplefin.org), sign up and link your banks there.',
           'In SimpleFIN Bridge choose Apps → New app connection, name it “Aggregate” and create a Setup Token.',
           'Copy the token and paste it here. It works once: Aggregate exchanges it for read access right away.',
         ],
@@ -138,8 +145,8 @@ export function createSimplefinConnector(opts: SimplefinConnectorOptions, deps: 
           'Read only: account names, balances and posted transactions. SimpleFIN has no way to move money.',
           'You can switch Aggregate’s access off at any time in SimpleFIN Bridge.',
         ],
-        helpUrl: 'https://bridge.simplefin.org/',
-        placeholder: 'aHR0cHM6Ly9icmlkZ2Uuc2ltcGxlZmluLm9yZy9zaW1wbGVmaW4vY2xhaW0v…',
+        helpUrl: 'https://beta-bridge.simplefin.org/',
+        placeholder: 'aHR0cHM6Ly9iZXRhLWJyaWRnZS5zaW1wbGVmaW4ub3JnL3NpbXBsZWZpbi9jbGFpbS8…',
       }
     },
 

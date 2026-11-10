@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { sql, type Kysely } from 'kysely'
 import { connectPglite } from './pglite.ts'
 import { migrateToLatest } from './migrate.ts'
-import { bootRls, ownerOf, unlessDenied, disableRls, enableRls, ensureAppRole, isHostedDb, RLS_PROTOTYPE_TABLES, rlsPool, rlsSetting, rlsStatus, syncRlsPolicies, tablesMissingRls, withBypass, withWorkspace, workspaceTables } from './rls.ts'
+import { bootRls, ownerOf, unlessDenied, disableRls, enableRls, ensureAppRole, isHostedDb, isPoolerUrl, looksLikePgbouncer, RLS_PROTOTYPE_TABLES, rlsPool, rlsSetting, rlsStatus, syncRlsPolicies, tablesMissingRls, withBypass, withWorkspace, workspaceTables } from './rls.ts'
 
 const at = '2026-10-10T00:00:00.000Z'
 const doc = (id: string, ws: string) => ({ id, workspace_id: ws, entity_id: null, storage_key: `k/${id}`, sha256: id.padEnd(64, '0'), mime_type: 'application/pdf', size_bytes: 10, original_name: null, arrived_via: 'upload', status: 'unread', extracted_json: null, record_type: null, record_id: null, created_by: null, created_at: at })
@@ -112,7 +112,7 @@ describe('Postgres row-level security (prototype)', () => {
     const { h, db } = await setup()
     const denied = /permission denied/
     try {
-      for (const t of ['signin_codes', 'reviewer_links', 'recheck_links', 'reauth_events', 'shopify_pending_installs', 'operator_access', 'worker_releases']) await expect(db.selectFrom(t).selectAll().execute(), t).rejects.toThrow(denied)
+      for (const t of ['signin_codes', 'reviewer_links', 'recheck_links', 'reauth_events', 'shopify_pending_installs', 'bigcommerce_pending_installs', 'operator_access', 'worker_releases']) await expect(db.selectFrom(t).selectAll().execute(), t).rejects.toThrow(denied)
       expect((await db.selectFrom('workspaces').select('id').execute()).length).toBe(2)
       await expect(db.deleteFrom('workspaces').execute()).rejects.toThrow(denied)
       await expect(db.deleteFrom('people').execute()).rejects.toThrow(denied)
@@ -222,7 +222,9 @@ describe('every workspace table is covered', () => {
       const tables = await workspaceTables(db)
       // Core, ledger, connectors, invoices, equity, MCP and usage tables are all found.
       for (const t of ['memberships', 'entities', 'connections', 'accounts', 'ledger_records', 'journal_lines', 'documents', 'grants', 'agent_keys', 'activity_log', 'usage_daily']) expect(tables, t).toContain(t)
+      // Workspace tables are reported by default; `people` only with { people: true } (it ships a release later).
       expect(await tablesMissingRls(db)).toEqual(tables)
+      expect(await tablesMissingRls(db, { people: true })).toEqual([...tables, 'people'])
 
       // This is the guard: whatever migrations exist, the boot step leaves no workspace table uncovered.
       await syncRlsPolicies(db, true)
@@ -234,7 +236,7 @@ describe('every workspace table is covered', () => {
       expect((await syncRlsPolicies(db, true)).enabled).toEqual(['future_slice_rows'])
       expect(await tablesMissingRls(db)).toEqual([])
 
-      // Rollback turns every one off again.
+      // Rollback turns every one off again (workspace tables + future_slice_rows; people was never enabled here).
       const off = await syncRlsPolicies(db, false)
       expect(off.disabled.length).toBe(tables.length + 1)
       expect((await tablesMissingRls(db)).length).toBe(tables.length + 1)
@@ -246,7 +248,10 @@ describe('every workspace table is covered', () => {
 
 describe('boot fails closed (a misconfigured machine must never turn isolation off for everyone)', () => {
   const NEON = 'postgres://u:p@ep-x-pooler.us-east-2.aws.neon.tech/aggregate?sslmode=require'
+  const NEON_DIRECT = 'postgres://u:p@ep-x.us-east-2.aws.neon.tech/aggregate?sslmode=require'
   const LOCAL = 'postgres://u:p@localhost:5432/agfn'
+  const RDS = 'postgres://u:p@agfn-live.c9abcdefghij.us-east-1.rds.amazonaws.com:5432/agfn?sslmode=verify-full'
+  const RDS_PROXY = 'postgres://u:p@agfn-proxy.proxy-c9abcdefghij.us-east-1.rds.amazonaws.com:5432/agfn'
 
   it('reads AGFN_PG_RLS strictly and spots hosted databases even without AGFN_HOSTED', () => {
     expect(rlsSetting({ AGFN_PG_RLS: '1' })).toBe('on')
@@ -259,7 +264,54 @@ describe('boot fails closed (a misconfigured machine must never turn isolation o
     expect(isHostedDb({ AGFN_PG_APP_URL: NEON }, LOCAL)).toBe(true)
     expect(isHostedDb({}, LOCAL)).toBe(false)
     expect(isHostedDb({}, 'postgres://u:p@neon.tech.evil.example/x')).toBe(false)
+    // Amazon RDS (instance, Aurora cluster) counts as hosted too: a machine missing its config still keeps RLS on there.
+    expect(isHostedDb({}, RDS)).toBe(true)
+    expect(isHostedDb({}, 'postgres://u:p@agfn.cluster-c9abcdefghij.us-east-1.rds.amazonaws.com/agfn')).toBe(true)
+    expect(isHostedDb({ AGFN_PG_APP_URL: RDS }, LOCAL)).toBe(true)
+    expect(isHostedDb({}, 'postgres://u:p@rds.amazonaws.com.evil.example/x')).toBe(false)
   })
+
+  it('spots RDS Proxy as a pooler, and PgBouncer only where it matters (hosted)', () => {
+    expect(isPoolerUrl(RDS_PROXY)).toBe(true)
+    expect(isPoolerUrl(RDS)).toBe(false)
+    expect(isPoolerUrl('postgres://u:p@agfn.cluster-c9abcdefghij.us-east-1.rds.amazonaws.com/agfn')).toBe(false)
+    expect(looksLikePgbouncer('postgres://u:p@pgbouncer.internal/agfn')).toBe(true)
+    expect(looksLikePgbouncer('postgres://u:p@db.internal:6432/agfn')).toBe(true)
+    expect(looksLikePgbouncer(RDS)).toBe(false)
+    expect(looksLikePgbouncer(LOCAL)).toBe(false)
+  })
+
+  it('spots a Neon pooler host (which breaks the per-connection RLS context)', () => {
+    expect(isPoolerUrl(NEON)).toBe(true)
+    expect(isPoolerUrl(NEON_DIRECT)).toBe(false)
+    expect(isPoolerUrl(LOCAL)).toBe(false)
+    expect(isPoolerUrl(undefined)).toBe(false)
+    // Only Neon pooler endpoints, not an unrelated host that merely contains the word.
+    expect(isPoolerUrl('postgres://u:p@my-pooler.example.com/x')).toBe(false)
+    expect(isPoolerUrl('not a url')).toBe(false)
+  })
+
+  it('refuses to boot with RLS on when the database routes through the Neon pooler', async () => {
+    const h = await connectPglite<any>()
+    const db = h.db as Kysely<any>
+    try {
+      await migrateToLatest(db)
+      // Pooler on the main URL, and on the phase-2 app login — both refused; the direct host is fine.
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON)).rejects.toThrow(/pooler.*Refusing to start/s)
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1', AGFN_PG_APP_URL: NEON }, NEON_DIRECT)).rejects.toThrow(/AGFN_PG_APP_URL.*pooler/s)
+      // RDS Proxy is refused like Neon's pooler; on hosted, so is anything that looks like PgBouncer.
+      await expect(bootRls(db, { AGFN_PG_RLS: '1' }, RDS_PROXY)).rejects.toThrow(/RDS Proxy.*Refusing to start/s)
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, 'postgres://u:p@db.internal:6432/agfn')).rejects.toThrow(/pooler/)
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1', AGFN_PG_APP_URL: 'postgres://u:p@pgbouncer.internal/agfn' }, RDS)).rejects.toThrow(/AGFN_PG_APP_URL.*pooler/s)
+      // A self-hoster's session-mode PgBouncer is still allowed (docs/security/rls.md).
+      await bootRls(db, { AGFN_PG_RLS: '1' }, 'postgres://u:p@db.internal:6432/agfn')
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON_DIRECT)
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, RDS)
+      expect(await tablesMissingRls(db)).toEqual([])
+    } finally {
+      await h.close()
+    }
+  }, 120_000)
 
   it('every case: on covers and checks; hosted refuses off/unset; unset refuses when RLS is already on', async () => {
     const h = await connectPglite<any>()
@@ -274,8 +326,15 @@ describe('boot fails closed (a misconfigured machine must never turn isolation o
       await expect(bootRls(db, { AGFN_HOSTED: '1' }, LOCAL)).rejects.toThrow(/requires AGFN_PG_RLS=1/)
       await expect(bootRls(db, {}, NEON)).rejects.toThrow(/Refusing to start/)
 
-      // On: every table covered, verified in the catalog.
-      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON)
+      // On: every table covered, verified in the catalog. Uses the DIRECT Neon host (the pooler is refused below).
+      // RDS Proxy is refused like Neon's pooler; on hosted, so is anything that looks like PgBouncer.
+      await expect(bootRls(db, { AGFN_PG_RLS: '1' }, RDS_PROXY)).rejects.toThrow(/RDS Proxy.*Refusing to start/s)
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, 'postgres://u:p@db.internal:6432/agfn')).rejects.toThrow(/pooler/)
+      await expect(bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1', AGFN_PG_APP_URL: 'postgres://u:p@pgbouncer.internal/agfn' }, RDS)).rejects.toThrow(/AGFN_PG_APP_URL.*pooler/s)
+      // A self-hoster's session-mode PgBouncer is still allowed (docs/security/rls.md).
+      await bootRls(db, { AGFN_PG_RLS: '1' }, 'postgres://u:p@db.internal:6432/agfn')
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON_DIRECT)
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, RDS)
       expect(await tablesMissingRls(db)).toEqual([])
 
       // The incident: a machine without its [env] block (no AGFN_HOSTED, no AGFN_PG_RLS) but with the Neon secret.
@@ -295,10 +354,33 @@ describe('boot fails closed (a misconfigured machine must never turn isolation o
       await bootRls(db, { AGFN_PG_RLS: '1' }, LOCAL) // a new table is simply covered
       expect(await tablesMissingRls(db)).toEqual([])
 
-      // Self-hosted rollback is explicit: AGFN_PG_RLS=off.
+      // Self-hosted rollback is explicit: AGFN_PG_RLS=off. Disables every workspace table and the later_rows one added
+      // above — so tables.length + 1 (AGFN_PEOPLE_RLS was never set here, so the people policy was never applied).
       const off = await bootRls(db, { AGFN_PG_RLS: 'off' }, LOCAL)
       expect(off.disabled.length).toBe(tables.length + 1)
       expect(await rlsStatus(db, tables)).toEqual([])
+    } finally {
+      await h.close()
+    }
+  }, 120_000)
+
+  it('the people policy is gated behind AGFN_PEOPLE_RLS, so the code can ship a release before the policy', async () => {
+    const h = await connectPglite<any>()
+    const db = h.db as Kysely<any>
+    try {
+      await migrateToLatest(db)
+      // Flag off (the first deploy): workspace tables are covered, but the people policy is NOT applied and NOT
+      // required — so a machine still running the old code can sign people up without hitting it.
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON_DIRECT)
+      expect(await rlsStatus(db, ['people'])).toEqual([]) // people RLS is still off
+      expect(await tablesMissingRls(db, { people: true })).toEqual(['people']) // it would be required, once asked for
+      // A fresh boot with the flag still off must not refuse (people being uncovered is fine).
+      expect((await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1' }, NEON_DIRECT)).enabled).toEqual([])
+
+      // Flag on (the later step, once every machine runs the new code): the policy is applied and then required.
+      await bootRls(db, { AGFN_PG_RLS: '1', AGFN_HOSTED: '1', AGFN_PEOPLE_RLS: '1' }, NEON_DIRECT)
+      expect(await rlsStatus(db, ['people'])).toEqual(['people'])
+      expect(await tablesMissingRls(db, { people: true })).toEqual([])
     } finally {
       await h.close()
     }

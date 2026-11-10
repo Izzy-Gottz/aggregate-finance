@@ -3,7 +3,7 @@
 import * as z from 'zod/v4'
 import type { DataType, EntityId, Money, MoneyWire } from '@agfn/contracts'
 import { MoneyError, parseMoney, parsePrice, wire } from '../money.ts'
-import type { AddedBy, Clock, EntityInfo, FinanceReader, LiveBalancePort, SharePort } from '../ports.ts'
+import type { AddedBy, Clock, ConnectPort, EntityInfo, FinanceReader, LiveBalancePort, SharePort } from '../ports.ts'
 import { ToolError, type Access, type Principal } from '../scope.ts'
 import type { ControlStore } from '../store/store.ts'
 import type { WritePipeline } from '../writes.ts'
@@ -18,6 +18,8 @@ export interface ToolContext {
   clock: Clock
   liveBalance?: LiveBalancePort
   share?: SharePort
+  /** Minting connect-from-chat links (AGFN_CONNECT_FROM_CHAT). Unset = connect_source isn't offered. */
+  connect?: ConnectPort
   /** get_investments is on (AGFN_TOOL_INVESTMENTS). */
   investments?: boolean
   /** Set-asides in the bucket tools and available_cash (AGFN_SET_ASIDES). */
@@ -49,7 +51,7 @@ export interface ToolDef<S extends z.ZodObject = z.ZodObject> {
   /** Hints that differ from the kind's defaults (e.g. a read that costs money and calls the bank). */
   hints?: { readOnlyHint?: boolean; idempotentHint?: boolean; openWorldHint?: boolean }
   /** Offered only when the deployment provides this capability. */
-  requires?: 'liveBalance' | 'coverage' | 'liabilities' | 'holdings' | 'mrrMovements' | 'share' | 'investments'
+  requires?: 'liveBalance' | 'coverage' | 'liabilities' | 'holdings' | 'mrrMovements' | 'share' | 'investments' | 'connect'
   /** The tool is useful when the grant has ANY of these data types. */
   dataTypes: DataType[]
   listWhen: ListWhen

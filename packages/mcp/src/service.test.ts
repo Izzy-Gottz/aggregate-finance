@@ -249,6 +249,17 @@ describe('reads', () => {
     }
   })
 
+  it('get_document says when a PDF was only partly read (past 60 pages or 60,000 characters), without a new field', async () => {
+    const { principal } = await H.connectAi({ write: false })
+    const whole = await call(principal, 'get_document', { id: 'd_receipt' })
+    expect([(whole.data.content as { untrusted_text: { truncated: boolean } }).untrusted_text.truncated, whole.summary.includes('first part')]).toEqual([false, false])
+    H.books.docs.set('d_receipt', { ...H.books.docs.get('d_receipt')!, partial: true })
+    const cut = await call(principal, 'get_document', { id: 'd_receipt' })
+    expect((cut.data.content as { untrusted_text: { truncated: boolean } }).untrusted_text.truncated).toBe(true)
+    expect(cut.summary).toContain('only the first part of this PDF was read')
+    expect(Object.keys(cut.data)).toEqual(Object.keys(whole.data))
+  })
+
   it('suggests the closest company name', async () => {
     const { principal } = await H.connectAi({})
     const err = await callErr(principal, 'search_transactions', { company: 'Bluebrd' })
@@ -404,6 +415,14 @@ describe('reads', () => {
     expect(JSON.stringify(ok.data)).toContain('Dana')
     H.people.people.get(DEMO.owner)!.manage = false
     expect((await callErr(principal, 'get_payroll', { detail: 'people' })).code).toBe('forbidden')
+  })
+
+  it('get_payroll says when payroll doesn’t report contractors, instead of leaving it to read as none', async () => {
+    const { principal } = await H.connectAi({ entityIds: [DEMO.northwind], dataTypes: ['payroll'] })
+    expect((await call(principal, 'get_payroll')).summary).not.toContain('contractors not reported')
+    const real = H.books.payroll.bind(H.books)
+    vi.spyOn(H.books, 'payroll').mockImplementation(async (...a) => (await real(...a)).map((p) => ({ ...p, contractors: null })))
+    expect((await call(principal, 'get_payroll')).summary).toContain('contractors not reported by payroll (payments to contractors may still be in the transactions)')
   })
 
   it('search_invoices returns both sides with aging and respects data types', async () => {

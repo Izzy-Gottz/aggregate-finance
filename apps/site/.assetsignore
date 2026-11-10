@@ -1,0 +1,11 @@
+# Not served by the aggregate.finance Worker. Keep .well-known/ served (security.txt).
+.vercel
+.wrangler
+.gitignore
+.assetsignore
+wrangler.jsonc
+vercel.json
+.vercelignore
+node_modules
+# Repo notes, never pages (logos/README.md held brand notes).
+**/README.md

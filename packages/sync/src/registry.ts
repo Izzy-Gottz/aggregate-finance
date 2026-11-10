@@ -21,6 +21,11 @@ export class ConnectorRegistry {
     return f(deps)
   }
 
+  /** The connector's own description, when it's installed here. */
+  describe(key: string): ConnectorDescription | undefined {
+    return this.descriptions.get(key)
+  }
+
   has(key: string): boolean {
     return this.factories.has(key)
   }

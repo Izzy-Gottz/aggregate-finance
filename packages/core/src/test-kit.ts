@@ -45,7 +45,7 @@ export interface Kit {
   close(): Promise<void>
 }
 
-export async function makeKit(backend: Backend, opts: { reporting?: string; now?: string; timeZone?: string; rates?: (store: LedgerStore) => RateSource; setAsides?: boolean } = {}): Promise<Kit> {
+export async function makeKit(backend: Backend, opts: { reporting?: string; now?: string; timeZone?: string; rates?: (store: LedgerStore) => RateSource; setAsides?: boolean; staleAfterHours?: (connectorKey: string) => number | undefined } = {}): Promise<Kit> {
   let now = opts.now ?? '2026-10-09T12:00:00.000Z'
   const rates = new MemoryRateSource()
   const reporting = opts.reporting ?? 'USD'
@@ -107,7 +107,7 @@ export async function makeKit(backend: Backend, opts: { reporting?: string; now?
   await db.insertInto('workspaces').values({ id: ws, name: 'Test', base_currency: reporting, time_zone: opts.timeZone ?? 'UTC', created_at: now }).execute()
   const scope = new DbScope(db)
   const store = new KyselyLedgerStore(scope)
-  const dir = new KyselyDirectory(scope)
+  const dir = new KyselyDirectory(scope, opts.staleAfterHours ? { staleAfterHours: opts.staleAfterHours } : {})
   const engine = new LedgerEngine({ store, directory: dir, rates: opts.rates?.(store) ?? rates, now: () => now, ...(opts.setAsides ? { setAsides: true } : {}) })
   const addEntity = async (name: string, kind: 'company' | 'personal', currency: string): Promise<EntityId> => {
     const id = newId()

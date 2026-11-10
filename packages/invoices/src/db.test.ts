@@ -291,4 +291,60 @@ describe.each(backends)('books store on %s', (_name, open) => {
       await h.close()
     }
   }, 30_000)
+
+  it('dates a payroll run that carries an instant by the workspace business day, not the UTC slice', async () => {
+    const h = await open()
+    try {
+      await seed(h)
+      const L = fakeLedger(h)
+      const books = createBooks(h.db, { ledger: L.ledger, clock: { now: () => NOW }, timeZone: async () => 'America/New_York' })
+      // 03:30Z on the 1st is 23:30 the evening before in New York, so the run belongs to 2026-09-30 — the same date the
+      // ledger uses. The old code stored the UTC slice (2026-10-01), splitting the run from its journal entry.
+      const run: PayrollRun = {
+        type: 'payroll.run', externalId: 'run_at', connectionId: QBO,
+        payDate: '2026-10-01', at: '2026-10-01T03:30:00Z',
+        gross: usd(1_000_000), employerTaxes: usd(80_000), net: usd(800_000), source: 'provider', status: 'paid', provider: 'Gusto',
+      }
+      await books.ingest(WS, ACME, run)
+      const payDateOf = async (ext: string) => (await h.db.selectFrom('payroll_runs').select('pay_date').where('workspace_id', '=', WS).where('external_id', '=', ext).executeTakeFirstOrThrow()).pay_date
+      expect(await payDateOf('run_at')).toBe('2026-09-30')
+      const [view] = await books.reader.payroll({ workspaceId: WS, entityIds: [ACME] }, { people: false })
+      expect(view?.runs.map((r) => r.payDate)).toContain('2026-09-30')
+      // Re-ingesting the identical run changes nothing (idempotent).
+      expect((await books.ingest(WS, ACME, run)).changed).toBe(false)
+      // A run without an instant keeps the provider's own pay date.
+      const plain: PayrollRun = { ...run, externalId: 'run_plain', at: undefined }
+      await books.ingest(WS, ACME, plain)
+      expect(await payDateOf('run_plain')).toBe('2026-10-01')
+      // A run first booked before the at-dating fix (no instant, UTC-slice pay date) is re-ingested once the connector
+      // learns to send `at`: gaining the instant counts as a change, and the row re-dates to the business day. This is
+      // the re-import's whole job for existing rows — without it payroll_runs keeps the pre-fix date while the ledger
+      // moves (staging's Deel split runs: ledger on the 10th, payroll_runs stuck on the 11th).
+      const prefix: PayrollRun = { type: 'payroll.run', externalId: 'run_gained', connectionId: QBO, payDate: '2026-10-01', gross: usd(1_000_000), employerTaxes: usd(80_000), net: usd(800_000), source: 'provider', status: 'paid', provider: 'Gusto' }
+      await books.ingest(WS, ACME, prefix)
+      expect(await payDateOf('run_gained')).toBe('2026-10-01')
+      const gained = await books.ingest(WS, ACME, { ...prefix, at: '2026-10-01T03:30:00Z' })
+      expect(gained.changed).toBe(true)
+      expect(await payDateOf('run_gained')).toBe('2026-09-30')
+      // The staging case: a row whose event ALREADY carries `at` but whose pay_date is stale, because it was booked by
+      // the old code (pay_date = r.payDate) before the localDate(at, tz) rule. The event is byte-identical, so the
+      // content check alone would skip it forever — a re-import could never re-date it. Re-deriving pay_date catches it.
+      const withAt: PayrollRun = { type: 'payroll.run', externalId: 'run_stale', connectionId: QBO, payDate: '2026-10-01', at: '2026-10-01T03:30:00Z', gross: usd(1_000_000), employerTaxes: usd(80_000), net: usd(800_000), source: 'provider', status: 'paid', provider: 'Gusto' }
+      await books.ingest(WS, ACME, withAt)
+      // Simulate the pre-fix row: same event JSON, but pay_date left on the UTC slice.
+      await h.db.updateTable('payroll_runs').set({ pay_date: '2026-10-01' }).where('workspace_id', '=', WS).where('external_id', '=', 'run_stale').execute()
+      const redated = await books.ingest(WS, ACME, withAt)
+      expect(redated.changed).toBe(true)
+      expect(await payDateOf('run_stale')).toBe('2026-09-30')
+    } finally {
+      await h.close()
+    }
+  }, 30_000)
+})
+
+describe('amounts in messages', () => {
+  it('use the currency’s own decimals: never 100× off for yen or 10× for dinars', async () => {
+    const { amountIn } = await import('./db.ts')
+    expect([amountIn(10_000, 'USD'), amountIn(10_000, 'JPY'), amountIn(1_250, 'KWD'), amountIn(5, 'USD')]).toEqual(['100.00', '10000', '1.250', '0.05'])
+  })
 })

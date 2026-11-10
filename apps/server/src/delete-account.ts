@@ -84,7 +84,7 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
   const { shared, solo } = await ownedAlone(db, personId)
   if (shared.length) throw new SoleOwnerError(shared)
 
-  const person = await db.selectFrom('people').select(['id', 'auth_user_id']).where('id', '=', personId).executeTakeFirst()
+  const person = await withBypass('account:person', () => db.selectFrom('people').select(['id', 'auth_user_id']).where('id', '=', personId).executeTakeFirst())
   if (!person) return { workspaces: 0, workspacesDeleted: 0, grantsRevoked: 0, connectionsRevoked: 0, notRevoked: [], documents: 0 }
   const memberOf = await withBypass('account:memberships', () => db.selectFrom('memberships').select('workspace_id').where('person_id', '=', personId).execute())
 
@@ -128,7 +128,16 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
     })
   }
 
-  // 4. Person-level records (no workspace, so no row-level security): re-check history, then sign-in records.
+  // 4. Keep the row (history points at it) but nothing that identifies them — FIRST, so a later failure (a stubborn
+  //    sign-in record) can't leave a real name and email behind. This MUST run under a bypass: the memberships are gone
+  //    by now, so with AGFN_PEOPLE_RLS on the agfn_people policy hides the row from the app role and the update would
+  //    silently touch 0 rows, leaving the real name and email. Assert exactly one row changed so that can't pass quietly.
+  const anon = await withBypass('account:anonymize', () =>
+    db.updateTable('people').set({ name: 'Former member', email: deletedTombstone(personId), auth_user_id: null }).where('id', '=', personId).executeTakeFirst(),
+  )
+  if (Number(anon.numUpdatedRows ?? 0) !== 1) throw new Error(`account delete did not anonymize person ${personId} (updated ${anon.numUpdatedRows ?? 0} rows)`)
+
+  // 5. Person-level records (no workspace, so no row-level security): re-check history, then sign-in records.
   await ownerOf(anyDb).deleteFrom('reauth_events').where('person_id', '=', personId).execute().catch(unlessDenied(undefined))
   // The person row stays (anonymized), so its creator-link attribution is removed here rather than by cascade.
   await forgetAttribution(anyDb, personId).catch(unlessDenied(undefined))
@@ -145,7 +154,74 @@ export async function deleteAccount(deps: DeleteAccountDeps, personId: string): 
     await ownerOf(anyDb).deleteFrom('auth_user').where('id', '=', uid).execute()
   }
 
-  // 5. Keep the row (history points at it) but nothing that identifies them.
-  await db.updateTable('people').set({ name: 'Former member', email: `deleted-${personId}@invalid`, auth_user_id: null }).where('id', '=', personId).execute()
   return { workspaces: memberOf.length, workspacesDeleted: solo.length, grantsRevoked, connectionsRevoked, notRevoked, documents }
+}
+
+/**
+ * The non-routable tombstone email a deleted account's person row carries. The `@invalid` form is kept (not
+ * `@deleted.invalid`) because prelaunch-wipe.ts and inbound.ts key on the `@invalid` suffix; the TLD `invalid` is
+ * reserved and never deliverable either way.
+ */
+export const deletedTombstone = (personId: string): string => `deleted-${personId}@invalid`
+
+export interface BackfillResult {
+  /** People rows that look like a deleted account whose real email was never cleared. */
+  found: number
+  /** How many this run tombstoned (0 on a dry run). */
+  anonymized: number
+  /** Up to `limit` samples for a human to sanity-check before applying — id and email DOMAIN only, never the local part. */
+  samples: Array<{ id: string; emailDomain: string; createdAt: string }>
+}
+
+/**
+ * Backfill for accounts deleted before anonymization was reliable: people rows that carry a real email but belong to no
+ * one reachable — not a current member of any workspace, owner of no company, holder of no live AI grant, and with no
+ * usable sign-in (auth_user_id null, OR pointing at an auth_user that no longer exists — the exact shape a delete that
+ * removed the login but then failed to anonymize leaves). Those are orphaned former accounts (or stale pending invites
+ * whose workspace is gone); either way nobody can use the address, so we replace it with the tombstone. System and demo
+ * rows (reviewer, glass, demo, demo pool, challenge) use `*.aggregate.invalid`; already-tombstoned rows use
+ * `…@invalid` or `…@deleted.invalid` — both suffixes (`%@invalid` and `%.invalid`) are skipped, so this is idempotent.
+ * Dry run by default: pass `{ apply: true }` to write. Safe to run repeatedly.
+ */
+export async function anonymizeOrphanedDeletedPeople(db: Kysely<CoreTables>, opts: { apply?: boolean; limit?: number } = {}): Promise<BackfillResult> {
+  const anyDb = db as unknown as Kysely<Record<string, Record<string, unknown>>>
+  const sampleLimit = opts.limit ?? 20
+  // Already a tombstone (never re-touch): system/demo rows end `.invalid`, deleted-account rows end `@invalid`.
+  const isTombstone = (email: string) => /\.invalid$/i.test(email) || /@invalid$/i.test(email)
+  return withBypass('backfill:anonymize-orphans', async () => {
+    const candidates = await db
+      .selectFrom('people')
+      .select(['id', 'email', 'created_at', 'auth_user_id'])
+      .where('email', 'not like', '%.invalid')
+      .where('email', 'not like', '%@invalid')
+      // Not a current member of any workspace (excludes active people and pending invitees, who keep a live membership).
+      .where((eb) => eb.not(eb.exists(eb.selectFrom('memberships').select('memberships.id').whereRef('memberships.person_id', '=', 'people.id').where('memberships.revoked_at', 'is', null))))
+      // Owns no company (a live owner's row is never orphaned).
+      .where((eb) => eb.not(eb.exists(eb.selectFrom('entities').select('entities.id').whereRef('entities.owner_person_id', '=', 'people.id'))))
+      .execute()
+    // Which of these can still sign in: auth_user_id set AND that auth_user still exists. A dangling auth_user_id (login
+    // already deleted) is NOT reachable, so it stays a candidate — that's the real leak shape.
+    const liveUids = new Set(
+      ((await ownerOf(anyDb).selectFrom('auth_user').select('id').execute().catch(unlessDenied([]))) as Array<{ id: string }>).map((u) => u.id),
+    )
+    // A live AI grant would mean the person is still active somewhere; the grants table lives in @agfn/mcp's schema.
+    const withLiveGrant = new Set(
+      ((await anyDb.selectFrom('grants').select('person_id').where('revoked_at', 'is', null).execute().catch(unlessDenied([]))) as Array<{ person_id: string }>).map((g) => g.person_id),
+    )
+    const orphans = candidates.filter((p) => {
+      if (withLiveGrant.has(p.id)) return false
+      if (p.auth_user_id && liveUids.has(p.auth_user_id)) return false // can still sign in → active, not orphaned
+      return true
+    })
+    const samples = orphans.slice(0, sampleLimit).map((p) => ({ id: p.id, emailDomain: p.email.includes('@') ? p.email.slice(p.email.lastIndexOf('@') + 1) : '(none)', createdAt: p.created_at }))
+    let anonymized = 0
+    if (opts.apply) {
+      for (const p of orphans) {
+        if (isTombstone(p.email)) continue // belt-and-suspenders; the query already excludes these
+        await db.updateTable('people').set({ name: 'Former member', email: deletedTombstone(p.id), auth_user_id: null }).where('id', '=', p.id).execute()
+        anonymized++
+      }
+    }
+    return { found: orphans.length, anonymized, samples }
+  })
 }

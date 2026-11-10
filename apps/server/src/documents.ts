@@ -4,8 +4,9 @@ import type { AccountType } from '@agfn/contracts'
 import { newId, nowIso, type CoreTables } from '@agfn/db'
 import { MIME, sniffKind, type FileStore } from '@agfn/files'
 import type { KeyRing } from '@agfn/security'
-import { createConnection, type SyncEngine } from '@agfn/sync'
+import { createConnection, institutionsCompatible, type SyncEngine } from '@agfn/sync'
 import { extractPdfText, parsePdfStatement, isColumnMapping, planCsvImport, type ColumnMapping, type MappingAnswers, type MappingQuestion, type PdfText } from '@agfn/connector-files'
+import { keepSeparateKey } from './retire.ts'
 
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const STATEMENT_KINDS = new Set(['csv', 'ofx', 'qfx', 'qbo', 'xml'])
@@ -157,6 +158,15 @@ function ofxAccountMask(bytes: Uint8Array): string | undefined {
   const m = /<ACCTID>\s*([^<\s]+)/i.exec(text)
   const digits = m?.[1]?.replace(/\D/g, '')
   return digits && digits.length >= 4 ? digits.slice(-4) : undefined
+}
+
+/** OFX/QFX name the bank in <FI><ORG> (or a bare <ORG>). Absent in many files — then we can't confirm which account
+ *  it is by the last 4 alone, so the upload is never silently merged (see the mask gate in the upload flow). */
+function ofxAccountInstitution(bytes: Uint8Array): string | undefined {
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes.subarray(0, 64 * 1024))
+  const m = /<ORG>\s*([^<\r\n]+?)\s*(?:<|$)/i.exec(text)
+  const org = m?.[1]?.trim()
+  return org || undefined
 }
 
 /** camt.053 names the account by IBAN (or another account number): its last 4 pick the account the same way. */
@@ -316,8 +326,18 @@ export function createDocuments(deps: { db: Kysely<CoreTables>; store: FileStore
       const { choices: found, hasReal } = await statementChoices(input.workspaceId, input.entityId)
       choices = found
       const mask = kind === 'csv' ? undefined : kind === 'xml' ? camtAccountMask(input.bytes) : kind === 'pdf' ? (pdfStatement?.ok ? pdfStatement.statement.account.mask : undefined) : ofxAccountMask(input.bytes)
+      // The bank the file names, when it says. A PDF matched a known layout; an OFX/QFX/QBO may carry <FI><ORG>.
+      const fileInstitution = kind === 'pdf' ? (pdfStatement?.ok ? pdfStatement.statement.layout.institution : undefined) : kind === 'ofx' || kind === 'qfx' || kind === 'qbo' ? ofxAccountInstitution(input.bytes) : undefined
       const byMask = mask ? choices.filter((c) => c.mask === mask) : []
-      if (byMask.length === 1) target = byMask[0]!.id
+      const single = byMask.length === 1 ? byMask[0]! : undefined
+      // Last-4 alone is too weak to merge an upload into an account we already sync (it would hide the upload's money
+      // under duplicate_of). For the formats that name their bank (OFX family, PDF) only auto-link when that name is
+      // present and compatible with the account's — the same rule the sync engine uses (3a); otherwise ask, or keep it
+      // separate ('new') so 3b can flag a true match. camt (IBAN) keeps its existing match for now — its damaged-file
+      // path makes the same tightening a separate change (flagged to 34).
+      const mustNameBank = kind === 'pdf' || kind === 'ofx' || kind === 'qfx' || kind === 'qbo'
+      const linkOk = !!single && (!mustNameBank || !!(fileInstitution && single.institution && institutionsCompatible(fileInstitution, single.institution)))
+      if (single && linkOk) target = single.id
       else if (!hasReal) target = 'new'
     }
     const connectionId = !isStatement || !target ? null : target === 'new' ? await statementConnection(db, keys, input.workspaceId, input.entityId, input.personId) : await statementConnectionFor(db, keys, input.workspaceId, target, input.personId)
@@ -329,6 +349,8 @@ export function createDocuments(deps: { db: Kysely<CoreTables>; store: FileStore
     if (waiting) {
       return { documentId: id, name, state: 'needs_account', message: 'Which account is this statement for?', duplicate: false, accounts: choices }
     }
+    // A long PDF is cut at upload (past 60 pages or 60,000 characters): say so, so the person can send the rest.
+    const cut = pdf?.status === 'text' && pdf.truncated ? ' This PDF is long, so only its first part was read. Upload the rest as a separate file of 60 pages or fewer.' : ''
     if (!connectionId) {
       const message =
         pdf?.status === 'scanned'
@@ -338,13 +360,16 @@ export function createDocuments(deps: { db: Kysely<CoreTables>; store: FileStore
             : pdfStatement && !pdfStatement.ok && pdfStatement.layout
               ? 'Saved. This looks like a bank statement, but its rows don’t add up to its balances, so nothing was imported. Ask your AI to read it, or upload a CSV.'
               : 'Saved. Ask your AI to read it and add what it finds.'
-      return { documentId: id, name, state: 'unread', message, duplicate: false }
+      return { documentId: id, name, state: 'unread', message: message + cut, duplicate: false }
     }
-    return importStatement(id, name, connectionId)
+    const done = await importStatement(id, name, connectionId)
+    return cut ? { ...done, message: done.message + cut } : done
   }
 
   /** Statements import right away so the person sees the result. */
   async function importStatement(id: string, name: string, connectionId: string): Promise<UploadOutcome> {
+    // Rows already here from an overlapping file keep their ids, so the file's row count isn't what was added.
+    const before = await txnCount(connectionId)
     await sync.sync(connectionId).catch(() => undefined)
     await countOnceBalanceKnown(connectionId)
     await dropUnusedPlaceholder(db, connectionId)
@@ -354,7 +379,16 @@ export function createDocuments(deps: { db: Kysely<CoreTables>; store: FileStore
     // The import didn't run or didn't finish (the sync failed): don't say it was imported.
     if (after.status !== 'processed') return { documentId: id, name, state: 'unread', message: 'Saved, but it couldn’t be imported right now. It will be tried again on the next sync.', duplicate: false }
     const n = report.eventCount ?? 0
-    return { documentId: id, name, state: 'imported', message: n ? `Imported ${n} ${n === 1 ? 'row' : 'rows'}.` : 'Imported.', duplicate: false }
+    const added = Math.min(n, Math.max(0, (await txnCount(connectionId)) - before))
+    const rows = (k: number) => `${k} ${k === 1 ? 'row' : 'rows'}`
+    const message = !n ? 'Imported.' : added === n ? `Imported ${rows(n)}.` : added === 0 ? `Nothing new: ${n === 1 ? 'its row was' : `all ${n} rows were`} already here.` : `Imported ${added} new ${added === 1 ? 'row' : 'rows'} (${n - added} already here).`
+    return { documentId: id, name, state: 'imported', message, duplicate: false }
+  }
+
+  async function txnCount(connectionId: string): Promise<number> {
+    const q = db as unknown as Kysely<{ ledger_records: { connection_id: string; event_type: string } }>
+    const r = await q.selectFrom('ledger_records').select((e) => e.fn.countAll().as('n')).where('connection_id', '=', connectionId).where('event_type', '=', 'txn.upsert').executeTakeFirstOrThrow()
+    return Number(r.n)
   }
 
   /** The "Uploaded statements" account counts as cash once any statement gave it a balance. */
@@ -379,7 +413,17 @@ export function createDocuments(deps: { db: Kysely<CoreTables>; store: FileStore
     if (!connectionId) throw new UploadError('That account no longer exists. Choose another one.')
     const mapping = (JSON.parse(d.extracted_json ?? '{}') as { mapping?: ColumnMapping }).mapping
     await db.updateTable('documents').set({ record_type: 'connection', record_id: connectionId, extracted_json: mapping ? JSON.stringify({ mapping }) : null }).where('id', '=', d.id).execute()
-    return importStatement(d.id, d.original_name ?? 'statement', connectionId)
+    // The person explicitly chose "new": the account(s) this import creates are kept separate forever, so a later bank
+    // sync never adopts them and hides their balance (adoptStatementAccounts reads these markers). Diff the files
+    // connection's accounts across the import to find exactly the ones this statement added.
+    const isNew = input.accountId === 'new'
+    const before = isNew ? new Set((await db.selectFrom('accounts').select('id').where('connection_id', '=', connectionId).execute()).map((r) => r.id)) : null
+    const outcome = await importStatement(d.id, d.original_name ?? 'statement', connectionId)
+    if (before) {
+      const created = (await db.selectFrom('accounts').select('id').where('connection_id', '=', connectionId).where('duplicate_of', 'is', null).where('closed_at', 'is', null).execute()).filter((a) => !before.has(a.id))
+      for (const a of created) await db.insertInto('settings').values({ workspace_id: input.workspaceId, key: keepSeparateKey(a.id), value_json: '{}', updated_at: nowIso() }).onConflict((oc) => oc.columns(['workspace_id', 'key']).doNothing()).execute()
+    }
+    return outcome
   }
 
   /** The upload queue the files connector reads (S3 connector-files FileSource). */

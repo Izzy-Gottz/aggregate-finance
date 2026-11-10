@@ -118,6 +118,8 @@ export function factsFrom(rows: TxnView[], months: { now: string[]; before: stri
     let doubles: Facts['doubles']
     for (const [name, v] of vendors) {
       if (v.group === 'payroll' || v.group === 'taxes' || v.group === 'rent' || v.group === 'utilities') continue
+      // Fees are charged per sale, so the same fee twice on one day is two sales, not a double charge.
+      const perSale = v.group === 'fees'
       const a = v.byMonth.get(first!)
       const b = v.byMonth.get(last!)
       // Same vendor, once a month at both ends (a subscription), clearly more at the end.
@@ -134,7 +136,7 @@ export function factsFrom(rows: TxnView[], months: { now: string[]; before: stri
         const seen = new Set<number>()
         for (const x of amounts) (seen.has(x) ? n++ : seen.add(x))
       }
-      if (n > 0 && (!doubles || n > doubles.count)) doubles = { name, count: n }
+      if (!perSale && n > 0 && (!doubles || n > doubles.count)) doubles = { name, count: n }
     }
     if (jump) f.priceJump = jump
     if (freq) f.frequent = freq

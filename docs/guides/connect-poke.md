@@ -11,7 +11,7 @@ Poke adds custom MCP servers as **Integrations**, from the web or the command li
 3. Choose **Create Integration**. Poke registers itself with Aggregate automatically; sign in to Aggregate and choose what Poke can see.
 4. Text Poke: "How much cash do we have?"
 
-From a terminal: `npx poke@latest mcp add https://app.aggregate.finance/mcp`. If you'd rather not sign in, create a key in Aggregate (**Connect your AI → + Connect another AI → Create a key**, with an expiry) and paste it as the API key.
+From a terminal: `npx poke@latest mcp add https://app.aggregate.finance/mcp`. If you'd rather not sign in, create a key in Aggregate (**Connect your AI → + Connect another AI → A key for a bot → Make a key**; it lasts 90 days) and paste it as the API key.
 
 Self-hosting? Use `https://<your-server>/mcp` instead; it must be reachable over HTTPS.
 

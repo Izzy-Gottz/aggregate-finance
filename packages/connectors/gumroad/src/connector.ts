@@ -136,6 +136,9 @@ export function createGumroadConnector(opts: GumroadConnectorOptions): GumroadCo
       ...(s.key ? { page_key: s.key } : {}),
       ...(s.since ? { after: dayBefore(s.since, windowDays) } : {}),
     })
+    // A present object with `sales` omitted/empty is a real empty page; a null/non-object body (an empty body, or the
+    // sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero sales.
+    if (!isRecord(res)) throw new ConnectorError('transient', 'Gumroad sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'gumroad' })
     const events: NormalizedEvent[] = []
     let hwm = s.hwm
     let pr = s.pr
@@ -161,6 +164,7 @@ export function createGumroadConnector(opts: GumroadConnectorOptions): GumroadCo
       ...(s.key ? { page_key: s.key } : {}),
       ...(s.since ? { after: dayBefore(s.since, PAYOUT_OVERLAP_DAYS) } : {}),
     })
+    if (!isRecord(res)) throw new ConnectorError('transient', 'Gumroad sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'gumroad' })
     const events: NormalizedEvent[] = []
     let fx = s.fx
     for (const p of res.payouts ?? []) {

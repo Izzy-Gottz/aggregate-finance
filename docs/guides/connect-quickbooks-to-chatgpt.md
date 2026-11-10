@@ -14,7 +14,7 @@ choose exactly what ChatGPT can see.
 ## Set it up
 
 ### 1. Connect QuickBooks to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → QuickBooks**, sign in to Intuit, pick the company, and approve.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → QuickBooks**, sign in to Intuit, pick the company, and approve.
 
 ### 2. Add Aggregate to ChatGPT
 1. Open [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add** (top right), then **Add custom MCP server**.

@@ -135,7 +135,7 @@ npx skills add Izzy-Gottz/aggregate-finance
 <summary><b>Bots and scripts that can’t sign in</b></summary>
 <br>
 
-Create a key in **Connect your AI → Connect another AI → A bot or script**. Keys look like `agfn_live_…`, are shown
+Create a key in **Connect your AI → + Connect another AI → A key for a bot → Make a key**. Keys look like `agfn_live_…`, are shown
 once and always expire. Send it as a header:
 
 ```sh

@@ -67,6 +67,8 @@ export interface ConnectionsTable {
   last_error: string | null
   /** JSON string[] of non-fatal notes from the last sync. */
   warnings_json?: string | null
+  /** JSON ProviderFreshness from the last successful sync (@agfn/contracts): the provider's own data-as-of times. */
+  freshness_json?: string | null
   /** When it was disconnected (raw payloads are purged 30 days later). Null while connected. */
   disconnected_at?: string | null
   created_by: string | null
@@ -185,6 +187,27 @@ export interface RecheckLinksTable {
   attempts: number
 }
 
+/**
+ * Connect-from-chat links (migration 0914, apps/server/src/connect-source.ts), behind AGFN_CONNECT_FROM_CHAT. An AI
+ * mints one; a workspace owner/admin opens it in Aggregate and approves before any real connect begins. Bound to one
+ * workspace + provider + person, hashed, 15 minutes, single-use. The raw token lives only in the URL, never stored.
+ */
+export interface ConnectLinksTable {
+  id: string
+  token_hash: string
+  workspace_id: string
+  person_id: string
+  /** The AI connection (grant) that minted it: for the per-grant mint rate-limit and shadow logging. */
+  grant_id: string
+  /** Connector key, e.g. "stripe", "plaid". */
+  provider: string
+  /** The company this source is for, if the AI named one; null = decide at connect time. */
+  entity_id: string | null
+  created_at: string
+  expires_at: string
+  used_at: string | null
+}
+
 /** Sign-in codes (migration 0509): the code next to a sign-in link, for the browser that asked for it. */
 export interface SigninCodesTable {
   id: string
@@ -281,6 +304,7 @@ export interface CoreTables {
   challenge_activity: ChallengeActivityTable
   public_demo: PublicDemoTable
   recheck_links: RecheckLinksTable
+  connect_links: ConnectLinksTable
   signin_codes: SigninCodesTable
   oauth_pending_grants: OAuthPendingGrantsTable
   reauth_events: ReauthEventsTable

@@ -1,0 +1,552 @@
+{
+  "payments": [
+    {
+      "id": "p-01",
+      "object": "payment",
+      "created": 1789484400,
+      "amount": 5000,
+      "eligible_amount": 5000,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "online",
+      "refund_status": "partial",
+      "refunds": [
+        {
+          "id": "rf-01",
+          "object": "refund",
+          "amount": 2500,
+          "currency": "cad",
+          "status": "succeeded",
+          "created": 1790953200
+        }
+      ],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 5000,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-02",
+      "object": "payment",
+      "created": 1790823600,
+      "amount": 2000,
+      "eligible_amount": 2000,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "online",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 2000,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-03",
+      "object": "payment",
+      "created": 1791212400,
+      "amount": 3000,
+      "eligible_amount": 3000,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "manual",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 3000,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-04",
+      "object": "payment",
+      "created": 1791298800,
+      "amount": 4000,
+      "eligible_amount": 4000,
+      "currency": "cad",
+      "status": "failed",
+      "type": "online",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 4000,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-05",
+      "object": "payment",
+      "created": 1791385200,
+      "amount": 1500,
+      "eligible_amount": 1500,
+      "currency": "cad",
+      "status": "pending",
+      "type": "online",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 1500,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-06",
+      "object": "payment",
+      "created": 1749567600,
+      "amount": 10000,
+      "eligible_amount": 10000,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "online",
+      "refund_status": "partial",
+      "refunds": [
+        {
+          "id": "rf-06a",
+          "object": "refund",
+          "amount": 500,
+          "currency": "cad",
+          "status": "succeeded",
+          "created": 1751382000
+        },
+        {
+          "id": "rf-06b",
+          "object": "refund",
+          "amount": 1000,
+          "currency": "cad",
+          "status": "succeeded",
+          "created": 1791039600
+        }
+      ],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 10000,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-07",
+      "object": "payment",
+      "created": 1787238000,
+      "amount": 7500,
+      "eligible_amount": 7500,
+      "currency": "usd",
+      "status": "succeeded",
+      "type": "online",
+      "refund_status": "partial",
+      "refunds": [
+        {
+          "id": "rf-07",
+          "object": "refund",
+          "amount": 7500,
+          "currency": "usd",
+          "status": "pending",
+          "created": 1787670000
+        }
+      ],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 7500,
+          "currency": "usd",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-08",
+      "object": "payment",
+      "created": 1791471600,
+      "amount": 1200,
+      "eligible_amount": 1200,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "imported",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 1200,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    },
+    {
+      "id": "p-09",
+      "object": "payment",
+      "created": 1788233400,
+      "amount": 900,
+      "eligible_amount": 900,
+      "currency": "cad",
+      "status": "succeeded",
+      "type": "online",
+      "refund_status": "none",
+      "refunds": [],
+      "dispute": null,
+      "description": "Sample campaign",
+      "contact": "sample-contact",
+      "payment_method": {
+        "type": "card",
+        "brand": "visa",
+        "last4": "0000"
+      },
+      "buyer": {
+        "email": "donor@example.com",
+        "first_name": "Sample",
+        "last_name": "Donor",
+        "is_corporate": false,
+        "company_name": null,
+        "address": {
+          "line1": "1 Sample Street",
+          "city": "Sampletown",
+          "state": "ON",
+          "postal_code": "A1A 1A1",
+          "country": "CA"
+        }
+      },
+      "buyer_questions": [
+        {
+          "question": "Note",
+          "type": "text",
+          "answer": "Wrong size"
+        }
+      ],
+      "items": [
+        {
+          "id": "sample-item",
+          "object": "item",
+          "type": "donation",
+          "amount": 900,
+          "currency": "cad",
+          "tribute": {
+            "type": "in_memory_of",
+            "honouree_name": "Sample Honouree"
+          }
+        }
+      ],
+      "campaign_type": "donation_form",
+      "campaign_id": "sample-campaign",
+      "metadata": {}
+    }
+  ]
+}

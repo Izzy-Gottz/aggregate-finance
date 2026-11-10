@@ -493,3 +493,15 @@ describe('Square cash drawer rows are dated where the sale happened', () => {
     expect(mapCashRefund(refund, 'M1', loc, 'c', 'r')?.date).toBe('2026-10-14')
   })
 })
+
+
+describe('square: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector } = make([{ match: '/v2/locations', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector } = make([{ match: '/v2/locations', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

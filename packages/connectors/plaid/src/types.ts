@@ -6,6 +6,8 @@ export interface PlaidBalances {
   limit: number | null
   iso_currency_code: string | null
   unofficial_currency_code?: string | null
+  /** When the institution last updated the balance. Plaid gives it for some institutions only (Capital One, Apple Card). */
+  last_updated_datetime?: string | null
 }
 
 export interface PlaidAccount {
@@ -29,6 +31,12 @@ export interface PlaidItem {
   consented_products?: string[]
   billed_products?: string[]
   consent_expiration_time?: string | null
+}
+
+/** /item/get's top-level `status`: when Plaid last refreshed each product from the institution. */
+export interface PlaidItemStatus {
+  transactions?: { last_successful_update?: string | null; last_failed_update?: string | null } | null
+  investments?: { last_successful_update?: string | null; last_failed_update?: string | null } | null
 }
 
 export interface PlaidTransaction {

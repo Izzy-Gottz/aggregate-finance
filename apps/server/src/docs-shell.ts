@@ -145,6 +145,7 @@ a:hover{text-decoration-color:var(--ink)}
 .dais a{display:flex;justify-content:space-between;padding:12px 16px;border:1px solid var(--hairline);border-radius:10px;background:var(--card);text-decoration:none;font-weight:400;font-size:15px}
 .dais a::after{content:'→';color:var(--faint)}
 .dfine{margin:40px 0 0;font-size:12px;color:var(--muted)}
+.dnotice{margin:4px 0 20px;font-size:12px;line-height:18px;color:var(--muted)}
 .dpartner{margin:28px 0 40px;font-size:15px;color:var(--muted)}.dpartner img{display:block;height:24px;width:auto;margin-top:10px}
 .dnext{border-top:1px solid var(--hairline)}
 .dnext a{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--hairline);text-decoration:none}
@@ -287,6 +288,16 @@ ${pager(o.path)}
 </body></html>`
 }
 
+/** A page on its own (the /try chat): the mark and Sign in, no docs sidebar, search or pager. */
+export function barePage(o: { head: string; body: string }): string {
+  return `<!doctype html>
+<html lang="en"><head>${o.head}<style>${DOCS_CSS}.dbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px}.dbar .dhome{font-size:20px;gap:10px}.dbar>a{min-height:44px;display:flex;align-items:center}.dbar>a:last-child{font-size:14px;text-decoration:none}@media (max-width:760px){.dbar{padding:8px 16px}.dbar .dhome{font-size:19px}}</style></head>
+<body>
+<header class="dbar"><a class="dhome" href="https://aggregate.finance">${MARK(28)}<b>Aggregate</b></a><a href="%AGFN_BASE_URL%/">Sign in</a></header>
+${o.body}
+</body></html>`
+}
+
 const LINK = 'https://app.aggregate.finance/mcp'
 
 /** The docs home: where to start, in three steps. */
@@ -384,7 +395,10 @@ export function connectionsBody(md: string, render: (md: string) => string, icon
     const inner = `${tile(r.name)}<b>${esc(r.name)}</b><span class="what">${esc(r.what)}</span><span class="dtag${r.tag === 'Live' ? ' live' : ''}">${r.tag}</span><i aria-hidden="true">${guide ? '→' : ''}</i>`
     return guide ? `<a class="drow" href="/docs/guides/${guide}">${inner}</a>` : `<div class="drow">${inner}</div>`
   }
-  return `${render(intro)}
+  // Etsy's API Terms want its notice "in a prominent position": one small line right under the page heading.
+  const etsy = sections.some((sec) => sec.rows.some((r) => r.name === 'Etsy'))
+  const top = etsy ? render(intro).replace('</h1>', `</h1>\n<p class="dnotice">${esc(ETSY_TRADEMARK_NOTICE)}</p>`) : render(intro)
+  return `${top}
 <div class="dchips" role="group" aria-label="Filter"><button type="button" aria-pressed="true">All</button>${sections.map((s) => `<button type="button" aria-pressed="false" data-cat="${esc(s.name)}">${esc(s.name)}</button>`).join('')}</div>
 ${sections.map((s) => `<section class="dcat" data-cat="${esc(s.name)}"><h2>${esc(s.name)}</h2><div class="drows">${s.rows.map(row).join('')}</div></section>`).join('\n')}
 <p class="dpartner">The Aggregate app for Stripe is available on the Stripe App Marketplace, and Aggregate is a Stripe partner.${icons[STRIPE_PARTNER] ? `<img src="${icons[STRIPE_PARTNER]}" alt="Stripe Partner" width="341" height="86">` : ''}</p>
@@ -393,6 +407,9 @@ ${render(rest)}
 <p>Running your own server? <a href="${SELF_HOSTING}">Self-hosting adds PayPal, Lemon Squeezy, Expensify and more.</a></p>
 <p class="dfine">Logos belong to their owners and are shown only to identify services you can connect. No endorsement implied. Brands whose terms need written permission show a letter instead.</p>`
 }
+
+/** Etsy's API Terms require this notice, word for word, wherever the app shows Etsy. */
+export const ETSY_TRADEMARK_NOTICE = "The term 'Etsy' is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc."
 
 /** What search looks through: titles and section headings, nothing from any workspace. */
 export function docsSearchIndex(pages: Array<{ path: string; title: string; html: string }>): Array<{ path: string; title: string; headings: Array<{ id: string; text: string }> }> {

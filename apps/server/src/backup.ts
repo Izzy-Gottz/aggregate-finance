@@ -2,9 +2,9 @@
 //
 //   SQLite   → VACUUM INTO a temp file (a consistent copy while the app runs), the file is the payload.
 //   Postgres → a logical dump through the app: every table, as JSON rows, plus the applied migration list.
-//              No pg_dump binary to keep in step with Neon's server version, no extra machine, and the same restore
-//              path is testable on PGlite. Neon's point-in-time restore stays the first line of recovery; this is the
-//              independent off-site copy.
+//              No pg_dump binary to keep in step with the server's version, no extra machine, and the same restore
+//              path is testable on PGlite. The database's own point-in-time restore (Neon's, or RDS's automated
+//              backups) stays the first line of recovery; this is the independent off-site copy.
 // Document files (receipts, statements) ride along from the file store, so one backup restores everything; they're
 // small (8 MB max each) and content-addressed, so restoring them is put-if-missing.
 // The payload is gzipped and envelope-encrypted with the master key (purpose "backup"), uploaded to R2 (any S3

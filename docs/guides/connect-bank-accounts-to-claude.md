@@ -16,7 +16,7 @@ Mortgages, student, auto and personal loans, and card APRs and due dates come th
 ## Set it up
 
 ### 1. Connect your bank accounts and cards to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections**, choose your bank, and sign in to it in Plaid's window. Before connecting any account, Aggregate checks it's you with a passkey or a code sent to your email.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Bank, card or brokerage**, choose your bank, and sign in to it in Plaid's window. Before connecting any account, Aggregate checks it's you with a passkey or a code sent to your email.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →

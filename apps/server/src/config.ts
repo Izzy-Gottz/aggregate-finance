@@ -60,6 +60,8 @@ export interface ServerConfig {
   toolInvestments?: boolean
   /** AGFN_SET_ASIDES=1: `set_aside` on the bucket tools, the available_cash metric, and set-asides in the app. Changes tools/list, so off while a directory review pins it. The ledger and the app don't depend on it. */
   setAsides?: boolean
+  /** AGFN_CONNECT_FROM_CHAT=1: the connect_source MCP tool and its confirm pages (connect-source.ts). Adds a tool to tools/list, so off until the directory reviews close and Yisrael says yes; never on the challenge. */
+  connectFromChat?: boolean
   /** AGFN_TRY_CHAT=1 with ANTHROPIC_TRY_KEY: the no-sign-up demo chat at /try (try-chat.ts). AGFN_TRY_MODEL picks the model. */
   tryChat?: { key: string; model: string }
   /** AGFN_FRIEND_INVITES=1: "Invite someone" in the app and its API. Off until the privacy policy and the email's postal address are done. */
@@ -107,9 +109,11 @@ export interface ServerConfig {
   clientIpHeader?: string
   /** Sign-in emails per client IP per 15 minutes (AGFN_SIGNIN_IP_LIMIT, default 20). Raised only on staging for load tests. */
   signInIpLimit?: number
+  /** In-app intrusion detection (intrusion.ts, AGFN_INTRUSION): detect (default, alerts only), block (adds a 15-minute cool-off) or off. */
+  intrusion?: 'block' | 'off'
   /**
    * Most Plaid bank connections (Items not disconnected) one workspace may have (AGFN_PLAID_MAX_ITEMS_PER_WORKSPACE).
-   * Hosted (AGFN_HOSTED=1 or a Neon database) is always capped: 25 unless set to another positive number, so a machine
+   * Hosted (AGFN_HOSTED=1 or a Neon or RDS database) is always capped: 25 unless set to another positive number, so a machine
    * missing its [env] block can't run up an open-ended Plaid bill. Self-hosted: unset = no cap (they pay Plaid themselves).
    */
   plaidMaxItems?: number
@@ -139,6 +143,11 @@ export interface ServerConfig {
   demoPool?: number
   /** Hosted connectors not offered for new connections yet (hostedUnlisted); still registered for callbacks and syncs. */
   unlisted?: string[]
+  /**
+   * Hosted: connectors offered only to the workspaces an operator names (AGFN_ETSY_WORKSPACES for Etsy), on top of their
+   * own offer flag. An empty list means nobody. Self-hosted: unset, so no limit.
+   */
+  onlyWorkspaces?: Record<string, string[]>
   /**
    * Connectors an operator paused for NEW connections (AGFN_HIDE_CONNECTORS=plaid,square): left out of the catalog and
    * refused at start, for everyone. Existing connections keep syncing, reconnecting and receiving webhooks.
@@ -209,6 +218,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(env.AGFN_INVESTMENTS === '1' ? { investments: true } : {}),
     ...(env.AGFN_TOOL_INVESTMENTS === '1' ? { toolInvestments: true } : {}),
     ...(env.AGFN_SET_ASIDES === '1' ? { setAsides: true } : {}),
+    // Connect-from-chat adds a tool to tools/list, and connecting sources has no place in the challenge sandbox: never on the challenge.
+    ...(env.AGFN_CONNECT_FROM_CHAT === '1' && env.AGFN_CHALLENGE !== '1' ? { connectFromChat: true } : {}),
     ...(env.AGFN_FRIEND_INVITES === '1' ? { friendInvites: true } : {}),
     ...(env.AGFN_TRY_CHAT === '1' && env.ANTHROPIC_TRY_KEY ? { tryChat: { key: env.ANTHROPIC_TRY_KEY, model: ['claude-haiku-5-5', 'claude-sonnet-5-5'].includes(env.AGFN_TRY_MODEL ?? '') ? env.AGFN_TRY_MODEL! : 'claude-haiku-5-5' } } : {}),
     ...(Number(env.AGFN_FRIEND_INVITES_PER_DAY) > 0 ? { friendInvitesPerDay: Number(env.AGFN_FRIEND_INVITES_PER_DAY) } : {}),
@@ -222,6 +233,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(env.ALERT_TELEGRAM_BOT_TOKEN?.trim() && env.ALERT_TELEGRAM_CHAT_ID?.trim() ? { alertTelegram: { botToken: env.ALERT_TELEGRAM_BOT_TOKEN.trim(), chatId: env.ALERT_TELEGRAM_CHAT_ID.trim() } } : {}),
     ...(env.CLIENT_IP_HEADER ? { clientIpHeader: env.CLIENT_IP_HEADER } : env.FLY_APP_NAME ? { clientIpHeader: 'fly-client-ip' } : {}),
     ...(/^[1-9]\d*$/.test(env.AGFN_SIGNIN_IP_LIMIT ?? '') ? { signInIpLimit: Number(env.AGFN_SIGNIN_IP_LIMIT) } : {}),
+    ...(env.AGFN_INTRUSION === 'block' || env.AGFN_INTRUSION === 'off' ? { intrusion: env.AGFN_INTRUSION } : {}),
     ...(/^[1-9]\d*$/.test(env.AGFN_PLAID_MAX_ITEMS_PER_WORKSPACE ?? '')
       ? { plaidMaxItems: Number(env.AGFN_PLAID_MAX_ITEMS_PER_WORKSPACE) }
       : isHostedDb(env, env.DATABASE_URL ?? '')
@@ -237,6 +249,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ...(hostedUnlisted(env).length ? { unlisted: hostedUnlisted(env) } : {}),
     ...(hiddenConnectors(env).length ? { hidden: hiddenConnectors(env) } : {}),
     ...(env.AGFN_HOSTED === '1' ? { beta: [...HOSTED_BETA] } : {}),
+    // Etsy, if ever offered again, goes only to the small group of sellers we've agreed with Etsy (#28407714).
+    ...(env.AGFN_HOSTED === '1' ? { onlyWorkspaces: { etsy: workspaceList(env.AGFN_ETSY_WORKSPACES) } } : {}),
   }
 }
 
@@ -266,9 +280,21 @@ export function hostedUnlisted(env: NodeJS.ProcessEnv): string[] {
   // WooCommerce: built and fixture-tested, not yet run against a real store. Staging offers it (test connectors above);
   // live waits for AGFN_OFFER_WOOCOMMERCE=1.
   if (env.AGFN_OFFER_WOOCOMMERCE !== '1') out.push('woocommerce')
+  // BigCommerce: built from its docs, never run on a real store. BigCommerce can't show a token's scopes, so read-only rests
+  // on the steps we give and a GET-only client. Live waits for AGFN_OFFER_BIGCOMMERCE=1 (package README).
+  if (env.AGFN_OFFER_BIGCOMMERCE !== '1') out.push('bigcommerce')
+  // Amazon: built from Amazon's docs, never run on a real seller account, and the app is still Draft (only a self-authorized
+  // test seller can sign in). Live waits for AGFN_OFFER_AMAZON=1 after a real Draft test (package README).
+  if (env.AMAZON_SPAPI_CLIENT_ID && env.AGFN_OFFER_AMAZON !== '1') out.push('amazon')
+  // Etsy: built from Etsy's docs and spec, never run on a real shop, and the ledger_type names aren't documented. Live
+  // waits for AGFN_OFFER_ETSY=1 after a real shop syncs cleanly (package README).
+  if (env.ETSY_CLIENT_ID && env.AGFN_OFFER_ETSY !== '1') out.push('etsy')
   // RevenueCat: same, built and fixture-tested from its docs only. RevenueCat can't show a key's permissions either, so
   // read-only rests on the steps we give. Live waits for AGFN_OFFER_REVENUECAT=1.
   if (env.AGFN_OFFER_REVENUECAT !== '1') out.push('revenuecat')
+  // Zeffy: built from its docs, never run on a real organization. Zeffy has no read-only key, so read-only rests on a
+  // GET-only client. Live waits for AGFN_OFFER_ZEFFY=1 (package README).
+  if (env.AGFN_OFFER_ZEFFY !== '1') out.push('zeffy')
   // FreshBooks: built and fixture-tested from its docs only, and it posts to the books. Staging tries it first (test
   // connectors above); live waits for AGFN_OFFER_FRESHBOOKS=1 after a real connect there.
   if (env.FRESHBOOKS_CLIENT_ID && env.AGFN_OFFER_FRESHBOOKS !== '1') out.push('freshbooks')
@@ -319,6 +345,18 @@ export function hostedUnlisted(env: NodeJS.ProcessEnv): string[] {
   return out
 }
 
+/** A list of workspace ids, comma or space separated; anything that isn't an id is ignored. */
+export function workspaceList(v: string | undefined): string[] {
+  return [...new Set((v ?? '').split(/[\s,]+/).filter((id) => /^[0-9A-Za-z_-]{8,64}$/.test(id)))]
+}
+
+/** Connectors this workspace isn't on the operator's list for (config.onlyWorkspaces). No workspace: all of them. */
+export function notForWorkspace(config: Pick<ServerConfig, 'onlyWorkspaces'>, workspaceId: string | null | undefined): string[] {
+  return Object.entries(config.onlyWorkspaces ?? {})
+    .filter(([, ids]) => !workspaceId || !ids.includes(workspaceId))
+    .map(([key]) => key)
+}
+
 /** AGFN_HIDE_CONNECTORS: connector keys, comma or space separated (the operator's pause, e.g. a Plaid rollback). */
 export function hiddenConnectors(env: NodeJS.ProcessEnv): string[] {
   return [...new Set((env.AGFN_HIDE_CONNECTORS ?? '').toLowerCase().split(/[\s,]+/).filter((k) => /^[a-z0-9_-]+$/.test(k)))]
@@ -330,12 +368,15 @@ export function passkeysPossible(baseUrl: string): boolean {
   return u.protocol === 'https:' || u.hostname === 'localhost' || u.hostname.endsWith('.localhost')
 }
 
+/** This process's release for the job queue's release guard (jobs.ts): AGFN_RELEASE, else Fly's FLY_IMAGE_REF. */
+export const releaseOf = (env: Record<string, string | undefined>): string | undefined => env.AGFN_RELEASE?.trim() || env.FLY_IMAGE_REF?.trim() || undefined
+
 /**
  * Settings hosted Aggregate depends on to protect its users, checked at boot. "Hosted" is AGFN_HOSTED=1 or a Neon
  * database (rls.ts isHostedDb): a machine started without its fly.toml [env] block has no AGFN_HOSTED but still has
  * the database secret, and must refuse to start rather than run without these. Empty when all is well.
  */
-export function hostedConfigProblems(env: Record<string, string | undefined>, config: Pick<ServerConfig, 'databaseUrl' | 'baseUrl' | 'smtpUrl'>): string[] {
+export function hostedConfigProblems(env: Record<string, string | undefined>, config: Pick<ServerConfig, 'databaseUrl' | 'baseUrl' | 'smtpUrl' | 'clientIpHeader'> & Partial<Pick<ServerConfig, 'runWorker'>>): string[] {
   if (!isHostedDb(env, config.databaseUrl)) return []
   const out: string[] = []
   const base = new URL(config.baseUrl)
@@ -345,7 +386,16 @@ export function hostedConfigProblems(env: Record<string, string | undefined>, co
   const noMail = env.AGFN_CHALLENGE === '1' || env.AGFN_ROLE === 'demo'
   if (!noMail && !config.smtpUrl) out.push('SMTP_URL is not set: sign-in links would go to the server log instead of people')
   if (!noMail && !env.MAIL_FROM?.trim()) out.push('MAIL_FROM is not set: emails would come from an unverified address and not arrive')
-  if (!env.AGFN_PG_RLS_ROLE && !env.AGFN_PG_APP_URL) out.push("AGFN_PG_RLS_ROLE (or AGFN_PG_APP_URL) is not set: Neon's login role bypasses row-level security, so the policies would not apply")
+  // Every per-IP limit (sign-in codes, referrals, the demo gate) and the intrusion guard need the client's IP from the
+  // one header the proxy in front sets. Fly sets fly-client-ip (picked automatically when FLY_APP_NAME is set). Anywhere
+  // else, CLIENT_IP_HEADER must name the header the proxy overwrites (x-real-ip from Caddy): without it the limits
+  // would quietly stop working.
+  if (!config.clientIpHeader) out.push('CLIENT_IP_HEADER is not set: per-IP sign-in limits and the intrusion guard would be off. Set it to the header your proxy overwrites with the real client IP (x-real-ip from Caddy; fly-client-ip is automatic on Fly)')
+  // The release guard (jobs.ts) keeps an old release's worker from claiming jobs during a deploy's overlap, and is off
+  // without a release id. Fly sets FLY_IMAGE_REF on every machine; anywhere else the deploy must set AGFN_RELEASE (a
+  // fresh value per deploy, scripts/deploy-aws.sh), or the old and new workers would both claim jobs.
+  if (config.runWorker !== false && !releaseOf(env)) out.push('AGFN_RELEASE is not set: the job release guard would be off, so an old release could run jobs during a deploy. Set it to a fresh id per deploy (FLY_IMAGE_REF is automatic on Fly)')
+  if (!env.AGFN_PG_RLS_ROLE && !env.AGFN_PG_APP_URL) out.push("AGFN_PG_RLS_ROLE (or AGFN_PG_APP_URL) is not set: the database's login role owns the tables (and on Neon bypasses row-level security), so the policies would not apply")
   // Staging keeps test uploads on its scratch disk on purpose: AGFN_FILES_LOCAL=1 lives in fly.staging.toml's [env], so a
   // machine started without that block still refuses.
   if (!noMail && !env.FILES_S3_BUCKET && env.AGFN_FILES_LOCAL !== '1') out.push("FILES_S3_BUCKET is not set: uploaded documents would land on this machine's scratch disk")

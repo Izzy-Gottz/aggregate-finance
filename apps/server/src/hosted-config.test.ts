@@ -14,6 +14,10 @@ const FULL = {
   MAIL_FROM: 'Aggregate <no-reply@aggregate.finance>',
   AGFN_PG_RLS_ROLE: 'agfn_app',
   FILES_S3_BUCKET: 'aggregate-files',
+  // Fly sets this on every machine, which picks fly-client-ip as the client-IP header.
+  FLY_APP_NAME: 'aggregate-finance',
+  // Fly sets this per image too: the job release guard's id (config.ts releaseOf).
+  FLY_IMAGE_REF: 'registry.fly.io/aggregate-finance:deployment-01',
 }
 const problems = (env: Record<string, string | undefined>) => hostedConfigProblems(env, loadConfig(env))
 
@@ -22,6 +26,32 @@ describe('hosted config', () => {
     expect(problems(FULL)).toEqual([])
     expect(problems({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'postgres://u:p@localhost/agfn' })).toEqual([])
     expect(problems({ AUTH_SECRET: 'x'.repeat(40) })).toEqual([])
+  })
+
+  it('off Fly, a hosted worker refuses to start without AGFN_RELEASE: the job release guard would be off', () => {
+    const offFly = { ...FULL, FLY_APP_NAME: undefined, FLY_IMAGE_REF: undefined, CLIENT_IP_HEADER: 'x-real-ip' }
+    expect(problems(offFly).join()).toMatch(/AGFN_RELEASE is not set/)
+    expect(problems({ ...offFly, AGFN_RELEASE: '  ' }).join()).toMatch(/AGFN_RELEASE is not set/)
+    expect(problems({ ...offFly, AGFN_RELEASE: 'aws-20261110-1' })).toEqual([])
+    // A web-only process claims no jobs, so it needs no release id.
+    expect(hostedConfigProblems(offFly, { ...loadConfig(offFly), runWorker: false })).toEqual([])
+    // On Fly nothing changes: FLY_IMAGE_REF is the release.
+    expect(problems(FULL)).toEqual([])
+    // Self-hosted is never checked.
+    expect(problems({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'postgres://u:p@localhost/agfn' })).toEqual([])
+  })
+
+  it('off Fly, hosted refuses to start without CLIENT_IP_HEADER: the per-IP limits would quietly be off', () => {
+    const offFly = { ...FULL, FLY_APP_NAME: undefined }
+    expect(problems(offFly).join()).toMatch(/CLIENT_IP_HEADER is not set/)
+    expect(problems({ ...offFly, AGFN_HOSTED: '1', DATABASE_URL: 'postgres://u:p@db.abc.us-east-1.rds.amazonaws.com/agfn' }).join()).toMatch(/CLIENT_IP_HEADER/)
+    // Caddy on AWS overwrites X-Real-IP with the peer: naming it is enough.
+    expect(problems({ ...offFly, CLIENT_IP_HEADER: 'x-real-ip' })).toEqual([])
+    expect(loadConfig({ ...offFly, CLIENT_IP_HEADER: 'x-real-ip' }).clientIpHeader).toBe('x-real-ip')
+    // On Fly nothing changes: fly-client-ip is still chosen without the setting.
+    expect(loadConfig(FULL).clientIpHeader).toBe('fly-client-ip')
+    // Self-hosted is still only warned at boot, never refused.
+    expect(problems({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'postgres://u:p@localhost/agfn' })).toEqual([])
   })
 
   it('each missing setting is named, on a Neon database even without AGFN_HOSTED', () => {
@@ -37,7 +67,7 @@ describe('hosted config', () => {
     expect(without('BASE_URL').join()).toMatch(/BASE_URL/)
     expect(problems({ ...FULL, BASE_URL: 'http://app.aggregate.finance' }).join()).toMatch(/BASE_URL/)
     // AGFN_HOSTED=1 on any database counts as hosted too.
-    expect(problems({ AUTH_SECRET: 'x'.repeat(40), AGFN_HOSTED: '1' }).length).toBe(5)
+    expect(problems({ AUTH_SECRET: 'x'.repeat(40), AGFN_HOSTED: '1' }).length).toBe(7)
   })
 
   it('boot refuses the incident shape: only the secrets (Neon URL), no [env] block', async () => {

@@ -50,6 +50,15 @@ export interface SyncEngineDeps {
   afterSync?: Array<(workspaceId: string, connectionId: string) => Promise<void>>
   /** Runs after a sync fails (error or needs_reauth; not a rate-limit reschedule), with the error. Errors are logged, never fatal. */
   afterFailure?: Array<(workspaceId: string, connectionId: string, error?: unknown) => Promise<void>>
+  /**
+   * Cap how many connections sync at once in this process (default: no cap). A sync runs CPU-light but holds a database
+   * connection for its transactions; a burst (the hourly sync.all, a post-deploy resync of every connection) can put
+   * more in flight than the pool can serve, so each one waits tens of seconds to check out — the whole burst crawls on
+   * a small pool. The cap bounds how many race for the pool at once; the rest queue here, holding nothing while they
+   * wait. Set it at or below the pool size. The per-connection and cross-machine serialization (grantLocks, leased) is
+   * unchanged; a sync waits here only after its turn in those, and holds no slot while waiting for them.
+   */
+  maxConcurrentSyncs?: number
 }
 
 export type RefreshOutcome =
@@ -94,6 +103,24 @@ export class SyncEngine {
   private d: SyncEngineDeps
   constructor(deps: SyncEngineDeps) {
     this.d = deps
+    this.#syncSlots = deps.maxConcurrentSyncs && deps.maxConcurrentSyncs > 0 ? deps.maxConcurrentSyncs : Infinity
+  }
+
+  // A plain counting semaphore over concurrent syncs (maxConcurrentSyncs; Infinity = no cap). A waiter holds no slot,
+  // so a sync blocked on its grant lock or lease doesn't occupy one.
+  #syncSlots: number
+  #syncWaiters: Array<() => void> = []
+  async #acquireSyncSlot(): Promise<void> {
+    if (this.#syncSlots > 0) {
+      this.#syncSlots--
+      return
+    }
+    await new Promise<void>((resolve) => this.#syncWaiters.push(resolve))
+  }
+  #releaseSyncSlot(): void {
+    const next = this.#syncWaiters.shift()
+    if (next) next()
+    else this.#syncSlots++
   }
 
   /** Queue a sync; at most one queued/running per connection. */
@@ -130,10 +157,18 @@ export class SyncEngine {
     return queued.length
   }
 
-  /** A records-only connection is up to date by definition: active, no error, synced now (so health never calls it stale). */
+  /**
+   * A records-only connection has no live source to go stale against, so we keep it active and clear any error. For one
+   * that has synced before, we keep its success time current (nothing to re-fetch). But a never-synced one has no data
+   * yet, so we do NOT invent a last_success_at — stamping "synced now" made freshness claim data that isn't there. We
+   * record that we looked (last_sync_at) and leave last_success_at null until it actually has something.
+   */
   private async markHeldUpToDate(ids: string[]): Promise<void> {
     const now = nowIso()
-    await this.d.db.updateTable('connections').set({ status: 'active', last_error: null, last_sync_at: now, last_success_at: now }).where('id', 'in', ids).where('status', 'in', ['active', 'error']).execute()
+    // Synced before: keep its success time current (nothing to re-fetch).
+    await this.d.db.updateTable('connections').set({ status: 'active', last_error: null, last_sync_at: now, last_success_at: now }).where('id', 'in', ids).where('status', 'in', ['active', 'error']).where('last_success_at', 'is not', null).execute()
+    // Never synced: record that we looked, but don't invent a success time it never had.
+    await this.d.db.updateTable('connections').set({ status: 'active', last_error: null, last_sync_at: now }).where('id', 'in', ids).where('status', 'in', ['active', 'error']).where('last_success_at', 'is', null).execute()
   }
 
   /**
@@ -355,7 +390,17 @@ export class SyncEngine {
     const key = grant ? `${peek!.workspace_id}:${grant}` : `conn:${connectionId}`
     const prev = this.grantLocks.get(key) ?? Promise.resolve()
     // In this process first, then a lease row other machines see too (launch runs several; a deploy overlaps two).
-    const run = prev.catch(() => undefined).then(() => (peek ? this.leased(peek.workspace_id, key, () => this.syncOne(connectionId)) : this.syncOne(connectionId)))
+    const run = prev.catch(() => undefined).then(async () => {
+      if (!peek) return this.syncOne(connectionId)
+      // Cap concurrent syncs here, after the grant lock, so a burst (sync.all, a post-deploy resync) can't put more in
+      // flight than maxConcurrentSyncs at once. The slot is held only for the actual run, never while queued above.
+      await this.#acquireSyncSlot()
+      try {
+        return await this.leased(peek.workspace_id, key, () => this.syncOne(connectionId))
+      } finally {
+        this.#releaseSyncSlot()
+      }
+    })
     this.grantLocks.set(key, run)
     try {
       return await run
@@ -493,7 +538,14 @@ export class SyncEngine {
       await this.settle(row.workspace_id, row.id)
       await db
         .updateTable('connections')
-        .set({ status: 'active', last_success_at: nowIso(), last_error: null, warnings_json: warnings.size ? JSON.stringify([...warnings].slice(0, 20)) : null })
+        .set({
+          status: 'active',
+          last_success_at: nowIso(),
+          last_error: null,
+          warnings_json: warnings.size ? JSON.stringify([...warnings].slice(0, 20)) : null,
+          // Kept from the last sync when this one's pages didn't say (a SimpleFIN pass that read no accounts).
+          ...(result.freshness ? { freshness_json: JSON.stringify(result.freshness) } : {}),
+        })
         .where('id', '=', row.id)
         // Disconnected or paused while this sync was in flight: that stands (a disconnected Item must not come back).
         .where('status', 'not in', ['disconnected', 'paused'])
@@ -578,23 +630,40 @@ export class SyncEngine {
         .execute()
       return
     }
-    // Same real account already connected through another source (institution + mask): mark as duplicate. Only a
-    // live twin counts: a closed account, or one on a disconnected connection (a re-linked bank), isn't a source.
+    // Same real account already connected through another source: mark as duplicate so it counts once. The mask plus
+    // the account type are the backbone of the match; the institution is a free-text label that drifts between sources
+    // ("Mercury" vs "Mercury Bank, N.A."), so it decides between candidates but doesn't gate the match. Only a live
+    // twin counts: a closed account, or one on a disconnected connection (a re-linked bank), isn't a source.
+    // We auto-link only when the answer is unambiguous — an exact institution match, or a single candidate. Two or
+    // more candidates with no exact institution match are left separate here; the possible-duplicate flag (3b) is
+    // what surfaces those, since a wrong auto-merge would hide a real, distinct account.
     let duplicateOf: string | null = null
-    if (e.mask && e.institution) {
-      const twin = await db
+    if (e.mask) {
+      const candidates = await db
         .selectFrom('accounts as a')
         .innerJoin('connections as c', 'c.id', 'a.connection_id')
-        .select('a.id')
+        .select(['a.id', 'a.institution'])
         .where('a.workspace_id', '=', workspaceId)
         .where('a.mask', '=', e.mask)
-        .where('a.institution', '=', e.institution)
         .where('a.account_type', '=', e.accountType)
         .where('a.duplicate_of', 'is', null)
         .where('a.closed_at', 'is', null)
         .where('c.status', '!=', 'disconnected')
-        .executeTakeFirst()
-      duplicateOf = twin?.id ?? null
+        .execute()
+      // Auto-link only when both sides carry an institution label and they agree. A wrong merge is the dangerous
+      // direction — the duplicate_of account drops out of cash, silently hiding real money — so a missing label on
+      // either side (a bare statement upload, a connector that omits it) is never enough on a four-digit mask alone.
+      // A missed merge stays visible: the possible-duplicate flag (3b) surfaces it. Within that, an exact label match
+      // links decisively; otherwise link a single candidate that survives dropping clearly-different banks, and leave
+      // two or more survivors — ambiguous — for 3b.
+      if (candidates.length > 0 && e.institution) {
+        const exact = candidates.find((c) => c.institution === e.institution)
+        if (exact) duplicateOf = exact.id
+        else {
+          const compatible = candidates.filter((c) => c.institution && institutionsCompatible(e.institution, c.institution))
+          if (compatible.length === 1) duplicateOf = compatible[0]!.id
+        }
+      }
     }
     // A personal account (an IRA, an HSA, a mortgage) arriving on a company's connection isn't assumed to be the
     // company's: it waits for "which company?" (the connect screen suggests Personal).
@@ -720,3 +789,16 @@ const SYNC_LEASE_MS = 90_000
 /** How often a sync waiting on another machine's lease looks again. */
 const SYNC_LEASE_POLL_MS = 250
 const CASH_TYPES: ReadonlySet<string> = new Set(['depository', 'cash_on_hand', 'processor_balance'])
+
+/** Whether two free-text institution labels could name the same bank. A missing label can't contradict, so it's
+ *  compatible with anything. Otherwise we compare on letters and digits only (dropping spaces, case and punctuation):
+ *  equal, or one a prefix of the other, counts as drift of the same name ("Mercury" ⊂ "Mercury Bank, N.A."). Two
+ *  present, clearly different labels ("Chase" vs "Wells Fargo") are taken as different banks — the mask alone (four
+ *  digits) is too weak to merge on, so we keep them separate and let the possible-duplicate flag surface a real match. */
+export function institutionsCompatible(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return true
+  const x = a.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const y = b.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (!x || !y) return true
+  return x === y || x.startsWith(y) || y.startsWith(x)
+}

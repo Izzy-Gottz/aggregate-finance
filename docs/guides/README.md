@@ -28,7 +28,7 @@ Agent and assistant apps that take a pasted MCP link:
 
 - [Dust](connect-dust.md): a workspace admin adds it once
 - [Gumloop](connect-gumloop.md)
-- [Le Chat (Mistral)](connect-le-chat.md)
+- [Mistral Vibe (formerly Le Chat)](connect-le-chat.md)
 - [Lindy](connect-lindy.md)
 - [Notion AI](connect-notion.md): Business and Enterprise
 - [Perplexity](connect-perplexity.md): Pro, Max and Enterprise

@@ -5,8 +5,11 @@
 /** Provider prefixes whose keys may never be present on the challenge server. Plaid is allowed in sandbox only. */
 export const CHALLENGE_FORBIDDEN_PREFIXES = [
   'STRIPE', 'SQUARE', 'QUICKBOOKS', 'XERO', 'PAYPAL', 'WISE', 'MERCURY', 'RAMP', 'BREX', 'FINCH', 'JUSTWORKS', 'SHOPIFY',
-  'BILL', 'DEEL', 'PADDLE', 'POLAR', 'LEMONSQUEEZY', 'RIPPLING', 'APPSTORE', 'GOOGLEPLAY', 'GUMROAD', 'LIGHTSPEED', 'SUMUP', 'ADSENSE', 'YOUTUBE', 'PINTEREST', 'SQUARESPACE', 'OWNERREZ', 'WHOP', 'MOLLIE', 'WIX', 'SIMPLEFIN', 'CARTA', 'GOOGLE', 'APPLE', 'FRESHBOOKS', 'PATREON', 'HARVEST',
+  'BILL', 'DEEL', 'PADDLE', 'POLAR', 'LEMONSQUEEZY', 'RIPPLING', 'APPSTORE', 'GOOGLEPLAY', 'GUMROAD', 'LIGHTSPEED', 'SUMUP', 'ADSENSE', 'YOUTUBE', 'PINTEREST', 'SQUARESPACE', 'OWNERREZ', 'WHOP', 'MOLLIE', 'WIX', 'BIGCOMMERCE', 'AMAZON', 'ETSY', 'SIMPLEFIN', 'CARTA', 'GOOGLE', 'APPLE', 'FRESHBOOKS', 'PATREON', 'HARVEST',
   'RESEND', 'SMTP', 'BACKUP_S3', 'AGFN_OPENAI_APPS_CHALLENGE', 'AGFN_REVIEWER_LINKS',
+  // AI-provider keys: the player brings their own AI (it drives the MCP from their side); the challenge server itself
+  // holds none, so a stray ANTHROPIC_*/OPENAI_* key must refuse boot like any other real credential.
+  'ANTHROPIC', 'OPENAI',
 ] as const
 
 /** Hosts the challenge may never serve as (the real service). */

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Kysely } from 'kysely'
 import { connectPglite, migrateToLatest, type CoreTables } from '@agfn/db'
-import { createAuth, logAuth, migrateAuth, type AuthConfig } from './index.ts'
+import { createAuth, logAuth, migrateAuth, TRUSTED_CLIENT_IP_HEADER, type AuthConfig } from './index.ts'
 
 describe('auth on Postgres (PGlite)', () => {
   it('migrates auth tables and signs in by magic link', async () => {
@@ -53,7 +53,9 @@ describe("Better Auth's own rate limiter on Postgres (PGlite)", () => {
       expect(warns.filter((w) => w.includes('different type'))).toEqual([])
 
       const auth = createAuth(cfg)
-      const hit = (ip: string) => auth.handler(new Request('http://localhost:8787/api/auth/get-session', { headers: { origin: 'http://localhost:8787', 'fly-client-ip': ip } }))
+      // Better Auth reads the canonical header the server resolves and sets (TRUSTED_CLIENT_IP_HEADER), not the raw
+      // proxy header, so its per-client limiter works behind Cloudflare → Fly without trusting a forgeable header.
+      const hit = (ip: string) => auth.handler(new Request('http://localhost:8787/api/auth/get-session', { headers: { origin: 'http://localhost:8787', [TRUSTED_CLIENT_IP_HEADER]: ip } }))
       const statuses: number[] = []
       for (let i = 0; i < 62; i++) statuses.push((await hit('203.0.113.9')).status)
       expect(statuses.slice(0, 60).every((s) => s === 200)).toBe(true)

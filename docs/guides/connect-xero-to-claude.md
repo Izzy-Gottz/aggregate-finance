@@ -25,7 +25,7 @@ Xero doesn't give apps access to Xero Payroll or expense claims, so wages, payro
 ## Set it up
 
 ### 1. Connect Xero to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Xero**, sign in to Xero, choose the organisation, and allow access.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Xero**, sign in to Xero, choose the organisation, and allow access.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →

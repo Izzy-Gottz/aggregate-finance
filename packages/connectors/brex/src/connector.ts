@@ -174,10 +174,11 @@ export function createBrexConnector(opts: BrexConnectorOptions, deps: ConnectorD
     for (let i = 0; i < 100; i++) {
       const p = await c.get<BrexPage<BrexCashAccount>>('/v2/accounts/cash', cursor ? { cursor } : undefined)
       out.push(...p.items)
-      if (!p.next_cursor) break
+      if (!p.next_cursor) return out
       cursor = p.next_cursor
     }
-    return out
+    // The provider still has pages after the cap: stop visibly rather than record a partial account list as complete.
+    throw new ConnectorError('permanent', 'Brex returned more cash accounts than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: 'brex', forUser: true })
   }
 
   async function accountsPage(conn: ConnectionRef, state: BrexCursor | null): Promise<SyncResult> {

@@ -93,6 +93,8 @@ describe('wise mapping', () => {
       accountExternalId: '2002:USD', date: '2026-10-01', amount: { minor: -2540, currency: 'USD' }, status: 'posted',
       counterparty: 'Notion Labs', categoryHint: 'CARD:Computer Network Services', linkRefs: { wise_reference: 'CARD-249281' },
     }))
+    // The row carries the provider instant so the engine dates it in the workspace tz (Wise sends a real UTC moment).
+    expect(txn(events, 'CARD-249281')!.at).toMatch(/^2026-10-01T\d\d:\d\d/)
     expect(txn(events, 'TRANSFER-554433')).toMatchObject({ amount: { minor: 150000 }, counterparty: 'Customer Co', rawText: 'Received money from Customer Co with reference INV-1001 | INV-1001' })
     expect(txn(events, 'BALANCE-778899:USD')).toMatchObject({ accountExternalId: '2002:USD', amount: { minor: -11000, currency: 'USD' }, linkRefs: { transfer: 'BALANCE-778899' } })
     expect(txn(events, 'BALANCE-778899:EUR')).toMatchObject({ accountExternalId: '2002:EUR', amount: { minor: 10000, currency: 'EUR' }, linkRefs: { transfer: 'BALANCE-778899' } })

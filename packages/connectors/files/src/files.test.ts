@@ -145,7 +145,7 @@ describe('Chase checking CSV', () => {
       }),
     ])
     const [snap] = one<BalanceSnapshot>(r.events, 'balance.snapshot')
-    expect(snap).toMatchObject({ externalId: 'file_chk@2026-01-08', current: { minor: 400425, currency: 'USD' }, at: '2026-01-08T23:59:59.000Z' })
+    expect(snap).toMatchObject({ externalId: 'file_chk@2026-01-08', current: { minor: 400425, currency: 'USD' }, at: '2026-01-08T12:00:00.000Z' })
   })
 
   it('stores each row raw with file hash, line number and original cells', async () => {
@@ -383,7 +383,8 @@ describe('OFX 2.x XML', () => {
 
   it('parses OFX dates with offsets', () => {
     expect(parseOfxDate('20260131120000.000[-5:EST]')).toEqual({ date: '2026-01-31', at: '2026-01-31T17:00:00.000Z' })
-    expect(parseOfxDate('20260131')).toEqual({ date: '2026-01-31', at: '2026-01-31T00:00:00.000Z' })
+    // No time: the calendar day, anchored at midday UTC so no workspace zone moves it.
+    expect(parseOfxDate('20260131')).toEqual({ date: '2026-01-31', at: '2026-01-31T12:00:00.000Z' })
     expect(parseOfxDate('20260131000000[+5.30:IST]').at).toBe('2026-01-30T18:30:00.000Z')
     expect(() => parseOfxDate('Jan 31')).toThrow(ConnectorError)
   })
@@ -830,7 +831,7 @@ describe('camt.053 (ISO 20022 XML)', () => {
       ['EUR', '2026-09-30', { minor: 100_000, currency: 'EUR' }],
     ])
     expect(r.balanceCheck.map((c) => [c.status, c.opening?.minor, c.closing?.minor])).toEqual([['ok', 500_000, 463_025], ['ok', -15_000, 85_000], ['ok', 0, 0]])
-    expect(one<BalanceSnapshot>(r.events, 'balance.snapshot').map((b) => b.at)).toEqual(['2026-09-30T21:59:59.000Z', '2026-09-30T23:59:59.000Z', '2026-09-30T23:59:59.000Z'])
+    expect(one<BalanceSnapshot>(r.events, 'balance.snapshot').map((b) => b.at)).toEqual(['2026-09-30T21:59:59.000Z', '2026-09-30T12:00:00.000Z', '2026-09-30T12:00:00.000Z'])
   })
 
   it('a single-account file posts into the chosen account when asked (ofxIntoFileAccount)', async () => {

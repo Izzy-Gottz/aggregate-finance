@@ -1,0 +1,8 @@
+// www.aggregate.finance → apex redirect. Deploy from this folder: npx wrangler@4 deploy (rarely needed).
+{
+  "name": "aggregate-www-redirect",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "routes": [{ "pattern": "www.aggregate.finance", "custom_domain": true }]
+}

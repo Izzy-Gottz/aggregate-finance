@@ -11,6 +11,7 @@ import { createApp } from './app.ts'
 import { loadConfig } from './config.ts'
 import { ledgerFor, mcpFor } from './modules.ts'
 import { financeFor } from './finance.ts'
+import { adoptStatementAccounts } from './retire.ts'
 
 const BASE = 'http://localhost:8787'
 let booted: Booted
@@ -137,12 +138,77 @@ describe('uploaded statements never count an account twice', () => {
     expect(await (await get(`/api/documents/${out.documentId}`)).json()).toMatchObject({ state: 'imported' })
   })
 
-  it('matches OFX/QFX statements to an account by its number', async () => {
+  // The account we sync is "Plaid Checking ••0000" at First Platypus Bank.
+  const ofxFor = (org: string) =>
+    `OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\n\n<OFX>${org ? `<SIGNONMSGSRSV1><SONRS><FI><ORG>${org}</ORG></FI></SONRS></SIGNONMSGSRSV1>` : ''}<BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>011000015<ACCTID>9876540000<ACCTTYPE>CHECKING</BANKACCTFROM><BANKTRANLIST><DTSTART>20261001<DTEND>20261010<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261005<TRNAMT>-42.17<FITID>f1<NAME>Corner Hardware</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>1477.83<DTASOF>20261010</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`
+
+  it('matches an OFX/QFX to an account when the file names the same bank', async () => {
     const { upload, cash } = await setup(true)
-    const ofx = `OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\n\n<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>011000015<ACCTID>9876540000<ACCTTYPE>CHECKING</BANKACCTFROM><BANKTRANLIST><DTSTART>20261001<DTEND>20261010<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261005<TRNAMT>-42.17<FITID>f1<NAME>Corner Hardware</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>1477.83<DTASOF>20261010</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`
-    const out = (await (await upload('checking.ofx', ofx)).json()) as { state: string; message: string }
+    const out = (await (await upload('checking.ofx', ofxFor('First Platypus Bank'))).json()) as { state: string; message: string }
     expect(out).toMatchObject({ state: 'imported', message: 'Imported 1 row.' })
     expect(await cash()).toBe(152_000)
+  })
+
+  it('an OFX with no bank name is not merged into a synced account by its last 4 alone (money stays in cash)', async () => {
+    const { upload, cash } = await setup(true)
+    const before = await cash()
+    // Same ACCTID ••0000 as the synced account, but no <FI><ORG> — we can't confirm it's that account, so we ask
+    // instead of silently marking it a duplicate (which hid the upload's money). 43's exact case.
+    const out = (await (await upload('mystery.ofx', ofxFor(''))).json()) as { documentId: string; state: string; message: string }
+    expect(out).toMatchObject({ state: 'needs_account', message: 'Which account is this statement for?' })
+    expect(await cash()).toBe(before)
+    // Nothing was linked as a duplicate behind the person's back.
+    const dupes = await booted.handle.db.selectFrom('accounts').select('id').where('duplicate_of', 'is not', null).execute()
+    expect(dupes).toHaveLength(0)
+  })
+
+  const bankConnId = (wsId: string) => booted.handle.db.selectFrom('connections').select('id').where('connector_key', '=', 'fakebank').where('workspace_id', '=', wsId).executeTakeFirstOrThrow().then((r) => r.id)
+  const dupeIds = () => booted.handle.db.selectFrom('accounts').select('id').where('duplicate_of', 'is not', null).execute().then((rs) => rs.map((r) => r.id))
+
+  it("a no-bank-name OFX chosen 'new' is never adopted by a later bank sync (43's second path; money stays in cash)", async () => {
+    const { cookie, ws, upload, cash } = await setup(true)
+    // Explicitly choose "new": a separate account, same ••0000 as the synced Plaid account but no <ORG>.
+    const up = (await (await upload('mystery.ofx', ofxFor(''))).json()) as { documentId: string; state: string }
+    expect(up.state).toBe('needs_account')
+    expect(await (await app.request(`/api/documents/${up.documentId}/account`, post(cookie, { accountId: 'new' }))).json()).toMatchObject({ state: 'imported' })
+    const withUpload = await cash()
+    const dupesBefore = await dupeIds()
+    // adoptStatementAccounts runs on every bank sync. It must NOT adopt the account the person kept separate, by last 4
+    // alone, and hide its balance (the bug). 43's exact sequence.
+    expect(await adoptStatementAccounts(booted.services, ws.workspaceId, await bankConnId(ws.workspaceId))).toBe(0)
+    expect(await dupeIds()).toEqual(dupesBefore)
+    expect(await cash()).toBe(withUpload)
+
+    // The lock is the only thing holding it apart: clear the "keep separate" marker and the same sync now adopts it by
+    // last 4 (the ordinary "statement first, bank later" behaviour still works — it was the explicit choice we honoured).
+    await booted.handle.db.deleteFrom('settings').where('key', 'like', 'stmt:keep_separate:%').execute()
+    expect(await adoptStatementAccounts(booted.services, ws.workspaceId, await bankConnId(ws.workspaceId))).toBe(1)
+    expect((await dupeIds()).length).toBe(1)
+    expect(await cash()).toBe(152_000)
+  })
+
+  it('a date-only month-end balance stays on its day in New York (OFX DTASOF 20261031 → Oct 31)', async () => {
+    const { ws, upload } = await setup(false, 'tz-ny@example.com')
+    const db = booted.services.db as unknown as { updateTable(t: string): { set(v: object): { where(a: string, b: string, c: string): { execute(): Promise<unknown> } } } }
+    await db.updateTable('workspaces').set({ time_zone: 'America/New_York' }).where('id', '=', ws.workspaceId).execute()
+    const ofx = `OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\n\n<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>011000015<ACCTID>5550001031<ACCTTYPE>CHECKING</BANKACCTFROM><BANKTRANLIST><DTSTART>20261001<DTEND>20261031<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261031<TRNAMT>-42.17<FITID>m1<NAME>Corner Hardware</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>1477.83<DTASOF>20261031</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`
+    expect(((await (await upload('oct.ofx', ofx)).json()) as { state: string }).state).toBe('imported')
+    const engine = booted.services.ledger as unknown as { store: { listRecords(ws: string, q: object): Promise<Array<{ date: string; externalId: string }>> } }
+    const snaps = await engine.store.listRecords(ws.workspaceId, { eventTypes: ['balance.snapshot'] })
+    expect(snaps.map((r) => [r.date, r.externalId.slice(-10)])).toEqual([['2026-10-31', '2026-10-31']])
+  })
+
+  it('a date-only camt.053 closing balance stays on its day in Berlin (2026-10-31 → Oct 31, not Nov 1)', async () => {
+    const { ws, upload } = await setup(false, 'tz-berlin@example.com')
+    const db = booted.services.db as unknown as { updateTable(t: string): { set(v: object): { where(a: string, b: string, c: string): { execute(): Promise<unknown> } } } }
+    await db.updateTable('workspaces').set({ time_zone: 'Europe/Berlin' }).where('id', '=', ws.workspaceId).execute()
+    const camt =
+      `<?xml version="1.0"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02"><BkToCstmrStmt><Stmt><Acct><Id><IBAN>DE89 3704 0044 0532 0130 00</IBAN></Id><Ccy>EUR</Ccy></Acct>` +
+      `<Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">1477.83</Amt><CdtDbtInd>CRDT</CdtDbtInd><Dt><Dt>2026-10-31</Dt></Dt></Bal>` +
+      `<Ntry><Amt Ccy="EUR">42.17</Amt><CdtDbtInd>DBIT</CdtDbtInd><Sts>BOOK</Sts><BookgDt><Dt>2026-10-30</Dt></BookgDt><AcctSvcrRef>B1</AcctSvcrRef></Ntry></Stmt></BkToCstmrStmt></Document>`
+    expect(((await (await upload('oktober.xml', camt)).json()) as { state: string }).state).toBe('imported')
+    const engine = booted.services.ledger as unknown as { store: { listRecords(ws: string, q: object): Promise<Array<{ date: string }>> } }
+    expect((await engine.store.listRecords(ws.workspaceId, { eventTypes: ['balance.snapshot'] })).map((r) => r.date)).toEqual(['2026-10-31'])
   })
 
   it('matches camt.053 statements by IBAN; the same file twice adds nothing; entity tricks are refused', async () => {
@@ -169,7 +235,7 @@ describe('uploaded statements never count an account twice', () => {
     const { upload } = await setup(false)
     const fixture = (n: string) => readFileSync(new URL(`../../../packages/connectors/files/fixtures/redacted/${n}`, import.meta.url), 'utf8')
     expect(((await (await upload('jan.qfx', fixture('chase-checking.qfx'))).json()) as { message: string }).message).toBe('Imported 4 rows.')
-    expect(((await (await upload('jan-again.qfx', fixture('chase-checking-redownload.qfx'))).json()) as { message: string }).message).toBe('Imported 5 rows.')
+    expect(((await (await upload('jan-again.qfx', fixture('chase-checking-redownload.qfx'))).json()) as { message: string }).message).toBe('Imported 1 new row (4 already here).')
     const db = booted.services.db as unknown as import('kysely').Kysely<Record<string, Record<string, unknown>>>
     const live = await db.selectFrom('ledger_records').select('external_id').where('event_type', '=', 'txn.upsert').where('status', '!=', 'void').execute()
     expect(live).toHaveLength(5)
@@ -329,7 +395,13 @@ describe('a month of statements from several banks, with no bank connected', () 
     // The same files again, and a later Chase export that overlaps the first: nothing counts twice.
     for (const [name, body] of [['Chase.csv', CHASE_CHECKING], ['Chase card.csv', CHASE_CARD], ['activity.csv', AMEX], ['wells.qbo', WELLS_QBO]] as const) await upload(name, body)
     const later = CHASE_CHECKING.replace('Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n', 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,10/09/2026,"SAMPLE INSURANCE CO",-120.00,ACH_DEBIT,7668.12,,\n')
-    expect(((await (await upload('Chase (1).csv', later)).json()) as { state: string }).state).toBe('imported')
+    const overlap = (await (await upload('Chase (1).csv', later)).json()) as { state: string; message: string }
+    expect(overlap.state).toBe('imported')
+    expect(overlap.message).toMatch(/^Imported 1 new row \(\d+ already here\)\.$/)
+    expect(await rows()).toBe(before + 1)
+    // The same rows once more, in a file with different bytes: nothing new, and it says so.
+    const again = (await (await upload('Chase (2).csv', later + '\n')).json()) as { state: string; message: string }
+    expect(again.message).toMatch(/^Nothing new: all \d+ rows were already here\.$/)
     expect(await rows()).toBe(before + 1)
     expect((await review()).length).toBe(1)
   })

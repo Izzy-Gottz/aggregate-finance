@@ -1,0 +1,24 @@
+// Cloudflare Workers config for aggregate.finance (static assets, plus a small script for video Range requests).
+// Deploy from this folder: npx wrangler@4 deploy
+// Replaces Vercel project aggregate-site (moved 2026-11-06, see ~/paperclip-fly/reports/vercel-to-cloudflare-2026-11-06.md §5.1).
+// Headers live in _headers, redirects in _redirects. www.aggregate.finance → apex is the separate Worker in ../site-www-redirect.
+{
+  "name": "aggregate-site",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  // Worker Custom Domain (Cloudflare creates the proxied DNS record). Cut over from Vercel 2026-11-06.
+  "routes": [{ "pattern": "aggregate.finance", "custom_domain": true }],
+  // Tiny script, used only for video files: adds HTTP Range (206) support, which static assets lack and Safari needs.
+  "main": "../site-worker/range.js",
+  // Runs on every deploy: writes ../site-worker/sizes.json (video byte sizes for Content-Range).
+  "build": { "command": "node ../site-worker/sizes.mjs" },
+  "assets": {
+    "binding": "ASSETS",
+    "run_worker_first": ["/*.mp4"],
+    "directory": ".",
+    // /trust serves trust.html, /blog/same-money-three-times serves its .html (replaces the Vercel rewrites).
+    "html_handling": "auto-trailing-slash",
+    // There is no 404.html; unknown paths get a plain 404.
+    "not_found_handling": "none"
+  }
+}

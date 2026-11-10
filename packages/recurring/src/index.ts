@@ -68,6 +68,8 @@ export function createRecurring(reader: Pick<FinanceReader, 'searchTransactions'
       const res = await reader.searchTransactions(scope, { from: addDays(asOf, -LOOKBACK_DAYS), to: asOf, direction: 'out', status: 'posted', limit: PAGE, ...(cursor ? { cursor } : {}) })
       for (const t of res.rows as TxnView[]) {
         if (t.kind && NOT_BILLS.has(t.kind)) continue
+        // A processor's cut of a sale repeats when the sale does (a customer's yearly charge), but it's not a bill.
+        if (t.kind === 'fee' && t.category === 'processor_fees') continue
         if (t.links.some((l) => l.type === 'payroll_settlement' || l.type === 'transfer' || l.type === 'card_payment')) continue
         out.push({ id: t.id, entityId: t.entityId, date: t.date, minor: t.amount.minor, currency: t.amount.currency, counterparty: t.counterparty ?? null })
       }

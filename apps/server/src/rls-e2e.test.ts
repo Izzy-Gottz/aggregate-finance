@@ -17,6 +17,7 @@ const outbox: Array<{ to: string; text: string }> = []
 
 beforeAll(async () => {
   process.env.AGFN_PG_RLS = '1'
+  process.env.AGFN_PEOPLE_RLS = '1' // exercise the people policy end to end (it ships gated behind this flag)
   const db = await connectPglite<CoreTables>({ wrapPool: (p) => rlsPool(exclusivePool(p), { role: 'agfn_app' }) })
   await withBypass('test', async () => {
     await migrateToLatest(db.db)
@@ -28,6 +29,7 @@ beforeAll(async () => {
 }, 120_000)
 afterAll(async () => {
   delete process.env.AGFN_PG_RLS
+  delete process.env.AGFN_PEOPLE_RLS
   await booted?.shutdown()
 })
 
@@ -134,7 +136,7 @@ describe('row-level security prototype, end to end', () => {
     expect((await app.request('/api/demo', req(leaver, 'POST'))).status).toBeLessThan(300)
     const db = booted.handle.db
     const staysWs = ((await (await app.request('/api/me', { headers: { cookie: owner } })).json()) as { workspaceId: string }).workspaceId
-    const leaverId = (await db.selectFrom('people').select('id').where('email', '=', 'leaver@example.com').executeTakeFirstOrThrow()).id
+    const leaverId = (await withBypass('test', () => db.selectFrom('people').select('id').where('email', '=', 'leaver@example.com').executeTakeFirstOrThrow())).id
     await withWorkspace(staysWs, () => db.insertInto('memberships').values({ id: newId(), workspace_id: staysWs, person_id: leaverId, role: 'finance', grid_json: null, expires_at: null, invited_by: null, created_at: nowIso(), revoked_at: null }).execute())
     // Invite records are closed to the app role, so these go from the owner side (a silent denial would leave the hashes).
     const friends = db as never as Kysely<any>

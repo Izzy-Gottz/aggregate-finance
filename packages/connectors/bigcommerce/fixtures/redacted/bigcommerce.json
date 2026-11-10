@@ -1,0 +1,38 @@
+{
+  "_note": "Hand-built from BigCommerce's public API reference (List Orders v2, Get Order v2, List Refunds v3, Get Store Information v2, List Currencies v2). NOT recorded from a real store. Totals are worked by hand in bigcommerce.test.ts. Buyer and owner fields are present, with example.com values, to prove they are never kept.",
+  "store": {
+    "id": "abc123",
+    "name": "Sample Store",
+    "first_name": "Sam",
+    "last_name": "Sample",
+    "admin_email": "owner@example.com",
+    "order_email": "orders@example.com",
+    "timezone": { "name": "America/Chicago", "raw_offset": -21600, "dst_offset": -18000, "dst_correction": true, "date_format": { "display": "jS M Y" } },
+    "currency": "USD",
+    "decimal_places": 2
+  },
+  "currencies": [
+    { "id": 1, "currency_code": "USD", "is_default": true, "is_transactional": true, "enabled": true, "decimal_places": 2 },
+    { "id": 2, "currency_code": "EUR", "is_default": false, "is_transactional": true, "enabled": true, "decimal_places": 2 },
+    { "id": 3, "currency_code": "GBP", "is_default": false, "is_transactional": false, "enabled": false, "decimal_places": 2 }
+  ],
+  "orders": [
+    { "id": 101, "status_id": 10, "status": "Completed", "date_created": "Tue, 01 Sep 2026 04:30:00 +0000", "total_inc_tax": "50.0000", "total_ex_tax": "50.0000", "total_tax": "0.0000", "refunded_amount": "0.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "customer_id": 7, "billing_address": { "first_name": "Sample", "last_name": "Buyer", "email": "buyer@example.com", "street_1": "1 Sample Street", "zip": "00000" } },
+    { "id": 102, "status_id": 11, "status": "Awaiting Fulfillment", "date_created": "Mon, 14 Sep 2026 15:00:00 +0000", "total_inc_tax": "108.2500", "total_ex_tax": "100.0000", "total_tax": "8.2500", "refunded_amount": "30.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "customer_id": 0, "billing_address": { "first_name": "Guest", "last_name": "Shopper", "email": "guest@example.com", "zip": "00000" } },
+    { "id": 103, "status_id": 4, "status": "Refunded", "date_created": "Tue, 15 Sep 2026 12:00:00 +0000", "total_inc_tax": "21.6500", "total_ex_tax": "20.0000", "total_tax": "1.6500", "refunded_amount": "21.6500", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "billing_address": { "zip": "00000" } },
+    { "id": 104, "status_id": 5, "status": "Cancelled", "date_created": "Wed, 16 Sep 2026 12:00:00 +0000", "total_inc_tax": "999.0000", "total_ex_tax": "999.0000", "total_tax": "0.0000", "refunded_amount": "7.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "billing_address": { "zip": "00000" } },
+    { "id": 105, "status_id": 7, "status": "Awaiting Payment", "date_created": "Thu, 17 Sep 2026 12:00:00 +0000", "total_inc_tax": "888.0000", "total_ex_tax": "888.0000", "total_tax": "0.0000", "refunded_amount": "0.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "billing_address": { "zip": "00000" } },
+    { "id": 106, "status_id": 2, "status": "Shipped", "date_created": "Thu, 01 Oct 2026 05:30:00 +0000", "total_inc_tax": "64.9500", "total_ex_tax": "60.0000", "total_tax": "4.9500", "refunded_amount": "0.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "billing_address": { "zip": "00000" } },
+    { "id": 107, "status_id": 11, "status": "Awaiting Fulfillment", "date_created": "Fri, 02 Oct 2026 11:00:00 +0000", "total_inc_tax": "119.0000", "total_ex_tax": "100.0000", "total_tax": "19.0000", "refunded_amount": "19.0000", "default_currency_code": "EUR", "currency_code": "EUR", "is_deleted": false, "billing_address": { "zip": "00000" } },
+    { "id": 108, "status_id": 10, "status": "Completed", "date_created": "Sat, 03 Oct 2026 11:00:00 +0000", "total_inc_tax": "777.0000", "total_ex_tax": "777.0000", "total_tax": "0.0000", "refunded_amount": "0.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": true, "billing_address": { "zip": "00000" } }
+  ],
+  "oldOrder": { "id": 50, "status_id": 10, "status": "Completed", "date_created": "Mon, 01 Jun 2025 12:00:00 +0000", "total_inc_tax": "12.0000", "total_ex_tax": "12.0000", "total_tax": "0.0000", "refunded_amount": "12.0000", "default_currency_code": "USD", "currency_code": "USD", "is_deleted": false, "billing_address": { "zip": "00000" } },
+  "refunds": [
+    { "id": 1, "order_id": 103, "user_id": 1, "created": "2026-09-20T10:00:00Z", "reason": "Wrong size for Sample Buyer", "total_amount": 21.65, "total_tax": 1.65, "items": [{ "item_type": "ORDER", "item_id": 103, "requested_amount": 21.65 }], "payments": [{ "id": 1, "provider_id": "testgateway", "amount": 21.65, "offline": false, "is_declined": false }] },
+    { "id": 2, "order_id": 102, "user_id": 1, "created": "2026-10-01T03:00:00Z", "reason": "Damaged", "total_amount": 30, "total_tax": 0, "items": [], "payments": [] },
+    { "id": 3, "order_id": 104, "user_id": 1, "created": "2026-09-23T10:00:00Z", "reason": "Cancelled", "total_amount": 7, "total_tax": 0, "items": [], "payments": [] },
+    { "id": 4, "order_id": 50, "user_id": 1, "created": "2026-10-07T10:00:00Z", "reason": "Late return", "total_amount": 12, "total_tax": 0, "items": [], "payments": [] },
+    { "id": 5, "order_id": 107, "user_id": 1, "created": "2026-10-05T10:00:00Z", "reason": "Partial", "total_amount": 19, "total_tax": 0, "items": [], "payments": [] },
+    { "id": 6, "order_id": 999, "user_id": 1, "created": "2026-10-06T10:00:00Z", "reason": "Order gone", "total_amount": 5, "total_tax": 0, "items": [], "payments": [] }
+  ]
+}

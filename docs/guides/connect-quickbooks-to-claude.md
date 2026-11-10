@@ -14,7 +14,7 @@ choose exactly what Claude can see.
 ## Set it up
 
 ### 1. Connect QuickBooks to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → QuickBooks**, sign in to Intuit, pick the company, and approve.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → QuickBooks**, sign in to Intuit, pick the company, and approve.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →

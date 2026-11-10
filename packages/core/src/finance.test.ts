@@ -375,14 +375,14 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
 
     it('a rule without "apply to existing" leaves past rows alone', async () => {
       const bank = await k.account({ entityId: acme })
-      await k.engine.post(k.ws, txn(bank, '2026-09-01', -1_000, { counterparty: 'Figma' }))
+      await k.engine.post(k.ws, txn(bank, '2026-09-01', -1_000, { counterparty: 'Brushwork Studio' }))
       k.setNow('2026-10-09T13:00:00.000Z')
-      await f.writer.apply(cmd('create_rule', { match: { descriptionContains: 'figma', counterparty: null, minAbsMinor: null, maxAbsMinor: null, currency: null, accountId: null }, set: { category: 'Software', bucketId: null, kind: null, entityId: null }, applyToExisting: false }), prov())
+      await f.writer.apply(cmd('create_rule', { match: { descriptionContains: 'brushwork', counterparty: null, minAbsMinor: null, maxAbsMinor: null, currency: null, accountId: null }, set: { category: 'Software', bucketId: null, kind: null, entityId: null }, applyToExisting: false }), prov())
       expect(await k.bal(acme, 'software')).toBe(0)
       k.setNow('2026-10-09T14:00:00.000Z')
-      await k.engine.post(k.ws, txn(bank, '2026-10-09', -1_000, { counterparty: 'Figma' }))
+      await k.engine.post(k.ws, txn(bank, '2026-10-09', -1_000, { counterparty: 'Brushwork Studio' }))
       expect(await k.bal(acme, 'software')).toBe(1_000)
-      await f.writer.apply(cmd('create_rule', { match: { descriptionContains: 'figma', counterparty: null, minAbsMinor: null, maxAbsMinor: null, currency: null, accountId: null }, set: { category: 'software', bucketId: null, kind: null, entityId: null }, applyToExisting: true }), prov())
+      await f.writer.apply(cmd('create_rule', { match: { descriptionContains: 'brushwork', counterparty: null, minAbsMinor: null, maxAbsMinor: null, currency: null, accountId: null }, set: { category: 'software', bucketId: null, kind: null, entityId: null }, applyToExisting: true }), prov())
       expect(await k.bal(acme, 'software')).toBe(2_000)
     })
 
@@ -472,8 +472,8 @@ describe.each(backends)('finance reader + writer (%s)', (backend) => {
 
     it('preview: the exact answer apply would give, with nothing kept', async () => {
       const bank = await k.account({ entityId: acme, name: 'Chase' })
-      await k.engine.post(k.ws, txn(bank, '2026-09-14', -61_250, { counterparty: 'AWS' }))
-      const rule = cmd('create_rule', { match: { query: 'aws' }, set: { category: 'cloud' }, applyToExisting: true })
+      await k.engine.post(k.ws, txn(bank, '2026-09-14', -61_250, { counterparty: 'Rackhouse Hosting' }))
+      const rule = cmd('create_rule', { match: { query: 'rackhouse' }, set: { category: 'cloud' }, applyToExisting: true })
       const seen = await f.writer.preview!(rule, prov())
       expect(seen.summary).toContain('cloud')
       expect(await k.bal(acme, 'cloud')).toBe(0)

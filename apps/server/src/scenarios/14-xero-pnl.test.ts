@@ -12,10 +12,11 @@ import { withBypass } from '@agfn/db'
 import { connectAi, connectProvider, entities, minor, signIn, startServer } from './harness.ts'
 
 type X = Record<string, unknown>
-const FIX = JSON.parse(readFileSync(new URL('../../../../packages/connectors/xero/fixtures/redacted/demo-us-pnl.json', import.meta.url), 'utf8')) as Record<string, unknown> & { ProfitAndLoss: Record<string, X> }
+const DEMO = JSON.parse(readFileSync(new URL('../../../../packages/connectors/xero/fixtures/redacted/demo-us-pnl.json', import.meta.url), 'utf8')) as Record<string, unknown> & { ProfitAndLoss: Record<string, X> }
+const FIX = DEMO
 const LISTS = ['Invoices', 'CreditNotes', 'Payments', 'Overpayments', 'Prepayments', 'BankTransactions', 'ManualJournals']
 
-async function connectorEvents(connectionId: string): Promise<NormalizedEvent[]> {
+async function connectorEvents(connectionId: string, FIX: Record<string, unknown> = DEMO): Promise<NormalizedEvent[]> {
   const ff = fixtureFetch([
     { match: '/connections', respond: { json: [] } },
     { match: '/Organisation', respond: { json: { Organisations: FIX.Organisations } } },
@@ -41,7 +42,7 @@ function monthRange(month: string): { from: string; to: string } {
   return { from: `${month}-01`, to: new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).toISOString().slice(0, 10) }
 }
 
-async function compare(): Promise<Array<{ month: string; ours: Record<string, number>; theirs: Record<string, number> }> & { review?: Array<{ label: string; detail: string }> }> {
+async function compare(): Promise<Array<{ month: string; ours: Record<string, number>; theirs: Record<string, number> }> & { review?: Array<{ label: string; detail: string }>; burnSep?: string }> {
     const srv = await startServer()
   try {
     const s = await signIn(srv, 'founder14@example.com', 'Demo Company')
@@ -66,7 +67,9 @@ async function compare(): Promise<Array<{ month: string; ours: Record<string, nu
       })
     }
     const drawer = await s.get<{ odd: Array<{ label: string; detail: string }> }>(`/api/entities/${E['Demo Company']}`)
-    return Object.assign(rows, { review: drawer.body.odd })
+    // What an AI asking for September's spend is told.
+    const burnSep = JSON.stringify(await ai.call('get_metric', { metric: 'gross_burn', company: 'Demo Company', from: '2026-09-01', to: '2026-09-30' }))
+    return Object.assign(rows, { review: drawer.body.odd, burnSep })
   } finally {
     await srv.close()
   }
@@ -85,6 +88,8 @@ describe('scenario 14: Xero Demo Company P&L equals our accrual P&L', { timeout:
     // The months that differ say why, so nobody hunts for a missing wage bill.
     const flagged = rows.review!.filter((c) => c.detail.includes(NOT_COVERED.text))
     expect([...new Set(flagged.map((c) => c.detail.match(/(\d{4}-\d{2})-01 to/)?.[1]))].sort()).toEqual(['2026-08', '2026-09'])
+    // And the AI hears the reason with the figure, not a bare "doesn't match" (answers shorten long reasons).
+    expect(rows.burnSep).toContain("Xero payroll and expense claims aren't included")
   })
 
   // Xero Payroll's wages and payroll tax (Sep $8,797.00 + $652.50) and expense claims (Aug Travel $34.90, Sep Printing
@@ -92,6 +97,30 @@ describe('scenario 14: Xero Demo Company P&L equals our accrual P&L', { timeout:
   // (accounting.journals.read), pending f8. Everything the accounting objects carry matches Xero per account.
   it.fails('Aug and Sep operating expenses and net income (payroll and expense claims)', async () => {
     for (const r of (await compare()).filter((x) => x.month !== '2026-07')) expect(r.ours, r.month).toEqual(r.theirs)
+  })
+
+  // Paying the sales tax return by Spend Money to Xero's tax account ("Sales Tax", system account GST) lowers what's
+  // owed. Hand-built on the Demo Company: one $100.00 payment on Sep 15.
+  it('a payment to the sales tax account lowers sales tax owed', async () => {
+    const owed = async (fix: Record<string, unknown>) => {
+      const srv = await startServer()
+      try {
+        const s = await signIn(srv, `tax14-${Object.keys(fix).length}-${(fix.BankTransactions as unknown[]).length}@example.test`, 'Demo Company')
+        const E = await entities(s)
+        const xero = await connectProvider(srv, s, 'quickbooks', { entityId: E['Demo Company'], name: 'Xero' })
+        const events = await connectorEvents(xero.id, fix)
+        xero.push(() => events)
+        expect((await xero.sync()).status).toBe('ok')
+        const ai = await connectAi(srv, s)
+        const got = (await ai.call<{ reports: Array<{ sections: Array<{ rows: Array<{ account: string; amount: { amount: string } | null }> }> }> }>('get_reports', { kind: 'balance_sheet', company: 'Demo Company', from: '2026-01-01', to: '2026-09-30', basis: 'accrual' })).reports[0]!
+        return minor(got.sections.flatMap((x) => x.rows).find((x) => x.account === 'Sales tax payable')?.amount ?? undefined) ?? 0
+      } finally {
+        await srv.close()
+      }
+    }
+    const paid = structuredClone(DEMO) as unknown as Record<string, unknown> & { BankTransactions: X[] }
+    paid.BankTransactions = [...paid.BankTransactions, { BankTransactionID: 'tax-return-q3', BankAccount: { Code: '090', Name: 'Checking Account' }, Type: 'SPEND', Contact: { Name: 'State Board of Equalization' }, DateString: '2026-09-15T00:00:00', Status: 'AUTHORISED', LineAmountTypes: 'NoTax', LineItems: [{ Description: 'Sales tax return', TaxType: 'NONE', TaxAmount: 0, LineAmount: 100, AccountCode: '220' }], SubTotal: 100, TotalTax: 0, Total: 100, CurrencyCode: 'USD' }]
+    expect((await owed(DEMO)) - (await owed(paid))).toBe(10_000)
   })
 
   it('moving the Xero connection to another company moves its receivables, payables and documents (bank links stay)', async () => {

@@ -20,6 +20,10 @@ export interface ChargebeeConnectorOptions {
   pageSize?: number
 }
 
+// Re-read this many seconds before the newest updated_at seen, so a subscription whose change becomes visible just
+// after the cursor passed its second (replication lag, clock skew) isn't missed at the boundary. Upserts are idempotent.
+const OVERLAP_SECONDS = 300
+
 interface CbCursor {
   /** Chargebee's next_offset for the page being read (null = first page). */
   offset: string | null
@@ -116,7 +120,7 @@ export function createChargebeeConnector(opts: ChargebeeConnectorOptions, deps: 
         limit: pageSize,
         include_deleted: 'true',
         'sort_by[asc]': 'updated_at',
-        ...(s.since !== null ? { 'updated_at[after]': s.since - 1 } : {}),
+        ...(s.since !== null ? { 'updated_at[after]': s.since - OVERLAP_SECONDS } : {}),
         ...(s.offset ? { offset: s.offset } : {}),
       })
       const subs = res.list.map((e) => e.subscription).filter((x): x is CbSubscription => isRecord(x) && typeof x.id === 'string')

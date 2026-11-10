@@ -3,7 +3,7 @@
 import { underfundedAccounts } from './set-aside.ts'
 import type { EntityId, Id, LinkType } from '@agfn/contracts'
 import { openItems } from './checks.ts'
-import { usedSides } from './matching.ts'
+import { MANY_NOTE, usedSides } from './matching.ts'
 import type { Link, SourceRecord } from './model.ts'
 import { formatMoney } from './money.ts'
 import { addDays, ledgerAccounts, todayFor, type ReadContext } from './queries.ts'
@@ -249,7 +249,7 @@ async function computeReviewItems(rc: ReadContext, opts: { entityIds?: EntityId[
       kind: 'suggested_match',
       entityId: to.entityId ?? from.entityId,
       title: `Same money? (${l.type === 'invoice_payment' ? `${docWord(from)} payment` : l.type === 'intercompany' && withPersonal(from, to) ? 'between a company and Personal' : l.type.replace(/_/g, ' ')})`,
-      detail: `${describe(from, year)} ↔ ${describe(to, year)}`,
+      detail: `${describe(from, year)} ↔ ${describe(to, year)}${l.scores?.['many'] === 1 ? ` · ${MANY_NOTE}` : ''}`,
       confirmLabel: asked && !personal ? 'Yes' : `${asked ? 'Yes' : 'Confirm'}: ${l.type === 'invoice_payment' ? `payment of ${docWord(from)}${numberOf(from)}${leftover(l, from, to, explained)}` : personal ? 'money owed between your company and you (not pay)' : (LINK_LABELS[l.type] ?? l.type.replace(/_/g, ' '))}`,
       recordIds: [from.id, to.id],
       linkId: l.id,

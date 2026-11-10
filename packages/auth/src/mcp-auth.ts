@@ -44,12 +44,13 @@ export function createMcpTokenVerifier(deps: McpVerifierDeps): McpTokenVerifier 
     try {
       const { payload } = await jwtVerify(token, await keySet(retry), { issuer: deps.issuer, audience: resource, clockTolerance: 5 })
       const grantId = typeof payload.grant_id === 'string' ? payload.grant_id : null
-      if (!grantId || typeof payload.sub !== 'string' || typeof payload.exp !== 'number') return null
+      const sub = typeof payload.sub === 'string' ? payload.sub : null
+      if (!grantId || !sub || typeof payload.exp !== 'number') return null
       // Before the workspace is known: the grant row (tenant table) is found by id, across workspaces.
       const grant = await withBypass('mcp:verify-token', () => deps.getGrant(grantId))
       if (!grant || grant.revokedAt || (grant.expiresAt && grant.expiresAt <= nowIso())) return null
       // The token's user must still be the grant's person.
-      const person = await deps.db.selectFrom('people').select('id').where('auth_user_id', '=', payload.sub).executeTakeFirst()
+      const person = await withBypass('mcp:verify-person', () => deps.db.selectFrom('people').select('id').where('auth_user_id', '=', sub).executeTakeFirst())
       if (!person || person.id !== grant.personId) return null
       const clientId = String(payload.client_id ?? payload.azp ?? '')
       return {

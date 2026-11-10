@@ -151,6 +151,41 @@ describe('SyncEngine', () => {
     expect(seen).toEqual(['t1', 't1+'])
   })
 
+  it('maxConcurrentSyncs caps how many connections sync at once (a burst waits its turn, holding no slot)', async () => {
+    let release = () => {}
+    const gate = new Promise<void>((r) => (release = r))
+    let inFlight = 0
+    let peak = 0
+    const registry = new ConnectorRegistry()
+    registry.register(
+      () => ({
+        describe: () => desc,
+        connect: async () => ({ secret: {}, config: {} }),
+        health: async () => ({ status: 'ok' as const }),
+        sync: async () => {
+          inFlight++
+          peak = Math.max(peak, inFlight)
+          await gate
+          inFlight--
+          return { cursor: null, hasMore: false, events: [] }
+        },
+      }),
+      { raw: { put: async () => 'x' } },
+    )
+    const engine = new SyncEngine({ db: h.db, keys, registry, ledger, queue: new JobQueue(h.db), maxConcurrentSyncs: 2 })
+    const ids: string[] = []
+    for (let i = 0; i < 5; i++) ids.push(await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: `C${i}`, secret: { token: 't' }, config: {}, createdBy: null }))
+    const all = Promise.all(ids.map((id) => engine.sync(id)))
+    // Let the first batch reach the gate; the rest wait on the semaphore, not in a sync.
+    for (let i = 0; i < 100 && inFlight < 2; i++) await new Promise((r) => setTimeout(r, 2))
+    await new Promise((r) => setTimeout(r, 15))
+    expect(inFlight).toBe(2)
+    expect(peak).toBe(2)
+    release()
+    await all
+    expect(peak).toBe(2) // never exceeded the cap across the whole burst of five
+  })
+
   it("disconnect: a token the connector refreshed reaches the siblings; a provider refusal comes back as the connector's warning", async () => {
     const registry = new ConnectorRegistry()
     registry.register(
@@ -266,6 +301,43 @@ describe('SyncEngine', () => {
     expect(rows[1]!.include_in_cash).toBe(0)
   })
 
+  it('links a twin across a drifted institution label, but not when a label is missing', async () => {
+    const c1 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'A', secret: null, config: {}, createdBy: null })
+    const c2 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'B', secret: null, config: {}, createdBy: null })
+    const c3 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'C', secret: null, config: {}, createdBy: null })
+    const mk = (conn: string, inst: string | undefined): Script => () => ({ cursor: null, hasMore: false, events: [{ type: 'account.upsert', externalId: 'x-' + conn, connectionId: conn, name: 'Ops', accountType: 'depository', currency: 'USD', mask: '9999', institution: inst }] })
+    await engineWith(mk(c1, 'Mercury')).sync(c1)
+    // A second source labels the same bank differently — a drift of the same name — so it links.
+    await engineWith(mk(c2, 'Mercury Bank, N.A.')).sync(c2)
+    // A third omits the label. On a four-digit mask alone that could be a different bank, and a wrong merge would
+    // silently drop it from cash, so it stays SEPARATE — 3b's flag surfaces it instead.
+    await engineWith(mk(c3, undefined)).sync(c3)
+    const first = await h.db.selectFrom('accounts').select('id').where('connection_id', '=', c1).executeTakeFirstOrThrow()
+    const dup = async (conn: string) => h.db.selectFrom('accounts').select(['duplicate_of', 'include_in_cash']).where('connection_id', '=', conn).executeTakeFirstOrThrow()
+    expect(await dup(c2)).toMatchObject({ duplicate_of: first.id, include_in_cash: 0 })
+    expect(await dup(c3)).toMatchObject({ duplicate_of: null, include_in_cash: 1 })
+  })
+
+  it('does NOT auto-link when two candidates share mask+type and none matches the institution exactly', async () => {
+    // Two genuinely distinct accounts that happen to share a mask (••9999) at the same type. A third arrival with a
+    // drifted institution label is ambiguous — linking it to either would hide a real account — so it stays separate.
+    const c1 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'A', secret: null, config: {}, createdBy: null })
+    const c2 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'B', secret: null, config: {}, createdBy: null })
+    const c3 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'C', secret: null, config: {}, createdBy: null })
+    const mk = (conn: string, inst: string): Script => () => ({ cursor: null, hasMore: false, events: [{ type: 'account.upsert', externalId: 'x-' + conn, connectionId: conn, name: 'Ops', accountType: 'depository', currency: 'USD', mask: '9999', institution: inst }] })
+    await engineWith(mk(c1, 'Chase')).sync(c1)
+    await engineWith(mk(c2, 'Wells Fargo')).sync(c2)
+    await engineWith(mk(c3, 'Unknown Bank')).sync(c3)
+    const rows = await h.db.selectFrom('accounts').select(['connection_id', 'duplicate_of']).execute()
+    expect(rows.every((r) => r.duplicate_of === null)).toBe(true)
+    // But an exact institution match among the candidates still links decisively.
+    const c4 = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'D', secret: null, config: {}, createdBy: null })
+    await engineWith(mk(c4, 'Chase')).sync(c4)
+    const chase = await h.db.selectFrom('accounts').select(['id']).where('connection_id', '=', c1).executeTakeFirstOrThrow()
+    const linked = await h.db.selectFrom('accounts').select(['duplicate_of']).where('connection_id', '=', c4).executeTakeFirstOrThrow()
+    expect(linked.duplicate_of).toBe(chase.id)
+  })
+
   it('counts only bank-type accounts as cash', async () => {
     const c = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'A', secret: null, config: {}, createdBy: null })
     const types = ['depository', 'credit_card', 'loan', 'investment', 'processor_balance'] as const
@@ -354,6 +426,30 @@ describe('failure messages people can act on', () => {
     expect(plainError(err('invalid_input', 'the Mercury token must not contain spaces'), 'Mercury', 'connect').message).toBe('Mercury didn’t accept that: the Mercury token must not contain spaces')
     expect(plainError(err('auth', '{"errors":{"message":"invalid token"}}', { status: 401 }), 'Mercury', 'connect').message).toBe('Mercury didn’t accept that. Check it’s copied in full and still active, then try again.')
     expect(plainError(err('invalid_input', 'No such API key: sk_test_…', { status: 400 }), 'Stripe', 'connect').message).toBe('Stripe didn’t accept that. Try again.')
+  })
+})
+
+describe('provider freshness', () => {
+  it('saves the merged freshness on the connection, and keeps the last one when a sync says nothing', async () => {
+    const connId = await createConnection(h.db, keys, { workspaceId: ws, connectorKey: 'fake', displayName: 'Fake', secret: { token: 't1' }, config: {}, createdBy: null })
+    let quiet = false
+    const engine = engineWith((cursor): SyncResult => {
+      if (quiet) return { cursor: 'q', hasMore: false, events: [] }
+      if (cursor === null) return { cursor: 'c1', hasMore: true, events: [], freshness: { checkedAt: '2026-10-09T12:00:00Z', transactionsLastSuccessAt: '2026-10-09T10:00:00Z', balancesUpdatedAtByAccount: { a1: '2026-10-09T06:00:00Z' } } }
+      return { cursor: 'c2', hasMore: false, events: [], freshness: { balancesUpdatedAtByAccount: { a2: '2026-10-08T03:00:00Z' } } }
+    })
+    const read = async () => JSON.parse((await h.db.selectFrom('connections').select('freshness_json').where('id', '=', connId).executeTakeFirstOrThrow()).freshness_json ?? 'null') as unknown
+    await engine.sync(connId)
+    const want = {
+      checkedAt: '2026-10-09T12:00:00Z',
+      transactionsLastSuccessAt: '2026-10-09T10:00:00Z',
+      balancesUpdatedAtByAccount: { a1: '2026-10-09T06:00:00Z', a2: '2026-10-08T03:00:00Z' },
+      balancesUpdatedAt: '2026-10-08T03:00:00Z',
+    }
+    expect(await read()).toEqual(want)
+    quiet = true
+    await engine.sync(connId)
+    expect(await read()).toEqual(want)
   })
 })
 

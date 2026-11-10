@@ -1,6 +1,6 @@
 # OWASP MCP Top 10: self-assessment
 
-Our own assessment against the [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/) (2025, beta), done on
+Our own assessment against the [OWASP MCP Top 10](https://owasp.org/projects/mcp-top-10) (2025, beta), done on
 2026-11-01. OWASP hasn't reviewed it. Read OWASP's page for what each risk means; this table says only what we do.
 
 | Risk | What we do | Where | What's left |

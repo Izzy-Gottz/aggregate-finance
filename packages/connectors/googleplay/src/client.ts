@@ -104,7 +104,10 @@ export class GooglePlayClient {
         path: `/storage/v1/b/${encodeURIComponent(this.bucket)}/o`,
         query: { prefix, pageToken, maxResults },
       })
-      out.push(...(res.data.items ?? []))
+      // A present bucket listing with no `items` is a real empty prefix; a null/non-object body (an empty body, or the
+      // sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as no files.
+      if (!isRecord(res.data as unknown)) throw new ConnectorError('transient', 'Google Play sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: 'googleplay' })
+      out.push(...(Array.isArray(res.data.items) ? res.data.items : []))
       pageToken = maxResults ? undefined : res.data.nextPageToken
     } while (pageToken)
     return out

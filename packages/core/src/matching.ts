@@ -32,6 +32,11 @@ export interface MatchInput {
 export const accountPair = (a: Id | null, b: Id | null): string => [a, b].sort().join('|')
 
 export const AUTO_CONFIRM = 0.95
+
+/** At most this many transfer suggestions per row when many rows share an amount (more is a guess, and N×M work). */
+export const MAX_TRANSFER_CANDIDATES = 5
+/** Said on those suggestions (Review shows it with the match). */
+export const MANY_NOTE = 'one of many rows with this amount, so only the nearest are suggested'
 /** How close two customer names must be to treat a sale in two sources as the same one. */
 const SAME_CUSTOMER = 0.7
 /**
@@ -43,8 +48,13 @@ const SAME_CUSTOMER = 0.7
  * 5: rows whose provider category is a utility are posted again, to Utilities instead of Rent (engine #rematchAll).
  * 6: the whole history matched again once: on Postgres a page's matching could read its rows before they were all
  * written (concurrent reads in one transaction, kysely-store #inOrder), so a pair in the same page could go unproposed.
+ * 7: rows from a vendor known by name (Fly.io, AWS, GitHub…, known-vendors.ts) are posted again, to Cloud or Software
+ * instead of the provider's guess (Plaid read FLY.IO as travel) (engine #rematchAll).
+ * 8: the same, once more, after the list learned "Neon Tech" (with a space; Plaid's name for the 11-02 Neon charge).
+ * 9: once more, for workspaces stamped current although an older release had posted their rows (engine
+ * #matcherBehind no longer assumes an unstamped workspace with rows is current).
  */
-export const MATCHER_VERSION = 6
+export const MATCHER_VERSION = 9
 export const PROPOSE_MIN = 0.6
 /** A payment this close to an invoice's open balance (a few cents) is suggested, never linked automatically. */
 const NEAR_MINOR = 100
@@ -52,7 +62,12 @@ const NEAR_MINOR = 100
 /** Link types where one record can take part only once (or up to its amount). */
 const EXCLUSIVE: readonly LinkType[] = ['transfer', 'card_payment', 'intercompany', 'reimbursement', 'payout', 'cash_deposit', 'duplicate', 'pending_posted', 'equity_cash', 'investment_cash']
 
-const PROCESSOR_NAMES = ['stripe', 'paypal', 'square', 'shopify', 'paddle', 'lemon squeezy', 'lemonsqueezy', 'gumroad', 'braintree', 'adyen', 'apple', 'google']
+const PROCESSOR_NAMES = ['stripe', 'paypal', 'square', 'shopify', 'paddle', 'lemon squeezy', 'lemonsqueezy', 'gumroad', 'braintree', 'adyen', 'apple', 'google', 'amazon', 'amzn']
+/** Days after an Amazon or Etsy payout (dated when it's sent, no arrival date) that a deposit naming it can land: ACH
+ *  takes up to 5 business days (Amazon 3 to 5, Etsy 1 to 5, and Etsy sends a weekend's deposit on the next business day),
+ *  so a weekend plus a holiday makes up to 10. Every other deposit has to land within 7. Etsy as a whole word: "Betsy". */
+const SLOW_PAYOUT = /amazon|amzn|\betsy\b/
+const SLOW_PAYOUT_DAYS = 10
 const PAYROLL_NAMES = ['gusto', 'adp', 'rippling', 'justworks', 'deel', 'paychex', 'trinet', 'payroll', 'oyster', 'remote com']
 const TRANSFER_WORDS = ['transfer', 'xfer', 'trnsfr', 'online banking', 'from chk', 'to chk', 'from sav', 'to sav', 'internal', 'paid in for', 'paid out from']
 const CARD_PAYMENT_WORDS = ['payment', 'autopay', 'epay', 'card pmt', 'pymt', 'thank you']
@@ -430,10 +445,24 @@ function transferPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, p
       else if (c.tier === cur.tier) cur.n++
     }
   }
+  // Many equal amounts (a statement of 1,000 identical $0.10 rows) are a guess either way: each row is offered only its
+  // nearest few, so the work and the Review list stay bounded. Rows past that stay unmatched, never paired or dropped.
+  const offered = new Map<Id, number>()
   for (const { o, cands } of all) {
-    for (const { i, fx, diff, tier } of cands) {
+    const many = cands.length > MAX_TRANSFER_CANDIDATES
+    const free = (c: Cand) => (offered.get(c.i.id) ?? 0) < MAX_TRANSFER_CANDIDATES
+    const near = many
+      ? cands.filter(free).sort((a, b) => a.tier - b.tier || Math.abs(daysBetween(o.date, a.i.date)) - Math.abs(daysBetween(o.date, b.i.date)) || (a.i.id < b.i.id ? -1 : 1)).slice(0, MAX_TRANSFER_CANDIDATES)
+      : cands
+    for (const { i, fx, diff, tier } of near) {
       const ib = inBest.get(i.id)
       if (ib && ib.tier < tier) continue // this money-in row has a better match elsewhere
+      const capped = many || (ib?.n ?? 0) > MAX_TRANSFER_CANDIDATES
+      if ((ib?.n ?? 0) > MAX_TRANSFER_CANDIDATES) {
+        const n = offered.get(i.id) ?? 0
+        if (n >= MAX_TRANSFER_CANDIDATES) continue
+        offered.set(i.id, n + 1)
+      }
       const oa = acct(o)
       const ia = acct(i)
       const crossEntity = o.entityId !== i.entityId
@@ -462,8 +491,8 @@ function transferPass(input: MatchInput, txns: SourceRecord[], idx: LinkIndex, p
         toId: i.id,
         confidence,
         method: 'rule',
-        scores: { amount: fx ? 1 - diff : 1, date: 1 - Math.abs(daysBetween(o.date, i.date)) / 5, unique: unique ? 1 : 0, text: textHint ? 1 : 0 },
-        reason: fx ? 'opposite amounts in two currencies within the FX band' : 'opposite equal amounts within 4 days',
+        scores: { amount: fx ? 1 - diff : 1, date: 1 - Math.abs(daysBetween(o.date, i.date)) / 5, unique: unique ? 1 : 0, text: textHint ? 1 : 0, ...(capped ? { many: 1 } : {}) },
+        reason: `${fx ? 'opposite amounts in two currencies within the FX band' : 'opposite equal amounts within 4 days'}${capped ? `; ${MANY_NOTE}` : ''}`,
       })
     }
   }
@@ -496,16 +525,17 @@ function payoutPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex, 
   for (const p of payouts) {
     if (p.event.type !== 'processor.balance_txn') continue
     const net = p.event.net
+    const named = (t: SourceRecord) => PROCESSOR_NAMES.some((n) => txnText(t).includes(n)) || SLOW_PAYOUT.test(txnText(t))
     const deposits = (byAmount.get(`${p.entityId}|${net.currency}|${-net.minor}`) ?? []).filter(
       (t) =>
         idx.used(t.id) === 0 &&
         daysBetween(arrivalDate(p), t.date) >= (arrivalDate(p) === p.date ? 0 : -1) &&
-        daysBetween(arrivalDate(p), t.date) <= (arrivalDate(p) === p.date ? 7 : 3),
+        daysBetween(arrivalDate(p), t.date) <= (arrivalDate(p) !== p.date ? 3 : SLOW_PAYOUT.test(txnText(t)) ? SLOW_PAYOUT_DAYS : 7),
     )
     for (const d of deposits) {
-      const named = PROCESSOR_NAMES.some((n) => txnText(d).includes(n))
-      const confidence = deposits.length === 1 ? (named ? 0.97 : 0.85) : named ? 0.8 : 0.6
-      push({ type: 'payout', fromId: p.id, toId: d.id, amount: money(Math.abs(net.minor), net.currency), confidence, method: 'rule', scores: { amount: 1, name: named ? 1 : 0 }, reason: 'payout amount arrived at the bank' })
+      const isNamed = named(d)
+      const confidence = deposits.length === 1 ? (isNamed ? 0.97 : 0.85) : isNamed ? 0.8 : 0.6
+      push({ type: 'payout', fromId: p.id, toId: d.id, amount: money(Math.abs(net.minor), net.currency), confidence, method: 'rule', scores: { amount: 1, name: isNamed ? 1 : 0 }, reason: 'payout amount arrived at the bank' })
     }
   }
 }
@@ -784,7 +814,8 @@ function payrollPass(live: SourceRecord[], txns: SourceRecord[], idx: LinkIndex,
     const run = r.event
     const debits = (named.get(r.entityId) ?? []).filter((t) => {
       const d = daysBetween(run.payDate, t.date)
-      return idx.used(t.id) === 0 && d >= -4 && d <= 2
+      // Same currency only: a euro debit's number added to dollars isn't a sum.
+      return idx.used(t.id) === 0 && d >= -4 && d <= 2 && t.amount?.currency === run.net.currency
     })
     if (debits.length === 0) continue
     const target = run.companyDebit?.minor ?? run.net.minor + run.employerTaxes.minor + (run.employeeTaxes?.minor ?? 0)

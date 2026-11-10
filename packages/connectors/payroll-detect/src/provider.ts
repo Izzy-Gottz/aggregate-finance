@@ -1,6 +1,6 @@
 // Shared by the payroll provider connectors (Finch, Justworks, Rippling, Deel): date-window paging and one
 // builder from provider totals to a PayrollRun, so every provider fills the same fields the same way.
-import type { ConnectionId, Currency, Id, IsoDate, Money, PayrollRun } from '@agfn/contracts'
+import type { ConnectionId, Currency, Id, IsoDate, IsoTimestamp, Money, PayrollRun } from '@agfn/contracts'
 import { addDays, daysBetween } from '@agfn/invoices'
 
 export interface RunInput {
@@ -9,6 +9,8 @@ export interface RunInput {
   rawRef?: Id
   provider: string
   payDate: IsoDate
+  /** Optional real instant the run was paid; the engine dates the run in the workspace tz when present (see instantAt). */
+  at?: IsoTimestamp
   currency: Currency
   /** Integer minor units. */
   gross: number
@@ -43,6 +45,7 @@ export function providerRun(r: RunInput): PayrollRun {
     status: r.voided ? 'void' : r.payDate > r.today ? 'scheduled' : 'paid',
     provider: r.provider,
   }
+  if (r.at) run.at = r.at
   if (r.rawRef !== undefined) run.rawRef = r.rawRef
   if (r.employeeTaxes !== undefined) run.employeeTaxes = m(r.employeeTaxes)
   if (r.employerBenefits !== undefined) run.employerBenefits = m(r.employerBenefits)

@@ -34,6 +34,24 @@ describe('Data health line', () => {
     await screen.findByRole('heading', { name: 'Harbor Coffee' })
   })
 
+  it('a possible duplicate offers "mark one a duplicate" and "different accounts", each calling the API', async () => {
+    const api = new MockApi()
+    const health = () => ({
+      status: 'needs_review' as const,
+      line: '1 thing needs a look: 1 account maybe connected twice',
+      items: [{ kind: 'possible_duplicate' as const, entityId: 'e_acme', text: 'Mercury ··1234 and Mercury look like the same account — their balances have matched since 2026-09-01.', refId: 'acct_a', relatedId: 'acct_b', dupKey: 'acct_a|acct_b|balance' }],
+    })
+    ;(api as unknown as { health: typeof health }).health = health
+    const dismiss = vi.spyOn(api, 'dismissDuplicate')
+    const mark = vi.spyOn(api, 'markDuplicate')
+    start(api, '#/?d=health')
+    await screen.findByRole('heading', { name: 'Needs a look' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark one a duplicate' }))
+    await waitFor(() => expect(mark).toHaveBeenCalledWith('acct_b', 'acct_a'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Different accounts' }))
+    await waitFor(() => expect(dismiss).toHaveBeenCalledWith('acct_a', 'acct_b', 'acct_a|acct_b|balance'))
+  })
+
   it('says All reconciled quietly when nothing needs a look, and nothing when there is no data', async () => {
     const api = new MockApi()
     const health = () => ({ status: 'ok' as const, line: 'All reconciled', items: [] })

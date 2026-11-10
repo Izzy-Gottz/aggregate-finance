@@ -22,10 +22,17 @@ describe('red team: PDF documents', () => {
       expect(ok.status).toBe(201)
       const doc = await asTest(() => reader.document(v.s.workspaceId as never, ok.body.documentId as string))
       expect(doc?.text).toContain('09/03 VICTIMSECRET Coffee -4.50')
-      expect(doc?.scanned).toBeUndefined()
+      expect([doc?.scanned, doc?.partial]).toEqual([undefined, undefined])
       // Not across workspaces, by id or by listing.
       expect(await asTest(() => reader.document(m.s.workspaceId as never, ok.body.documentId as string))).toBeNull()
       expect((await m.s.get(`/api/documents/${ok.body.documentId}`)).status).toBe(404)
+
+      // Past 60 pages only the first part is read, and the AI is told so.
+      const long = await upload(v.s, v.entityId, 'long.pdf', makePdf({ pages: Array.from({ length: 61 }, (_, i) => ({ texts: [{ x: 50, y: 700, text: `Page ${i + 1}` }] })) }))
+      expect(long.body.message).toContain('only its first part was read')
+      expect(ok.body.message).not.toContain('first part')
+      const ld = await asTest(() => reader.document(v.s.workspaceId as never, long.body.documentId as string))
+      expect([ld?.partial, ld?.text?.includes('Page 60'), ld?.text?.includes('Page 61')]).toEqual([true, true, false])
 
       const scan = await upload(v.s, v.entityId, 'scan.pdf', makePdf({ pages: [{ imageOnly: true }] }))
       expect(scan.status).toBe(201)

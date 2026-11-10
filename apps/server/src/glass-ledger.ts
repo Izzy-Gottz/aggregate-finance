@@ -4,7 +4,7 @@
 // rows say " [planted]" in their bank text so the log labels them automatically. Run once by ops:
 // `agfn glass-ledger create --from <launch Monday>`.
 import type { Kysely } from 'kysely'
-import { newId, nowIso, withWorkspace, type CoreTables } from '@agfn/db'
+import { newId, nowIso, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
 import type { LedgerEngine } from '@agfn/core'
 import { createDemoWorkspace, DEMO_AI_SETTING } from '@agfn/demo'
 import { equityFor } from './equity.ts'
@@ -16,10 +16,12 @@ export const GLASS_EMAIL = 'glass-ledger@aggregate.invalid'
 export const GLASS_NAME = 'Glass Ledger · Harbor Coffee (synthetic)'
 
 async function glassPerson(db: Kysely<CoreTables>): Promise<string> {
-  const found = await db.selectFrom('people').select('id').where('email', '=', GLASS_EMAIL).executeTakeFirst()
+  // The operator runs this before the glass workspace exists, so there's no membership to make the person visible: a
+  // named bypass finds or creates it.
+  const found = await withBypass('glass:person', () => db.selectFrom('people').select('id').where('email', '=', GLASS_EMAIL).executeTakeFirst())
   if (found) return found.id
   const id = newId()
-  await db.insertInto('people').values({ id, auth_user_id: null, name: 'Glass Ledger', email: GLASS_EMAIL, created_at: nowIso() }).execute()
+  await withBypass('glass:person', () => db.insertInto('people').values({ id, auth_user_id: null, name: 'Glass Ledger', email: GLASS_EMAIL, created_at: nowIso() }).execute())
   return id
 }
 

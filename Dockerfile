@@ -59,10 +59,17 @@ COPY docs/legal ./docs/legal
 COPY docs/connect-your-ai.md ./docs/connect-your-ai.md
 COPY docs/recipes.md ./docs/recipes.md
 COPY docs/connectors.md ./docs/connectors.md
+COPY docs/connectors/etsy.md ./docs/connectors/etsy.md
 COPY docs/institutions.json ./docs/institutions.json
 COPY docs/guides ./docs/guides
+# Amazon RDS's public root certificates (certs/README.md), for NODE_EXTRA_CA_CERTS on AWS: sslmode=require verifies the
+# server certificate, and RDS's roots aren't in Node's store. Read only when that variable is set.
+COPY certs/rds-global-bundle.pem ./certs/rds-global-bundle.pem
 # AGFN_MASTER_KEY_COMMAND runs this at boot. The rest of scripts/ stays out of the image.
 COPY scripts/kms-master-key.mjs ./scripts/kms-master-key.mjs
+# `agfn` on PATH so operator commands (docs/launch/challenge-ops.md: challenge-reset, challenge-check-flag,
+# challenge-qa-player) run as written under `fly ssh console`, instead of spelling out the CLI entry each time.
+RUN printf '#!/bin/sh\nexec node /app/packages/cli/src/main.ts "$@"\n' > /usr/local/bin/agfn && chmod 755 /usr/local/bin/agfn
 RUN mkdir -p /data && chown -R node:node /data && chmod 700 /data
 USER node
 VOLUME ["/data"]

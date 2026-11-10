@@ -55,7 +55,11 @@ const DIRECT_STORES = new Set(['stripe', 'paddle'])
 const SILENT_STORES = new Set(['promotional', 'test_store'])
 /** The stores the Subscription Transactions endpoint is documented for. */
 const TRANSACTION_STORES = new Set(['app_store', 'play_store'])
-/** Newest first; a weekly subscription fits two years. Older rows only date the start. */
+// Newest first (purchased_at desc), so no pagination is needed and the cap is safe: this sample feeds no total. It sets
+// the subscription's CURRENT MRR rate — always taken from the newest paid transaction (exactPrice), which is in the
+// first page — and the tail of the MRR-change history (chart depth, like Stripe's), not a sum. Revenue and refunds are
+// not booked from here (total_revenue_in_usd is ignored); the store connectors (App Store, Play) book that money. So a
+// subscription with more than 100 transactions keeps the right MRR and only loses the oldest history points.
 const TRANSACTION_LIMIT = 100
 
 export const READ_PERMISSIONS = ['customer_information:customers:read', 'customer_information:subscriptions:read', 'project_configuration:products:read'] as const

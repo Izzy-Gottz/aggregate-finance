@@ -312,7 +312,9 @@ export function parseOfxDate(s: string): OfxDateTime {
     const minutes = om === undefined ? 0 : om.length === 1 ? Number(om) * 6 : Number(om)
     offset = `${sign === '-' ? '-' : '+'}${oh.padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
   }
-  const at = isoTimestamp(`${date}T${hh}:${mi}:${ss}${offset}`)
+  // A date with no time is the bank's calendar day: midday UTC keeps that day in every workspace zone from −12 to +11
+  // (midnight GMT, the spec's reading, is the evening before in the Americas and moved month-end balances a day back).
+  const at = m[4] === undefined && oh === undefined ? isoTimestamp(`${date}T12:00:00Z`) : isoTimestamp(`${date}T${hh}:${mi}:${ss}${offset}`)
   return { date, at }
 }
 

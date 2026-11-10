@@ -14,6 +14,7 @@ import { signInCallback } from '../lib/deeplink.ts'
 import { shownClientName } from '../lib/client-name.ts'
 import { AI_DISCLOSURE, type ConnectorDescription, type GrantShape, type WriteResult } from '@agfn/contracts'
 import type {
+  RequestableApp,
   AccountRow,
   AiActivity,
   AiDetail,
@@ -99,10 +100,14 @@ export interface Routes {
 
   // ----- connections -----
   'GET /api/connectors': { body: void; res: Connector[] }
+  'GET /api/connection-requests': { body: void; res: { apps: RequestableApp[] } }
+  'POST /api/connection-requests': { body: { app: string }; res: Ok }
   'POST /api/connectors/:key/start': { body: { entityId: string | null; returnTo?: string; investmentsFirst?: boolean }; res: ConnectStart }
   /** body: {state, ...}. Plaid {publicToken, institution?}; API key {apiKey}. OAuth finishes at the server's callback. */
   'POST /api/connectors/:key/finish': { body: Record<string, unknown> & { state: string }; res: { connectionId: string; accounts: NewAccount[] } }
   'POST /api/accounts/assign': { body: { assignments: Array<{ accountId: string; entityId: string }> }; res: Ok }
+  'POST /api/accounts/dismiss-duplicate': { body: { subjectId: string; relatedId: string; dupKey: string }; res: Ok }
+  'POST /api/accounts/mark-duplicate': { body: { duplicateId: string; ofId: string }; res: Ok }
   'GET /api/connections/:id': { body: void; res: ConnectionSummary & { accounts: AccountRow[]; unassigned?: Array<{ id: string; name: string; mask?: string }>; provides: string[]; records?: number; storeSales?: Money[] } }
   'GET /api/connections/:id/shared': { body: void; res: { offers: Array<{ id: string; name: string }> } }
   'POST /api/connections/:id/shared': { body: { id: string }; res: { connectionId: string; name: string } }
@@ -192,7 +197,7 @@ export const ROUTES = [
   'POST /api/auth/sign-out',
   'GET /api/auth/oauth2/public-client', 'POST /api/ai/consent', 'POST /api/auth/oauth2/continue', 'POST /api/auth/oauth2/consent', 'POST /api/workspaces', 'POST /api/demo', 'DELETE /api/demo', 'DELETE /api/workspace', 'GET /api/workspace/delete-preview', 'DELETE /api/me', 'GET /api/sign-in-methods', 'POST /api/review-access/code', 'GET /api/invites/:id', 'POST /api/invites/:id/accept',
   'GET /api/workspace', 'GET /api/entities/:id', 'GET /api/entities/:id/transactions', 'POST /api/entities', 'DELETE /api/entities/:id',
-  'GET /api/connectors', 'POST /api/connectors/:key/start', 'POST /api/connectors/:key/finish', 'POST /api/accounts/assign',
+  'GET /api/connectors', 'GET /api/connection-requests', 'POST /api/connection-requests', 'POST /api/connectors/:key/start', 'POST /api/connectors/:key/finish', 'POST /api/accounts/assign', 'POST /api/accounts/dismiss-duplicate', 'POST /api/accounts/mark-duplicate',
   'GET /api/connections/:id', 'GET /api/connections/:id/shared', 'POST /api/connections/:id/shared', 'POST /api/connections/:id/company', 'POST /api/connections/:id/reconnect', 'POST /api/connections/:id/reconnect/finish', 'POST /api/connectors/plaid/link-event', 'POST /api/connections/:id/refresh-balance', 'POST /api/connections/:id/sync', 'POST /api/connections/:id/disconnect',
   'GET /api/buckets/:id', 'PATCH /api/buckets/:id', 'POST /api/buckets', 'POST /api/records/:id/undo',
   'GET /api/ai/:grantId', 'PATCH /api/ai/:grantId', 'POST /api/ai/:grantId/pause', 'POST /api/ai/:grantId/revoke',
@@ -516,11 +521,21 @@ export class HttpApi implements AgfnApi {
 
   // ----- connections -----
   connectors = () => this.call('GET /api/connectors')
+  connectionRequests = async () => (await this.call('GET /api/connection-requests')).apps
+  requestConnection = async (app: string) => {
+    await this.call('POST /api/connection-requests', {}, { app })
+  }
   startConnect = (key: string, entityId: string | null, returnTo?: string, opts?: { investmentsFirst?: boolean }) =>
     this.call('POST /api/connectors/:key/start', { key }, { entityId, ...(returnTo && returnTo !== '/' ? { returnTo } : {}), ...(opts?.investmentsFirst ? { investmentsFirst: true } : {}) })
   finishConnect = (key: string, input: Record<string, unknown> & { state: string }) => this.call('POST /api/connectors/:key/finish', { key }, input)
   assignAccounts = async (assignments: Array<{ accountId: string; entityId: string }>) => {
     await this.call('POST /api/accounts/assign', {}, { assignments })
+  }
+  dismissDuplicate = async (subjectId: string, relatedId: string, dupKey: string) => {
+    await this.call('POST /api/accounts/dismiss-duplicate', {}, { subjectId, relatedId, dupKey })
+  }
+  markDuplicate = async (duplicateId: string, ofId: string) => {
+    await this.call('POST /api/accounts/mark-duplicate', {}, { duplicateId, ofId })
   }
   connection = (id: string) => this.call('GET /api/connections/:id', { id }) as ReturnType<AgfnApi['connection']>
   sharedOffers = async (id: string) => (await this.call('GET /api/connections/:id/shared', { id })).offers

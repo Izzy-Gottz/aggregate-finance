@@ -58,6 +58,10 @@ identify services you can connect. No endorsement implied." In US law, using a l
 | Squarespace | Its Developer Terms don't grant an integrator its logo for this use. Letter tile. | [Developer Terms](https://www.squarespace.com/developer-terms) |
 | YouTube | The API Services terms don't grant an integrator its logo for this use. Letter tile. | [YouTube API Services Terms](https://developers.google.com/youtube/terms/api-services-terms-of-service) |
 | Pinterest Ads | Publicity needs Pinterest's permission and the Brand guidelines weren't read. Letter tile. | Pinterest developer guidelines |
+| BigCommerce | Its API Terms don't grant an integrator its logo for this use. Letter tile. | [API Terms](https://www.commerce.com/terms/api-terms/) |
+| Etsy | Text only: no Etsy logo or artwork, and "Etsy" never in our app or product name (Etsy's Trademark Policy and API Terms). The required notice is in packages/connectors/etsy/README.md, and must be placed in the app before the flag goes on. Letter tile. | [Trademark Policy](https://www.etsy.com/help/article/481) |
+| Amazon | Text only (34's rule, 2026-11-05): no Amazon logo and no Appstore badge, which needs a listing and a grant from Amazon. Letter tile. | apps/site/logos/README.md |
+| Zeffy | No API terms and no logo grant for integrators found. Letter tile. | [API docs](https://www.zeffy.com/api/docs) |
 | Wix | No logo licence for this use is confirmed. Letter tile. | [Terms of Use](https://www.wix.com/about/terms-of-use) |
 | Google AdSense | Google's API terms don't grant an integrator its logo for this use. Letter tile. | [Google APIs Terms](https://developers.google.com/terms) |
 | SumUp | API terms read for the licence only; no logo grant for integrators found. Letter tile until terms are checked. | [API terms](https://www.sumup.com/en-gb/terms/api/) |

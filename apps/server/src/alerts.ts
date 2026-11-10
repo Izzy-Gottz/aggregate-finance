@@ -11,7 +11,7 @@ import { scrubLogText } from './log-safe.ts'
 export type AlertLevel = 'info' | 'warn' | 'error'
 export type Alert = (level: AlertLevel, message: string, fields?: Record<string, unknown>) => void
 
-const SAFE_FIELD = /^(connectionId|connector|workspaceId|job|kind|status|error|count|revoked|files|rows|connectionsRevoked|route)$/
+const SAFE_FIELD = /^(connectionId|connector|workspaceId|job|kind|status|error|count|revoked|files|rows|connectionsRevoked|route|source)$/
 
 export function createAlerter(opts: { webhookUrl?: string; telegram?: { botToken: string; chatId: string }; fetch?: typeof fetch; now?: () => number; label?: string } = {}): Alert & { flush(): Promise<void> } {
   const send = opts.fetch ?? fetch

@@ -4,12 +4,12 @@ import type { Currency, EntityId, Id, IsoDate, Money, PaymentApplied, ReportSnap
 import { convert, formatMoney, NOT_MONEY } from './money.ts'
 import { assertionChecks } from './coverage.ts'
 import { cashRole, isClearingRole } from './coa.ts'
-import type { EntityInfo, SourceRecord } from './model.ts'
+import type { EntityInfo, SourceAccountInfo, SourceRecord } from './model.ts'
 import { addDays, baseBalances, daysBetween, ledgerAccountFor, ledgerAccounts, scopeEntities, snapshotsOf, today, type ReadContext, todayFor, walkedLines } from './queries.ts'
 import { profitAndLoss } from './reports.ts'
 import { documentFx, fxFits } from './posting.ts'
 
-export type CheckName = 'trial_balance' | 'balance_identity' | 'subledger_ar' | 'subledger_ap' | 'intercompany' | 'processor' | 'clearing' | 'suspense' | 'balance_assertion' | 'provider_report' | 'duplicate_source' | 'listing'
+export type CheckName = 'trial_balance' | 'balance_identity' | 'subledger_ar' | 'subledger_ap' | 'intercompany' | 'processor' | 'clearing' | 'suspense' | 'balance_assertion' | 'provider_report' | 'duplicate_source' | 'possible_duplicate_account' | 'listing'
 
 export interface CheckResult {
   name: CheckName
@@ -28,6 +28,12 @@ export interface CheckResult {
   accountId?: Id
   /** clearing only: the clearing account's role (payouts and transfers in transit, or book payments not yet at the bank). */
   role?: string
+  /** possible_duplicate_account only: the second account of the suspected pair (subjectId is the first). dc's coverage
+   *  line reads the pair to figure how much the two answers could overlap. */
+  relatedId?: Id
+  /** possible_duplicate_account only: a key stable across runs for this pair and the evidence behind it, so a
+   *  "these are different accounts" dismissal sticks until the evidence changes (mirrors Anomaly.id). */
+  dupKey?: string
 }
 
 export interface CheckOptions {
@@ -64,6 +70,7 @@ async function computeChecks(rc: ReadContext, opts: CheckOptions): Promise<Check
   results.push(...(await assertionChecks(rc, entities.map((e) => e.id), asOf)))
   results.push(...(await providerReports(rc, entities, asOf)))
   results.push(...(await duplicateSources(rc, entities)))
+  results.push(...(await possibleDuplicateAccounts(rc, entities, asOf)))
   results.push(...(await listingOutcomes(rc, entities)))
   return opts.problemsOnly ? results.filter((r) => r.status !== 'ok') : results
 }
@@ -541,7 +548,7 @@ async function clearingAndSuspense(rc: ReadContext, entities: EntityInfo[], asOf
 const PROVIDER_NAMES: Record<string, string> = { quickbooks: 'QuickBooks', xero: 'Xero', freshbooks: 'FreshBooks' }
 
 /** Figures a store or invoicing tool reports, stored as report snapshots: not a company's books, so never compared with the ledger's P&L. */
-const NOT_BOOKS = new Set(['woocommerce', 'harvest', 'lightspeed', 'sumup', 'adsense', 'youtube', 'pinterest', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix'])
+const NOT_BOOKS = new Set(['woocommerce', 'harvest', 'lightspeed', 'sumup', 'adsense', 'youtube', 'pinterest', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix', 'bigcommerce', 'zeffy'])
 
 /** Records that put amounts on a P&L outside bank feeds (books, billing and payroll sources). */
 const BOOKED_TYPES = ['invoice.upsert', 'credit_note.upsert', 'payment.applied', 'payroll.run', 'journal.upsert', 'equity.event']
@@ -637,6 +644,83 @@ async function duplicateSources(rc: ReadContext, entities: EntityInfo[]): Promis
       currency: null,
       message: `${e?.name ?? 'A company'}: ${names.join(' and ')} both posted the same ${p.n} document${p.n === 1 ? '' : 's'}, so they count twice. Remove the old connection with its data.`,
     })
+  }
+  return out
+}
+
+/** Minimum shared snapshot days before matching balances are treated as evidence of one account seen twice. */
+const MIN_SHARED_DAYS = 3
+
+/** The name a person recognises: the account name, with its last-four when it has one — but not twice, since some
+ *  account names already end in "••1234". */
+export function dupName(a: SourceAccountInfo): string {
+  return a.mask && !a.name.includes(`••${a.mask}`) ? `${a.name} ••${a.mask}` : a.name
+}
+
+/**
+ * One real account connected through two routes that 3a's mask+label match didn't catch (a missing or incompatible
+ * label, a type the two sources bucket differently). Cash would then be counted twice with nothing said. We can't
+ * merge safely on this evidence — two genuinely separate accounts can hold the same balance — so we never set
+ * duplicate_of here; we flag the pair and let dc's coverage line carry the overlap into every cash/burn/runway answer,
+ * and the person resolves it (mark one a duplicate, disconnect one, or dismiss as two different accounts).
+ *
+ * Signal: two live cash accounts in the same company and currency whose provider balances match to the cent on every
+ * shared snapshot day, over at least a few days, and aren't merely both sitting at zero (no evidence, no risk).
+ */
+async function possibleDuplicateAccounts(rc: ReadContext, entities: EntityInfo[], asOf: IsoDate): Promise<CheckResult[]> {
+  const out: CheckResult[] = []
+  const ids = new Set(entities.map((e) => e.id))
+  if (ids.size === 0) return out
+  const accounts = (await rc.directory.listSourceAccounts(rc.ws)).filter(
+    (a) => a.entityId && ids.has(a.entityId) && !a.duplicateOf && a.includeInCash && a.currency !== NOT_MONEY,
+  )
+  // Pairs the person has already dismissed as genuinely different accounts, by dupKey (pair + evidence kind).
+  const dismissed = new Set((await rc.store.listDuplicateDismissals(rc.ws)).map((d) => d.dupKey))
+  // Only accounts in the same company and currency can be the same real account.
+  const groups = new Map<string, SourceAccountInfo[]>()
+  for (const a of accounts) {
+    const k = `${a.entityId}|${a.currency}`
+    groups.set(k, [...(groups.get(k) ?? []), a])
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue
+    const daysOf = new Map<Id, Map<IsoDate, number>>()
+    for (const a of group) {
+      const m = new Map<IsoDate, number>()
+      for (const s of latestPerDay((await snapshotsOf(rc, a.id)).filter((r) => r.date <= asOf))) m.set(s.date, snapCurrent(s).minor)
+      daysOf.set(a.id, m)
+    }
+    const sorted = [...group].sort((x, y) => (x.id < y.id ? -1 : 1))
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        const a = sorted[i] as SourceAccountInfo
+        const b = sorted[j] as SourceAccountInfo
+        const da = daysOf.get(a.id) as Map<IsoDate, number>
+        const db = daysOf.get(b.id) as Map<IsoDate, number>
+        const shared = [...da.keys()].filter((d) => db.has(d)).sort()
+        if (shared.length < MIN_SHARED_DAYS) continue
+        if (!shared.every((d) => da.get(d) === db.get(d))) continue
+        if (!shared.some((d) => da.get(d) !== 0)) continue
+        const first = shared[0] as IsoDate
+        // The dismissal key is the pair plus the KIND of evidence ("balance"), never the matching dates — so more
+        // matching days keep a dismissed pair quiet, and only a new kind of evidence (mask, name) would raise it again.
+        const dupKey = `${a.id}|${b.id}|balance`
+        if (dismissed.has(dupKey)) continue
+        out.push({
+          name: 'possible_duplicate_account',
+          status: 'warn',
+          entityId: a.entityId,
+          subjectId: a.id,
+          relatedId: b.id,
+          dupKey,
+          expectedMinor: null,
+          actualMinor: null,
+          differenceMinor: null,
+          currency: a.currency,
+          message: `${dupName(a)} and ${dupName(b)} look like the same account — their balances have matched since ${first}. If they are the same, mark one a duplicate; if they are two different accounts, dismiss this.`,
+        })
+      }
+    }
   }
   return out
 }

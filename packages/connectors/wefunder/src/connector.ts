@@ -184,6 +184,9 @@ export function createWefunderConnector(opts: WefunderOptions): Connector & { au
         await renew(true)
         res = await read()
       }
+      // A present JSON:API envelope with an empty `data` array is a real empty page; a null/non-object body (an empty
+      // body, or a sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop the sync.
+      if (!isRecord(res.data)) throw new ConnectorError('transient', 'Wefunder sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       const rows = Array.isArray(res.data.data) ? res.data.data.filter(isRecord) : []
       const events: NormalizedEvent[] = []
       for (const p of rows) {
@@ -194,7 +197,12 @@ export function createWefunderConnector(opts: WefunderOptions): Connector & { au
       }
       const meta = isRecord(res.data.meta) ? res.data.meta : {}
       const nextCursor = typeof meta.next_cursor === 'number' || typeof meta.next_cursor === 'string' ? meta.next_cursor : null
-      const more = meta.has_more === true && nextCursor !== null && nextCursor !== state.cursor && rows.length > 0 && state.pages + 1 < MAX_PAGES
+      const providerMore = meta.has_more === true && nextCursor !== null && nextCursor !== state.cursor && rows.length > 0
+      // The cap must not masquerade as the end of the listing: a truncated pass here would emit listing.complete and
+      // void the positions on the pages never fetched. Stop visibly instead.
+      if (providerMore && state.pages + 1 >= MAX_PAGES)
+        throw new ConnectorError('permanent', 'Wefunder returned more positions than Aggregate can page through, so this sync stopped. No positions were voided and no totals were changed.', { provider: PROVIDER, forUser: true })
+      const more = providerMore
       if (!more) {
         // A full pass: any Wefunder position this connection had that wasn't seen since it began is gone at Wefunder.
         events.push({ type: 'listing.complete', externalId: `listing:${state.startedAt}`, connectionId: conn.id, kinds: ['investment'], startedAt: state.startedAt, scope: SCOPE })

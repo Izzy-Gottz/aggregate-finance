@@ -37,7 +37,7 @@ const fakeProvider = (key: string) => (deps: ConnectorDeps): Connector => ({
 beforeEach(async () => {
   outbox = []
   const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: BASE, WEB_DIST: '/nonexistent' }), runWorker: false }
-  booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async (m) => void outbox.push(m.text) }, connectors: [fakeProvider('wefunder') as never, fakeProvider('freshbooks') as never], fileStore: new MemoryFileStore(), ledger: (h) => ledgerFor(h.db) })
+  booted = await boot({ config, keys: loadKeyRing({ AGFN_MASTER_KEY: generateMasterKey() }), mailer: { send: async (m) => void outbox.push(m.text) }, connectors: [fakeProvider('wefunder') as never, fakeProvider('freshbooks') as never, fakeProvider('bigcommerce') as never], fileStore: new MemoryFileStore(), ledger: (h) => ledgerFor(h.db) })
   app = createApp(booted.services)
 })
 afterEach(() => booted.shutdown())
@@ -75,6 +75,28 @@ describe('erase on disconnect', () => {
     const { cookie, ws, personal, id } = await setup('freshbooks')
     const rows = (t: string) => withBypass('t', () => anyDb().selectFrom(t).select('id').where('connection_id', '=', id).execute())
     expect((await rows('ledger_records')).length).toBe(4)
+    const res = await app.request(`/api/connections/${id}/disconnect`, post(cookie, {}))
+    expect(res.status, await res.clone().text()).toBe(200)
+    expect(await res.json()).toMatchObject({ ok: true, dataDeleted: true })
+    expect(await rows('ledger_records')).toEqual([])
+    expect(await rows('raw_records')).toEqual([])
+    expect(await withBypass('t', () => anyDb().selectFrom('journal_entries').select('id').where('workspace_id', '=', ws).where('entity_id', '=', personal).execute())).toEqual([])
+  })
+
+  it('Etsy is erased on disconnect too (API Terms: service provider, kept no longer than needed, stop on termination)', () => {
+    expect(ERASE_ON_DISCONNECT.has('etsy')).toBe(true)
+  })
+
+  it('Amazon is erased on disconnect too (Data Protection Policy s.1.7)', () => {
+    expect(ERASE_ON_DISCONNECT.has('amazon')).toBe(true)
+  })
+
+  it('BigCommerce is erased on disconnect (API Terms s.2.1): records, entries and raw payloads all go', async () => {
+    expect(ERASE_ON_DISCONNECT.has('bigcommerce')).toBe(true)
+    const { cookie, ws, personal, id } = await setup('bigcommerce')
+    const rows = (t: string) => withBypass('t', () => anyDb().selectFrom(t).select('id').where('connection_id', '=', id).execute())
+    expect((await rows('ledger_records')).length).toBe(4)
+    expect((await rows('raw_records')).length).toBe(4)
     const res = await app.request(`/api/connections/${id}/disconnect`, post(cookie, {}))
     expect(res.status, await res.clone().text()).toBe(200)
     expect(await res.json()).toMatchObject({ ok: true, dataDeleted: true })

@@ -103,6 +103,8 @@ export function mapSaleRefund(s: GumroadSale, sellerId: string, connectionId: st
 }
 
 export function mapSaleChargeback(s: GumroadSale, sellerId: string, connectionId: string, rawRef: string): ProcessorBalanceTxn | undefined {
+  // Won: Gumroad clears chargedback. The same id at zero replaces a chargeback row already posted (else it stays lost).
+  if (s.dispute_won && !s.chargedback && s.price > 0) return { ...base(s, sellerId, connectionId, rawRef), externalId: `${s.id}:chargeback`, kind: 'dispute', gross: usd(0), fee: usd(0), net: usd(0) }
   if (!s.chargedback || s.refunded || s.price <= 0) return undefined
   const fee = saleFee(s)
   return { ...base(s, sellerId, connectionId, rawRef), externalId: `${s.id}:chargeback`, kind: 'dispute', gross: usd(-s.price), fee: usd(-fee), net: usd(-(s.price - fee)) }

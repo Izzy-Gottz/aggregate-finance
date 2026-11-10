@@ -18,7 +18,7 @@ move money, and you choose exactly what <Assistant> can see.
 
 ### 1. Connect <Source> to Aggregate
 Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace →
-Connections → + More connections → <Source>** and <sign in / paste a token>.
+Connections → + Add a connection → <Source>** and <sign in / paste a token>.
 
 ### 2. Add Aggregate to <Assistant>
 <The exact steps for this assistant, from docs/connect-your-ai.md.>

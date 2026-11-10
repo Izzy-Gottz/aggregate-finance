@@ -20,7 +20,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import type { Kysely } from 'kysely'
 import { ownerOf, newId, nowIso, withBypass, withWorkspace, type CoreTables } from '@agfn/db'
-import { captureReviewerMagicLink, REVIEWER_EMAIL_DOMAIN } from '@agfn/auth'
+import { captureMagicLink, REVIEWER_EMAIL_DOMAIN } from '@agfn/auth'
 import type { LedgerEngine } from '@agfn/core'
 import { createDemoWorkspace, isDemoWorkspace, leaveDemoWorkspace, type DemoExtrasPorts } from '@agfn/demo'
 import { equityFor } from './equity.ts'
@@ -105,7 +105,7 @@ export async function revokeReviewerLink(db: Kysely<CoreTables>, id: string, now
 async function endReviewerAccess(db: Kysely<CoreTables>, personId: string, now: Date): Promise<void> {
   const at = now.toISOString()
   const anyDb = db as unknown as Kysely<Record<string, Record<string, unknown>>>
-  const person = await db.selectFrom('people').select('auth_user_id').where('id', '=', personId).executeTakeFirst()
+  const person = await withBypass('reviewer:end-person', () => db.selectFrom('people').select('auth_user_id').where('id', '=', personId).executeTakeFirst())
   // Grants and agent keys are core tables: any failure there is thrown, never swallowed. Only the auth tables may be
   // missing (a minimal install without OAuth); anything else they throw is thrown too.
   if (person?.auth_user_id) await optionalTable(ownerOf(anyDb).deleteFrom('auth_session').where('userId', '=', person.auth_user_id).execute())
@@ -148,14 +148,15 @@ export async function redeemReviewerLink(
   if (!row) return { ok: false, reason: 'unknown' }
   if (row.revoked_at) return { ok: false, reason: 'revoked' }
   if (row.expires_at <= now.toISOString()) return { ok: false, reason: 'expired' }
-  const person = await deps.db.selectFrom('people').select(['id', 'email']).where('id', '=', row.person_id).executeTakeFirst()
+  // Redeeming the link signs the reviewer in: no workspace context yet, so a named bypass reads the link's person.
+  const person = await withBypass('reviewer:redeem-person', () => deps.db.selectFrom('people').select(['id', 'email']).where('id', '=', row.person_id).executeTakeFirst())
   if (email !== undefined && person?.email.toLowerCase() !== email.trim().toLowerCase()) return { ok: false, reason: 'unknown' }
   const ws = person && isReviewerEmail(person.email) ? await reviewerWorkspace(deps.db, person.id) : null
   if (!person || !ws) {
     await deps.log?.('reviewer link refused: the account is not demo-only', { linkId: row.id })
     return { ok: false, reason: 'unsafe' }
   }
-  const url = await captureReviewerMagicLink(() => deps.signIn(person.email))
+  const url = await captureMagicLink(() => deps.signIn(person.email))
   if (!url) throw new Error('reviewer sign-in: no link was produced')
   await ownerOf(deps.db).updateTable('reviewer_links').set({ last_used_at: now.toISOString(), uses: Number(row.uses) + 1 }).where('id', '=', row.id).execute()
   await deps.log?.(`reviewer link used (${row.label})`, { linkId: row.id, workspaceId: ws })

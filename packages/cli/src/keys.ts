@@ -12,8 +12,8 @@ import { bootFromEnv, settleAuth, type BootFn } from './sync.ts'
 const BATCH = 200
 
 interface Sealed {
-  table: 'connections' | 'shopify_pending_installs'
-  id: 'id' | 'shop'
+  table: 'connections' | 'shopify_pending_installs' | 'bigcommerce_pending_installs'
+  id: 'id' | 'shop' | 'store_hash'
   columns: readonly string[]
   context: (row: Record<string, string>) => EncryptionContext
 }
@@ -22,6 +22,7 @@ interface Sealed {
 const SEALED: readonly Sealed[] = [
   { table: 'connections', id: 'id', columns: ['id', 'workspace_id', 'secret_enc'], context: (r) => ({ workspaceId: r.workspace_id as string, recordId: r.id as string, purpose: SECRET_PURPOSE }) },
   { table: 'shopify_pending_installs', id: 'shop', columns: ['shop', 'secret_enc'], context: (r) => ({ workspaceId: 'shopify-pending', recordId: r.shop as string, purpose: 'shopify_pending_install' }) },
+  { table: 'bigcommerce_pending_installs', id: 'store_hash', columns: ['store_hash', 'secret_enc'], context: (r) => ({ workspaceId: 'bigcommerce-pending', recordId: r.store_hash as string, purpose: 'bigcommerce_pending_install' }) },
 ]
 
 interface Tally {

@@ -1,7 +1,7 @@
 // The Monday note's "Bills due this week" line: open bills (the ledger's digest), plus recurring charges expected
 // this week that aren't billed yet (subscriptions paid by card, utilities, SaaS), plus card and loan minimum payments
 // due (from the provider's terms). Everything else is the ledger's.
-import type { FinanceReader } from '@agfn/contracts'
+import type { FinanceReader, Money } from '@agfn/contracts'
 import type { CoreTables } from '@agfn/db'
 import { shortMoney, type WeeklyDigest } from '@agfn/core'
 import { createRecurring } from '@agfn/recurring'
@@ -12,6 +12,7 @@ import { termsReader, type TermsTables } from './account-terms.ts'
 type DigestLedger = {
   weeklyDigest?: (ws: string, asOf: Date) => Promise<{ subject: string; lines: string[] } | null>
   weeklyDigestDetail?: (ws: string, asOf?: string) => Promise<WeeklyDigest>
+  metricContext?: (ws: string) => { toCurrency(amount: Money, to: string, date: string): Promise<Money> }
 }
 
 const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000)
@@ -25,10 +26,25 @@ export function digestWithRecurring(ledger: DigestLedger, db: Kysely<CoreTables>
     const companies = (await db.selectFrom('entities').select('id').where('workspace_id', '=', ws).where('kind', '=', 'company').where('archived_at', 'is', null).execute()).map((e) => e.id)
     const scope = { workspaceId: ws, entityIds: companies }
     const window = Math.max(0, days(date, d.data.billsDue.through))
-    const payments = (await termsReader(db as unknown as Kysely<CoreTables & TermsTables>).paymentsDue(scope, date, window).catch(() => [])).filter((p) => p.amount.currency === d.currency)
-    const due = await createRecurring(reader())
-      .due(scope, date, window)
-      .catch(() => [])
+    // A charge in another currency counts at the day's rate (a euro subscription is still due this week).
+    const fx = ledger.metricContext?.(ws)
+    const inHome = async <T extends { amount: Money }>(xs: T[]): Promise<T[]> => {
+      const out: T[] = []
+      for (const x of xs) {
+        if (x.amount.currency === d.currency) out.push(x)
+        else if (fx) {
+          const { minor, currency } = await fx.toCurrency(x.amount, d.currency, date)
+          out.push({ ...x, amount: { minor, currency } })
+        }
+      }
+      return out
+    }
+    const payments = await inHome(await termsReader(db as unknown as Kysely<CoreTables & TermsTables>).paymentsDue(scope, date, window).catch(() => []))
+    const due = await inHome(
+      await createRecurring(reader())
+        .due(scope, date, window)
+        .catch(() => []),
+    )
     // A recurring guess at a payment that is already scheduled counts once (same rule as bills_due_30d).
     const subs = due.filter((r) => r.amount.currency === d.currency && !payments.some((p) => p.entityId === r.entityId && Math.abs(Math.abs(p.amount.minor) - r.amount.minor) <= 0.075 * Math.max(Math.abs(p.amount.minor), r.amount.minor)))
     if (!subs.length && !payments.length) return { subject: d.subject, lines: [...d.lines] }

@@ -214,11 +214,12 @@ export function homeTotals(s: CapState, currency: string, rates: Rates, asOf: st
   return { currency, rates, missing, safesAndNotes: convertibles.length ? sumIn(convertibles, currency, rates) : null, preferences: prefs.length ? sumIn(prefs, currency, rates) : null }
 }
 
-/** "$1.2345" for share prices (up to 4 decimals, at least 2). */
+/** "$1.2345" for share prices (the currency's decimals, up to two more: ¥125, KWD 1.25). */
 export function fmtPrice(m: Money | number, currency = 'USD'): string {
   const minor = typeof m === 'number' ? m : m.minor
   const cur = typeof m === 'number' ? currency : m.currency
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(minor / 100)
+  const exp = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).resolvedOptions().maximumFractionDigits ?? 2
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: Math.min(exp, 2), maximumFractionDigits: exp + 2 }).format(minor / 10 ** exp)
 }
 
 function defaultFmt(m: Money): string {

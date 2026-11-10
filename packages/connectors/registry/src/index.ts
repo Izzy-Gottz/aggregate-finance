@@ -19,6 +19,10 @@ import { createPolarConnector } from '@agfn/connector-polar'
 import { createLemonSqueezyConnector } from '@agfn/connector-lemonsqueezy'
 import { createChargebeeConnector } from '@agfn/connector-chargebee'
 import { createWooCommerceConnector } from '@agfn/connector-woocommerce'
+import { createBigCommerceConnector } from '@agfn/connector-bigcommerce'
+import { createAmazonConnector } from '@agfn/connector-amazon'
+import { createEtsyConnector } from '@agfn/connector-etsy'
+import { createZeffyConnector } from '@agfn/connector-zeffy'
 import { createHarvestConnector } from '@agfn/connector-harvest'
 import { createLightspeedConnector } from '@agfn/connector-lightspeed'
 import { createSumUpConnector } from '@agfn/connector-sumup'
@@ -314,6 +318,30 @@ export function installedConnectorList(env: Env, services: RegistryServices = {}
   // WooCommerce: a Read key on the store's own address, for sales reported by the store (never posted). Hosted refuses a
   // key it can't show is Read only, and holds it back until it's run on a real store (config.ts).
   add('woocommerce', (deps) => createWooCommerceConnector(env.AGFN_HOSTED === '1' ? { hosted: true } : {}, deps))
+  // BigCommerce: the merchant's own store-level API account (read-only scopes), for sales reported by the store (never
+  // posted). BigCommerce can't show a pasted token's scopes, so the client sends GET only. With BIGCOMMERCE_CLIENT_ID and
+  // _SECRET it's also a single-click app installed from BigCommerce, whose scopes are checked read-only. Hosted holds it back
+  // until it's run on a real store (config.ts).
+  const bigcommerceApp =
+    env.BIGCOMMERCE_CLIENT_ID && env.BIGCOMMERCE_CLIENT_SECRET
+      ? { clientId: env.BIGCOMMERCE_CLIENT_ID, clientSecret: env.BIGCOMMERCE_CLIENT_SECRET, authCallback: redirectUriFor(env, 'bigcommerce').replace(/\/callback$/, '/auth') }
+      : undefined
+  add('bigcommerce', (deps) => createBigCommerceConnector(deps, bigcommerceApp ? { app: bigcommerceApp } : {}))
+  // Amazon: sign-in with Aggregate's registered SP-API app (Finance and Accounting role only), for each settlement Amazon
+  // paid. All three are needed: the app id names the app on Seller Central's consent page, the LWA client exchanges the
+  // code. AMAZON_SPAPI_DRAFT (on unless 0) adds version=beta while the app is Draft. Hosted holds it back (config.ts).
+  const amazonApp = env.AMAZON_SPAPI_APP_ID && env.AMAZON_SPAPI_CLIENT_ID && env.AMAZON_SPAPI_CLIENT_SECRET
+    ? { appId: env.AMAZON_SPAPI_APP_ID, clientId: env.AMAZON_SPAPI_CLIENT_ID, clientSecret: env.AMAZON_SPAPI_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'amazon') }
+    : undefined
+  if (amazonApp) add('amazon', (deps) => createAmazonConnector({ app: amazonApp, draft: env.AMAZON_SPAPI_DRAFT !== '0' }, deps))
+  // Etsy: "Sign in with Etsy" (PKCE) on Aggregate's app, transactions_r and shops_r only, for the shop's payment account
+  // ledger. Both are needed: the keystring is the OAuth client id, and every call sends keystring:shared_secret. There's
+  // no key to paste, so no app means no connector. Hosted holds it back (config.ts).
+  const etsyApp = env.ETSY_CLIENT_ID && env.ETSY_CLIENT_SECRET ? { clientId: env.ETSY_CLIENT_ID, clientSecret: env.ETSY_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'etsy') } : undefined
+  if (etsyApp) add('etsy', (deps) => createEtsyConnector({ app: etsyApp }, deps))
+  // Zeffy: the organization owner's API key, for online payments reported by Zeffy (never posted). Zeffy has no read-only
+  // key, so the client sends GET only. Hosted holds it back until it's run on a real organization (config.ts).
+  add('zeffy', (deps) => createZeffyConnector(deps))
   // Harvest: sign-in first, once Aggregate's app is set. Harvest has no read-only scope, so the connector's client refuses
   // anything but GET. Only self-hosters may paste a personal token; hosted waits for the app, then for config.ts.
   const harvestOAuth = env.HARVEST_CLIENT_ID && env.HARVEST_CLIENT_SECRET ? { clientId: env.HARVEST_CLIENT_ID, clientSecret: env.HARVEST_CLIENT_SECRET, redirectUri: redirectUriFor(env, 'harvest') } : undefined

@@ -241,6 +241,9 @@ export function createBillConnector(opts: BillOptions): Connector {
           query: st.page ? { page: st.page, max } : { max, ...(st.since && spec.filter ? { filters: `updatedTime:gte:"${st.since}"` } : {}), sort: 'updatedTime:asc' },
         }),
       )
+      // A present object with `results` omitted/empty is a real empty page; a null/non-object body (an empty body, or
+      // the sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero.
+      if (!isRecord(res.data)) throw new ConnectorError('transient', 'BILL sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       const items = Array.isArray(res.data.results) ? res.data.results.filter(isRecord) : []
       const ctx: MapContext = { connectionId: conn.id, currency: cfg.currency, customers: st.customers, vendors: st.vendors }
       const events: NormalizedEvent[] = []

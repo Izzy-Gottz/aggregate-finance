@@ -1,0 +1,24 @@
+# Caddy in front of the Aggregate container on AWS (EC2). DNS is DNS-only (no Cloudflare proxy), so the TCP peer Caddy
+# sees is the real client. TLS: automatic HTTPS (Let's Encrypt, HTTP-01).
+#
+# The app trusts exactly one header for the client IP: CLIENT_IP_HEADER=x-real-ip (apps/server/src/security.ts
+# clientIp). Caddy OVERWRITES it with the peer address, so whatever a client sends in X-Real-IP is replaced. It also
+# drops cf-connecting-ip and fly-client-ip from the request: the app honours cf-connecting-ip only when the trusted
+# value is a Cloudflare address, and with no Cloudflare proxy in front, a client must never be able to supply either.
+# deploy/aws/caddy-client-ip.test.ts runs this file through a real Caddy and forges all three.
+#
+#   AGFN_SITE      the site address, e.g. app.aggregate.finance (staging.aggregate.finance on the staging box)
+#   upstream.caddy written by scripts/deploy-aws.sh: one line, `to 127.0.0.1:<port>` of the container now serving
+
+{$AGFN_SITE} {
+	reverse_proxy {
+		import {$AGFN_CADDY_DIR:/etc/caddy}/upstream.caddy
+		header_up X-Real-IP {remote_host}
+		header_up -Cf-Connecting-Ip
+		header_up -Fly-Client-Ip
+		# The app keeps a request up to 30 s (statement timeout); a slow sync request is not a dead upstream.
+		transport http {
+			read_timeout 60s
+		}
+	}
+}

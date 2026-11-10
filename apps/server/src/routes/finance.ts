@@ -195,10 +195,12 @@ export function financeRoutes(s: S, o: { setAsides?: boolean } = {}): Hono<Env> 
     let bills: Record<string, unknown> | null = null
     if (seeBills && (payable.length || (ov?.billsDue30d.minor ?? 0) > 0)) {
       // Due in the next 30 days as get_overview counts it: open bills, recurring charges and card/loan minimums.
-      const soon = payable.filter((v) => (v.dueDate ?? v.issueDate) <= addDays(today, 30) && v.total.currency === currency)
+      const due30 = payable.filter((v) => (v.dueDate ?? v.issueDate) <= addDays(today, 30))
+      const soon = due30.filter((v) => v.total.currency === currency)
       const openSoon = soon.reduce((sum, v) => sum + open(v).minor, 0)
       const dueSoon = ov?.billsDue30d ?? { minor: openSoon, currency }
-      const other = dueSoon.minor - openSoon
+      // A bill in another currency is in dueSoon at the day's rate but not in openSoon: no split, rather than call it recurring.
+      const other = due30.length === soon.length ? dueSoon.minor - openSoon : 0
       bills = {
         dueSoon,
         ...(other > 0 ? { breakdown: { openBills: { minor: openSoon, currency: dueSoon.currency }, recurring: { minor: other, currency: dueSoon.currency } } } : {}),
@@ -448,7 +450,13 @@ export async function cashTrend(s: S, r: FinanceReader, ws: string, entityId: st
   const ledger = s.ledger as { cashHistory?: (ws: string, o: { entityIds: string[]; days: string[] }) => Promise<Array<Money | null>> }
   if (ledger.cashHistory) {
     const days = await ledger.cashHistory(ws, { entityIds: [entityId], days: ends }).catch(() => null)
-    if (days) return days.map((m) => (m ? major(m) : 0))
+    // A month before the company's cash is known is left out, never drawn as $0 (that would show a climb from nothing).
+    // A gap after the first known month means no trend at all rather than a false dip.
+    if (days) {
+      const first = days.findIndex((m) => m !== null)
+      const known = first < 0 ? [] : days.slice(first)
+      return known.some((m) => !m) ? [] : known.map((m) => major(m!))
+    }
   }
   const answers = await Promise.all(ends.map((to) => safe(() => r.metric('cash', { workspaceId: ws, entityIds: [entityId], to }))))
   if (answers.some((a) => !a)) return []

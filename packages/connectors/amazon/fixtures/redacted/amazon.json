@@ -1,0 +1,129 @@
+{
+  "_note": "Hand-built from Amazon's published Finances API v0 model (financesV0.json: FinancialEventGroup, ShipmentEvent, ShipmentItem, ChargeComponent, FeeComponent, Promotion, TaxWithheldComponent, ServiceFeeEvent, ProductAdsPaymentEvent, AdjustmentEvent). NOT recorded from a real seller account. Totals are worked by hand in amazon.test.ts. Order ids, SKUs, ASINs, store names and a bank account tail are present, with made-up values, to prove they are never kept.",
+  "groupPages": [
+    [
+      { "FinancialEventGroupId": "G1-USD", "ProcessingStatus": "Closed", "FundTransferStatus": "Succeeded", "OriginalTotal": { "CurrencyCode": "USD", "CurrencyAmount": 11.34 }, "ConvertedTotal": { "CurrencyCode": "USD", "CurrencyAmount": 11.34 }, "FundTransferDate": "2026-09-16T10:00:00Z", "TraceId": "TRACE0001", "AccountTail": "321", "BeginningBalance": { "CurrencyCode": "USD", "CurrencyAmount": 0 }, "FinancialEventGroupStart": "2026-09-01T00:00:00Z", "FinancialEventGroupEnd": "2026-09-15T00:00:00Z" },
+      { "FinancialEventGroupId": "G2-USD", "ProcessingStatus": "Closed", "FundTransferStatus": "Succeeded", "OriginalTotal": { "CurrencyCode": "USD", "CurrencyAmount": 29.5 }, "FundTransferDate": "2026-09-30T10:00:00Z", "TraceId": "TRACE0002", "AccountTail": "321", "BeginningBalance": { "CurrencyCode": "USD", "CurrencyAmount": 4 }, "FinancialEventGroupStart": "2026-09-15T00:00:00Z", "FinancialEventGroupEnd": "2026-09-29T00:00:00Z" },
+      { "FinancialEventGroupId": "G3-USD", "ProcessingStatus": "Open", "OriginalTotal": { "CurrencyCode": "USD", "CurrencyAmount": 12 }, "BeginningBalance": { "CurrencyCode": "USD", "CurrencyAmount": 0 }, "FinancialEventGroupStart": "2026-09-29T00:00:00Z" }
+    ],
+    [
+      { "FinancialEventGroupId": "G4-USD", "ProcessingStatus": "Closed", "FundTransferStatus": "Processing", "OriginalTotal": { "CurrencyCode": "USD", "CurrencyAmount": 3 }, "FinancialEventGroupStart": "2026-09-20T00:00:00Z", "FinancialEventGroupEnd": "2026-09-27T00:00:00Z" },
+      { "FinancialEventGroupId": "G5-CAD", "ProcessingStatus": "Closed", "FundTransferStatus": "Succeeded", "OriginalTotal": { "CurrencyCode": "CAD", "CurrencyAmount": 8.5 }, "FundTransferDate": "2026-09-22T10:00:00Z", "FinancialEventGroupStart": "2026-09-05T00:00:00Z", "FinancialEventGroupEnd": "2026-09-21T00:00:00Z" }
+    ]
+  ],
+  "events": {
+    "G1-USD": [
+      {
+        "ShipmentEventList": [
+          {
+            "AmazonOrderId": "111-0000000-0000001",
+            "SellerOrderId": "SELLER-ORDER-1",
+            "MarketplaceName": "Amazon.com",
+            "StoreName": "Sample Store",
+            "PostedDate": "2026-09-03T12:00:00Z",
+            "ShipmentItemList": [
+              {
+                "SellerSKU": "SKU-SAMPLE-1",
+                "OrderItemId": "OI-SAMPLE-1",
+                "QuantityShipped": 1,
+                "ItemChargeList": [
+                  { "ChargeType": "Principal", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 100.0 } },
+                  { "ChargeType": "ShippingCharge", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 5.0 } },
+                  { "ChargeType": "Tax", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 8.25 } },
+                  { "ChargeType": "ShippingTax", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 0.41 } }
+                ],
+                "ItemFeeList": [
+                  { "FeeType": "Commission", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -15.75 } },
+                  { "FeeType": "FBAPerUnitFulfillmentFee", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -3.22 } }
+                ],
+                "PromotionList": [{ "PromotionType": "PromotionMetaDataDefinitionValue", "PromotionId": "PROMO-SAMPLE", "PromotionAmount": { "CurrencyCode": "USD", "CurrencyAmount": -10.0 } }],
+                "ItemTaxWithheldList": [
+                  {
+                    "TaxCollectionModel": "MarketplaceFacilitator",
+                    "TaxesWithheld": [
+                      { "ChargeType": "MarketplaceFacilitatorTax-Principal", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -8.25 } },
+                      { "ChargeType": "MarketplaceFacilitatorTax-Shipping", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -0.41 } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "RefundEventList": [
+          {
+            "AmazonOrderId": "111-0000000-0000002",
+            "PostedDate": "2026-09-08T12:00:00Z",
+            "ShipmentItemAdjustmentList": [
+              {
+                "SellerSKU": "SKU-SAMPLE-2",
+                "OrderAdjustmentItemId": "OA-SAMPLE-2",
+                "ItemChargeAdjustmentList": [
+                  { "ChargeType": "Principal", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -20.0 } },
+                  { "ChargeType": "Tax", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -1.65 } }
+                ],
+                "ItemFeeAdjustmentList": [
+                  { "FeeType": "Commission", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 3.0 } },
+                  { "FeeType": "RefundCommission", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -0.6 } }
+                ],
+                "PromotionAdjustmentList": [{ "PromotionType": "PromotionMetaDataDefinitionValue", "PromotionId": "PROMO-SAMPLE", "PromotionAmount": { "CurrencyCode": "USD", "CurrencyAmount": 2.0 } }],
+                "ItemTaxWithheldList": [{ "TaxCollectionModel": "MarketplaceFacilitator", "TaxesWithheld": [{ "ChargeType": "MarketplaceFacilitatorTax-Principal", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 1.65 } }] }]
+              }
+            ]
+          }
+        ],
+        "ServiceFeeEventList": [{ "FeeDescription": "Subscription", "FeeList": [{ "FeeType": "Subscription", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -39.99 } }] }],
+        "ProductAdsPaymentEventList": [
+          { "postedDate": "2026-09-10T12:00:00Z", "transactionType": "charge", "invoiceId": "INV-SAMPLE", "baseValue": { "CurrencyCode": "USD", "CurrencyAmount": -12.5 }, "taxValue": { "CurrencyCode": "USD", "CurrencyAmount": 0 }, "transactionValue": { "CurrencyCode": "USD", "CurrencyAmount": -12.5 } }
+        ],
+        "AdjustmentEventList": [
+          {
+            "AdjustmentType": "FBAInventoryReimbursement",
+            "PostedDate": "2026-09-11T12:00:00Z",
+            "AdjustmentAmount": { "CurrencyCode": "USD", "CurrencyAmount": 7.4 },
+            "AdjustmentItemList": [{ "Quantity": "1", "PerUnitAmount": { "CurrencyCode": "USD", "CurrencyAmount": 7.4 }, "TotalAmount": { "CurrencyCode": "USD", "CurrencyAmount": 7.4 }, "SellerSKU": "SKU-SAMPLE-3", "ASIN": "B000SAMPLE", "ProductDescription": "Sample product" }]
+          },
+          { "AdjustmentType": "ReserveEvent", "PostedDate": "2026-09-15T00:00:00Z", "AdjustmentAmount": { "CurrencyCode": "USD", "CurrencyAmount": -4.0 } }
+        ],
+        "ChargebackEventList": [],
+        "DebtRecoveryEventList": []
+      }
+    ],
+    "G2-USD": [
+      {
+        "ShipmentEventList": [
+          {
+            "AmazonOrderId": "111-0000000-0000003",
+            "PostedDate": "2026-09-20T12:00:00Z",
+            "ShipmentItemList": [
+              {
+                "SellerSKU": "SKU-SAMPLE-1",
+                "ItemChargeList": [{ "ChargeType": "Principal", "ChargeAmount": { "CurrencyCode": "USD", "CurrencyAmount": 30.0 } }],
+                "ItemFeeList": [{ "FeeType": "Commission", "FeeAmount": { "CurrencyCode": "USD", "CurrencyAmount": -4.5 } }]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "G5-CAD": [
+      {
+        "ShipmentEventList": [
+          {
+            "AmazonOrderId": "702-0000000-0000004",
+            "PostedDate": "2026-09-10T12:00:00Z",
+            "ShipmentItemList": [
+              {
+                "SellerSKU": "SKU-SAMPLE-1",
+                "ItemChargeList": [{ "ChargeType": "Principal", "ChargeAmount": { "CurrencyCode": "CAD", "CurrencyAmount": 10.0 } }],
+                "ItemFeeList": [{ "FeeType": "Commission", "FeeAmount": { "CurrencyCode": "CAD", "CurrencyAmount": -1.5 } }]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

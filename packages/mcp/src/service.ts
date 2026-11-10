@@ -8,9 +8,10 @@ import { ControlApi } from './control.ts'
 import { perfEnabled, perfLine, withBypass, withPerf, withWorkspace } from '@agfn/db'
 import { dataLabel, defaultGrantShape, grantState, PUBLIC_DEMO_CLIENT } from './grants.ts'
 import { hashKey, looksLikeAgentKey } from './keys.ts'
-import { systemClock, type Clock, type ControlHooks, type FinanceReader, type LiveBalancePort, type SharePort, type McpTokenVerifier, type PeopleDirectory, type RecordWriter } from './ports.ts'
+import { systemClock, type Clock, type ConnectPort, type ControlHooks, type FinanceReader, type FreshnessAspect, type LiveBalancePort, type SharePort, type SourceEntry, type SourcesPort, type McpTokenVerifier, type PeopleDirectory, type RecordWriter } from './ports.ts'
 import { DEFAULT_RATE_LIMITS, MemoryRateLimiter, type RateLimiter, type RateLimits } from './ratelimit.ts'
 import { Access, ToolError, type Principal } from './scope.ts'
+import { safeLabel } from './untrusted.ts'
 import { ControlStore, type McpDb } from './store/store.ts'
 import type { AgentKeysTable } from './store/schema.ts'
 import type { ToolContext, ToolDef, ToolOutput } from './tools/common.ts'
@@ -18,6 +19,7 @@ import { READ_TOOLS, READ_WITH_SET_ASIDES } from './tools/read.ts'
 import { LIVE_TOOLS } from './tools/live.ts'
 import { WRITE_TOOLS, WRITE_WITH_SET_ASIDES } from './tools/write.ts'
 import { SHARE_TOOLS } from './tools/share.ts'
+import { CONNECT_TOOLS } from './tools/connect.ts'
 import { WritePipeline } from './writes.ts'
 import { AiUi } from './ui.ts'
 
@@ -47,6 +49,85 @@ export function canonicalJson(v: unknown): string {
 
 export const SCOPES = { read: 'finance:read', write: 'records:write' } as const
 
+/** Reads that aren't data answers (no numbers), so they carry no `sources` block or "Data as of" line. */
+const NO_SOURCES = new Set(['whoami', 'connect_source', 'share_answer'])
+
+/** Which provider timestamp a read leans on, so the host picks the matching freshness field. */
+export function aspectFor(tool: string): FreshnessAspect {
+  if (tool === 'get_holdings') return 'investments'
+  if (['query_transactions', 'search_transactions', 'query_invoices', 'search_invoices', 'list_upcoming', 'list_recurring', 'get_mrr_movements', 'get_record', 'get_counterparty', 'get_activity', 'get_payroll'].includes(tool)) return 'transactions'
+  if (['list_accounts', 'get_coverage', 'get_liabilities', 'get_owner_balance', 'list_buckets', 'get_bucket', 'get_cap_table'].includes(tool)) return 'balances'
+  return 'overview'
+}
+
+/** A short "how long ago" for the summary line; the `sources` block carries the exact ISO times. */
+export function freshnessAgo(iso: string | null, now: Date): string {
+  if (!iso) return 'time unknown'
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return 'time unknown'
+  const mins = Math.round((now.getTime() - t) / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min ago`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.round(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(t).toISOString().slice(0, 10)
+}
+
+/** Plain-words versions of the Plaid Item error codes a person can act on; unknown codes fall back to the raw code. */
+const CODE_WORDS: Record<string, string> = {
+  ITEM_LOGIN_REQUIRED: 'you may need to reconnect it',
+  PENDING_EXPIRATION: 'the connection will expire soon — reconnect it',
+  PENDING_DISCONNECT: 'the bank is ending this connection — reconnect it',
+  USER_SETUP_REQUIRED: 'the bank needs you to finish setup on their site',
+  INSTITUTION_DOWN: 'the bank was temporarily down',
+  INSTITUTION_NOT_RESPONDING: 'the bank was not responding',
+  INSTITUTION_NO_LONGER_SUPPORTED: 'this institution is no longer supported',
+  INTERNAL_SERVER_ERROR: 'a temporary provider error',
+}
+function plainCode(code: string): string {
+  return /^[A-Z0-9_]{1,64}$/.test(code) ? (CODE_WORDS[code] ?? code) : ''
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** A plain-English day like "Nov 3" (adds the year when it isn't the current one), from a 'YYYY-MM-DD' date. */
+function friendlyDay(iso: string, now: Date): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  if (!m) return iso
+  const base = `${MONTHS[Number(m[2]) - 1] ?? m[2]} ${Number(m[3])}`
+  return Number(m[1]) === now.getUTCFullYear() ? base : `${base}, ${m[1]}`
+}
+
+/** The one compact line that ends a read answer's summary: how current each source behind it is. */
+export function dataAsOfLine(entries: SourceEntry[], now: Date): string {
+  const parts = entries.slice(0, 6).map((e) => {
+    const refresh = e.typical_refresh ? ` (${e.typical_refresh})` : ''
+    const staleMark = e.stale ? ' — stale' : ''
+    // A stuck source: the last refresh failed after the last success. Lead with the failure; fall back to the last
+    // good data as "data from"; add a plain-words reason when the provider gave an error code.
+    if (e.refresh_failed_at) {
+      const good = e.refresh_last_good ? `; data from ${friendlyDay(e.refresh_last_good, now)}` : '; no good data yet'
+      const why = e.error_code ? plainCode(e.error_code) : ''
+      return `${e.source}: last refresh failed ${friendlyDay(e.refresh_failed_at, now)}${good}${why ? ` — ${why}` : ''}`
+    }
+    if (e.kind === 'live') return `${e.source} live, checked ${freshnessAgo(e.last_checked, now)}${staleMark}`
+    // A cached source with no provider time: show when WE checked, but never imply that's the source's own data time.
+    if (e.kind === 'cached' && !e.data_as_of) return `${e.source}: checked ${freshnessAgo(e.last_checked, now)} (its own update time not reported yet)${staleMark}`
+    // A file (statement) source's data_as_of is the statement closing date, not an elapsed time — say so plainly.
+    if (e.kind === 'file' && e.data_as_of) return `${e.source}: statements through ${e.data_as_of.slice(0, 10)}${staleMark}`
+    // Manual sources are hand-keyed: dated by the last entry, never sync-stale, but flag plainly when the entry is old.
+    if (e.kind === 'manual') {
+      if (!e.data_as_of) return `${e.source}: no entries yet`
+      const old = now.getTime() - Date.parse(e.data_as_of) > 30 * 86_400_000
+      return `${e.source}: as of your last entry, ${friendlyDay(e.data_as_of, now)}${old ? ' (over a month ago)' : ''}`
+    }
+    return `${e.source} ${freshnessAgo(e.data_as_of ?? e.last_checked, now)}${refresh}${staleMark}`
+  })
+  const more = entries.length > 6 ? ` · +${entries.length - 6} more` : ''
+  return `Data as of: ${parts.join(' · ')}${more}.`
+}
+
 export interface AgfnMcpDeps {
   db: McpDb
   reader: FinanceReader
@@ -68,6 +149,12 @@ export interface AgfnMcpDeps {
   investments?: boolean
   /** Set-asides in the bucket tools, and available_cash (AGFN_SET_ASIDES=1). Off until the directory reviews close: it changes tools/list. */
   setAsides?: boolean
+  /** connect_source, minting connect-from-chat links (AGFN_CONNECT_FROM_CHAT=1). Needs `connect`; off until the directory reviews close and Yisrael says yes, because it adds a tool to tools/list. */
+  connectFromChat?: boolean
+  /** The host's connect-from-chat implementation (apps/server/src/connect-source.ts). Without it connect_source isn't offered even with the flag. */
+  connect?: ConnectPort
+  /** Per-source freshness for the `sources` block + "Data as of" line on every read (apps/server/src/freshness.ts). Without it, reads carry no sources block. */
+  sources?: SourcesPort
   /** The app's address, for approval links in held writes (BASE_URL). */
   appUrl?: string
 }
@@ -101,10 +188,14 @@ export class AgfnMcp {
   private readonly hooks: ControlHooks | undefined
   private readonly liveBalance: LiveBalancePort | undefined
   private readonly share: SharePort | undefined
+  readonly connect: ConnectPort | undefined
+  private readonly sources: SourcesPort | undefined
   /** share_answer is wired (AGFN_MCP_SHARE=1). */
   get offersShare(): boolean {
     return !!this.share
   }
+  /** connect_source is wired (AGFN_CONNECT_FROM_CHAT=1 and a ConnectPort). */
+  readonly offersConnectFromChat: boolean
   readonly appUrl: string | undefined
   /** The prompt packs are listed (AGFN_MCP_PROMPTS=1). */
   readonly offersPromptPacks: boolean
@@ -124,11 +215,17 @@ export class AgfnMcp {
     this.hooks = deps.hooks
     this.liveBalance = deps.liveBalance
     this.share = deps.share
+    this.connect = deps.connect
+    this.sources = deps.sources
     this.appUrl = deps.appUrl?.replace(/\/+$/, '')
     this.offersPromptPacks = deps.promptPacks === true
     this.offersInvestments = deps.investments === true
     this.offersSetAsides = deps.setAsides === true
-    this.tools = this.offersSetAsides ? TOOLS_WITH_SET_ASIDES : ALL_TOOLS
+    this.offersConnectFromChat = deps.connectFromChat === true && !!deps.connect
+    // Compose, don't swap: the set-asides overlay and connect_source are independent. Off → the tool set is unchanged,
+    // so tools/list stays frozen for the directory reviews; each flag adds only its own.
+    const base = this.offersSetAsides ? TOOLS_WITH_SET_ASIDES : ALL_TOOLS
+    this.tools = this.offersConnectFromChat ? [...base, ...CONNECT_TOOLS] : base
     this.access = new Access(deps.reader, deps.people, this.clock)
     this.pipeline = new WritePipeline({ store: this.store, reader: deps.reader, writer: deps.writer, people: deps.people, clock: this.clock, hooks: deps.hooks })
     this.control = new ControlApi({ store: this.store, reader: deps.reader, people: deps.people, pipeline: this.pipeline, clock: this.clock, hooks: deps.hooks, ...(this.offersInvestments ? { investments: true } : {}) })
@@ -228,8 +325,11 @@ export class AgfnMcp {
    * ChatGPT) list a connector from one snapshot of tools/list, so it must not depend on the grant or on data present.
    * Access is decided per call (allowedTools, re-read on every call); a tool outside the grant is refused with why.
    */
-  async listTools(_p?: Principal): Promise<ToolDef[]> {
-    return this.tools.filter((t) => this.serverCan(t))
+  async listTools(p?: Principal): Promise<ToolDef[]> {
+    // The public demo never lists connect_source: it's read-only and would refuse it at call time anyway, and this keeps
+    // the /demo/mcp tools/list (the directory gate's snapshot) stable even once AGFN_CONNECT_FROM_CHAT is on there.
+    const hideForDemo = p && isPublicDemo(p)
+    return this.tools.filter((t) => this.serverCan(t) && !(hideForDemo && t.requires === 'connect'))
   }
 
   /** Tools that need a capability this server lacks (live balance, coverage…) can't run for anyone. */
@@ -241,6 +341,7 @@ export class AgfnMcp {
     if (t.requires === 'liabilities' && typeof this.reader.liabilities !== 'function') return false
     if (t.requires === 'holdings' && typeof this.reader.holdings !== 'function') return false
     if (t.requires === 'mrrMovements' && typeof this.reader.mrrMovements !== 'function') return false
+    if (t.requires === 'connect' && !(this.offersConnectFromChat && this.connect)) return false
     return true
   }
 
@@ -261,6 +362,7 @@ export class AgfnMcp {
       if (t.requires === 'liabilities' && typeof this.reader.liabilities !== 'function') return false
       if (t.requires === 'holdings' && typeof this.reader.holdings !== 'function') return false
       if (t.requires === 'mrrMovements' && typeof this.reader.mrrMovements !== 'function') return false
+      if (t.requires === 'connect' && !(this.offersConnectFromChat && this.connect)) return false
       if (t.listWhen === 'always') return true
       const granted = t.dataTypes.filter((d) => g.dataTypes.includes(d))
       if (!granted.length) return false
@@ -344,7 +446,7 @@ export class AgfnMcp {
     const parsed = tool.input.safeParse(rawArgs ?? {})
     if (!parsed.success) return fail(new ToolError('invalid', `Invalid arguments: ${formatIssues(parsed.error)}`), rawArgs)
 
-    const ctx: ToolContext = { principal: p, ...(this.offersSetAsides ? { setAsides: true } : {}), access: this.access, reader: this.reader, pipeline: this.pipeline, store: this.store, clock: this.clock, ...(this.liveBalance ? { liveBalance: this.liveBalance } : {}), ...(this.share ? { share: this.share } : {}), ...(this.offersInvestments ? { investments: true } : {}), ...(this.appUrl ? { appUrl: this.appUrl } : {}) }
+    const ctx: ToolContext = { principal: p, ...(this.offersSetAsides ? { setAsides: true } : {}), access: this.access, reader: this.reader, pipeline: this.pipeline, store: this.store, clock: this.clock, ...(this.liveBalance ? { liveBalance: this.liveBalance } : {}), ...(this.share ? { share: this.share } : {}), ...(this.offersConnectFromChat && this.connect ? { connect: this.connect } : {}), ...(this.offersInvestments ? { investments: true } : {}), ...(this.appUrl ? { appUrl: this.appUrl } : {}) }
     try {
       const output = isPublicDemo(p) && tool.kind === 'read' ? await this.#demoRead(p, name, parsed.data, () => tool.run(ctx, parsed.data)) : await tool.run(ctx, parsed.data)
       // Writes log themselves in the pipeline (with the outcome); reads log here.
@@ -356,6 +458,19 @@ export class AgfnMcp {
         const prior = Array.isArray(output.data.notes) ? (output.data.notes as unknown[]) : []
         output.data = { ...output.data, notes: [...prior, ...extra] }
         output.summary = `${output.summary} ${extra.join(' ')}`
+      }
+      // Per-source freshness on every data read: the shared `sources` block plus a closing "Data as of" line, so the AI
+      // can always say how current each source is. The public demo's books are synthetic, so it carries none.
+      if (this.sources && tool.kind === 'read' && !isPublicDemo(p) && !NO_SOURCES.has(name)) {
+        const scopeIds = output.entityIds?.length ? output.entityIds : (await this.access.anyVisible(p)).map((e) => e.id)
+        const raw = await this.sources.forEntities({ workspaceId: p.workspaceId, entityIds: scopeIds, aspect: aspectFor(name) }).catch(() => [] as SourceEntry[])
+        // source and institution carry provider-set text: clean and flag it like any other third-party label, so an
+        // injected institution name can't reach the AI unmarked (redteam §1).
+        const entries = raw.map((e) => ({ ...e, source: safeLabel(e.source, 'counterparty_name') ?? e.source, institution: e.institution == null ? null : safeLabel(e.institution, 'counterparty_name') ?? null }))
+        if (entries.length) {
+          output.data = { ...output.data, sources: entries }
+          output.summary = `${output.summary} ${dataAsOfLine(entries, this.clock.now())}`
+        }
       }
       return { ok: true, output }
     } catch (err) {

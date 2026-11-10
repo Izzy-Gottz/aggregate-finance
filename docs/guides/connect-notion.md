@@ -11,7 +11,7 @@ Notion can use custom MCP servers on Business and Enterprise plans, once a works
 3. Choose **Connect**, sign in to Aggregate and choose what Notion can see.
 4. Ask: "Summarize this month's cash in and out for our weekly notes."
 
-Connections are per user and per agent and don't carry over between Notion Agent and Custom Agents. Not available on mobile. A header key also works: create a key in Aggregate (**Connect your AI → + Connect another AI → Create a key**, with an expiry) and use it as a bearer token.
+Connections are per user and per agent and don't carry over between Notion Agent and Custom Agents. Not available on mobile. A header key also works: create a key in Aggregate (**Connect your AI → + Connect another AI → A key for a bot → Make a key**; it lasts 90 days) and use it as a bearer token.
 
 Self-hosting? Use `https://<your-server>/mcp` instead; it must be reachable over HTTPS.
 

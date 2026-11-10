@@ -29,7 +29,16 @@ export interface DataHealth {
     passedChecks: number
   }
   /** Up to 10 items, most important first. Built from Aggregate's own data; may name counterparties. */
-  items: Array<{ kind: 'failed_check' | 'review' | 'in_transit' | 'unexplained' | 'stale_source' | 'missing_statement'; entityId: EntityId | null; text: string; refId: Id | null }>
+  items: Array<{
+    kind: 'failed_check' | 'review' | 'in_transit' | 'unexplained' | 'stale_source' | 'missing_statement' | 'possible_duplicate'
+    entityId: EntityId | null
+    text: string
+    refId: Id | null
+    /** possible_duplicate only: the second account of the pair (refId is the first) and the key the dismiss control
+     *  sends back, so the person can mark one a duplicate or dismiss the pair as two different accounts. */
+    relatedId?: Id
+    dupKey?: string
+  }>
 }
 
 
@@ -77,9 +86,11 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   const transit = checks.filter((c) => c.name === 'clearing' && c.status !== 'ok')
   const unexplained = review.filter((r) => r.kind === 'unexplained_money')
   const otherReview = review.filter((r) => r.kind !== 'unexplained_money')
+  const possibleDuplicates = checks.filter((c) => c.name === 'possible_duplicate_account')
   const warnings = checks.filter((c) => c.status === 'warn').length
   const notTiedOut = checks.filter((c) => c.name === 'balance_identity' && c.status === 'warn' && c.actualMinor === null).length
-  const openWarnings = checks.filter((c) => c.status === 'warn' && c.name !== 'clearing' && c.name !== 'suspense' && !(c.name === 'balance_identity' && c.actualMinor === null)).length
+  // A possible duplicate has its own item and actions, so it isn't also counted as a vague "open warning".
+  const openWarnings = checks.filter((c) => c.status === 'warn' && c.name !== 'clearing' && c.name !== 'suspense' && c.name !== 'possible_duplicate_account' && !(c.name === 'balance_identity' && c.actualMinor === null)).length
 
   // The same items on every run: checks, sources and months by what they say (review items come in a stable order).
   const byText = <T,>(xs: T[], t: (x: T) => string) => [...xs].sort((a, b) => (t(a) < t(b) ? -1 : t(a) > t(b) ? 1 : 0))
@@ -89,6 +100,7 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
     ...byText(silent, (a) => a.name).map((a) => ({ kind: 'stale_source' as const, entityId: a.entityId, text: `${a.name} hasn't reported a balance yet`, refId: a.id })),
     ...byText(missing, (x) => x.text).map((x) => ({ kind: 'missing_statement' as const, entityId: x.a.entityId, text: x.text, refId: x.a.accountId })),
     ...byText(transit, (c) => c.message).map((c) => ({ kind: 'in_transit' as const, entityId: c.entityId, text: c.message, refId: c.subjectId })),
+    ...byText(possibleDuplicates, (c) => c.message).map((c) => ({ kind: 'possible_duplicate' as const, entityId: c.entityId, text: c.message, refId: c.subjectId, ...(c.relatedId ? { relatedId: c.relatedId } : {}), ...(c.dupKey ? { dupKey: c.dupKey } : {}) })),
     ...unexplained.map((r) => ({ kind: 'unexplained' as const, entityId: r.entityId, text: `What is this money? ${r.detail}`, refId: r.recordIds[0] ?? null })),
     ...otherReview.map((r) => ({ kind: 'review' as const, entityId: r.entityId, text: `${r.title} ${r.detail}`.trim(), refId: r.id })),
   ]
@@ -108,7 +120,8 @@ export async function dataHealth(rc: ReadContext, entityIds: EntityId[] | 'all' 
   if (stale.length) parts.push(`${stale.length} connection${stale.length === 1 ? '' : 's'} not syncing`)
   if (silent.length) parts.push(`${silent.length} balance${silent.length === 1 ? '' : 's'} not reported yet`)
   if (missing.length) parts.push(`${missing.length} month${missing.length === 1 ? '' : 's'} missing`)
-  const total = review.length + failed.length + transit.length + stale.length + silent.length + missing.length
+  if (possibleDuplicates.length) parts.push(`${possibleDuplicates.length} account${possibleDuplicates.length === 1 ? '' : 's'} maybe connected twice`)
+  const total = review.length + failed.length + transit.length + stale.length + silent.length + missing.length + possibleDuplicates.length
   // Nothing for anyone to do, so not a thing that needs a look, but "All reconciled" would claim more than we know.
   const waiting = `${notTiedOut} account${notTiedOut === 1 ? '' : 's'} not tied out yet`
   // An open warning isn't a thing to do yet either, but it isn't "All reconciled".

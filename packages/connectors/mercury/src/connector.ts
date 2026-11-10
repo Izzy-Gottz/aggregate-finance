@@ -154,6 +154,9 @@ export function createMercuryConnector(opts: MercuryConnectorOptions, deps: Conn
     provides: ['balances', 'transactions'],
     freshness: webhook ? 'updates within minutes via webhooks' : 'updates every few hours',
     auth: opts.oauthClientId && opts.oauthClientSecret ? 'oauth' : 'api_key',
+    // 1: transactions carry a real `at` instant so the ledger dates them by the workspace's business day. Existing
+    // connections re-import once to re-date rows booked before the fix.
+    dataVersion: 1,
   }
 
   async function listAccounts(c: MercuryClient): Promise<MercuryAccount[]> {
@@ -162,10 +165,11 @@ export function createMercuryConnector(opts: MercuryConnectorOptions, deps: Conn
     for (let i = 0; i < 100; i++) {
       const r = await c.get<MercuryAccountsResponse>('/accounts', { limit: 1000, ...(after ? { start_after: after } : {}) })
       out.push(...r.accounts)
-      if (!r.page?.nextPage) break
+      if (!r.page?.nextPage) return out.filter((a) => a.type === 'mercury' && a.status !== 'deleted')
       after = r.page.nextPage
     }
-    return out.filter((a) => a.type === 'mercury' && a.status !== 'deleted')
+    // The provider still has pages after the cap: stop visibly rather than record a partial account list as complete.
+    throw new ConnectorError('permanent', 'Mercury returned more accounts than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: 'mercury', forUser: true })
   }
 
   /** Credit and Treasury are optional products: a 403/404 means "not on this org / not in this token's scope". */

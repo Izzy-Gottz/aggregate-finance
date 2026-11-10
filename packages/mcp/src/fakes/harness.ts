@@ -61,7 +61,7 @@ export const READ_ALL: GrantShape = {
   expiresAt: '2027-01-07T14:00:00.000Z',
 }
 
-export async function makeHarness(opts: { people?: FakePerson[]; rateLimits?: { readsPerMinute?: number; readsPerHour?: number; writesPerHour?: number }; liveBalance?: import('../ports.ts').LiveBalancePort; share?: import('../ports.ts').SharePort; promptPacks?: boolean; investments?: boolean } = {}): Promise<Harness> {
+export async function makeHarness(opts: { people?: FakePerson[]; rateLimits?: { readsPerMinute?: number; readsPerHour?: number; writesPerHour?: number }; liveBalance?: import('../ports.ts').LiveBalancePort; share?: import('../ports.ts').SharePort; connect?: import('../ports.ts').ConnectPort; connectFromChat?: boolean; sources?: import('../ports.ts').SourcesPort; promptPacks?: boolean; investments?: boolean; setAsides?: boolean } = {}): Promise<Harness> {
   const h = connect<CoreTables & McpTables>('sqlite::memory:')
   await migrateToLatest(h.db)
   const clock = new TestClock()
@@ -79,7 +79,7 @@ export async function makeHarness(opts: { people?: FakePerson[]; rateLimits?: { 
     onAlert: async (a) => void alerts.push({ kind: a.kind, text: a.text }),
     onGrantRevoked: async (id) => void revoked.push(id),
   }
-  const agfn = createAgfnMcp({ db: h.db, reader: books, writer: books, people, verifier, hooks, clock, rateLimits: opts.rateLimits, ...(opts.liveBalance ? { liveBalance: opts.liveBalance } : {}), ...(opts.share ? { share: opts.share } : {}), ...(opts.promptPacks ? { promptPacks: true } : {}), ...(opts.investments ? { investments: true } : {}) }, { resourceUrl: RESOURCE, authenticatePerson: async (req) => {
+  const agfn = createAgfnMcp({ db: h.db, reader: books, writer: books, people, verifier, hooks, clock, rateLimits: opts.rateLimits, ...(opts.liveBalance ? { liveBalance: opts.liveBalance } : {}), ...(opts.share ? { share: opts.share } : {}), ...(opts.connect ? { connect: opts.connect } : {}), ...(opts.connectFromChat ? { connectFromChat: true } : {}), ...(opts.sources ? { sources: opts.sources } : {}), ...(opts.promptPacks ? { promptPacks: true } : {}), ...(opts.investments ? { investments: true } : {}), ...(opts.setAsides ? { setAsides: true } : {}) }, { resourceUrl: RESOURCE, authenticatePerson: async (req) => {
     const pid = req.headers.get('x-test-person')
     return pid ? { workspaceId: WS, personId: pid } : null
   } })

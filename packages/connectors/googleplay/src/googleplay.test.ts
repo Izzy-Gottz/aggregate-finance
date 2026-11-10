@@ -263,3 +263,15 @@ describe('googleplay errors and connect', () => {
     expect(b.kind === 'api_key' && b.steps?.join(' ')).toMatch(/JSON key.*Cloud Storage URI/)
   })
 })
+
+
+describe('google play: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('a listing whose body isn’t the expected object fails visibly', async () => {
+    const { connector } = make((u) => (u.pathname.endsWith('/o') ? json(200, 5) : undefined))
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('an empty listing body fails visibly', async () => {
+    const { connector } = make((u) => (u.pathname.endsWith('/o') ? new Response('', { status: 200 }) : undefined))
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

@@ -1,3 +1,7 @@
+---
+description: Some services have no Aggregate connector because their money runs through one it does connect: Substack, Beehiiv and Ko-fi through Stripe, crypto and investing apps through Plaid, payroll through your bank.
+---
+
 # Sources that come in through another connection
 
 **Short answer:** some services have no connector of their own because their money already runs through something Aggregate connects to. Connect that, and the money comes with it. It's only counted once.
@@ -10,15 +14,15 @@
 | Beehiiv paid subscriptions | The Stripe account linked to your Beehiiv | The same |
 | Ko-fi | The Stripe account linked to your Ko-fi | The same. Ko-fi payments made through PayPal arrive as PayPal deposits in your bank |
 
-In Aggregate, open **Workspace → Connections → + More connections → Stripe**. See [Connect Stripe to Claude](connect-stripe-to-claude.md).
+In Aggregate, open **Workspace → Connections → + Add a connection → Stripe**. See [Connect Stripe to Claude](connect-stripe-to-claude.md).
 
 These show up under Stripe's name. Aggregate doesn't read Substack, Beehiiv or Ko-fi themselves, so it doesn't know subscriber lists, open rates or free subscribers. Anything these services take as their own cut shows up only as far as Stripe records it.
 
 ## Crypto and investing apps: connect through Plaid
 
-Plaid lists Kraken, Gemini, Robinhood, Interactive Brokers and Fundrise, each with Investments and Transactions support.
+Plaid's coverage list shows Kraken, Gemini, Robinhood, Interactive Brokers and Fundrise, each with Investments support.
 
-1. Open **Workspace → Connections → Plaid**.
+1. Open **Workspace → Connections → + Add a connection → Bank, card or brokerage**.
 2. Search for the app's name and sign in there.
 3. Choose the accounts to share.
 

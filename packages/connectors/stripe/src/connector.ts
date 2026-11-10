@@ -250,8 +250,9 @@ export function createStripeConnector(opts: StripeConnectorOptions, deps: Connec
     freshness: secrets.length ? 'updates within minutes via webhooks' : 'updates every few hours',
     auth: opts.appClientId && (opts.appSecretKey || opts.appTestSecretKey) ? 'oauth' : 'api_key',
     // 1: charges and refunds name the customer (not its cus_ id); 2: subscriptions carry their MRR history and rows
-    // Stripe's description. Existing connections re-read once.
-    dataVersion: 2,
+    // Stripe's description; 3: rows carry a real `at` instant so the ledger dates them by the workspace's business
+    // day. Existing connections re-read once.
+    dataVersion: 3,
   }
 
   const oauthReady = !!(opts.appClientId && (opts.appSecretKey || opts.appTestSecretKey))

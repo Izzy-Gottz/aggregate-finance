@@ -8,11 +8,12 @@
 import type { Connector, ConnectorDescription, GrantShape, NormalizedEvent } from '@agfn/contracts'
 import type { ConnectorFactory } from '@agfn/sync'
 import { createConnection } from '@agfn/sync'
-import { connectPglite, ensureAppRole, exclusivePool, rlsPool, withBypass, withWorkspace, type CoreTables, type DbHandle } from '@agfn/db'
+import { connect, connectPglite, ensureAppRole, exclusivePool, rlsPool, withBypass, withWorkspace, type CoreTables, type DbHandle } from '@agfn/db'
 import { generateMasterKey, loadKeyRing } from '@agfn/security'
 import { MemoryFileStore } from '@agfn/files'
 import { createFilesConnector } from '@agfn/connector-files'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
+import pg from 'pg'
 import { boot, type Booted } from '../boot.ts'
 import { createApp } from '../app.ts'
 import { loadConfig } from '../config.ts'
@@ -68,6 +69,8 @@ const DESCRIPTIONS: Record<string, ConnectorDescription> = {
   sumup: { key: 'sumup', name: 'SumUp', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
   lightspeed: { key: 'lightspeed', name: 'Lightspeed', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'oauth' },
   woocommerce: { key: 'woocommerce', name: 'WooCommerce', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'api_key' },
+  bigcommerce: { key: 'bigcommerce', name: 'BigCommerce', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'api_key' },
+  zeffy: { key: 'zeffy', name: 'Zeffy', group: 'payments', provides: ['reports'], freshness: 'scripted', auth: 'api_key' },
 }
 
 function scripted(key: string): ConnectorFactory {
@@ -118,14 +121,22 @@ export async function startServer(opts: ServerOptions = {}): Promise<Server> {
   const files = new MemoryFileStore()
   const config = { ...loadConfig({ AUTH_SECRET: 'x'.repeat(40), DATABASE_URL: 'sqlite::memory:', BASE_URL: BASE, WEB_DIST: '/nonexistent', ...opts.env }), runWorker: false }
   // AGFN_TEST_PG_RLS=1 runs the story on Postgres with row-level security on, as an RLS-bound role (docs/security/rls.md).
+  // On PGlite by default. With AGFN_TEST_PG_URL too, on that real Postgres, wired exactly as production (connect() with
+  // AGFN_PG_RLS_ROLE; boot creates and grants the role): point it at a database whose owner is NOT a superuser to
+  // test what RDS runs (its master user isn't one; it needs CREATEDB). Each server gets its own new database, dropped on
+  // close, as PGlite does: no test sees another's people or workspaces, so a failure there is only ever the policies.
   const rls = process.env.AGFN_TEST_PG_RLS === '1'
+  const pgUrl = rls && process.env.AGFN_TEST_PG_URL ? await freshDatabase(process.env.AGFN_TEST_PG_URL) : undefined
   if (rls) process.env.AGFN_PG_RLS = '1'
-  const db = rls
-    ? await connectPglite<CoreTables>({ wrapPool: (p) => rlsPool(exclusivePool(p), { role: 'agfn_app' }) })
-    : opts.pglite
-      ? await connectPglite<CoreTables>()
-      : undefined
-  if (rls) await withBypass('test:role', () => ensureAppRole(db!.db as never))
+  if (pgUrl) process.env.AGFN_PG_RLS_ROLE ??= 'agfn_app'
+  const db = pgUrl
+    ? connect<CoreTables>(pgUrl)
+    : rls
+      ? await connectPglite<CoreTables>({ wrapPool: (p) => rlsPool(exclusivePool(p), { role: 'agfn_app' }) })
+      : opts.pglite
+        ? await connectPglite<CoreTables>()
+        : undefined
+  if (rls && !pgUrl) await withBypass('test:role', () => ensureAppRole(db!.db as never))
   const booted = await boot({
     config,
     ...(db ? { db: db as DbHandle<CoreTables> } : {}),
@@ -142,7 +153,42 @@ export async function startServer(opts: ServerOptions = {}): Promise<Server> {
     ledger: (h, c) => ledgerFor(h.db, c),
     mcp: (s) => mcpFor(s, financeFor(s)),
   })
-  return { booted, app: createApp(booted.services), outbox, files, close: () => booted.shutdown() }
+  return {
+    booted,
+    app: createApp(booted.services),
+    outbox,
+    files,
+    close: async () => {
+      await booted.shutdown()
+      if (pgUrl) await dropDatabase(process.env.AGFN_TEST_PG_URL!, new URL(pgUrl).pathname.slice(1))
+    },
+  }
+}
+
+/** A new, empty database next to the one `url` names (same server and login), for one test server. */
+async function freshDatabase(url: string): Promise<string> {
+  const name = `agfn_t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+  await adminQuery(url, `create database ${name}`)
+  const u = new URL(url)
+  u.pathname = `/${name}`
+  return u.toString()
+}
+
+async function dropDatabase(url: string, name: string): Promise<void> {
+  if (!/^agfn_t_[a-z0-9_]+$/.test(name)) return
+  // Best effort: a leftover test database is harmless.
+  await adminQuery(url, `drop database if exists ${name} with (force)`).catch(() => {})
+}
+
+/** A plain client as the URL's own login: connect() would switch to AGFN_PG_RLS_ROLE, which can't create databases. */
+async function adminQuery(url: string, text: string): Promise<void> {
+  const c = new pg.Client({ connectionString: url })
+  await c.connect()
+  try {
+    await c.query(text)
+  } finally {
+    await c.end()
+  }
 }
 
 function keyOf(f: ConnectorFactory): string {

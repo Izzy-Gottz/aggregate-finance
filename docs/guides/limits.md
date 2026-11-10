@@ -1,5 +1,6 @@
 ---
 description: What Aggregate doesn't do yet, what happens instead, and what's coming: crypto, non-US banks, PDF statements, cap tables, currencies and more.
+updated: 2026-11-03
 ---
 
 # Known limits: what Aggregate doesn't do yet, and what happens instead

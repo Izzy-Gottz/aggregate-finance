@@ -1,5 +1,5 @@
 import type { Kysely } from 'kysely'
-import { newId, nowIso, type CoreTables, type RolePreset } from '@agfn/db'
+import { newId, nowIso, withBypass, type CoreTables, type RolePreset } from '@agfn/db'
 import type { PermissionGrid } from './permissions.ts'
 
 /** An IANA time zone this runtime knows ("America/New_York", "Europe/Berlin", "UTC"). */
@@ -69,10 +69,13 @@ export async function addMember(
 ): Promise<{ personId: string; membershipId: string }> {
   const email = input.email.trim().toLowerCase()
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('That email address doesn’t look right')
-  let person = await db.selectFrom('people').select('id').where('email', '=', email).executeTakeFirst()
+  // The invitee may already exist (in another workspace) and isn't yet a member of this one, so finding/creating the
+  // person needs a bypass — people is otherwise visible only through a membership. The membership insert below stays
+  // under the caller's workspace context.
+  let person = await withBypass('invite:find-person', () => db.selectFrom('people').select('id').where('email', '=', email).executeTakeFirst())
   if (!person) {
     person = { id: newId() }
-    await db.insertInto('people').values({ id: person.id, auth_user_id: null, name: input.name?.trim() || email.split('@')[0] || email, email, created_at: nowIso() }).execute()
+    await withBypass('invite:create-person', () => db.insertInto('people').values({ id: person!.id, auth_user_id: null, name: input.name?.trim() || email.split('@')[0] || email, email, created_at: nowIso() }).execute())
   }
   const membershipId = newId()
   await db

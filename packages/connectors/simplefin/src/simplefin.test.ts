@@ -116,6 +116,17 @@ describe('simplefin sync', () => {
     expect(t.find((x) => x.externalId === 'CON-1:ACT-1:T3')).toMatchObject({ counterparty: 'Bluebird Supplies Inc', status: 'posted' })
   })
 
+  it("keeps each account's balance-date as the connection's freshness, the oldest as balancesUpdatedAt", async () => {
+    const stale = { match: (u: URL) => u.pathname === '/simplefin/accounts', respond: () => ({ json: { errlist: [], connections: [], accounts: accounts().map((a) => (a.id === 'ACT-2' ? { ...a, 'balance-date': day(3), transactions: [] } : { ...a, transactions: [] })) } }) }
+    const { connector, conn } = make([stale])
+    const r = await runSync(connector, conn, null)
+    expect(r.freshness).toMatchObject({
+      balancesUpdatedAt: new Date(day(3) * 1000).toISOString(),
+      balancesUpdatedAtByAccount: { 'CON-1:ACT-1': new Date(day(0) * 1000).toISOString(), 'CON-1:ACT-2': new Date(day(3) * 1000).toISOString() },
+    })
+    expect(r.freshness?.checkedAt).toEqual(expect.any(String))
+  })
+
   it('later cycles re-read 5 days, and a cycle within 4 hours of the last is skipped', async () => {
     const { connector, conn, calls, clock } = make()
     const first = await runSync(connector, conn, null)

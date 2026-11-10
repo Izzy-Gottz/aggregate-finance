@@ -38,7 +38,7 @@ export function CompanyView({ id, onClose, onBack }: { id: string; onClose: () =
     title=${c.entity.name}
     onClose=${onClose}
     onBack=${onBack}
-    aside=${html`<${Sparkline} points=${c.trend} label=${`${c.entity.name} cash over the last 12 months`} />`}
+    aside=${html`<${Sparkline} points=${c.trend} label=${`${c.entity.name} cash over the last ${c.trend.length} months`} />`}
   >
     <${Header} c=${c} sub=${sub} />
     ${c.entity.kind === 'company' && isManager(app) && !isPublicDemo(app) && !isReviewer(app) ? html`<${CompanySettings} c=${c} />` : null}

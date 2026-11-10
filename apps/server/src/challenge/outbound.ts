@@ -22,6 +22,79 @@ export interface OutboundCall {
 
 const pathOnly = (p: string) => (p.split('?')[0] ?? '').slice(0, 300) || '/'
 
+export interface OutboundSink {
+  /** Enqueue a call to persist. Synchronous and non-throwing: it never blocks or breaks the request. */
+  record: (call: OutboundCall) => void
+  /** Drain everything still queued (call on shutdown). Resolves once the queue is empty or given up on. */
+  flush: () => Promise<void>
+  stats: () => { queued: number; dropped: number }
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+
+/**
+ * A durable sink for outbound-call rows: tier-A/C judging needs the log complete, so a row must not be lost to a
+ * transient database hiccup. Calls are enqueued (never awaited on the request path), a single background drainer writes
+ * them in batches, and a failed batch is retried once before it is dropped. The queue is bounded: if the database stays
+ * down, the oldest rows are dropped rather than growing memory without limit, and the drop count is reported. Writing is
+ * decoupled from the request, so the log never blocks or breaks a call.
+ */
+export function createOutboundSink(insert: (calls: OutboundCall[]) => Promise<unknown>, opts: { max?: number; batch?: number; retryMs?: number; onDrop?: (total: number) => void } = {}): OutboundSink {
+  const max = opts.max ?? 1000
+  const batchSize = opts.batch ?? 100
+  const retryMs = opts.retryMs ?? 250
+  const queue: OutboundCall[] = []
+  let dropped = 0
+  let draining: Promise<void> | null = null
+
+  const tryInsert = async (calls: OutboundCall[]): Promise<boolean> => {
+    try {
+      await insert(calls)
+      return true
+    } catch {
+      // One retry is enough: a brief blip clears, a real outage keeps failing and we give up rather than spin.
+      try {
+        await sleep(retryMs)
+        await insert(calls)
+        return true
+      } catch {
+        return false
+      }
+    }
+  }
+
+  const runDrain = async (): Promise<void> => {
+    while (queue.length) {
+      const batch = queue.splice(0, batchSize)
+      if (!(await tryInsert(batch))) {
+        dropped += batch.length
+        opts.onDrop?.(dropped)
+      }
+    }
+  }
+  const kick = (): Promise<void> => {
+    if (!draining) draining = runDrain().finally(() => void (draining = null))
+    return draining
+  }
+
+  return {
+    record: (call) => {
+      if (queue.length >= max) {
+        queue.shift()
+        dropped++
+        opts.onDrop?.(dropped)
+      }
+      queue.push(call)
+      void kick()
+    },
+    // Drain until nothing is left and no drain is in flight (new rows may arrive while one runs).
+    flush: async () => {
+      while (draining || queue.length) await kick()
+    },
+    stats: () => ({ queued: queue.length, dropped }),
+  }
+}
+
 /** Start recording. `record` must not throw (failures are swallowed); returns stop(). */
 export function startOutboundLog(record: (c: OutboundCall) => void, opts: { ignoreHosts?: string[] } = {}): () => void {
   const ignore = new Set((opts.ignoreHosts ?? []).map((h) => h.toLowerCase()))

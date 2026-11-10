@@ -78,7 +78,8 @@ describe('xero connector', () => {
     expect(find(events, 'invoice.upsert', 'inv-b')).toMatchObject({ amountCredited: { minor: 12_000, currency: 'GBP' }, status: 'partially_paid' })
     expect(find(events, 'invoice.upsert', 'inv-d')?.status).toBe('draft')
     expect(find(events, 'invoice.upsert', 'inv-e')?.status).toBe('void')
-    expect(find(events, 'invoice.upsert', 'bill-a')).toMatchObject({ direction: 'payable', lines: [{ category: 'rent' }] })
+    // A bill's tax (here VAT) goes on Xero's tax account, as its own line: the rent is net of it.
+    expect(find(events, 'invoice.upsert', 'bill-a')).toMatchObject({ direction: 'payable', lines: [{ category: 'rent', amount: { minor: 200_000 } }, { category: 'sales_tax_payable', amount: { minor: 40_000 } }] })
     expect(find(events, 'invoice.upsert', 'bill-b')).toMatchObject({ status: 'paid', lines: [{ category: 'software' }] })
     expect(find(events, 'ledger_account.upsert', 'acc-old')).toMatchObject({ active: false })
 
@@ -326,3 +327,15 @@ describe("Xero P&L months are the organisation's local months", () => {
   })
 })
 
+
+
+describe('xero: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: '/Accounts', respond: { text: '' } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: '/Accounts', respond: { json: 5 } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

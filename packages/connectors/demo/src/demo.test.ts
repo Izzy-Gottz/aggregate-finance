@@ -4,7 +4,8 @@ import { MemoryRawSink, runSync } from '@agfn/connector-sdk'
 import { assertValidEvents, fakeClock, runConnectorContract } from '@agfn/connector-sdk/testing'
 import { PROFILES, PROFILE_KEYS, createDemoConnector, demoCaughtUp, type ProfileKey } from './index.ts'
 
-const NOW = Date.parse('2026-10-09T12:00:00Z')
+// After 21:00Z, so the demo's last day is 2026-10-09 (demoToday).
+const NOW = Date.parse('2026-10-09T22:00:00Z')
 const conn = (profile: ProfileKey): ConnectionRef => ({
   id: `conn_demo_${profile}`,
   workspaceId: 'ws_demo',
@@ -22,12 +23,12 @@ async function all(profile: ProfileKey) {
 describe('demo connector', () => {
   it('reports caught up only after the last page', async () => {
     const { connector, conn: c } = make('harbor')
-    expect(demoCaughtUp(null, '2026-10-09')).toBe(false)
-    expect(demoCaughtUp('not-a-cursor', '2026-10-09')).toBe(false)
+    expect(demoCaughtUp(null, NOW)).toBe(false)
+    expect(demoCaughtUp('not-a-cursor', NOW)).toBe(false)
     const first = await connector.sync(c, null)
-    expect(demoCaughtUp(first.cursor, '2026-10-09')).toBe(false)
+    expect(demoCaughtUp(first.cursor, NOW)).toBe(false)
     const done = await runSync(connector, c, null)
-    expect(demoCaughtUp(done.cursor, '2026-10-09')).toBe(true)
+    expect(demoCaughtUp(done.cursor, NOW)).toBe(true)
   })
 
   it.each(PROFILE_KEYS)('%s passes the connector contract', async (p) => {
@@ -92,6 +93,17 @@ describe('demo connector', () => {
     const other = createDemoConnector({ raw: new MemoryRawSink(), clock: fakeClock(NOW) })
     const c = await runSync(other, { ...conn('northwind'), config: { ...conn('northwind').config, seed: 'other' } }, null)
     expect(JSON.stringify(c.events)).not.toBe(JSON.stringify(a))
+  })
+
+  it('a build at 00:22Z (the evening before in the US) writes no row or balance from the future', async () => {
+    const at = Date.parse('2026-11-04T00:22:00Z')
+    const { connector, conn: c } = make('harbor', at)
+    const events = (await runSync(connector, c, null)).events
+    const stamps = events.flatMap((e) => ('at' in e && typeof e.at === 'string' ? [e.at] : []))
+    expect(stamps.length).toBeGreaterThan(0)
+    expect(stamps.filter((s) => Date.parse(s) > at)).toEqual([])
+    expect(events.flatMap((e) => ('date' in e && typeof e.date === 'string' && e.date > '2026-11-03' ? [e.date] : []))).toEqual([])
+    expect(events.some((e) => e.type === 'balance.snapshot' && e.at === '2026-11-03T21:00:00.000Z')).toBe(true)
   })
 
   it('a later day extends history without changing earlier events', async () => {

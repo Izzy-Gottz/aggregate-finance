@@ -10,7 +10,7 @@ import { HTTPException } from 'hono/http-exception'
 import { randomBytes } from 'node:crypto'
 import { aiDisclosure } from '@agfn/contracts'
 import { consentShown } from './consent.ts'
-import { oauthProviderAuthServerMetadata, oauthProviderOpenIdConfigMetadata, createWorkspace, addCompany, isTimeZone, signInPending, SIGNIN_NONCE_COOKIE, newNonce, sha256, normalizeCode, codeHash, sameHash, CODE_TRIES, workspaceDeletingEmail } from '@agfn/auth'
+import { oauthProviderAuthServerMetadata, oauthProviderOpenIdConfigMetadata, createWorkspace, addCompany, isTimeZone, signInPending, SIGNIN_NONCE_COOKIE, newNonce, sha256, normalizeCode, codeHash, sameHash, CODE_TRIES, workspaceDeletingEmail, TRUSTED_CLIENT_IP_HEADER } from '@agfn/auth'
 import { seal, unseal } from '@agfn/security'
 import { applyPendingReassignments, createConnection, SECRET_PURPOSE, SYNC_JOB } from '@agfn/sync'
 import { DemoMixError, assertConnectorAllowed, createDemoWorkspace, demoFillPlace, demoImporting, isDemoReady, isDemoWorkspace, leaveDemoWorkspace } from '@agfn/demo'
@@ -22,6 +22,7 @@ import type { Kysely } from 'kysely'
 import type { GrantShape, MetricAnswer } from '@agfn/contracts'
 import type { LedgerEngine } from '@agfn/core'
 import type { Services } from './services.ts'
+import { intrusionGuard } from './intrusion.ts'
 import { authRedirectsAreSafe, clientIp, securityHeaders, sameOriginForWrites } from './security.ts'
 import { serveWeb } from './static.ts'
 import { createPublicDemoDoor, isPublicDemoKey, mountPublicDemo } from './public-demo-route.ts'
@@ -45,9 +46,11 @@ import { findLegalFonts, loadGuides, loadLegalPages, loadPublicDocs, renderDoc, 
 import { apiDocsMarkdown, type OpenApiDoc } from './api-docs.ts'
 import { readFileSync } from 'node:fs'
 import { demoDocuments, isReviewerEmail, redeemReviewerLink, reviewerAccess, reviewerBlocked } from './reviewer.ts'
+import { claimConnectLink, logConnectOutcome, lookupConnectLink, mayApproveConnect, type ConnectLink } from './connect-source.ts'
 import { peopleFromAuth } from '@agfn/mcp'
 import { financeFor } from './finance.ts'
 import { confirmPage, dropPending, embeddedPage, SHOPIFY_LINK_COOKIE, shopifyEmbeddedRoutes, takePendingByLink } from './shopify-embedded.ts'
+import { BIGCOMMERCE_LINK_COOKIE, bigcommerceAppRoutes, dropPending as dropBigCommercePending, takePendingByLink as takeBigCommerceLink } from './bigcommerce-app.ts'
 import { deleteUploadedFile, FileDeleteError } from './delete-file.ts'
 import { APP_DISALLOW, type CrawlPage, llmsFullTxt, llmsTxt, robotsTxt } from './docs-crawl.ts'
 import { docsHost } from './docs-host.ts'
@@ -62,8 +65,9 @@ import { personalHidden } from './personal.ts'
 import { termsByAccount } from './account-terms.ts'
 import { connectionRoutes, plaidDuplicateMessage } from './routes/connections.ts'
 import { hasDrawerLine, storeSalesThisMonth } from './store-sales.ts'
-import { passkeysPossible, type ServerConfig } from './config.ts'
+import { notForWorkspace, passkeysPossible, type ServerConfig } from './config.ts'
 import { startDemoWorkspace } from './demo-start.ts'
+import { isRequestable, requestConnection, requestList } from './connection-requests.ts'
 
 export interface RequestPerson {
   personId: string
@@ -143,6 +147,8 @@ export function createApp(s: Services): Hono<Env> {
   }
 
   app.use('*', securityHeaders(config))
+  // Scanner paths, failed sign-ins and rate-limit trips per client IP: alert, and in block mode a 15-minute cool-off (intrusion.ts).
+  app.use('*', intrusionGuard({ mode: config.intrusion ?? 'detect', ipHeader: config.clientIpHeader, secret: config.authSecret, ...(s.alert ? { alert: s.alert, log: (line) => s.alert!('info', 'intrusion', line) } : {}) }))
   // The docs on their own host, and the old /docs URLs moved there (docs-host.ts). The lists are read per request: they
   // fill in further down.
   if (config.docsHost) {
@@ -274,10 +280,18 @@ export function createApp(s: Services): Hono<Env> {
   }
   app.on(['GET', 'POST'], '/api/auth/*', async (c) => {
     if (!(await authRedirectsAreSafe(c.req.raw, config.baseUrl))) return c.json({ message: 'That sign-in link points to another site.' }, 400)
+    // Hand Better Auth the IP we trust (Cloudflare-aware), always overwriting any client-sent copy, so its own per-IP
+    // rate limit and session.ipAddress see the real client even behind Cloudflare → Fly, never a forgeable header.
+    const ip = clientIp(c.req.raw.headers, config.clientIpHeader)
+    const withTrustedIp = (req: Request): Request => {
+      const headers = new Headers(req.headers)
+      headers.delete(TRUSTED_CLIENT_IP_HEADER)
+      if (ip) headers.set(TRUSTED_CLIENT_IP_HEADER, ip)
+      return new Request(req, { headers })
+    }
     if (c.req.method === 'POST' && c.req.path === '/api/auth/sign-in/magic-link') {
       const body = (await c.req.raw.clone().json().catch(() => ({}))) as { email?: unknown }
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-      const ip = clientIp(c.req.raw.headers, config.clientIpHeader)
       const now = Date.now()
       const perEmail = email ? await signInLimiter.hit(`signin:email:${email}`, 5, 15 * 60_000, now) : 0
       if (perEmail) return tooMany(c, 'Too many sign-in emails.', perEmail)
@@ -287,7 +301,7 @@ export function createApp(s: Services): Hono<Env> {
       if (perNetwork) return tooMany(c, 'Too many sign-ins from this network.', perNetwork)
       // The email also carries a code for this browser: a nonce cookie ties it here (POST /api/signin/code).
       const nonce = newNonce()
-      const res = await signInPending.run({ nonceHash: sha256(nonce) }, () => s.auth.handler(c.req.raw))
+      const res = await signInPending.run({ nonceHash: sha256(nonce) }, () => s.auth.handler(withTrustedIp(c.req.raw)))
       if (res.status === 429) return authTooMany(c, res)
       const out = new Response(res.body, res)
       out.headers.append('set-cookie', `${SIGNIN_NONCE_COOKIE}=${nonce}; Path=/api/signin; HttpOnly; SameSite=Lax; Max-Age=600${config.baseUrl.startsWith('https:') ? '; Secure' : ''}`)
@@ -300,7 +314,7 @@ export function createApp(s: Services): Hono<Env> {
     }
     // RFC 8707 lets the authorization server pick the audience when a client names no resource. Some MCP clients (Meta
     // Muse) send none, and without one Better Auth issues an opaque token that /mcp can't verify. Default it to /mcp.
-    let req = c.req.raw
+    let req = withTrustedIp(c.req.raw)
     if (c.req.method === 'GET' && c.req.path === '/api/auth/oauth2/authorize') {
       const url = new URL(req.url)
       if (!url.searchParams.has('resource')) {
@@ -368,6 +382,96 @@ export function createApp(s: Services): Hono<Env> {
     }
     return c.redirect(safeReturnTo(c.req.query('r')), 302)
   })
+
+  // ---------- Connect-from-chat confirm pages (connect-source.ts; off unless AGFN_CONNECT_FROM_CHAT=1) ----------
+  // An AI minted a link with connect_source; here a workspace owner/admin opens it, and only they can approve it. The
+  // link is bound to one workspace + provider + the minting person, so a forwarded link is useless to anyone else and
+  // a member of another workspace is refused. Approving hands off to the normal connect flow via the SPA deep link.
+  if (config.connectFromChat) {
+    const escHtml = (s: string) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!)
+    const invalidPage = (reason: 'unknown' | 'used' | 'expired') => {
+      const why = reason === 'used' ? 'This link was already used.' : reason === 'expired' ? 'This link has expired.' : 'This link isn’t valid.'
+      return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aggregate</title><body style="font-family:-apple-system,system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;color:#1F1B1C"><h1 style="font-weight:400">${why}</h1><p>Ask your AI to make a new connect link.</p></body>`
+    }
+    const shell = (inner: string) =>
+      `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aggregate</title><body style="font-family:-apple-system,system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;color:#1F1B1C">${inner}</body>`
+    const providerName = (key: string) => (s.registry.has(key) ? s.registry.create(key, { raw: { put: async () => '' } }).describe().name : key)
+    const companyName = async (link: ConnectLink): Promise<string | null> => {
+      if (!link.entityId) return null
+      // entities is RLS-scoped, and these pages run outside the /api/* session, so set the link's workspace (not a
+      // bypass) to read the company name under least privilege.
+      const e = await withWorkspace(link.workspaceId, () => db.selectFrom('entities').select(['name', 'kind']).where('id', '=', link.entityId!).where('workspace_id', '=', link.workspaceId).executeTakeFirst())
+      return e ? (e.kind === 'personal' ? 'Personal' : e.name) : null
+    }
+    // Who, if anyone, is signed in on this browser — read here because these pages live outside the /api/* session.
+    const whoami = async (c: Context<Env>): Promise<{ personId: string; name: string; email: string } | null> => {
+      const session = await s.auth.api.getSession({ headers: c.req.raw.headers }).catch(() => null)
+      if (!session) return null
+      const person = await withBypass('connect:whoami', () => db.selectFrom('people').select(['id', 'name', 'email']).where('auth_user_id', '=', session.user.id).executeTakeFirst())
+      return person ? { personId: person.id, name: person.name, email: person.email } : null
+    }
+    // Returns the link only when this browser's signed-in person is the very person it was minted for AND they still
+    // manage that workspace. Everyone else is refused with a plain reason, and the reason is logged.
+    const gate = async (c: Context<Env>, link: ConnectLink): Promise<{ ok: true; who: { personId: string; name: string; email: string } } | { ok: false; status: 200 | 403; html: string }> => {
+      const who = await whoami(c)
+      if (!who) {
+        // Not signed in: a prompt, not a refusal (the link stays valid), so this is 200, not 403.
+        return { ok: false, status: 200, html: shell(`<h1 style="font-weight:400">Sign in to approve this connection</h1><p>Open <a href="/">Aggregate</a>, sign in as the workspace owner or admin, then reopen this link. It’s good for 15 minutes.</p>`) }
+      }
+      if (who.personId !== link.personId) {
+        await logConnectOutcome(db, { link, outcome: 'refused_wrong_person', personId: who.personId, actorLabel: who.name })
+        return { ok: false, status: 403, html: shell(`<h1 style="font-weight:400">This link isn’t for you</h1><p>It was created for someone else on this workspace. Ask them to open it, or ask your AI to make one for you.</p>`) }
+      }
+      if (isReviewerEmail(who.email) || !(await mayApproveConnect(s.permissions, link, who.personId))) {
+        await logConnectOutcome(db, { link, outcome: 'refused_wrong_workspace', personId: who.personId, actorLabel: who.name })
+        return { ok: false, status: 403, html: shell(`<h1 style="font-weight:400">You can’t connect sources here</h1><p>Only an owner or admin of this workspace can connect a new source.</p>`) }
+      }
+      return { ok: true, who }
+    }
+
+    app.get('/connect/:token', async (c) => {
+      const look = await lookupConnectLink(db, c.req.param('token'))
+      if (!look.ok) {
+        await logConnectOutcome(db, { outcome: look.reason })
+        return c.html(invalidPage(look.reason), 410, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+      }
+      const g = await gate(c, look.link)
+      if (!g.ok) return c.html(g.html, g.status, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+      const to = await companyName(look.link)
+      const name = escHtml(providerName(look.link.provider))
+      const inner =
+        `<h1 style="font-weight:400">Connect ${name}${to ? ` to ${escHtml(to)}` : ''}?</h1>` +
+        `<p>Your AI asked to connect this source. You’ll sign in at ${name} (or paste a read-only key) on the next step — nothing is shared with the AI.</p>` +
+        `<form method="post" action="/connect/${encodeURIComponent(c.req.param('token'))}/go" style="margin-top:24px">` +
+        `<button type="submit" style="font:inherit;padding:10px 20px;border:0;border-radius:8px;background:#1F1B1C;color:#fff;cursor:pointer">Connect ${name}</button> ` +
+        `<a href="/" style="margin-left:12px;color:#1F1B1C">Cancel</a></form>`
+      return c.html(shell(inner), 200, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+    })
+
+    app.post('/connect/:token/go', async (c) => {
+      const token = c.req.param('token')
+      const look = await lookupConnectLink(db, token)
+      if (!look.ok) {
+        await logConnectOutcome(db, { outcome: look.reason })
+        return c.html(invalidPage(look.reason), 410, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+      }
+      const g = await gate(c, look.link)
+      if (!g.ok) return c.html(g.html, g.status, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+      // The provider could have been paused between mint and now: don't claim the link, say so plainly.
+      if (!s.registry.has(look.link.provider) || config.hidden?.includes(look.link.provider)) {
+        return c.html(shell(`<h1 style="font-weight:400">That source isn’t available right now</h1><p>New connections to it are paused. Ask your AI to try a different one.</p>`), 403, { 'cache-control': 'no-store' })
+      }
+      // Claim it (single use): a second submit racing this one loses and gets the "used" page.
+      if (!(await claimConnectLink(db, look.link))) {
+        return c.html(invalidPage('used'), 410, { 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' })
+      }
+      await logConnectOutcome(db, { link: look.link, outcome: 'confirmed', personId: g.who.personId, actorLabel: g.who.name })
+      // Pin this browser to the link's workspace, so the connect flow runs there whatever it last showed, then hand off
+      // to the SPA's normal connect flow for this provider (provider OAuth, Plaid Link, key form, or upload).
+      setCookie(c, WORKSPACE_COOKIE, look.link.workspaceId, { path: '/', httpOnly: true, secure: config.baseUrl.startsWith('https:'), sameSite: 'Lax', maxAge: 400 * 24 * 3600 })
+      return c.redirect(`/#/?d=connect:${encodeURIComponent(look.link.provider)}`, 302)
+    })
+  }
 
   // ---------- Reviewer access links (reviewer.ts; off unless AGFN_REVIEWER_LINKS=1) ----------
   app.get('/review-access/:token', async (c) => {
@@ -571,6 +675,8 @@ export function createApp(s: Services): Hono<Env> {
   // The embedded page opened outside the admin sends the browser here: back into the admin.
   app.get('/api/connectors/shopify/install/top', shopifyInstall(false))
   shopifyEmbeddedRoutes(app, s)
+  // BigCommerce installs start from BigCommerce too (single-click app callbacks, bigcommerce-app.ts).
+  bigcommerceAppRoutes(app, s)
 
   // ---------- "Try it" demo chat (try-chat.ts, AGFN_TRY_CHAT): no session; demo data only ----------
   const tryMcpUrl = config.publicDemoUrl ?? (s.publicDemo ? `${config.baseUrl.replace(/\/+$/, '')}/demo/mcp` : undefined)
@@ -611,7 +717,8 @@ export function createApp(s: Services): Hono<Env> {
       }
       return c.json({ message: 'Please sign in.' }, 401)
     }
-    const person = await db.selectFrom('people').select(['id', 'name', 'email']).where('auth_user_id', '=', session.user.id).executeTakeFirst()
+    // Who is this session? A lookup before any workspace is chosen, so a named bypass (people is scoped by membership).
+    const person = await withBypass('auth:whoami', () => db.selectFrom('people').select(['id', 'name', 'email']).where('auth_user_id', '=', session.user.id).executeTakeFirst())
     if (!person) return c.json({ message: 'Please sign in.' }, 401)
     // Memberships across workspaces, before one is chosen: a narrow named bypass (docs/security/rls.md).
     const workspaces = await withBypass('auth:memberships', () => s.permissions.workspacesFor(person.id))
@@ -812,7 +919,7 @@ export function createApp(s: Services): Hono<Env> {
       // Reviewer access link session: the app shows a "Reviewer demo" banner.
       ...(isReviewerEmail(p.email) ? { reviewerDemo: true } : {}),
       // A Shopify install that started signed out: the app sends the browser to /api/connectors/shopify/install/resume.
-      ...(getCookie(c, SHOPIFY_LINK_COOKIE) ? { pendingInstall: 'shopify' } : {}),
+      ...(getCookie(c, SHOPIFY_LINK_COOKIE) ? { pendingInstall: 'shopify' } : getCookie(c, BIGCOMMERCE_LINK_COOKIE) ? { pendingInstall: 'bigcommerce' } : {}),
       // Demo only: false while the demo is still filling (show "Filling the demo…"), true once it's loaded.
       ...(p.workspaceId && (await isDemoWorkspace(db, p.workspaceId)) ? { demoReady: await isDemoReady(db, p.workspaceId), ...(await demoQueue(p.workspaceId)) } : {}),
       signInMethods: signInMethodsFor(config),
@@ -892,7 +999,7 @@ export function createApp(s: Services): Hono<Env> {
       me: { ...(config.friendInvites ? { friendInvites: true } : {}), personId: p.personId, name: p.name, email: p.email, workspaceId: ws, mcpUrl: `${config.baseUrl}/mcp`, selfHosted: config.selfHosted, demo, ...(demo ? { demoReady: await isDemoReady(db, ws), ...(await demoQueue(ws)) } : {}) },
       entities: summaries,
       connections,
-      suggested: demo ? [] : suggestConnectors(offered(p.email), connectedKeys),
+      suggested: demo ? [] : suggestConnectors(offered(p.email, ws), connectedKeys),
       ais: [],
       aiPaused: false,
       inbound: await inboundAddresses(s, ws, p.personId),
@@ -966,15 +1073,39 @@ export function createApp(s: Services): Hono<Env> {
   // Self-hosted: app-based connectors without keys are listed too, with their setup guide (setup.configured: false).
   // Connectors offered for new connections: hosted holds some back (config.unlisted), except Plaid for reviewers; an
   // operator's pause (config.hidden, AGFN_HIDE_CONNECTORS) holds back for everyone.
-  const unlistedFor = (email: string) => [...(config.unlisted ?? []).filter((k) => !(k === 'plaid' && isReviewerEmail(email))), ...(config.hidden ?? [])]
-  const offered = (email: string) =>
+  // And a connector offered only to named workspaces (config.onlyWorkspaces: Etsy) is held back from every other one.
+  const unlistedFor = (email: string, ws: string | null | undefined) => [...(config.unlisted ?? []).filter((k) => !(k === 'plaid' && isReviewerEmail(email))), ...(config.hidden ?? []), ...notForWorkspace(config, ws)]
+  const offered = (email: string, ws: string | null | undefined) =>
     s.registry
       .list()
-      .filter((d) => !unlistedFor(email).includes(d.key))
+      .filter((d) => !unlistedFor(email, ws).includes(d.key))
       .map((d) => (config.beta?.includes(d.key) ? { ...d, beta: true } : d))
       .map((d) => (allowedInDemo(d.key) ? { ...d, demoAllowed: true } : d))
   const guides = () => (config.hosted ? [] : unconfiguredConnectors({ BASE_URL: config.baseUrl }, s.registry.list().map((d) => d.key)))
-  app.get('/api/connectors', (c) => c.json([...offered(c.get('person').email).filter((d) => d.key !== 'demo'), ...guides()]))
+  app.get('/api/connectors', (c) => c.json([...offered(c.get('person').email, c.get('person').workspaceId).filter((d) => d.key !== 'demo'), ...guides()]))
+  // "Don't see your app? Request it +" (connection-requests.ts): names only, one row per workspace and app. Never in a
+  // demo (the public demo, the app-directory reviewer's, anyone's own): those books are made up, and so would the asks be.
+  const requestLimiter = new DbRateLimiter(db)
+  async function requestsWs(c: Context<Env>): Promise<string> {
+    const ws = requireWs(c)
+    if (c.get('person').sessionId === PUBLIC_DEMO_SESSION || (await isDemoWorkspace(db, ws))) fail(403, 'Not available in the demo.', { error: 'demo' })
+    return ws
+  }
+  app.get('/api/connection-requests', async (c) => {
+    const ws = await requestsWs(c)
+    const shown = new Set([...offered(c.get('person').email, ws), ...guides()].map((d) => d.key))
+    return c.json({ apps: await requestList(db, ws, shown) })
+  })
+  app.post('/api/connection-requests', async (c) => {
+    const ws = await requestsWs(c)
+    const { app: key } = await c.req.json<{ app?: unknown }>().catch(() => ({ app: undefined }))
+    if (typeof key !== 'string' || !isRequestable(key)) fail(400, 'That isn’t one of the apps on the list.')
+    const wait = await requestLimiter.hit(`connreq:ws:${ws}`, 60, 3_600_000, Date.now())
+    if (wait) return tooMany(c, 'Too many requests.', wait)
+    await requestConnection(db, ws, key as string)
+    return c.json({ ok: true, app: key, requested: true })
+  })
+
   const notConfigured = (key: string) => guides().some((g) => g.key === key) && fail(409, 'This connection needs its own app on this server first. Open it in Connect to see the steps.', { error: 'not_configured' })
 
   /**
@@ -1153,7 +1284,7 @@ export function createApp(s: Services): Hono<Env> {
     const key = c.req.param('key')
     if (!s.registry.has(key)) notConfigured(key) || fail(404, 'That connection isn’t available on this server.')
     if (config.hidden?.includes(key)) fail(404, 'New connections to this service are paused for now. Ones you already have keep updating.')
-    if (unlistedFor(c.get('person').email).includes(key)) fail(404, UNLISTED_MESSAGE[key] ?? 'That connection isn’t available yet.')
+    if (unlistedFor(c.get('person').email, ws).includes(key)) fail(404, UNLISTED_MESSAGE[key] ?? 'That connection isn’t available yet.')
     await guardDemo(ws, key)
     if (!(await s.permissions.canManageWorkspace(ws, c.get('person').personId))) fail(403, 'Only an owner or admin can add connections.')
     await requirePasskeyCheck(s, c.get('person').personId)
@@ -1460,6 +1591,66 @@ export function createApp(s: Services): Hono<Env> {
     return c.redirect('/')
   })
 
+  // The "Connect to Aggregate" link from BigCommerce's install page, after sign-in: the store's waiting token becomes a
+  // connection in this person's workspace (one-time, short-lived, the installer's email only; bigcommerce-app.ts). A store
+  // reinstalled while its connection here needs reconnecting gets the new token in that same connection.
+  app.get('/api/connectors/bigcommerce/install/resume', async (c) => {
+    const link = getCookie(c, BIGCOMMERCE_LINK_COOKIE)
+    deleteCookie(c, BIGCOMMERCE_LINK_COOKIE, { path: '/api' })
+    const back = (msg: string) => c.redirect(`/#/?connect_error=${encodeURIComponent(msg)}&connector=bigcommerce`)
+    const again = 'Open Aggregate from Apps → My Apps in BigCommerce again.'
+    const ws = c.get('person').workspaceId
+    if (!ws) return back(`Create your workspace first, then ${again[0]!.toLowerCase()}${again.slice(1)}`)
+    if (unlistedFor(c.get('person').email, ws).includes('bigcommerce')) return back(UNLISTED_MESSAGE.bigcommerce ?? 'BigCommerce isn’t available yet.')
+    try {
+      await guardDemo(ws, 'bigcommerce')
+    } catch {
+      return back(`The demo can’t hold real stores. Leave the demo, then ${again[0]!.toLowerCase()}${again.slice(1)}`)
+    }
+    if (!(await s.permissions.canManageWorkspace(ws, c.get('person').personId))) return back('Only an owner or admin can add connections.')
+    const person = await db.selectFrom('people').select('email').where('id', '=', c.get('person').personId).executeTakeFirst()
+    const pending = link && person?.email ? await takeBigCommerceLink(s, link, person.email) : null
+    if (pending && 'wrongPerson' in pending) return back(`Sign in to Aggregate with the email you use for this BigCommerce store (${pending.wrongPerson}).`)
+    if (!pending) return back(`That BigCommerce link expired or was already used. ${again}`)
+    const stuck = (await db.selectFrom('connections').select(['id', 'config_json', 'display_name']).where('workspace_id', '=', ws).where('connector_key', '=', 'bigcommerce').where('status', '=', 'needs_reauth').execute()).find(
+      (r) => (JSON.parse(r.config_json) as { storeHash?: string }).storeHash === pending.storeHash,
+    )
+    if (stuck) {
+      try {
+        const result = await s.registry.create('bigcommerce', { raw: { put: async () => '' } }).connect({ adopt: pending.secret } as never)
+        const config = { ...(JSON.parse(stuck.config_json) as Record<string, unknown>), ...result.config }
+        await db
+          .updateTable('connections')
+          .set({ secret_enc: seal(s.keys, result.secret, { workspaceId: ws, recordId: stuck.id, purpose: SECRET_PURPOSE }), config_json: JSON.stringify(config), status: 'active', last_error: null })
+          .where('id', '=', stuck.id)
+          .where('workspace_id', '=', ws)
+          .execute()
+        await clearAttention(db as unknown as Kysely<CoreTables & ConnectorTables>, stuck.id)
+        await dropBigCommercePending(s, pending.storeHash)
+        await logConnectionChange(s, ws, stuck.id, c.get('person').personId, 'connection.connected', `Reconnected ${stuck.display_name} from BigCommerce`)
+        await s.sync.request(ws, stuck.id)
+        return c.redirect(`/#/?d=connection:${stuck.id}`)
+      } catch (err) {
+        console.warn('[agfn] bigcommerce reconnect failed', { detail: err instanceof Error ? err.message.slice(0, 200) : 'unknown' })
+        return back(`Reconnecting the store didn’t finish. ${again}`)
+      }
+    }
+    // Through the normal finish (demo, naming, first sync, activity), with a one-time state for this person.
+    const state = randomBytes(24).toString('base64url')
+    await db
+      .insertInto('settings')
+      .values({ workspace_id: ws, key: `connect_state:${state}`, value_json: JSON.stringify({ key: 'bigcommerce', personId: c.get('person').personId, entityId: null, at: Date.now() }), updated_at: new Date().toISOString() })
+      .execute()
+    try {
+      const connectionId = await finishConnect(c, 'bigcommerce', { state, adopt: pending.secret } as never)
+      await dropBigCommercePending(s, pending.storeHash)
+      return c.redirect(`/#/?d=connection:${connectionId}`)
+    } catch (err) {
+      const msg = err instanceof HTTPException ? ((await err.getResponse().json().catch(() => ({}))) as { message?: string }).message : undefined
+      return back(msg ?? `That connection didn’t finish. ${again}`)
+    }
+  })
+
   /** The app route saved with a connect state ("/" when none, or the state is unknown). Doesn't use the state up. */
   async function connectReturnTo(ws: string | null | undefined, state: string | undefined): Promise<string> {
     if (!ws || !state) return '/'
@@ -1467,6 +1658,28 @@ export function createApp(s: Services): Hono<Env> {
     const saved = row ? (JSON.parse(row.value_json) as { returnTo?: unknown }).returnTo : (await connectDone(ws, state))?.returnTo
     return safeAppRoute(saved) ?? '/'
   }
+
+  // Amazon's log-in URI. Its website authorization sends the seller here after consent (amazon_callback_uri, amazon_state,
+  // selling_partner_id); the browser goes back to Amazon with this person's own connect state, and Amazon then calls the
+  // callback below with the code. Without a connect started here in the last 10 minutes (Amazon's limit for the whole
+  // flow), e.g. an install from the Appstore, the person is sent to start one. The connector checks the callback is
+  // Amazon's (amazonLoginRedirect).
+  app.get('/api/connectors/amazon/login', async (c) => {
+    const back = (msg: string) => c.redirect(`/#/?connect_error=${encodeURIComponent(msg)}&connector=amazon`)
+    const start = 'Start from Aggregate: Connections → Add → Amazon.'
+    const ws = c.get('person').workspaceId
+    if (!ws || !s.registry.has('amazon')) return back(start)
+    const pending = (await db.selectFrom('settings').select(['key', 'value_json']).where('workspace_id', '=', ws).where('key', 'like', 'connect_state:%').execute())
+      .map((r) => ({ state: r.key.slice('connect_state:'.length), v: JSON.parse(r.value_json) as { key?: string; personId?: string; at?: number } }))
+      .filter((r) => r.v.key === 'amazon' && r.v.personId === c.get('person').personId && typeof r.v.at === 'number' && Date.now() - r.v.at < 10 * 60_000)
+      .sort((a, b) => (b.v.at ?? 0) - (a.v.at ?? 0))[0]
+    if (!pending) return back(start)
+    const connector = s.registry.create('amazon', { raw: { put: async () => '' } }) as { loginRedirect?: (q: Record<string, string>, state: string) => string | null }
+    const url = connector.loginRedirect?.(Object.fromEntries(new URL(c.req.url).searchParams), pending.state)
+    if (!url) return back('That Amazon sign-in didn’t come from Amazon. Start again from Connections → Add → Amazon.')
+    // Amazon asks for no referrer on this hop: the server-wide Referrer-Policy (same-origin) already sends none to amazon.com.
+    return c.redirect(url)
+  })
 
   // OAuth providers (Stripe, QuickBooks, Xero…) send the browser back here with ?code&state.
   app.get('/api/connectors/:key/callback', async (c) => {
@@ -1505,6 +1718,36 @@ export function createApp(s: Services): Hono<Env> {
       await db.updateTable('accounts').set({ entity_id: entityId }).where('id', '=', a.accountId).execute()
       await s.ledger.accountChanged?.(ws, a.accountId)
     }
+    return c.json({ ok: true })
+  })
+
+  // A possible-duplicate pair the person says is two different accounts: stop flagging it (keyed by dupKey, so only
+  // new evidence raises it again). No money changes — both accounts keep counting.
+  app.post('/api/accounts/dismiss-duplicate', async (c) => {
+    const ws = requireWs(c)
+    const { subjectId, relatedId, dupKey } = await c.req.json<{ subjectId?: string; relatedId?: string; dupKey?: string }>()
+    if (!subjectId || !relatedId || !dupKey) fail(400, 'That dismissal is missing its accounts.')
+    const rows = await db.selectFrom('accounts').select(['id', 'entity_id']).where('workspace_id', '=', ws).where('id', 'in', [subjectId!, relatedId!]).execute()
+    if (rows.length !== 2) fail(404, 'One of those accounts no longer exists.')
+    for (const r of rows) if (!r.entity_id || !(await s.permissions.can(actorOf(c), 'view', r.entity_id, 'balances'))) fail(403, 'You can’t change those accounts.')
+    await s.ledger.dismissDuplicate?.(ws, { subjectId: subjectId!, relatedId: relatedId!, dupKey: dupKey! })
+    return c.json({ ok: true })
+  })
+
+  // "Mark one a duplicate": the person confirms a pair is the same real account. The duplicate counts once by posting
+  // into the primary; the engine re-posts its rows and drops it from cash (accountChanged).
+  app.post('/api/accounts/mark-duplicate', async (c) => {
+    const ws = requireWs(c)
+    const { duplicateId, ofId } = await c.req.json<{ duplicateId?: string; ofId?: string }>()
+    if (!duplicateId || !ofId || duplicateId === ofId) fail(400, 'Pick two different accounts.')
+    const rows = await db.selectFrom('accounts').select(['id', 'entity_id', 'duplicate_of']).where('workspace_id', '=', ws).where('id', 'in', [duplicateId!, ofId!]).execute()
+    const dup = rows.find((r) => r.id === duplicateId)
+    const primary = rows.find((r) => r.id === ofId)
+    if (!dup || !primary) fail(404, 'One of those accounts no longer exists.')
+    if (primary!.duplicate_of) fail(409, 'That account is already marked a duplicate of another.')
+    for (const r of [dup!, primary!]) if (!r.entity_id || !(await s.permissions.can(actorOf(c), 'add', r.entity_id, 'balances'))) fail(403, 'You can’t change those accounts.')
+    await db.updateTable('accounts').set({ duplicate_of: ofId!, include_in_cash: 0 }).where('id', '=', duplicateId!).where('workspace_id', '=', ws).execute()
+    await s.ledger.accountChanged?.(ws, duplicateId!)
     return c.json({ ok: true })
   })
 
@@ -1908,7 +2151,7 @@ export function createApp(s: Services): Hono<Env> {
   // Search engines get the public pages of the hosted service; a self-hosted server lists nothing. Docs on their own host
   // are listed there.
   if (config.hosted) {
-    const pages = ['/', ...(s.publicDemo ? ['/demo'] : []), '/privacy', '/terms', '/security', '/support', ...(config.docsHost ? [] : listedDocs())]
+    const pages = ['/', ...(s.publicDemo ? ['/demo'] : []), ...(config.tryChat && tryMcpUrl ? ['/try'] : []), '/privacy', '/terms', '/security', '/support', ...(config.docsHost ? [] : listedDocs())]
     const sitemap = sitemapXml(config.baseUrl, pages, docsUpdated)
     app.get('/sitemap.xml', (c) => c.body(sitemap, 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }))
     const robots = robotsTxt([`${config.baseUrl}/sitemap.xml`, ...(config.docsHost ? [`https://${config.docsHost}/sitemap.xml`] : [])], APP_DISALLOW)
@@ -2135,7 +2378,7 @@ async function connectionSummaries(s: Services, workspaceId: string) {
       name: r.connector_key === 'manual' ? 'Added by hand' : r.display_name !== genericName.get(r.connector_key) ? providerFirst(r.connector_key, genericName.get(r.connector_key), r.display_name) : (institution ?? r.display_name),
       entityNames: names,
       ...(needsCompany ? { needsCompany } : {}),
-      status: r.status === 'active' ? (busy.has(r.id) || demoImporting(r.connector_key, r.cursor, today) ? 'syncing' : 'ok') : r.status,
+      status: r.status === 'active' ? (busy.has(r.id) || demoImporting(r.connector_key, r.cursor, new Date()) ? 'syncing' : 'ok') : r.status,
       lastSyncAt: r.last_success_at,
       accountCount: mine.length,
       ...(payrollRuns.get(r.id) ? { payrollRunCount: payrollRuns.get(r.id) } : {}),
@@ -2171,7 +2414,7 @@ const LIVE_STATUSES: ReadonlySet<string> = new Set(['active', 'paused'])
 const XERO_FULL = 'New Xero connections are full right now while we add room on Xero’s side. Try again in a day or two, or email support@aggregate.finance and we’ll tell you when it’s ready.'
 
 /** Most founders' next useful connection first; niche tools last. */
-const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'lightspeed', 'sumup', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix', 'adsense', 'pinterest', 'youtube', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin', 'harvest']
+const SUGGEST_ORDER = ['plaid', 'stripe', 'quickbooks', 'xero', 'finch', 'gusto', 'rippling', 'justworks', 'deel', 'square', 'shopify', 'mercury', 'brex', 'ramp', 'paypal', 'billcom', 'wise', 'paddle', 'polar', 'chargebee', 'woocommerce', 'bigcommerce', 'amazon', 'lightspeed', 'sumup', 'squarespace', 'ownerrez', 'whop', 'mollie', 'wix', 'adsense', 'pinterest', 'youtube', 'lemonsqueezy', 'appstore', 'googleplay', 'simplefin', 'harvest', 'zeffy']
 /** Tools whose data another connected tool already brings (an accounting tool carries bills and invoices). */
 const COVERED_BY: Record<string, string[]> = {
   xero: ['quickbooks'],

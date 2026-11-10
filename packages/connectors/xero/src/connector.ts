@@ -194,7 +194,7 @@ export function createXeroConnector(opts: XeroOptions): Connector & {
     name: 'Xero',
     group: 'accounting',
     provides: ['invoices', 'bills', 'reports'],
-    freshness: 'syncs every few hours, and within minutes when Xero sends a change notice',
+    freshness: 'syncs every few hours, and within minutes when Xero sends a change notice; bank-feed lines are only as current as the bank feed (a few times a day)',
     auth: 'oauth',
     dataVersion: MAPPING_VERSION,
   }
@@ -349,6 +349,9 @@ export function createXeroConnector(opts: XeroOptions): Connector & {
       } else if (phase === 'Accounts') {
         // Always the full chart (small, unpaged): the role map must cover every code bills can use.
         const res = await http.request<XeroObject>({ path: '/Accounts' })
+        // Xero returns the envelope object with the key present (empty array) when empty; a null/non-object body (an
+        // empty body, or a sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop.
+        if (!isRecord(res.data)) throw new ConnectorError('transient', 'Xero sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
         const list = Array.isArray(res.data.Accounts) ? res.data.Accounts.filter(isRecord) : []
         const roles: Record<string, string> = {}
         for (const a of list) {
@@ -370,6 +373,7 @@ export function createXeroConnector(opts: XeroOptions): Connector & {
           query: { page: state.page, pageSize, order: 'UpdatedDateUTC ASC', ...(phase === 'Invoices' ? { summaryOnly: 'false' } : {}) },
           headers: state.since ? { 'if-modified-since': state.since } : {},
         })
+        if (!isRecord(res.data)) throw new ConnectorError('transient', 'Xero sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
         const items = Array.isArray(res.data[list.key]) ? (res.data[list.key] as unknown[]).filter(isRecord) : []
         for (const o of items) events.push(...(await mapItem(phase, o, conn, ctx)))
         if (items.length >= pageSize) next = { ...state, page: state.page + 1 }

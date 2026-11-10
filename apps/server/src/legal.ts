@@ -4,7 +4,7 @@
 
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { connectionsBody, docsHomeBody, docsPage } from './docs-shell.ts'
+import { barePage, connectionsBody, docsHomeBody, docsPage } from './docs-shell.ts'
 import { institutionsBody, loadInstitutions } from './docs-institutions.ts'
 
 export interface LegalPage {
@@ -213,7 +213,7 @@ function summary(meta: Record<string, string>, body: string): string {
   const para = body
     .split(/\n{2,}/)
     .map((p) => p.trim())
-    .find((p) => p && !/^(#|\||-|\*|>|```|<|\d+\.)/.test(p))
+    .find((p) => p && !/^(#|\||-|\*(?!\*)|>|```|<|\d+\.)/.test(p))
   const text = (para ?? '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim()
   return text.length > 200 ? text.slice(0, 197).replace(/\s+\S*$/, '') + '…' : text || 'Aggregate'
 }
@@ -256,13 +256,13 @@ const updatedLine = (date: string) => {
 }
 
 /** A public docs page in the docs frame (docs-shell.ts). `body` replaces the markdown, for pages built from it. */
-export function renderDoc(md: string, fonts: LegalFonts, path: string, o: { body?: (md: string) => string; wide?: boolean } = {}): LegalPage {
+export function renderDoc(md: string, fonts: LegalFonts, path: string, o: { body?: (md: string) => string; wide?: boolean; ld?: object; bare?: boolean } = {}): LegalPage {
   const { meta, body } = frontMatter(md.replace(/\r\n?/g, '\n').replace(/<!--[\s\S]*?-->\n?/g, ''))
   const title = meta.title ?? 'Aggregate'
-  const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Aggregate</title><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="canonical" href="${BASE_URL_TOKEN}${PATH_TOKEN}">${shareMeta(`${title} · Aggregate`, summary(meta, body))}<style>${faces(fonts)}</style>`
+  const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Aggregate</title><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="canonical" href="${BASE_URL_TOKEN}${PATH_TOKEN}">${shareMeta(`${title} · Aggregate`, summary(meta, body))}<style>${faces(fonts)}</style>${o.ld ? `<script type="application/ld+json">${JSON.stringify(o.ld).replace(/</g, '\\u003c')}</script>` : ''}`
   const updated = /^\d{4}-\d{2}-\d{2}$/.test(meta.updated ?? '') ? meta.updated : undefined
   const shown = o.body ? o.body(body) : renderMarkdown(body)
-  const html = docsPage({ path, head: updated ? `${head}<meta property="article:modified_time" content="${updated}">` : head, body: updated ? shown.replace('</h1>', `</h1>${updatedLine(updated)}`) : shown, ...(o.wide ? { wide: true } : {}) })
+  const html = o.bare ? barePage({ head, body: shown }) : docsPage({ path, head: updated ? `${head}<meta property="article:modified_time" content="${updated}">` : head, body: updated ? shown.replace('</h1>', `</h1>${updatedLine(updated)}`) : shown, ...(o.wide ? { wide: true } : {}) })
   return { title, draft: false, html, description: summary(meta, body), md: body, ...(updated ? { updated } : {}) }
 }
 
@@ -289,6 +289,7 @@ export const PUBLIC_DOCS = {
   'connect-your-ai': { file: 'connect-your-ai.md', title: 'Connect your AI to Aggregate' },
   recipes: { file: 'recipes.md', title: 'Prompt recipes' },
   connectors: { file: 'connectors.md', title: 'What Aggregate connects' },
+  etsy: { file: 'connectors/etsy.md', title: 'Etsy: what Aggregate reads and how it’s kept' },
 } as const
 
 /** The page of a doc beside the public docs (docs/<name>.md) if this server serves it, otherwise null. */
@@ -346,6 +347,19 @@ export function guideLinks(md: string): string {
   })
 }
 
+/** FAQPage data for a page of "**Question?**" lines, each followed by its answer: the page's own words as plain text, so
+ *  the markup never says more than the page does. Undefined when the page has no such pairs. */
+export function faqLd(body: string): object | undefined {
+  const plain = (t: string) => t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim()
+  const pairs = [...body.matchAll(/^\*\*([^*\n]+\?)\*\*\n((?:(?!\*\*|#|\n).*\n?)+)/gm)].map((m) => ({ q: plain(m[1]!), a: plain(m[2]!) })).filter((p) => p.a)
+  if (!pairs.length) return undefined
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: pairs.map(({ q, a }) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+  }
+}
+
 export function loadGuides(dir: URL = new URL('../../../docs/guides/', import.meta.url), fonts: LegalFonts = {}): Map<string, LegalPage> {
   const out = new Map<string, LegalPage>()
   let files: string[] = []
@@ -363,7 +377,8 @@ export function loadGuides(dir: URL = new URL('../../../docs/guides/', import.me
     const { meta, body } = frontMatter(md)
     const checked = meta.updated ?? /Last checked (\d{4}-\d{2}-\d{2})/.exec(body)?.[1]
     const front = [`title: ${title}`, 'status: final', ...(meta.description ? [`description: ${meta.description}`] : []), ...(checked ? [`updated: ${checked}`] : [])]
-    out.set(slug, renderDoc(`---\n${front.join('\n')}\n---\n\n${guideLinks(body)}`, fonts, slug ? `/docs/guides/${slug}` : '/docs/guides'))
+    const ld = slug === 'faq' ? faqLd(body) : undefined
+    out.set(slug, renderDoc(`---\n${front.join('\n')}\n---\n\n${guideLinks(body)}`, fonts, slug ? `/docs/guides/${slug}` : '/docs/guides', ld ? { ld } : {}))
   }
   return out
 }

@@ -51,6 +51,23 @@ describe.each(backends)('coverage and balance assertions (%s)', (backend) => {
     expect(cov?.months.find((m) => m.month === '2026-08')?.status).toBe('covered')
   })
 
+  it('dataThrough is the exact day data runs through: balance/statement as-of, else last transaction, never future', async () => {
+    // Kit's today is 2026-10-09. A statement account whose closing balance (OFX DTASOF/PDF period end) is the 8th,
+    // with transaction rows only up to the 5th → the snapshot as-of wins.
+    const stmt = await k.account({ entityId: acme, name: 'Chase', mask: '4411', connectionId: await k.connection({ key: 'files' }) })
+    await k.engine.postBatch(k.ws, [txn(stmt, '2026-09-20', -1_000), txn(stmt, '2026-10-05', -2_000), snapshot(stmt, '2026-10-08', 300_000)])
+    // An account with transactions but no balance snapshot: dataThrough is the last transaction's exact day.
+    const feed = await k.account({ entityId: acme, name: 'Ramp' })
+    await k.engine.postBatch(k.ws, [txn(feed, '2026-10-02', -500), txn(feed, '2026-10-07', -700)])
+    // A scheduled/future-dated row (after today) must NOT push the date into the future.
+    const sched = await k.account({ entityId: acme, name: 'Mercury scheduled' })
+    await k.engine.postBatch(k.ws, [txn(sched, '2026-10-03', -100), txn(sched, '2026-11-28', -2_000)])
+    const cov = await k.engine.coverage(k.ws)
+    expect(cov.find((c) => c.accountId === stmt.id)?.dataThrough).toBe('2026-10-08') // the snapshot as-of, not the 5th
+    expect(cov.find((c) => c.accountId === feed.id)?.dataThrough).toBe('2026-10-07') // last transaction, no balance
+    expect(cov.find((c) => c.accountId === sched.id)?.dataThrough).toBe('2026-10-03') // the future 2026-11-28 row is ignored
+  })
+
   it('coverage: a quiet month in a busy account, a statement not uploaded yet, a month that does not add up', async () => {
     const bank = await k.account({ entityId: acme, name: 'Chase', mask: '4411' })
     const busy = (month: string) => [3, 10, 17, 24].map((d) => txn(bank, `${month}-${String(d).padStart(2, '0')}`, -1_000, { counterparty: `Shop ${month}-${d}` }))

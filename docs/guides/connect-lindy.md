@@ -12,7 +12,7 @@ Lindy adds custom MCP servers from its **Integrations** page.
 4. Under **Availability**, choose who in your Lindy workspace can use it.
 5. Try: "What did payroll cost last month?"
 
-Lindy also takes a static key under **Advanced**: create a key in Aggregate (**Connect your AI → + Connect another AI → Create a key**, with an expiry) and send it as the bearer token. Each tool can be set to **Always allow** or **Ask for approval**.
+Lindy also takes a static key under **Advanced**: create a key in Aggregate (**Connect your AI → + Connect another AI → A key for a bot → Make a key**; it lasts 90 days) and send it as the bearer token. Each tool can be set to **Always allow** or **Ask for approval**.
 
 Self-hosting? Use `https://<your-server>/mcp` instead; it must be reachable over HTTPS.
 

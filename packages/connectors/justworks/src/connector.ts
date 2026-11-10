@@ -83,7 +83,9 @@ export function classifyJustworksError({ status, body }: { status: number; body:
 
 function list(data: unknown): Obj[] {
   if (Array.isArray(data)) return data.filter(isRecord)
-  if (!isRecord(data)) return []
+  // A present object with `items` omitted is a real empty page; a null/non-object (empty body, or the sign-in/error
+  // page the shared client rejects as non-JSON) is unreadable and must stop the sync, never read as zero.
+  if (!isRecord(data)) throw new ConnectorError('transient', 'Justworks sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
   const v = data.items
   return Array.isArray(v) ? v.filter(isRecord) : []
 }
@@ -270,6 +272,8 @@ export function createJustworksConnector(opts: JustworksOptions): Connector & { 
       cur = str(isRecord(res.data) ? res.data.next_cursor : undefined)
       if (!cur) break
     }
+    // The list still has pages after the cap: stop visibly rather than return a partial list as complete.
+    if (cur) throw new ConnectorError('permanent', 'Justworks returned more rows for one list than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: PROVIDER, forUser: true })
     return out
   }
 

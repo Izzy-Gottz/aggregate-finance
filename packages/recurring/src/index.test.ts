@@ -64,4 +64,13 @@ describe('recurring', () => {
     expect(asked[0]).toBe('2024-09-11')
     expect(list).toEqual([expect.objectContaining({ counterparty: 'Domain Registrar', cadence: 'yearly', status: 'active', nextDue: '2026-11-01' })])
   })
+
+  it("Stripe's fee on a customer's yearly charge is not a yearly Stripe bill", async () => {
+    const fees = [row('ch1:fee', '2024-11-01'), row('ch2:fee', '2025-11-01')].map((t) => ({ ...t, counterparty: 'Stripe', kind: 'fee', category: 'processor_fees' }))
+    const r: Pick<FinanceReader, 'searchTransactions' | 'searchInvoices'> = {
+      searchTransactions: (async () => ({ rows: fees, sums: [] })) as never,
+      searchInvoices: (async () => ({ rows: [], sums: [] })) as never,
+    }
+    expect(await createRecurring(r).list(scope, { asOf: '2026-10-11' })).toEqual([])
+  })
 })

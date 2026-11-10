@@ -29,6 +29,7 @@ import type { BalanceAssertion, PeriodLock, Basis, EntityInfo, EntryBasis, Journ
 import { convert, impliedRate, NOT_MONEY } from './money.ts'
 import { RateUnavailableError } from './fx.ts'
 import { changePoints, initialPoints, mrrMovements, nextPoint, type MrrMonth } from './mrr.ts'
+import { knownVendorRole } from './known-vendors.ts'
 import { AUTO_CONFIRM, MATCHER_VERSION, accountPair, findMatchesYielding, type Proposal } from './matching.ts'
 import { classifyTxn, fxFits, plan, PostingError, UTILITY_HINT, type Classification, type LinkedRecord, type PlanContext, type PlannedEntry } from './posting.ts'
 import { applyRules, suggestRules, validateRule, type RuleSuggestion } from './rules.ts'
@@ -241,12 +242,12 @@ export class LedgerEngine implements Ledger {
    * matching merely skipped are fetched after commit (one ranged request per currency pair) for next time.
    * Nested calls join the outer transaction.
    */
-  async transaction<T>(fn: () => Promise<T>): Promise<T> {
+  async transaction<T>(fn: () => Promise<T>, opts: { readOnly?: boolean } = {}): Promise<T> {
     if (this.#tx.getStore()) return fn()
     for (let attempt = 0; ; attempt++) {
       const state: TxState = { missing: new Map() }
       try {
-        const out = await this.#tx.run(state, () => this.store.transaction(fn))
+        const out = await this.#tx.run(state, () => this.store.transaction(fn, opts))
         if (state.missing.size > 0) await this.rates.prefetch?.([...state.missing.values()]).catch(() => undefined)
         return out
       } catch (err) {
@@ -491,6 +492,7 @@ export class LedgerEngine implements Ledger {
     for (const l of listings) validateListing(l)
     const posted = await this.#exclusive(ws, () =>
       this.store.transaction(async () => {
+        await this.#startCurrent(ws)
         const ctx = await this.#ctx(ws)
         const results: PostResult[] = []
         const dirtyAccounts = new Set<Id>()
@@ -756,13 +758,28 @@ export class LedgerEngine implements Ledger {
   }
 
   /** The workspace's history was last matched by an older matcher (a workspace never recorded starts current). */
+  /**
+   * Whether this workspace's history was matched and posted under an older matcher. A workspace never stamped is only
+   * current when it has no rows yet (its first post stamps it, #startCurrent). Rows with no stamp were posted by an
+   * older release: during a deploy's overlap the old machine can still be filling a demo while the new one settles it
+   * first. Those are matched again once. (Found while checking live v188; the rows that seemed to show it were a
+   * miscount that included reversal entries, so the gap is from reading the code, not seen in data.)
+   */
   async #matcherBehind(ws: WorkspaceId): Promise<boolean> {
     const v = await this.store.matchedWith(ws)
     if (v === null) {
+      if ((await this.store.listRecords(ws, { limit: 1 })).length > 0) return true
       await this.store.setMatchedWith(ws, MATCHER_VERSION, this.now())
       return false
     }
     return v < MATCHER_VERSION
+  }
+
+  /** A workspace's first rows are planned by this release, so it starts current (no re-match of a fresh import). */
+  async #startCurrent(ws: WorkspaceId): Promise<void> {
+    if ((await this.store.matchedWith(ws)) !== null) return
+    if ((await this.store.listRecords(ws, { limit: 1 })).length > 0) return
+    await this.store.setMatchedWith(ws, MATCHER_VERSION, this.now())
   }
 
   /** Match the whole history once with the current matcher (rows still waiting in Review get its new answers). */
@@ -771,6 +788,7 @@ export class LedgerEngine implements Ledger {
     await this.#grossProcessorLinks(ctx)
     await this.#applyMatches(ctx, await this.#matches(ctx))
     await this.#repostUtilities(ctx)
+    await this.#repostKnownVendors(ctx)
     for (const acc of ctx.dirty) await this.#refreshOpening(ctx, acc)
     await this.store.setMatchedWith(ctx.ws, MATCHER_VERSION, this.now())
   }
@@ -783,6 +801,17 @@ export class LedgerEngine implements Ledger {
   async #repostUtilities(ctx: Ctx): Promise<void> {
     for (const r of await this.store.listRecords(ctx.ws, { eventTypes: ['txn.upsert'], statuses: ['posted'] })) {
       if (r.event.type === 'txn.upsert' && r.event.categoryHint && UTILITY_HINT.test(r.event.categoryHint)) await this.#repost(ctx, r)
+    }
+  }
+
+  /**
+   * Rows from a vendor known by name (matcher 7) were booked to whatever the provider guessed: Fly.io to travel one
+   * month, uncategorized the next. They're planned again, so each lands in Cloud or Software. A category someone set or
+   * a rule still decides; a row whose entries come out the same writes nothing.
+   */
+  async #repostKnownVendors(ctx: Ctx): Promise<void> {
+    for (const r of await this.store.listRecords(ctx.ws, { eventTypes: ['txn.upsert'], statuses: ['posted'] })) {
+      if (r.event.type === 'txn.upsert' && knownVendorRole(r.event)) await this.#repost(ctx, r)
     }
   }
 
@@ -970,6 +999,12 @@ export class LedgerEngine implements Ledger {
     )
   }
 
+  /** The person judged a possible-duplicate pair to be two different accounts. Store the dismissal (keyed by dupKey)
+   *  and bump the version (via #exclusive) so the cached data-health drops the flag. No ledger rows change. */
+  async dismissDuplicate(ws: WorkspaceId, d: { subjectId: Id; relatedId: Id; dupKey: string }): Promise<void> {
+    await this.#exclusive(ws, () => this.store.saveDuplicateDismissal({ workspaceId: ws, subjectId: d.subjectId, relatedId: d.relatedId, dupKey: d.dupKey, dismissedAt: this.now() }))
+  }
+
   /** Review's "which company?": assign an unassigned account and post the rows it was holding. */
   async assignAccount(ws: WorkspaceId, sourceAccountId: Id, entityId: EntityId): Promise<void> {
     await this.#exclusive(ws, () =>
@@ -1020,6 +1055,46 @@ export class LedgerEngine implements Ledger {
         return moved.length
       }),
     )
+  }
+
+  /**
+   * Re-post already-posted records so their row date and journal entries match today's rules, for the given
+   * connections and event types. A dating or posting-rule change (a connector learning to send `at`, say) leaves
+   * existing rows with a stale date or entries on the old day; re-deriving the date and re-planning the entries, then
+   * writing only what actually differs (#writeSource), re-dates them. Idempotent: a row already correct is left alone,
+   * so a second run changes 0. dryRun writes nothing and only counts what would change. Returns the count per
+   * connection id. Scoped so a known drift can be healed without re-posting everything.
+   */
+  async repostToRules(ws: WorkspaceId, opts: { connectionIds: Id[]; eventTypes: Array<NormalizedEvent['type']>; dryRun: boolean }): Promise<Record<Id, number>> {
+    const scan = async (): Promise<Record<Id, number>> => {
+      this.#forgetCtx(ws)
+      const ctx = await this.#ctx(ws)
+      const counts: Record<Id, number> = {}
+      const accounts = new Set<Id>()
+      for (const connectionId of opts.connectionIds) {
+        const recs = await this.store.listRecords(ws, { connectionId, eventTypes: opts.eventTypes, statuses: ['posted'] })
+        for (const r of recs) {
+          const day = eventDate(r.event, ctx.timeZone)
+          const rec = day === r.date ? r : { ...r, date: day, updatedAt: this.now() }
+          if (!opts.dryRun && rec !== r) await this.store.saveRecord(rec)
+          const changed = await this.#repost(ctx, rec, opts.dryRun)
+          if (!changed) continue
+          counts[connectionId] = (counts[connectionId] ?? 0) + 1
+          if (!opts.dryRun) {
+            await this.#repostLinked(ctx, rec.id)
+            if (rec.sourceAccountId) accounts.add(rec.sourceAccountId)
+          }
+        }
+      }
+      if (!opts.dryRun) for (const acc of accounts) await this.#refreshOpening(ctx, acc)
+      this.#forgetCtx(ws)
+      return counts
+    }
+    // A dry run only reads: skip the workspace lock and the version bump (#exclusive) so it never writes — and run it in
+    // a read-only transaction so any stray write fails loudly rather than slipping through. A real run takes the lock
+    // and bumps the version as usual. Either way the caller sets the workspace RLS context (operator ops wrap this in
+    // withWorkspace), which the ledger_versions insert and entry writes need on a deployment with RLS on.
+    return opts.dryRun ? this.transaction(scan, { readOnly: true }) : this.#exclusive(ws, scan)
   }
 
   /** A connection removed with its data: everything it brought stops counting. See retireRecords. */
@@ -1141,24 +1216,26 @@ export class LedgerEngine implements Ledger {
     }
   }
 
-  /** Rebuild one record's entries: plan both views, then reverse + insert only if something changed. */
-  async #repost(ctx: Ctx, record: SourceRecord): Promise<void> {
-    if (record.sourceAccountId) noteDirty(ctx, record.sourceAccountId, record.date)
+  /** Rebuild one record's entries: plan both views, then reverse + insert only if something changed. Returns whether
+   *  anything changed. dryRun computes that without writing (no entries, no dirty marks, no cascade writes). */
+  async #repost(ctx: Ctx, record: SourceRecord, dryRun = false): Promise<boolean> {
+    if (!dryRun && record.sourceAccountId) noteDirty(ctx, record.sourceAccountId, record.date)
     const planned = record.status === 'posted' && record.entityId ? await this.#planRecord(ctx, record) : []
-    await this.#writeSource(ctx, record.id, planned, record.entityId)
+    const changed = await this.#writeSource(ctx, record.id, planned, record.entityId, dryRun)
     // An investment event changes the cost left for the rest of its position: they re-plan (unchanged ones write
     // nothing). Once per position per operation, not again from inside.
     if (record.event.type === 'investment.event' && record.entityId) {
       const key = `${record.entityId}|${record.event.positionId}`
       const busy = (ctx.positionsReposting ??= new Set())
-      if (busy.has(key)) return
+      if (busy.has(key)) return changed
       busy.add(key)
       try {
-        for (const r of await this.#position(ctx, record.entityId, record.event.positionId)) if (r.id !== record.id) await this.#repost(ctx, r)
+        for (const r of await this.#position(ctx, record.entityId, record.event.positionId)) if (r.id !== record.id) await this.#repost(ctx, r, dryRun)
       } finally {
         busy.delete(key)
       }
     }
+    return changed
   }
 
   async #planContext(ctx: Ctx, record: SourceRecord): Promise<PlanContext> {
@@ -1324,23 +1401,25 @@ export class LedgerEngine implements Ledger {
   }
 
   /** Resolve planned lines to journal entries (base amounts, rounding, FX plug); replace active entries if they differ. */
-  async #writeSource(ctx: Ctx, sourceId: Id, planned: Array<PlannedEntry & { basis: EntryBasis }>, _entityId: EntityId | null): Promise<void> {
+  async #writeSource(ctx: Ctx, sourceId: Id, planned: Array<PlannedEntry & { basis: EntryBasis }>, _entityId: EntityId | null, dryRun = false): Promise<boolean> {
     const ws = ctx.ws
     const fresh: JournalEntry[] = []
     for (const p of planned) fresh.push(await this.#resolveEntry(ctx, sourceId, p))
     const active = ctx.entries?.get(sourceId) ?? (await this.store.activeEntriesForSource(ws, sourceId))
     if (sameEntries(active, fresh)) {
       ctx.entries?.set(sourceId, active)
-      return
+      return false
     }
     // A closed period stays as it was reported: what changed in it posts on the first open day instead.
     if (ctx.locks.size > 0) {
       for (const [i, e] of fresh.entries()) fresh[i] = intoOpenPeriod(e, ctx.locks)
       if (sameEntries(active, fresh)) {
         ctx.entries?.set(sourceId, active)
-        return
+        return false
       }
     }
+    // dryRun: the entries would change, but write nothing and leave the cache untouched (the caller rolls back nothing).
+    if (dryRun) return true
     for (const e of active) {
       const rev = intoOpenPeriod(reversal(e, newId(), this.now()), ctx.locks)
       await this.store.insertEntry(rev)
@@ -1348,6 +1427,7 @@ export class LedgerEngine implements Ledger {
     }
     for (const e of fresh) await this.store.insertEntry(e)
     ctx.entries?.set(sourceId, fresh)
+    return true
   }
 
   async #resolveEntry(ctx: Ctx, sourceId: Id, p: PlannedEntry & { basis: EntryBasis }): Promise<JournalEntry> {
@@ -2278,6 +2358,8 @@ export function contentHash(ev: NormalizedEvent): string {
 export function eventDate(ev: NormalizedEvent, timeZone = 'UTC'): string {
   switch (ev.type) {
     case 'txn.upsert':
+      // A real instant (a provider timestamp) is placed in the workspace's time zone; otherwise the row's own calendar date.
+      return ev.at ? localDate(ev.at, timeZone) : ev.date
     case 'payment.applied':
     case 'credit_note.upsert':
     case 'equity.event':
@@ -2288,9 +2370,9 @@ export function eventDate(ev: NormalizedEvent, timeZone = 'UTC'): string {
     case 'processor.balance_txn':
       return localDate(ev.at, timeZone)
     case 'invoice.upsert':
-      return ev.issueDate
+      return ev.at ? localDate(ev.at, timeZone) : ev.issueDate
     case 'payroll.run':
-      return ev.payDate
+      return ev.at ? localDate(ev.at, timeZone) : ev.payDate
     case 'report.snapshot':
       return ev.to
     default: {

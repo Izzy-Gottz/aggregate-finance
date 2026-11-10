@@ -395,3 +395,12 @@ describe('one percent per holder on every screen (docs/qa/web-number-sources.md)
     expect(page[0]!.pct).toBe(33.33)
   })
 })
+
+describe('share price text in any currency', () => {
+  it('yen have no minor unit and dinars three: a price is never 100× off', async () => {
+    const { fmtPrice } = await import('./view.ts')
+    expect(fmtPrice({ minor: 0.6522 * 100, currency: 'USD' })).toBe('$0.6522')
+    expect(fmtPrice({ minor: 125, currency: 'JPY' })).toBe('¥125')
+    expect(fmtPrice({ minor: 1_250, currency: 'KWD' }).replace(/\s/g, ' ')).toBe('KWD 1.25')
+  })
+})

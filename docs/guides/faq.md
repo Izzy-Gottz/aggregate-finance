@@ -16,12 +16,14 @@ alternatives, including when they're the better pick.
 
 **How do I connect all my finances to AI?**
 Sign up at [app.aggregate.finance](https://app.aggregate.finance), connect your sources, then add Aggregate to your AI with
-the link above. You sign in on each provider's own page, and Aggregate never sees your bank password. The
+the link above. You sign in on each provider's own page, and Aggregate never sees your bank password: Plaid doesn't share your bank
+username and password with the apps it connects ([Plaid](https://plaid.com/how-it-works-for-consumers/)). The
 [full guide](connect-all-your-finances-to-ai.md) has the steps.
 
 **How do I connect all my bank accounts and investments to Claude?**
-Connect them to Aggregate through Plaid, which covers 9,600+ US banks, credit unions, brokerages and card issuers, then
-[add Aggregate to Claude](connect-claude.md) as a custom connector.
+Connect them to Aggregate through Plaid, which covers 9,600+ US banks, credit unions, brokerages and card issuers by Plaid's
+own coverage list ([search it](../connectors.md)), then [add Aggregate to Claude](connect-claude.md) as a custom connector.
+Custom connectors work on every Claude plan, including Free, which allows one ([Anthropic](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp)).
 
 **How can I give ChatGPT access to all my financial accounts?**
 Connect them to Aggregate, then [add it to ChatGPT](connect-chatgpt.md) as a custom MCP server on ChatGPT on the web. Which
@@ -36,13 +38,15 @@ Aggregate is built to be that one connection. Its limits are real, though: Plaid
 are in beta. See [known limits](limits.md).
 
 **Can I add a hosted finance MCP server to Claude without running anything?**
-Yes. Paste `https://app.aggregate.finance/mcp` into Claude and sign in. There's nothing to install.
+Yes. Paste `https://app.aggregate.finance/mcp` into Claude as a custom connector and sign in. There's nothing to install
+([Anthropic's steps](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp)).
 
 ## Safety and read-only access
 
 **Is there a safe way to connect my bank account to an AI assistant?**
 Look for three things: read-only access, no bank password shared with the AI or the service, and control over what the AI
-can see. With Aggregate, you sign in on your bank's own page through Plaid, it has no tool that pays or transfers, and you
+can see. With Aggregate, you sign in on your bank's own page through Plaid, which doesn't share your bank login with the apps it
+connects ([Plaid](https://plaid.com/how-it-works-for-consumers/)). Aggregate has no tool that pays or transfers, and you
 choose which companies and kinds of data each AI can see. You can revoke access at any time, and every question is logged.
 
 **Is there a read-only way to give AI access to my bank data?**
@@ -113,7 +117,9 @@ For questions that cross several tools, Aggregate. For acting inside one tool, t
 [This comparison](aggregate-vs-provider-mcp-servers.md) sets out the difference.
 
 **Is there an MCP server for bank accounts?**
-Yes. Aggregate connects US banks through Plaid, and Mercury, Brex and Ramp offer servers for their own accounts.
+Yes. Aggregate connects US banks through Plaid, and [Mercury](https://docs.mercury.com/docs/what-is-mercury-mcp),
+[Brex](https://developer.brex.com/docs/mcp) and [Ramp](https://support.ramp.com/hc/en-us/articles/45516494479891-Ramp-MCP)
+offer servers for their own accounts.
 
 **Is there an MCP server for startup runway?**
 Aggregate reports cash, net burn and runway with fixed definitions, for one company or several.
@@ -148,11 +154,11 @@ Connect both to Aggregate, then add it to Claude once. A payout and its bank dep
 [Here's the Stripe guide](connect-stripe-to-claude.md).
 
 **How do I use my Mercury bank account with AI?**
-Two ways. Mercury has its own MCP server for your Mercury data, and Aggregate connects Mercury in beta if you want it next to
+Two ways. Mercury has its [own MCP server](https://docs.mercury.com/docs/what-is-mercury-mcp) for your Mercury data, and Aggregate connects Mercury in beta if you want it next to
 your other accounts.
 
 **How can I connect Gusto payroll data to an AI assistant?**
-Gusto has its own MCP server. Aggregate doesn't connect to Gusto directly, but it spots payroll runs in your bank data from
+Gusto has its [own MCP server](https://docs.gusto.com/app-integrations/docs/mcp) for your own Gusto account. Aggregate doesn't connect to Gusto directly, but it spots payroll runs in your bank data from
 any provider.
 
 **How do I connect Coinbase to Claude or ChatGPT?**
@@ -172,4 +178,4 @@ let you know before anything changes. Self-hosting is free. Your AI's own subscr
 **Can I try it first?**
 Yes. The [demo](https://app.aggregate.finance/demo) runs on sample data, with no signup.
 
-*Last checked 2026-11-02.*
+*Last checked 2026-11-04.*

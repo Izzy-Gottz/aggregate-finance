@@ -40,3 +40,30 @@ describe.each(['memory', 'sqlite'] as const)('wefunder into the ledger (%s)', (b
     expect(typeof cash === 'object' && cash ? cash.minor : (cash ?? 0)).toBe(0) // no cash from Wefunder
   })
 })
+
+
+describe('wefunder: an unreadable 2xx stops the sync, never a silent $0', () => {
+  const NOW_U = Date.parse('2026-10-14T12:00:00Z')
+  const build = (respond: { text: string } | { json: unknown }) =>
+    createWefunderConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: (u) => u.pathname === '/portfolio/positions', respond }]).fetch, clock: fakeClock(NOW_U), random: () => 0.5 },
+      oauth: { clientId: 'pk_test_x', clientSecret: 'sk_test_x', redirectUri: 'https://app.example.com/api/connectors/wefunder/callback' },
+    })
+  const c: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'wefunder', secret: { tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_U + 3_600_000 } } satisfies WefunderSecret, config: {} }
+  it('an empty body fails visibly', async () => { await expect(runSync(build({ text: '' }), c, null)).rejects.toThrow() })
+  it('a non-object body fails visibly', async () => { await expect(runSync(build({ json: 5 }), c, null)).rejects.toThrow() })
+})
+
+
+describe('wefunder pagination completeness: a truncated listing must not void real positions', () => {
+  const NOW_P = Date.parse('2026-10-13T12:00:00Z')
+  it('a positions list that never stops paging fails visibly and emits no listing.complete', async () => {
+    const wf = createWefunderConnector({
+      deps: { raw: new MemoryRawSink(), fetch: fixtureFetch([{ match: (u) => u.pathname === '/portfolio/positions', respond: (u) => { const n = Number(u.searchParams.get('cursor') ?? '0') || 0; return { json: { data: [{ id: 'p' + n, type: 'position', attributes: { offering_id: 'o' + n } }], meta: { has_more: true, next_cursor: n + 1 } } } } }]).fetch, clock: fakeClock(NOW_P), random: () => 0.5 },
+      oauth: { clientId: 'pk_test_x', clientSecret: 'sk_test_x', redirectUri: 'https://app.example.com/api/connectors/wefunder/callback' },
+    })
+    const conn: ConnectionRef = { id: 'c', workspaceId: 'w', connectorKey: 'wefunder', secret: { tokens: { accessToken: 'at', refreshToken: 'rt', expiresAt: NOW_P + 3_600_000 } } satisfies WefunderSecret, config: {} }
+    // The cap throw fires before the terminal listing.complete, so no pass with unfetched pages can void positions.
+    await expect(runSync(wf, conn, null)).rejects.toThrow(/page through/)
+  })
+})

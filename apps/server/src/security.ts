@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import type { ServerConfig } from './config.ts'
+import { isCloudflareIp } from './cloudflare-ips.ts'
 
 /** Strict headers for every response. The web app ships no inline scripts, so script-src stays 'self'. */
 export function securityHeaders(config: ServerConfig): MiddlewareHandler {
@@ -114,8 +115,21 @@ export async function authRedirectsAreSafe(req: Request, baseUrl: string): Promi
 /**
  * The client's IP, only from the one header a trusted proxy sets (CLIENT_IP_HEADER, e.g. fly-client-ip). Never from
  * x-forwarded-for, whose first hop is whatever the client sent. Undefined when no trusted header is configured.
+ *
+ * Behind Cloudflare's proxy there are two hops: Fly sets the trusted header to Cloudflare's edge IP, and Cloudflare
+ * sets cf-connecting-ip to the real client. We take cf-connecting-ip only when the trusted-header value is itself one
+ * of Cloudflare's published ranges — proof the request really came through Cloudflare. A request straight to fly.dev
+ * carries the client's own (non-Cloudflare) IP in the trusted header, so any cf-connecting-ip it sets is ignored and
+ * can't be forged. (Residual: a client hosted on a Cloudflare IP reaching the origin directly could still spoof it;
+ * close that with an authenticated-origin secret header if we ever need to.)
  */
 export function clientIp(headers: Headers, trustedHeader: string | undefined): string | undefined {
   if (!trustedHeader) return undefined
-  return headers.get(trustedHeader)?.split(',')[0]?.trim() || undefined
+  const trusted = headers.get(trustedHeader)?.split(',')[0]?.trim() || undefined
+  if (!trusted) return undefined
+  if (isCloudflareIp(trusted)) {
+    const cf = headers.get('cf-connecting-ip')?.split(',')[0]?.trim() || undefined
+    if (cf) return cf
+  }
+  return trusted
 }

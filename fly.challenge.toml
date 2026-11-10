@@ -5,14 +5,16 @@
 # Deploy: fly deploy -c fly.challenge.toml   (only after Yisrael's yes on the app, the Neon project, DNS and the GitHub
 # OAuth app)
 #
-# Secrets (fly secrets set -a aggregate-challenge …; never in this file), and ONLY these:
+# Secrets (fly secrets set -a aggregate-chal …; never in this file), and ONLY these:
 #   AUTH_SECRET, AGFN_MASTER_KEY     fresh, never the live or staging app's
 #   DATABASE_URL                     the challenge's own Neon project (never the live one's)
 #   GITHUB_CLIENT_ID / _SECRET       the challenge's own GitHub OAuth app (callback /api/auth/callback/github)
 #   PLAID_CLIENT_ID / PLAID_SECRET   SANDBOX keys only
 # No email keys, no backups, no other provider: the guard refuses them.
 
-app = "aggregate-challenge"
+# Its own private network (challenge-net, set at `fly apps create --network`): no private-network path to live or
+# staging, only their public URLs, like anyone.
+app = "aggregate-chal"
 primary_region = "iad"
 kill_signal = "SIGTERM"
 kill_timeout = "30s"
@@ -43,10 +45,13 @@ kill_timeout = "30s"
 [http_service]
   internal_port = 8787
   force_https = true
-  # One machine always on: the nightly reset and the outbound log need a running process.
-  auto_stop_machines = "off"
+  # Stops when idle and starts on the next request (Yisrael's yes, 2026-11-09). The nightly reset is still safe: at boot
+  # worker.start() re-queues every recurring job that's due, and challenge.tick resets only when the last planted_at
+  # isn't today (UTC), so a machine asleep at midnight resets once on its first wake that day. That first visitor may
+  # see yesterday's books for the moment the reset takes. Outbound rows are flushed on SIGTERM (kill_timeout 30s).
+  auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
 
   [[http_service.checks]]
     grace_period = "30s"

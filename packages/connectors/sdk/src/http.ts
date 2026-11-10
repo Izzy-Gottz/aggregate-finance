@@ -212,18 +212,18 @@ export class HttpClient {
     }
 
     if (!res.ok) {
-      const parsed = await readBody(res, 'json').catch(() => undefined)
+      const parsed = await readBody(res, 'json', this.provider).catch(() => undefined)
       const info: HttpErrorInfo = { status: res.status, headers: res.headers, body: parsed }
       const custom = this.opts.classifyError?.(info)
       const err = redactSent(custom ?? defaultError(this.provider, info), sentValues(url, headers, req))
       throw withRequestId(withRetryAfter(err, res.headers, this.clock), this.opts.requestIdHeader ? res.headers.get(this.opts.requestIdHeader) : null)
     }
-    const data = (await readBody(res, req.responseType ?? 'json')) as T
+    const data = (await readBody(res, req.responseType ?? 'json', this.provider)) as T
     return { status: res.status, headers: res.headers, data }
   }
 }
 
-async function readBody(res: Response, type: 'json' | 'text' | 'bytes'): Promise<unknown> {
+async function readBody(res: Response, type: 'json' | 'text' | 'bytes', provider: string): Promise<unknown> {
   if (type === 'bytes') return new Uint8Array(await res.arrayBuffer())
   const text = await res.text()
   if (type === 'text') return text
@@ -231,7 +231,15 @@ async function readBody(res: Response, type: 'json' | 'text' | 'bytes'): Promise
   try {
     return JSON.parse(text) as unknown
   } catch {
-    return text
+    // A 2xx whose body isn't JSON is a provider malfunction, not data: a sign-in or error HTML page (often reached by a
+    // redirect that `fetch` followed), a gateway page, a truncated body. Returning the raw text here let callers read it
+    // as an empty result and report a silent success with no rows (the SimpleFIN 2026-11-04 bug). Fail visibly instead;
+    // the body is never put in the message.
+    const ct = res.headers.get('content-type')?.split(';')[0]?.trim() || 'unknown'
+    throw new ConnectorError('transient', `the provider returned a non-JSON response (content-type ${ct}); it may be a sign-in or error page`, {
+      provider,
+      ...(res.status ? { status: res.status } : {}),
+    })
   }
 }
 

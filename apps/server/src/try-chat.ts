@@ -27,11 +27,11 @@ export function costUsd(model: string, u: TryUsage): number {
   return ((u.input_tokens ?? 0) * i + (u.output_tokens ?? 0) * o + (u.cache_creation_input_tokens ?? 0) * w + (u.cache_read_input_tokens ?? 0) * r) / 1e6
 }
 
-const SYSTEM = `You answer questions on Aggregate's public demo: made-up companies (Northwind Labs, Bluebird Studio, Harbor Coffee) and a Personal set, all sample data. Use the Aggregate tools for every number; never estimate or invent one. Give the figure, the period or date it covers, and a one-line note on how it was counted when that matters. If something is waiting for review (for example a transfer not yet marked as a loan or an investment), say so and say what it would change, instead of picking an answer. Keep answers short and plain, in a few sentences or a small list. If a question isn't about these companies' finances, say briefly that this demo only answers questions about the sample companies.`
+const SYSTEM = `You answer questions on Aggregate's public demo: made-up companies (Northwind Labs, Bluebird Studio, Harbor Coffee) and a Personal set, all sample data. Use the Aggregate tools for every number; never estimate or invent one. Give the figure, the period or date it covers, and a one-line note on how it was counted when that matters. If something is waiting for review (for example a transfer not yet marked as a loan or an investment), say so and say what it would change, instead of picking an answer. Keep answers short and plain, in a few sentences or a small list, with no preamble before using a tool. The page shows plain text: no markdown, so no asterisks, tables or headings; use short lines, or "- " at the start of a line for a list. If a question isn't about these companies' finances, say briefly that this demo only answers questions about the sample companies.`
 
 /** The paused message's words; the page adds the connect links. */
-export const PAUSED = 'Demo chat is paused — connect Aggregate to your own Claude or ChatGPT.'
-export const LIMITED = 'That’s the limit for the demo chat for now. Try again later, or connect Aggregate to your own Claude or ChatGPT.'
+export const PAUSED = 'Demo chat is paused — connect Aggregate to your own AI assistant or agent.'
+export const LIMITED = 'That’s the limit for the demo chat for now. Try again later, or connect Aggregate to your own AI assistant or agent.'
 
 export type TryMessage = { role: 'user' | 'assistant'; content: string }
 export type TryReply = { answer: string } | { paused: true; message: string } | { limited: true; message: string } | { invalid: true }
@@ -101,9 +101,9 @@ export async function tryChat(d: TryDeps, ip: string | undefined, body: unknown)
         max_tokens: 4_000,
         // Thinking off: Haiku takes `disabled`; Sonnet 5.5's thinking-off form is `between_tools`.
         thinking: haiku ? { type: 'disabled' } : { type: 'between_tools' },
-        // Caches the system prompt and the tool list (the prefix) across questions.
-        cache_control: { type: 'ephemeral' },
-        system: [{ type: 'text', text: SYSTEM }],
+        // One breakpoint on the system prompt caches the tool list and the prompt (the prefix) across questions. A
+        // top-level breakpoint would also cache-write each question's tool results, which are never read again.
+        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
         mcp_servers: [{ type: 'url', url: d.demoMcpUrl, name: 'aggregate-demo' }],
         tools: [{ type: 'mcp_toolset', mcp_server_name: 'aggregate-demo' }],
         messages,
@@ -118,7 +118,11 @@ export async function tryChat(d: TryDeps, ip: string | undefined, body: unknown)
     await addSpend(d.db, usd)
     const u = out.usage ?? {}
     console.log(`[agfn] try chat: 1 question, ${d.model}, $${usd.toFixed(4)} (in ${u.input_tokens ?? 0}, cache read ${u.cache_read_input_tokens ?? 0}, cache write ${u.cache_creation_input_tokens ?? 0}, out ${u.output_tokens ?? 0})`)
-    const answer = (out.content ?? []).filter((b) => b.type === 'text').map((b) => b.text ?? '').join('').trim()
+    // Only the text after the last tool call: what comes before is preamble ("I'll pull…") or a retry note. The page
+    // shows plain text, so bold markers the model adds anyway are dropped.
+    const blocks = out.content ?? []
+    const last = blocks.findLastIndex((b) => b.type === 'mcp_tool_use' || b.type === 'mcp_tool_result')
+    const answer = blocks.slice(last + 1).filter((b) => b.type === 'text').map((b) => (b.text ?? '').trim()).filter(Boolean).join('\n\n').replace(/\*\*(.+?)\*\*/g, '$1')
     if (out.stop_reason === 'refusal' || !answer) return { paused: true, message: PAUSED }
     return { answer: answer.slice(0, MAX_ANSWER_CHARS) }
   } catch (e) {

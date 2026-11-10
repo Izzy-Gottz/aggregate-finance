@@ -86,7 +86,7 @@ export async function confirmRecheckCode(db: Kysely<CoreTables>, personId: strin
 /** Record the re-check (it satisfies passkey checks for 10 minutes) and log it in each of the person's workspaces. */
 async function recordRecheck(db: Kysely<CoreTables>, personId: string, now: Date): Promise<RecheckResult> {
   await ownerOf(db).insertInto('reauth_events').values({ id: newId(), person_id: personId, method: 'email_link', at: now.toISOString() }).execute()
-  const person = await db.selectFrom('people').select('name').where('id', '=', personId).executeTakeFirst()
+  const person = await withBypass('recheck:person', () => db.selectFrom('people').select('name').where('id', '=', personId).executeTakeFirst())
   // The one cross-workspace step: which workspaces to log it in (a narrow named bypass); each log entry is written inside its workspace.
   const workspaces = await withBypass('recheck:memberships', () => db.selectFrom('memberships').select('workspace_id').where('person_id', '=', personId).where('revoked_at', 'is', null).execute())
   for (const { workspace_id } of workspaces) {

@@ -25,7 +25,7 @@ Xero doesn't give apps access to Xero Payroll or expense claims, so wages, payro
 ## Set it up
 
 ### 1. Connect Xero to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Xero**, sign in to Xero, choose the organisation, and allow access.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Xero**, sign in to Xero, choose the organisation, and allow access.
 
 ### 2. Add Aggregate to ChatGPT
 1. Open [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add** (top right), then **Add custom MCP server**.

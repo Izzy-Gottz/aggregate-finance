@@ -166,7 +166,7 @@ export function parsePdfStatement(lines: PdfLine[]): PdfStatementResult {
       account,
       rows,
       opening: usd(opening),
-      closing: { current: usd(closingMinor), at: `${period.to}T23:59:59.000Z`, date: period.to },
+      closing: { current: usd(closingMinor), at: `${period.to}T12:00:00.000Z`, date: period.to },
       period,
     },
   }

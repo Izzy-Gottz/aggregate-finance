@@ -39,26 +39,29 @@ person or system gets only the access it needs.
    until when. Access is removed the same day it is no longer needed.
 8. Database: Neon (managed Postgres). Connections require TLS and a strong, generated password. The production branch is protected.
 9. Shared logins are not allowed. Each person, and each automated system, has its own credential.
+10. Passwords. Any password we set (admin consoles, database roles, the password manager) is at least 12 characters
+    and includes special characters, with MFA on every account that offers it. Passwords and stored keys are rotated at
+    least once every 365 days, recorded in the access-review log. Passkeys are preferred where offered.
 
 ## Policy: application (built in code)
 
-10. One permission check, `can()`, guards the web app, the REST API and MCP. Roles are owner, admin, finance,
+11. One permission check, `can()`, guards the web app, the REST API and MCP. Roles are owner, admin, finance,
     accountant, investor and employee, plus a per-person grid. A Personal space is visible only to its owner.
     Code: `packages/auth/src/permissions.ts`. Tests try to cross companies: `packages/auth/src/permissions.test.ts`.
-11. Only owners and admins can add or remove connections or manage people (`canManageWorkspace`, used in
+12. Only owners and admins can add or remove connections or manage people (`canManageWorkspace`, used in
     `apps/server/src/app.ts` and `apps/server/src/routes/settings.ts`).
-12. Connecting a bank requires a sign-in or passkey check within the last 10 minutes (`recentlyVerified` in
+13. Connecting a bank requires a sign-in or passkey check within the last 10 minutes (`recentlyVerified` in
     `apps/server/src/app.ts`). Sensitive settings actions require a passkey within that window (`requireRecheck`
     in `apps/server/src/routes/settings.ts`).
     Planned: make the bank-connect, grant and agent-key re-checks passkey-only, and require
     every hosted account to add a passkey after first sign-in.
-13. Users sign in with a passkey, Apple, Google or a one-time email link that expires in 10 minutes. There are no
+14. Users sign in with a passkey, Apple, Google or a one-time email link that expires in 10 minutes. There are no
     passwords. Auth endpoints are rate limited. Code: `packages/auth/src/auth.ts`.
-14. An AI client gets a grant scoped to companies, data types, read or add, and an expiry. It can never exceed the
+15. An AI client gets a grant scoped to companies, data types, read or add, and an expiry. It can never exceed the
     person who connected it. Grants can be paused, revoked, or all paused at once. Revoking deletes the grant's
     OAuth refresh tokens and consent. Code: `packages/mcp/src/grants.ts`, `packages/mcp/src/control.ts`,
     `apps/server/src/routes/ai.ts`, `onGrantRevoked` in `apps/server/src/modules.ts`.
-15. Agent keys are shown once and stored only as SHA-256 hashes (`packages/mcp/src/keys.ts`). OAuth tokens are
+16. Agent keys are shown once and stored only as SHA-256 hashes (`packages/mcp/src/keys.ts`). OAuth tokens are
     stored hashed (`storeTokens: 'hashed'` in `packages/auth/src/auth.ts`).
 
 ## How it is checked

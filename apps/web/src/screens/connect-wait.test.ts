@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 // After Plaid says yes, finishing takes seconds: the drawer says it's connecting and offers no second Connect.
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact'
+import { SQUARESPACE_DESCRIPTION } from '@agfn/connector-squarespace'
 import { describe, expect, it, vi } from 'vitest'
 import { HttpError } from '../api/http.ts'
 import { MockApi } from '../api/mock.ts'
@@ -223,6 +224,16 @@ describe('Connect drawer wording', () => {
     location.hash = '#/?d=connect:plaid'
     render(html`<${Root} api=${new MockApi()} />`)
     expect(await screen.findByRole('heading', { name: 'Connect your bank or card' })).toBeTruthy()
+  })
+
+  it('Squarespace names what it reads instead of "reports" (43, staging)', async () => {
+    const api = new MockApi()
+    oneCompany(api)
+    const base = api.connectors.bind(api)
+    api.connectors = (async () => [...(await base()), SQUARESPACE_DESCRIPTION]) as typeof api.connectors
+    location.hash = '#/?d=connect:squarespace'
+    render(html`<${Root} api=${api} />`)
+    expect(await screen.findByText('Aggregate will read your monthly sales, taxes, fees and refunds. It updates every few hours.')).toBeTruthy()
   })
 })
 

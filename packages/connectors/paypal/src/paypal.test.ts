@@ -490,3 +490,15 @@ describe('paypal oversized windows (RESULTSET_TOO_LARGE)', () => {
     await expect(runSync(connector, conn, null)).rejects.toMatchObject({ kind: 'invalid_input' })
   })
 })
+
+
+describe('paypal: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector } = make([{ match: '/v1/reporting/balances', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector } = make([{ match: '/v1/reporting/balances', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

@@ -133,9 +133,38 @@ describe('finch connector', () => {
     await expect(syncing.connector.sync(syncing.conn, null)).rejects.toMatchObject({ kind: 'rate_limited', code: 'data_sync_in_progress' })
   })
 
-  it('connect exchanges the Finch Connect code', async () => {
-    const { connector } = make([{ method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_1', company_id: 'co_1', provider_id: 'gusto', client_type: 'sandbox' } } }])
-    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_1', companyId: 'co_1', providerId: 'gusto', clientType: 'sandbox' } })
+  it('connect exchanges the code and reads the plan from /introspect (automated → assisted:false)', async () => {
+    const { connector } = make([
+      // client_type here is the APP environment (sandbox), not the plan — we no longer store it.
+      { method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_1', company_id: 'co_1', provider_id: 'gusto', client_type: 'sandbox' } } },
+      { match: '/introspect', respond: { json: { connection_type: 'provider', authentication_methods: [{ type: 'oauth' }] } } },
+    ])
+    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_1', companyId: 'co_1', providerId: 'gusto', assisted: false, connectionType: 'provider' } })
+  })
+
+  it('connect marks an assisted connection (authentication_methods[].type === "assisted") so freshness uses the weekly cadence', async () => {
+    const { connector } = make([
+      { method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_2', provider_id: 'adp_run' } } },
+      { match: '/introspect', respond: { json: { connection_type: 'finch', authentication_methods: [{ type: 'assisted' }] } } },
+    ])
+    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_2', providerId: 'adp_run', assisted: true, connectionType: 'finch' } })
+  })
+
+  it('connection_type "finch" alone does NOT mean assisted — only authentication_methods decides', async () => {
+    const { connector } = make([
+      { method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_4', provider_id: 'gusto' } } },
+      // Finch docs point only to authentication_methods for assisted; connection_type is recorded but not the signal.
+      { match: '/introspect', respond: { json: { connection_type: 'finch', authentication_methods: [{ type: 'credential' }] } } },
+    ])
+    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_4', providerId: 'gusto', assisted: false, connectionType: 'finch' } })
+  })
+
+  it('connect survives /introspect failing: the plan is simply left unrecorded', async () => {
+    const { connector } = make([
+      { method: 'POST', match: '/auth/token', respond: { json: { access_token: 'tok-new', connection_id: 'cn_3', provider_id: 'gusto' } } },
+      { match: '/introspect', respond: { status: 500, json: { message: 'boom' } } },
+    ])
+    expect(await connector.connect({ code: 'c1' })).toEqual({ secret: { accessToken: 'tok-new' }, config: { connectionId: 'cn_3', providerId: 'gusto' } })
   })
 
   it('disconnect ends the connection at Finch, the only call that stops its billing', async () => {
@@ -159,5 +188,17 @@ describe('finch connector', () => {
     await expect(gone.connector.disconnect!(gone.conn)).resolves.toBeUndefined()
     const down = make([{ method: 'POST', match: '/disconnect', respond: { status: 400, json: { message: 'nope' } } }])
     await expect(down.connector.disconnect!(down.conn)).resolves.toEqual({ notRevoked: expect.stringContaining('payroll provider') })
+  })
+})
+
+
+describe('finch: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make([{ match: '/employer/payment', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make([{ match: '/employer/payment', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
   })
 })

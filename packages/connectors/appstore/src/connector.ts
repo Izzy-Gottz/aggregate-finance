@@ -185,7 +185,9 @@ export function createAppStoreConnector(opts: AppStoreConnectorOptions, deps: Co
             connectionId: conn.id,
             rawRef,
             accountExternalId: accountId(vendor, g.currency),
-            at: isoTimestamp(`${g.endDate}T00:00:00Z`),
+            // endDate is a date-only fiscal-period end; anchor at midday UTC so the engine's workspace-tz conversion
+            // keeps it on that day (T00:00:00Z would roll back to the day before in any Americas/Europe workspace).
+            at: isoTimestamp(`${g.endDate}T12:00:00Z`),
             kind: g.kind,
             gross: amount,
             fee: { minor: 0, currency: g.currency },

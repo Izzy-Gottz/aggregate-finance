@@ -14,14 +14,14 @@ and no neutral ranking we know of, so this page sorts them by what they're for a
 
 ## At a glance
 
-As of 2026-11-01.
+As of 2026-11-04.
 
 | Server | Covers | Runs | Can it change things? | Cost |
 |---|---|---|---|---|
 | **Aggregate** (ours) | Banks, cards, payments, books, payroll, cap table, in one ledger | Hosted, or self-host (AGPL-3.0) | Never at your providers. Can add records inside Aggregate if you allow it | Free during beta; self-hosting is free |
 | Stripe [1] | Your Stripe accounts | Hosted | Yes, including refunds. Sending money is in public preview. Some actions need a person to confirm | Check Stripe |
-| Mercury [2] | Your Mercury accounts | Hosted, beta | Reads by default. Added scopes can create payment requests, which still need approval in Mercury | Check Mercury |
-| Brex [3] | Your Brex expenses, cards, banking, bills and travel data | Hosted, beta | Depends on the tool and your access. Approvals and card management aren't available yet | Check Brex |
+| Mercury [2] | Your Mercury accounts | Hosted, beta | Reads unless you grant write permissions. Then it can request payments and transfers, which need approval in Mercury, and edit categories and notes, which apply at once | Check Mercury |
+| Brex [3] | Your Brex expenses, cards, banking, bills and travel data | Hosted, beta | A few tools write, such as expense memos and receipts. Approvals and card management aren't available yet | Check Brex |
 | Ramp [4] | Your Ramp cards, bills, expenses and travel | Hosted | Yes, including approving transactions and reimbursements | Check Ramp |
 | Gusto [5] | Your Gusto payroll and HR | Hosted | Yes, including running payroll | Check Gusto |
 | QuickBooks connector [6] | Your QuickBooks company | Hosted, US only | Yes, including creating invoices | Check Intuit |
@@ -63,7 +63,7 @@ vary in upkeep, so check when one was last updated before you give it real accou
 
 ## Sources
 
-Vendor pages, read 2026-11-01 unless noted. These products change often. If something here is out of date, tell us at
+Vendor pages, read 2026-11-04 unless noted. These products change often. If something here is out of date, tell us at
 support@aggregate.finance and we'll fix it.
 
 1. [Stripe docs: Model Context Protocol](https://docs.stripe.com/mcp)
@@ -74,7 +74,7 @@ support@aggregate.finance and we'll fix it.
 5. [Gusto docs: MCP](https://docs.gusto.com/app-integrations/docs/mcp)
 6. [QuickBooks: use the QuickBooks connector in Claude](https://quickbooks.intuit.com/learn-support/en-us/help-article/accounting-bookkeeping/use-quickbooks-connector-claude/L3YBlo6Ht_US_en_US)
 7. [BankSync pricing](https://banksync.io/pricing)
-8. [Copilot Money: MCP](https://www.copilot.money/mcp) and [Dispatch](https://www.copilot.money/dispatch)
+8. [Copilot Money: MCP](https://www.copilot.money/connector) and [Dispatch](https://www.copilot.money/dispatch)
 9. [personal-finance-mcp on Glama](https://glama.ai/mcp/servers/JosueM1109/personal-finance-mcp), a directory listing
 
-*Last checked 2026-11-01.*
+*Last checked 2026-11-04.*

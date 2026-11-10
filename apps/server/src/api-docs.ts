@@ -46,7 +46,7 @@ export function apiDocsMarkdown(doc: OpenApiDoc): string {
   const out: string[] = [
     '# Aggregate REST API',
     '',
-    `The REST API has the same operations as Aggregate's MCP tools, at \`${origin}/v1/…\`. The machine-readable description is [/v1/openapi.json](/v1/openapi.json) (OpenAPI 3.1). Nothing in it moves money or contacts anyone.`,
+    `The REST API has the same operations as Aggregate's MCP tools, at \`${origin}/v1/…\`. The machine-readable description is [/v1/openapi.json](${origin}/v1/openapi.json) (OpenAPI 3.1). Nothing in it moves money or contacts anyone.`,
     '',
     '## Authentication',
     '',

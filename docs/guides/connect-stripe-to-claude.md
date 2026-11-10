@@ -14,7 +14,7 @@ choose exactly what Claude can see.
 ## Set it up
 
 ### 1. Connect Stripe to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Stripe**, sign in to Stripe, and approve read access. You can connect more than one Stripe account.
 
 ### 2. Add Aggregate to Claude
 1. In Claude (claude.ai or Claude Desktop), open **Customize → Connectors** (in some accounts still **Settings →

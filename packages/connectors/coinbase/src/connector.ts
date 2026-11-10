@@ -74,7 +74,9 @@ const isSecret = (v: unknown): v is CoinbaseSecret =>
   ((v.kind === 'oauth' && isRecord(v.tokens) && typeof v.tokens.accessToken === 'string') || (v.kind === 'key' && typeof v.name === 'string' && typeof v.privateKey === 'string'))
 
 /** Mapping version: bump when the mapping changes, so existing connections re-read everything once. */
-export const MAPPING_VERSION = 2
+// 3: transactions carry a real `at` instant, so the ledger dates them by the workspace's business day. Existing
+// connections re-import once to re-date rows booked before the fix.
+export const MAPPING_VERSION = 3
 const codec = cursorCodec<CoinbaseCursor>(PROVIDER, MAPPING_VERSION, isCursor)
 const DAY = 86_400_000
 const OVERLAP_MS = 7 * DAY
@@ -130,9 +132,14 @@ export function createCoinbaseConnector(opts: CoinbaseOptions): CoinbaseConnecto
     let uri: string | null = '/v2/accounts'
     for (let i = 0; uri && i < MAX_PAGES; i++) {
       const page: CoinbaseList<CoinbaseAccount> = await c.get<CoinbaseList<CoinbaseAccount>>(uri, i === 0 ? { limit } : undefined)
+      // A present object with `data` omitted/empty is a real empty page; a null/non-object body (an empty body, or the
+      // sign-in/error page the shared client rejects as non-JSON) is unreadable and must stop, never read as zero.
+      if (!isRecord(page)) throw new ConnectorError('transient', 'Coinbase sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
       out.push(...(page.data ?? []))
       uri = page.pagination?.next_uri || null
     }
+    // The provider still has pages after the cap: stop visibly rather than record a partial account list as complete.
+    if (uri) throw new ConnectorError('permanent', 'Coinbase returned more accounts than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: PROVIDER, forUser: true })
     return out
   }
 
@@ -183,6 +190,7 @@ export function createCoinbaseConnector(opts: CoinbaseOptions): CoinbaseConnecto
     })
     if (w === undefined) return done([], s.pend)
     const page = await client(sec).get<CoinbaseList<CoinbaseTransaction>>(s.next ?? `/v2/accounts/${encodeURIComponent(w.id)}/transactions`, s.next ? undefined : { limit, order: 'desc' })
+    if (!isRecord(page)) throw new ConnectorError('transient', 'Coinbase sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
     const events: NormalizedEvent[] = []
     let pend = s.pend
     let older = false

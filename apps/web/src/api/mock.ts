@@ -9,6 +9,9 @@ import { shortDate } from '../lib/time.ts'
 import { withOwnPersonal } from '../lib/grant.ts'
 import { equityDetail, fullyDiluted, holders, importCapTableCsv, importOcf, parsePayload, planWrite, possibleDuplicates, replay, type EquityObject } from '@agfn/equity/math'
 import { demoCapTable } from './mock-equity.ts'
+
+/** A few of the server's REQUESTABLE names (connection-requests.ts), for the mock's "Request it" list. */
+const REQUESTABLE_MOCK = [{ key: 'hospitable', name: 'Hospitable' }, { key: 'paypal', name: 'PayPal' }, { key: 'harvest', name: 'Harvest' }, { key: 'rippling', name: 'Rippling' }]
 import { positionsFrom, type InvestmentInput, type InvestmentTotals, type InvestmentView } from '../lib/investments.ts'
 import type { EquityImportResult, EquityWritePayloadInput, EquityWriteResult } from './types.ts'
 import type { AiSummary, BucketDetail, CompanyDetail, Connector, ConnectorSetup, MappingQuestion, MappingReply, EntitySummary, AgfnApi, PersonRow, Preferences, Workspace } from './types.ts'
@@ -321,6 +324,17 @@ export class MockApi implements AgfnApi {
     return this.ok({ workspaceId: this.s.me.workspaceId, companyId: c?.id ?? null, personalId: 'e_personal' })
   }
 
+  /** Tests read it: apps this mock workspace asked for. */
+  requested = new Set<string>()
+  connectionRequests() {
+    if (this.s.me.demo) throw new Error('Not available in the demo.')
+    return this.ok(REQUESTABLE_MOCK.filter((a) => !CONNECTORS.some((c) => c.key === a.key)).map((a) => ({ ...a, requested: this.requested.has(a.key) })))
+  }
+  async requestConnection(app: string) {
+    if (this.s.me.demo) throw new Error('Not available in the demo.')
+    this.requested.add(app)
+    await this.ok(undefined)
+  }
   connectors() {
     if (!this.selfHost) return this.ok(CONNECTORS)
     return this.ok(CONNECTORS.map((c): Connector => (SELF_HOST_SETUP[c.key] ? { ...c, setup: SELF_HOST_SETUP[c.key]! } : c)))
@@ -384,6 +398,8 @@ export class MockApi implements AgfnApi {
       last.entityNames = [...new Set(assignments.filter((a) => a.entityId !== 'skip').map((a) => (a.entityId === 'personal' ? 'Personal' : this.entity(a.entityId).name)))]
     }
   }
+  async dismissDuplicate(_subjectId: string, _relatedId: string, _dupKey: string) {}
+  async markDuplicate(_duplicateId: string, _ofId: string) {}
   connection(id: string) {
     const c = this.s.connections.find((x) => x.id === id)
     if (!c) throw new Error(`No connection ${id}`)

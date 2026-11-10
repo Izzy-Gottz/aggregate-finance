@@ -1,6 +1,6 @@
 # @agfn/connector-simplefin
 
-Read-only bank connections through [SimpleFIN Bridge](https://bridge.simplefin.org/) (protocol:
+Read-only bank connections through [SimpleFIN Bridge](https://beta-bridge.simplefin.org/) (protocol:
 https://www.simplefin.org/protocol.html). Connect banks through SimpleFIN, about $15/year, paid to them. There's no
 developer app or key on our side, so it works the same hosted and self-hosted.
 

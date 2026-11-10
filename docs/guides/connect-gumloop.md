@@ -12,7 +12,7 @@ Gumloop adds custom MCP servers as **Connectors**, which its agents can then use
 4. On your agent, open **Connectors**, choose **+ Add**, then **+** next to Aggregate, and **Save**.
 5. Ask the agent: "What bills are due in the next two weeks?"
 
-Gumloop runs tools without asking first. To keep it read-only, leave "Can add records" off when you choose what it can see. A key works too: create a key in Aggregate (**Connect your AI → + Connect another AI → Create a key**, with an expiry) and paste it as the **Access Token / API Key**.
+Gumloop runs tools without asking first. To keep it read-only, leave "Can add records" off when you choose what it can see. A key works too: create a key in Aggregate (**Connect your AI → + Connect another AI → A key for a bot → Make a key**; it lasts 90 days) and paste it as the **Access Token / API Key**.
 
 Self-hosting? Use `https://<your-server>/mcp` instead; it must be reachable over HTTPS.
 

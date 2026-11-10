@@ -3,18 +3,33 @@
 import { EmailCode } from '../ui/email-code.ts'
 import { AI_DISCLOSURE, type ConnectorDescription, type ConnectorGroup } from '@agfn/contracts'
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { needsSetup, type Connector, type ConnectionSummary, type ConnectStart, type NewAccount } from '../api/types.ts'
+import { needsSetup, type RequestableApp, type Connector, type ConnectionSummary, type ConnectStart, type NewAccount } from '../api/types.ts'
 import { useApp, useLoad, isManager, isReviewer } from '../app/context.ts'
 import { inDemo, isPublicDemo, leaveDemo } from '../lib/demo.ts'
 import { returnPath } from '../app/router.ts'
 import { SUPPORT_EMAIL } from '../lib/support.ts'
 import { fmt } from '../lib/money.ts'
 import { termsLine } from '../lib/terms.ts'
+
+/** One-line caveats for a beta connector, shown on its connect drawer (and in docs/connectors.md). */
+export const BETA_NOTES: Readonly<Record<string, string>> = {
+  etsy: 'Beta: revenue may include sales tax until we confirm how Etsy reports it.',
+}
+
+/** What the drawer says Aggregate reads, where the connector's `provides` list ("reports") would be vague. */
+export const READS: Readonly<Record<string, string>> = {
+  squarespace: 'your monthly sales, taxes, fees and refunds',
+}
+
+/** Notices a provider's API terms require on its connect screen, word for word (Etsy API Terms: trademark notice). */
+export const TRADEMARK_NOTICES: Readonly<Record<string, string>> = {
+  etsy: "The term 'Etsy' is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.",
+}
 import { ago } from '../lib/time.ts'
 import { Button, CopyButton, LinkButton, PlusAction, Row, Rows, Section } from '../ui/components.ts'
 import { Drawer, LoadFailed } from '../ui/drawer.ts'
 import { html } from '../ui/html.ts'
-import { connectionLine, SourceTile } from './workspace.ts'
+import { connectionLine, DuplicateActions, SourceTile } from './workspace.ts'
 import { closePlaidLink, INVESTMENTS_RETRY, openPlaidLink, PlaidExitError, preloadPlaid, savePending, takePending } from '../lib/plaid.ts'
 import { passkeyName } from '../lib/passkey.ts'
 import { returnHere, recentlyRechecked, forgetRechecked } from '../lib/recheck.ts'
@@ -212,7 +227,7 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
     ${limited || !manages ? null : html`<${ConnectionCompany} c=${c} onMoved=${async () => (reload(), await app.reload())} />`}
     ${c.connectorKey === 'xero' && !limited ? html`<${SharedOrgs} id=${c.id} />` : null}
     ${c.unassigned?.length && !limited ? html`<${ChooseCompanies} accounts=${c.unassigned} onSaved=${async () => (reload(), app.reload())} />` : null}
-    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">${c.connectorKey === 'harvest' ? 'Invoiced in Harvest' : c.connectorKey === 'sumup' ? 'Paid out by SumUp' : c.connectorKey === 'adsense' ? 'Earned on AdSense' : c.connectorKey === 'youtube' ? 'Earned on YouTube' : c.connectorKey === 'pinterest' ? 'Spent on Pinterest ads' : c.connectorKey === 'ownerrez' ? 'Collected in OwnerRez' : c.connectorKey === 'whop' ? 'Net in Whop' : c.connectorKey === 'mollie' ? 'Net from sales in Mollie' : 'Sales reported by the store'}: ${fmt(m, { cents: true })} this month, not counted as ${c.connectorKey === 'pinterest' ? 'an expense' : 'revenue'}</p>`)}
+    ${c.storeSales?.map((m) => html`<p class="sub" style="margin-top:16px">${c.connectorKey === 'harvest' ? 'Invoiced in Harvest' : c.connectorKey === 'sumup' ? 'Paid out by SumUp' : c.connectorKey === 'adsense' ? 'Earned on AdSense' : c.connectorKey === 'youtube' ? 'Earned on YouTube' : c.connectorKey === 'pinterest' ? 'Spent on Pinterest ads' : c.connectorKey === 'ownerrez' ? 'Collected in OwnerRez' : c.connectorKey === 'whop' ? 'Net in Whop' : c.connectorKey === 'mollie' ? 'Net from sales in Mollie' : c.connectorKey === 'zeffy' ? 'Received online through Zeffy' : 'Sales reported by the store'}: ${fmt(m, { cents: true })} this month, not counted as ${c.connectorKey === 'pinterest' ? 'an expense' : 'revenue'}</p>`)}
     ${!c.accounts.length && !needsReconnect
       ? html`<p class="sub" style="margin-top:16px">${c.status === 'syncing'
           ? 'Bringing in your data. The first import can take a few minutes.'
@@ -224,7 +239,11 @@ export function ConnectionView({ id, onClose, onBack }: { id: string; onClose: (
       : null}
     ${c.accounts.length
       ? html`<${Section} compact title="Accounts" sub="Each one belongs to a company, or Personal">
-          <${Rows}>${c.accounts.map((a) => html`<${Row} name=${`${a.name}${a.mask ? ' ··' + a.mask : ''}`} line=${movable ? html`${[termsLine(a.terms), balanceAsOf(a.asOf, c.lastSyncAt, now)].filter(Boolean).map((x) => x + ' · ')}<${LinkButton} onClick=${() => setMoving(a.id)}>Move<span class="sr"> ${a.name}</span> to another company</${LinkButton}>` : [termsLine(a.terms), balanceAsOf(a.asOf, c.lastSyncAt, now)].filter(Boolean).join(' · ')} right=${a.balance ? html`<span class="value">${fmt(a.balance)}</span>` : html`<span class="value grey">unknown</span>`} />`)}</${Rows}>
+          <${Rows}>${c.accounts.map((a) => {
+            // A possible duplicate names two accounts; show the same choices here on whichever one is open.
+            const dup = app.ws?.health?.items.find((it) => it.kind === 'possible_duplicate' && (it.refId === a.id || it.relatedId === a.id))
+            return html`<${Row} name=${`${a.name}${a.mask ? ' ··' + a.mask : ''}`} line=${movable ? html`${[termsLine(a.terms), balanceAsOf(a.asOf, c.lastSyncAt, now)].filter(Boolean).map((x) => x + ' · ')}<${LinkButton} onClick=${() => setMoving(a.id)}>Move<span class="sr"> ${a.name}</span> to another company</${LinkButton}>` : [termsLine(a.terms), balanceAsOf(a.asOf, c.lastSyncAt, now)].filter(Boolean).join(' · ')} right=${a.balance ? html`<span class="value">${fmt(a.balance)}</span>` : html`<span class="value grey">unknown</span>`} />${dup ? html`<${Row} name="Maybe connected twice" line=${dup.text} right=${html`<${DuplicateActions} item=${dup} />`} />` : null}`
+          })}</${Rows}>
           ${moving && c.accounts.some((a) => a.id === moving) ? html`<${MoveAccount} account=${c.accounts.find((a) => a.id === moving)!} onDone=${async (moved: boolean) => (setMoving(null), moved ? (reload(), await app.reload()) : undefined)} />` : null}
         </${Section}>`
       : null}
@@ -310,8 +329,51 @@ export function ConnectView({ connectorKey, entityId, onClose, onBack }: { conne
         ${group === 'banks' && items.some((c) => c.key === 'plaid' && !needsSetup(c)) ? html`<${InstitutionSearch} />` : null}
       </${Section}>`
     })}
+    ${all && mayRequest(app) ? html`<${RequestApp} offered=${all} />` : null}
     ${all ? html`<p class="meta" style="margin-top:24px">Logos belong to their owners and are shown only to identify services you can connect. No endorsement implied.</p>` : null}
   </${Drawer}>`
+}
+
+/** Not in any demo (made-up books, so made-up asks), and not self-hosted, where a request would reach nobody. */
+const mayRequest = (app: ReturnType<typeof useApp>): boolean => !!app.ws && !app.ws.me.demo && !app.ws.me.selfHosted && !isPublicDemo(app) && !isReviewer(app)
+
+/** "Don't see your app? Request it +": a fixed list of names (no logos, no free text), one Request each. */
+function RequestApp({ offered }: { offered: Connector[] }) {
+  const app = useApp()
+  const [open, setOpen] = useState(false)
+  const [list, setList] = useState<RequestableApp[] | null | 'failed'>(null)
+  const [q, setQ] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
+  useEffect(() => {
+    if (!open || list) return
+    app.api.connectionRequests().then((l) => setList(l), () => setList('failed'))
+  }, [open])
+  if (!open) return html`<div style="margin-top:24px"><button type="button" class="plus" aria-expanded="false" onClick=${() => setOpen(true)}>Don’t see your app? Request it +</button></div>`
+  if (list === 'failed') return html`<p class="sub" style="margin-top:24px">The list didn’t load. Try again later.</p>`
+  if (!list) return html`<p class="sub" aria-busy="true" style="margin-top:24px">Loading the list…</p>`
+  const term = q.trim().toLowerCase()
+  const keys = new Set(offered.map((c) => c.key))
+  const shown = list.filter((a) => !keys.has(a.key) && (!term || a.name.toLowerCase().includes(term)))
+  const request = async (key: string) => {
+    setBusy(key)
+    try {
+      await app.api.requestConnection(key)
+      setList((l) => (Array.isArray(l) ? l.map((a) => (a.key === key ? { ...a, requested: true } : a)) : l))
+    } catch (e) {
+      app.toast({ text: e instanceof Error && e.message ? e.message : 'That didn’t go through. Try again.' })
+    } finally {
+      setBusy(null)
+    }
+  }
+  return html`<${Section} compact title="Request an app">
+    <label class="sr" for="req-q">App name</label>
+    <input id="req-q" class="input" type="search" placeholder="App name" autocomplete="off" spellcheck=${false} value=${q} onInput=${(e: Event) => setQ((e.target as HTMLInputElement).value)} style="margin:4px 0" />
+    ${shown.length
+      ? html`<${Rows} label="Apps you can request">${shown.map((a) =>
+          html`<${Row} name=${a.name} right=${a.requested ? html`<span class="meta">Requested</span>` : html`<${Button} quiet disabled=${busy === a.key} onClick=${() => request(a.key)} label=${'Request ' + a.name}>Request</${Button}>`} />`,
+        )}</${Rows}>`
+      : html`<p class="meta" role="status">Not on the list.</p>`}
+  </${Section}>`
 }
 
 /** The docs page's "Banks and institutions" search (docs-institutions.ts), behind a +. Names from Plaid's public file. */
@@ -625,6 +687,9 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
         if (typeof x.data.connectionId === 'string') setDuplicateOf(x.data.connectionId)
       }
       setErr(x instanceof Error ? x.message : 'That token didn’t work.')
+      // The server spends the attempt on every finish, so the next Connect needs a fresh one: start it now, quietly.
+      const again = await app.api.startConnect(c.key, target, returnPath(app.route)).catch(() => null)
+      if (again?.kind === 'api_key') setStart(again)
     }
   }
 
@@ -632,8 +697,10 @@ export function ConnectOne({ c, onClose, onBack, entityId, onDone }: { c: Connec
 
   return html`<${Drawer} title=${c.key === 'plaid' ? 'Connect your bank or card' : `Connect ${c.name}`} sub=${c.key === 'plaid' ? 'You sign in with your bank, not with us.' : 'Aggregate only reads. It can’t move money.'} onClose=${onClose} onBack=${onBack}>
     ${c.beta ? html`<p class="meta" style="margin-top:12px"><span class="pill">Beta</span> Built to ${c.name}’s documentation; not yet tried with a real account. If a number looks off, tell us at <a class="link" href=${`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`${c.name} (beta)`)}`}>${SUPPORT_EMAIL}</a>.</p>` : null}
-    <p style="margin-top:16px">Aggregate will read ${c.provides.join(', ')}. It ${c.freshness === 'live' ? 'stays live' : /^(updates|syncs|stays)\b/.test(c.freshness) ? c.freshness : `updates ${c.freshness}`}.</p>
+    ${c.beta && BETA_NOTES[c.key] ? html`<p class="meta" style="margin-top:8px">${BETA_NOTES[c.key]}</p>` : null}
+    <p style="margin-top:16px">Aggregate will read ${READS[c.key] ?? c.provides.join(', ')}. It ${c.freshness === 'live' ? 'stays live' : /^(updates|syncs|stays)\b/.test(c.freshness) ? c.freshness : `updates ${c.freshness}`}.</p>
     <p class="sub" style="margin-top:8px">${AI_DISCLOSURE.connectText}</p>
+    ${TRADEMARK_NOTICES[c.key] ? html`<p class="sub" style="margin-top:8px">${TRADEMARK_NOTICES[c.key]}</p>` : null}
     ${note ? html`<p class="sub" role="status" style="margin-top:16px">${note}</p>` : null}
     ${duplicate
       ? null

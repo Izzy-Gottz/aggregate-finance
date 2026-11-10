@@ -104,9 +104,13 @@ function balanceSheetRole(info: QboAccountInfo): string | null {
   if (/inventory/i.test(info.subtype ?? '') || /inventory/i.test(info.name)) return 'inventory'
   if (t === 'Fixed Asset') return 'fixed_assets'
   if (t === 'Other Current Asset' || t === 'Other Asset') return /prepaid/i.test(info.subtype ?? info.name) ? 'prepaid' : 'other_assets'
+  if (isSalesTaxAccount(info)) return 'sales_tax_payable'
   if (t === 'Other Current Liability' || t === 'Long Term Liability') return 'other_liabilities'
   return null
 }
+
+/** A sales tax agency's payable account: a filing paid by hand (a check, an expense, a journal) lowers what's owed. */
+const isSalesTaxAccount = (info: QboAccountInfo) => info.subtype === 'SalesTaxPayable' || info.subtype === 'GlobalTaxPayable'
 
 /**
  * The ledger role for one line on account `acct`, or null when that account isn't on the P&L (an asset, liability or
@@ -612,6 +616,47 @@ export function mapCashEntity(entity: CashEntity, o: QboObject, ctx: MapContext)
 }
 
 /**
+ * Sales tax paid from QuickBooks' US sales tax centre. The API lists no object for it (TaxPayment is non-US only), so
+ * these come from the TransactionList report's "Sales Tax Payment" rows: owed goes down, through "not yet seen at the
+ * bank" like a bill paid. QuickBooks shows a payment as a positive amount; a row of any other sign isn't posted, and is
+ * counted so the sync can say so rather than guess.
+ */
+export function mapSalesTaxPayments(report: QboObject, ctx: MapContext): { events: CashEvent[]; unposted: number } {
+  const cols = isRecord(report.Columns) && Array.isArray(report.Columns.Column) ? report.Columns.Column.filter(isRecord) : []
+  const key = (c: QboObject) => (Array.isArray(c.MetaData) ? c.MetaData.filter(isRecord).find((m) => m.Name === 'ColKey')?.Value : undefined)
+  const at = (k: string) => cols.findIndex((c) => key(c) === k)
+  const [iDate, iType, iAmount, iMemo, iNoPost] = ['tx_date', 'txn_type', 'subt_nat_amount', 'memo', 'is_no_post'].map(at) as [number, number, number, number, number]
+  const rows = isRecord(report.Rows) && Array.isArray(report.Rows.Row) ? report.Rows.Row.filter(isRecord) : []
+  const out: CashEvent[] = []
+  let unposted = 0
+  if (iDate < 0 || iType < 0 || iAmount < 0) return { events: out, unposted }
+  for (const r of rows) {
+    const cd = Array.isArray(r.ColData) ? r.ColData.filter(isRecord) : []
+    if (str(cd[iType]?.value) !== 'Sales Tax Payment' || (iNoPost >= 0 && str(cd[iNoPost]?.value) === 'Yes')) continue
+    const id = str(cd[iType]?.id)
+    const day = date(cd[iDate]?.value)
+    const a = amt(cd[iAmount]?.value, ctx.homeCurrency)
+    if (!id || !day || a.minor <= 0) {
+      unposted++
+      continue
+    }
+    const doc: InvoiceUpsert = {
+      type: 'invoice.upsert',
+      ...base(ctx, `salestaxpayment:${id}`),
+      direction: 'payable',
+      counterparty: 'Sales tax',
+      issueDate: day,
+      total: a,
+      amountPaid: { minor: 0, currency: a.currency },
+      status: 'open',
+      lines: [{ description: (iMemo >= 0 && str(cd[iMemo]?.value)) || 'Sales tax payment', amount: a, category: 'sales_tax_payable' }],
+    }
+    out.push(...paidPair(doc, ctx, undefined))
+  }
+  return { events: out, unposted }
+}
+
+/**
  * A manual JournalEntry (depreciation, accruals, payroll postings) → journal.upsert, debits + and credits −. Only
  * journals that touch the P&L are kept, like Xero's manual journals: lines on P&L accounts keep their section, and
  * whatever sits on balance-sheet accounts is one balancing line, so the journal still sums to zero.
@@ -623,6 +668,7 @@ export function mapJournalEntry(o: QboObject, ctx: MapContext): JournalUpsert | 
   const cur = currencyOf(o, ctx)
   const out: JournalUpsert['lines'] = []
   let rest = 0
+  let tax = 0
   for (const l of lines(o)) {
     if (str(l.DetailType) !== 'JournalEntryLineDetail' || !isRecord(l.JournalEntryLineDetail)) continue
     const d = l.JournalEntryLineDetail as QboObject
@@ -634,9 +680,11 @@ export function mapJournalEntry(o: QboObject, ctx: MapContext): JournalUpsert | 
     const onPnl = info ? info.classification === 'income' || info.classification === 'expense' : false
     const role = onPnl ? lineRole(acct, ctx, info!.classification === 'income' ? 'income' : 'expense') : null
     if (role) out.push({ role, amount: { minor: signed, currency: cur }, ...(str(l.Description) ? { memo: str(l.Description)!.slice(0, 140) } : {}), ...(acct.value ? { accountExternalId: acct.value } : {}) })
+    else if (info && isSalesTaxAccount(info)) tax += signed
     else rest += signed
   }
   if (!out.length) return null
+  if (tax) out.push({ role: 'sales_tax_payable', amount: { minor: tax, currency: cur }, memo: 'Sales tax in QuickBooks' })
   if (rest) out.push({ role: rest > 0 ? 'other_assets' : 'other_liabilities', amount: { minor: rest, currency: cur }, memo: 'Balance sheet side in QuickBooks' })
   const e: JournalUpsert = { type: 'journal.upsert', ...base(ctx, `je:${id}`), date: day, status: 'posted', lines: out }
   const memo = str(o.PrivateNote)

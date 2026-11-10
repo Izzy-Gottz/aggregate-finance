@@ -1,8 +1,8 @@
 // agfn prelaunch-wipe [--keep-email a@x,b@y [--allow-missing]] [--apply --confirm WIPE [--branch-copy]]
 // The launch-day wipe (apps/server prelaunch-wipe.ts): deletes all test data except reviewer accounts and the
 // keep-list. Without --apply it only prints what it would keep and delete. Take a backup first.
-// RETIRED on live (2026-11-01): live has real users, so --apply runs only on a Neon branch copy (--branch-copy); the
-// dry run still lists what it would do.
+// RETIRED on live (2026-11-01): live has real users, so --apply runs only on a database copy (a Neon branch or an RDS
+// snapshot restore; --branch-copy); the dry run still lists what it would do.
 
 import { withWorkspace } from '@agfn/db'
 import { applyWipe, planWipe, rowsOnly, type WipePlan } from '@agfn/server/prelaunch-wipe'
@@ -29,7 +29,7 @@ export async function wipeCommand(argv: string[], io: Io, bootFn: BootFn = bootF
   rejectUnknown(args, ['keep-email', 'apply', 'confirm', 'allow-missing', 'branch-copy'])
   if (args.positionals.length) throw new UsageError(USAGE)
   const apply = args.flags.has('apply')
-  if (apply && !args.flags.has('branch-copy')) throw new UsageError('Live has real users; the pre-launch wipe is retired. --apply runs only on a Neon branch copy (--branch-copy); without --apply it is a dry run.')
+  if (apply && !args.flags.has('branch-copy')) throw new UsageError('Live has real users; the pre-launch wipe is retired. --apply runs only on a database copy (a Neon branch or an RDS snapshot restore; --branch-copy); without --apply it is a dry run.')
   if (apply && flagString(args, 'confirm') !== 'WIPE') throw new UsageError('--apply deletes data for good: add --confirm WIPE (take a backup first: agfn backup now)')
   const keepEmails = (flagString(args, 'keep-email') ?? '').split(',').filter(Boolean)
 
@@ -42,10 +42,10 @@ export async function wipeCommand(argv: string[], io: Io, bootFn: BootFn = bootF
     })
     print(io, plan)
     if (!apply) {
-      io.out('dry run: nothing deleted. (--apply runs only on a Neon branch copy, with --branch-copy --confirm WIPE.)')
+      io.out('dry run: nothing deleted. (--apply runs only on a database copy (a Neon branch or an RDS snapshot restore), with --branch-copy --confirm WIPE.)')
       return 0
     }
-    // --branch-copy: a Neon branch copy shares live's provider tokens and file bucket, so there only rows go: no
+    // --branch-copy: a database copy (a Neon branch, or an RDS snapshot restored to a new instance) shares live's provider tokens and file bucket, so there only rows go: no
     // provider is told to revoke anything and no stored file is deleted (both would hit the live service).
     const copy = args.flags.has('branch-copy')
     if (copy) io.out('branch copy: rows only; providers are not contacted and stored files are left alone')

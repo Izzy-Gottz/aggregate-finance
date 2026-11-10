@@ -13,10 +13,12 @@ import {
   dedupeEvents,
   healthFromError,
   hmac,
+  instantAt,
   isoDate,
   minorMoney,
   money,
   parseRetryAfter,
+  plainError,
   rawId,
   runSync,
   signatureMatches,
@@ -71,6 +73,46 @@ describe('toMinor (golden answers)', () => {
   })
 })
 
+describe('instantAt (an event at-instant only for a real intraday moment)', () => {
+  it('carries a real intraday timestamp (string or epoch), normalized to ISO', () => {
+    expect(instantAt('2026-10-31T23:30:00-04:00')).toBe('2026-11-01T03:30:00.000Z')
+    expect(instantAt('2026-10-31T23:30:00.000Z')).toBe('2026-10-31T23:30:00.000Z')
+    expect(instantAt(1791021700)).toBe('2026-10-03T10:01:40.000Z') // epoch seconds
+  })
+  it('returns undefined for a date-only value or an exact UTC-midnight stamp (carrying it would shift the day back)', () => {
+    expect(instantAt('2026-10-31')).toBeUndefined()
+    expect(instantAt('2026-10-31T00:00:00Z')).toBeUndefined()
+    expect(instantAt('2026-10-31T00:00:00.000Z')).toBeUndefined()
+  })
+  it('returns undefined for missing or unparseable input', () => {
+    expect(instantAt(undefined)).toBeUndefined()
+    expect(instantAt(null)).toBeUndefined()
+    expect(instantAt('')).toBeUndefined()
+    expect(instantAt('not a date')).toBeUndefined()
+  })
+})
+
+describe('plainError (what the person sees on a failed sync — provider text never shown)', () => {
+  const err = (kind: 'auth' | 'rate_limited' | 'transient' | 'permanent', extra: Record<string, unknown> = {}) =>
+    new ConnectorError(kind, 'raw provider stack trace', { provider: 'x', ...extra })
+  it('an expired/revoked token (401) becomes needs_reauth with a plain reconnect message', () => {
+    const r = plainError(err('auth', { status: 401 }), 'Mercury')
+    expect(r.status).toBe('needs_reauth')
+    expect(r.message).toMatch(/[Rr]econnect/)
+    expect(r.message).not.toContain('raw provider stack trace')
+  })
+  it('a missing-permission auth failure (403) asks to reconnect and allow read access', () => {
+    const r = plainError(err('auth', { status: 403 }), 'Mercury')
+    expect(r.status).toBe('needs_reauth')
+    expect(r.message).toMatch(/read/)
+  })
+  it('rate-limited and transient stay a plain error, not needs_reauth', () => {
+    expect(plainError(err('rate_limited'), 'Mercury').status).toBe('error')
+    expect(plainError(err('transient'), 'Mercury').status).toBe('error')
+    expect(plainError(err('transient'), 'Mercury').message).not.toContain('raw provider stack trace')
+  })
+})
+
 describe('HttpClient', () => {
   it('a ConnectorError thrown by the fetch keeps its kind: a refusal is not retried as a network error', async () => {
     let calls = 0
@@ -101,6 +143,32 @@ describe('HttpClient', () => {
     expect(res.data.ok).toBe(true)
     expect(fx.calls).toHaveLength(3)
     expect(clock.sleeps).toEqual([250, 2000])
+  })
+
+  it('retries a persistent 5xx up to the budget, then fails visibly (never a partial success)', async () => {
+    const clock = fakeClock()
+    const fx = fixtureFetch([{ match: '/thing', respond: { status: 503, json: { message: 'down' } } }])
+    const http = new HttpClient({ provider: 'x', baseUrl: 'https://api.example.com', fetch: fx.fetch, clock, random: () => 0.5, retry: { maxAttempts: 3 } })
+    await expect(http.request({ path: '/thing' })).rejects.toMatchObject({ kind: 'transient' })
+    expect(fx.calls).toHaveLength(3) // tried the whole budget
+    expect(clock.sleeps).toHaveLength(2) // slept between attempts, then gave up
+  })
+
+  it('retries a persistent 429 up to the budget, then fails rate_limited', async () => {
+    const clock = fakeClock()
+    const fx = fixtureFetch([{ match: '/thing', respond: { status: 429, json: {} } }])
+    const http = new HttpClient({ provider: 'x', baseUrl: 'https://api.example.com', fetch: fx.fetch, clock, random: () => 0.5, retry: { maxAttempts: 4 } })
+    await expect(http.request({ path: '/thing' })).rejects.toMatchObject({ kind: 'rate_limited' })
+    expect(fx.calls).toHaveLength(4)
+  })
+
+  it('throws a long Retry-After at once (no in-process wait) so the scheduler retries later', async () => {
+    const clock = fakeClock()
+    const fx = fixtureFetch([{ match: '/thing', respond: { status: 429, json: {}, headers: { 'retry-after': '86400' } } }])
+    const http = new HttpClient({ provider: 'x', baseUrl: 'https://api.example.com', fetch: fx.fetch, clock, random: () => 0.5 })
+    await expect(http.request({ path: '/thing' })).rejects.toMatchObject({ kind: 'rate_limited', retryAfterMs: 86_400_000 })
+    expect(fx.calls).toHaveLength(1) // not retried in-process
+    expect(clock.sleeps).toEqual([])
   })
 
   it('does not retry a non-idempotent POST', async () => {

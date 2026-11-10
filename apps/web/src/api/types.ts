@@ -40,6 +40,9 @@ export type Connector = ConnectorDescription & {
   beta?: boolean
 }
 /** Shown as "Needs your own … app" with setup steps, never as a Connect button that can't work. */
+/** One name on the "Request it" list (names only, no logos). */
+export interface RequestableApp { key: string; name: string; requested: boolean }
+
 export const needsSetup = (c: Connector): boolean => c.setup?.configured === false && c.setup.kind === 'app'
 
 // ---------- People and workspace ----------
@@ -76,7 +79,7 @@ export interface Me {
   /** "Verified by Aggregate" badges are on for this server (AGFN_BADGES). */
   badges?: boolean
   /** A Shopify App Store install arrived while signed out: finish it with a full-page visit to the resume URL. */
-  pendingInstall?: 'shopify'
+  pendingInstall?: 'shopify' | 'bigcommerce'
   /** Sign-in methods this server offers (Apple/Google only when configured). */
   signInMethods?: SignInMethod[]
   /** Signed in but no workspace yet: onboarding creates it with the first company. Workspace routes return 409 until then. */
@@ -167,7 +170,15 @@ export interface WorkspaceHealth {
   /** "All reconciled" or "3 things need a look: 2 to review, 1 balance doesn't match". */
   line: string
   /** Up to 10, most important first. */
-  items: Array<{ kind: 'failed_check' | 'review' | 'in_transit' | 'unexplained' | 'stale_source' | 'missing_statement'; entityId: string | null; text: string; refId: string | null }>
+  items: Array<{
+    kind: 'failed_check' | 'review' | 'in_transit' | 'unexplained' | 'stale_source' | 'missing_statement' | 'possible_duplicate'
+    entityId: string | null
+    text: string
+    refId: string | null
+    /** possible_duplicate only: the pair's second account (refId is the first) and the key the dismiss control sends. */
+    relatedId?: string
+    dupKey?: string
+  }>
 }
 
 // ---------- Company drawer ----------
@@ -703,11 +714,19 @@ export interface AgfnApi {
 
   // connections
   connectors(): Promise<Connector[]>
+  /** "Don't see your app? Request it": the fixed list of names, and which this workspace asked for. Never in a demo. */
+  connectionRequests(): Promise<RequestableApp[]>
+  /** Once per workspace per app; asking again changes nothing. */
+  requestConnection(app: string): Promise<void>
   /** returnTo: the app page an OAuth round trip comes back to (e.g. /welcome/2); the overview when left out. */
   /** investmentsFirst: Plaid Link for a brokerage-only login (products: investments), the one retry after NO_ACCOUNTS. */
   startConnect(connectorKey: string, entityId: EntityId | null, returnTo?: string, opts?: { investmentsFirst?: boolean }): Promise<ConnectStart>
   finishConnect(connectorKey: string, input: Record<string, unknown> & { state: string }): Promise<{ connectionId: Id; accounts: NewAccount[] }>
   assignAccounts(assignments: Array<{ accountId: Id; entityId: EntityId | 'personal' | 'skip' }>): Promise<void>
+  /** A possible-duplicate pair the person says is two genuinely different accounts: stop flagging it. */
+  dismissDuplicate(subjectId: Id, relatedId: Id, dupKey: string): Promise<void>
+  /** Confirm a possible-duplicate pair is the same real account: `duplicateId` then counts once, inside `ofId`. */
+  markDuplicate(duplicateId: Id, ofId: Id): Promise<void>
   /** records: how many records it has brought in (invoices, bills…), for connections without bank accounts (Xero, QuickBooks). */
   connection(id: Id): Promise<ConnectionSummary & { /** Disconnecting deletes its data: always, or it may (the server decides then). */ erasesOnDisconnect?: 'always' | 'maybe'; accounts: AccountRow[]; unassigned?: Array<{ id: Id; name: string; mask?: string }>; provides: DataType[]; canRefreshBalance?: boolean; records?: number; /** WooCommerce: this month's sales reported by the store, one per currency. Not revenue. */ storeSales?: Money[] }>
   /** Xero organisations this connection's sign-in can reach that the workspace doesn't have yet (shared before, so Xero won't offer them again). Empty for other connectors and non-admins. */

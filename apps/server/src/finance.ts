@@ -13,6 +13,7 @@ import type {
   EntityId,
   FinanceReader,
   IsoDate,
+  Money,
   NormalizedEvent,
   Overview,
   Provenance,
@@ -52,6 +53,8 @@ export interface FinanceParts {
     writer?: RecordWriter
     owns?(workspaceId: WorkspaceId, recordId: string): Promise<boolean>
     bankRows?(workspaceId: WorkspaceId, entityId: EntityId, since: IsoDate): Promise<TxnUpsert[]>
+    /** An amount in another currency at that day's rate (the ledger's own rates). */
+    toCurrency?(workspaceId: WorkspaceId, amount: Money, to: string, date: IsoDate): Promise<Money>
   }
   books?: Books
   /** S6. */
@@ -163,12 +166,21 @@ export function composeFinance(parts: FinanceParts): { reader: FinanceReader; wr
       const due = ((await settle(recurring.due(scope, today, 30))) ?? []).filter((r) => !payments.some((p) => samePayment(r, p)))
       const extra = [...due.map((d) => ({ entityId: d.entityId, amount: d.amount })), ...payments.map((p) => ({ entityId: p.entityId, amount: { ...p.amount, minor: -p.amount.minor } }))]
       if (!extra.length) return base
+      // A charge in another currency counts at today's rate (a euro subscription is still a bill due).
+      const toCurrency = parts.core?.toCurrency
       return {
         ...base,
-        entities: base.entities.map((e) => {
-          const add = extra.filter((d) => d.entityId === e.entityId && d.amount.currency === e.billsDue30d.currency).reduce((n, d) => n + d.amount.minor, 0)
-          return add ? { ...e, billsDue30d: { ...e.billsDue30d, minor: e.billsDue30d.minor + add } } : e
-        }),
+        entities: await Promise.all(
+          base.entities.map(async (e) => {
+            let add = 0
+            for (const d of extra.filter((x) => x.entityId === e.entityId)) {
+              const cur = e.billsDue30d.currency
+              if (d.amount.currency === cur) add += d.amount.minor
+              else if (toCurrency) add += (await toCurrency(scope.workspaceId, d.amount, cur, today)).minor
+            }
+            return add ? { ...e, billsDue30d: { ...e.billsDue30d, minor: e.billsDue30d.minor + add } } : e
+          }),
+        ),
       }
     },
 
@@ -324,7 +336,11 @@ export function financeFor(s: Pick<Services, 'db' | 'ledger' | 'syncDeps'>, part
   const db = s.db as unknown as Kysely<CoreTables & BooksTables>
   const core = parts.core ?? coreFinance(s.ledger, { documents: documentsProvider(s), names: namesProvider(s) })
   const bankRows = core?.bankRows ? core.bankRows.bind(core) : bankRowsFromLedger(s.db)
-  const books = createBooks(db, { ledger: s.ledger, bankRows })
+  const books = createBooks(db, {
+    ledger: s.ledger,
+    bankRows,
+    timeZone: async (ws) => (await db.selectFrom('workspaces').select('time_zone').where('id', '=', ws).executeTakeFirst())?.time_zone ?? null,
+  })
   const entities: FinanceReader['entities'] = async (workspaceId) =>
     (await s.db.selectFrom('entities').select(['id', 'name', 'kind', 'base_currency']).where('workspace_id', '=', workspaceId).where('archived_at', 'is', null).execute()).map((e) => ({
       id: e.id,
@@ -584,6 +600,7 @@ export function documentsProvider(s: Pick<Services, 'db'> & Partial<Pick<Service
     const name = r.original_name ?? 'document'
     let text: string | undefined
     let scanned = false
+    let partial = false
     if (withText && s.files && /^(text\/csv|application\/x-(ofx|qfx)|application\/xml)$/.test(r.mime_type)) {
       const bytes = await s.files.get(r.storage_key).catch(() => null)
       if (bytes) text = new TextDecoder().decode(bytes.subarray(0, DOC_TEXT_MAX))
@@ -602,6 +619,7 @@ export function documentsProvider(s: Pick<Services, 'db'> & Partial<Pick<Service
       // The text counts for the "looks like instructions" flag even in lists; it's only handed out by get.
       if (got?.text !== undefined) text = got.text
       scanned = got?.pdf.status === 'scanned'
+      partial = got?.pdf.truncated === true
     }
     const flagged = text !== undefined && detectInjection(text).suspected
     if (!withText) text = undefined
@@ -618,6 +636,7 @@ export function documentsProvider(s: Pick<Services, 'db'> & Partial<Pick<Service
       injectionSuspected: detectInjection(name).suspected || flagged,
       ...(text !== undefined ? { text } : {}),
       ...(scanned ? { scanned: true } : {}),
+      ...(partial && text !== undefined ? { partial: true } : {}),
       recordIds: r.record_id ? [r.record_id] : [],
     } as DocumentView
   }

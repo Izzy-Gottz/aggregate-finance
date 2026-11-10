@@ -75,6 +75,10 @@ describe('ramp mapping', () => {
       rawText: 'FIGMA.COM SAN FRANCISCO | Design seats', categoryHint: 'Software', linkRefs: { card_id: 'card_r1' },
     })
     expect(txn(events, 'rtx_pending')).toMatchObject({ status: 'pending', date: '2026-09-25', amount: { minor: -10000 } })
+    // A pending row's date is the real user_transaction_time instant → carried as `at` for workspace-tz dating; a posted
+    // row's date is settlement_date (a UTC-midnight day), which instantAt drops so it isn't shifted back.
+    expect(txn(events, 'rtx_pending')!.at).toMatch(/^2026-09-25T\d\d:\d\d/)
+    expect(txn(events, 'rtx_purchase')!.at).toBeUndefined()
     expect(txn(events, 'rtx_refund')?.amount.minor).toBe(2000)
     expect(txn(events, 'rtx_declined')?.status).toBe('void')
     // One token for the whole sync; every API call carries it; all GET.

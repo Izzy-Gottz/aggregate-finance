@@ -16,6 +16,8 @@ import { REPORT_ROW_NET_SALES as WIX_NET_SALES } from '@agfn/connector-wix'
 import { REPORT_ROW_NET_COLLECTED as OWNERREZ_NET_COLLECTED } from '@agfn/connector-ownerrez'
 import { REPORT_ROW_NET as WHOP_NET } from '@agfn/connector-whop'
 import { REPORT_ROW_NET_SALES as MOLLIE_NET_SALES } from '@agfn/connector-mollie'
+import { REPORT_ROW_NET_SALES as BIGCOMMERCE_NET_SALES } from '@agfn/connector-bigcommerce'
+import { REPORT_ROW_NET as ZEFFY_NET } from '@agfn/connector-zeffy'
 
 type Db = Kysely<{ ledger_records: { workspace_id: string; connection_id: string; entity_id: string | null; event_type: string; external_id: string; status: string; event_json: string } }>
 
@@ -33,6 +35,8 @@ const DRAWER_ROWS: Record<string, string> = {
   ownerrez: OWNERREZ_NET_COLLECTED,
   whop: WHOP_NET,
   mollie: MOLLIE_NET_SALES,
+  bigcommerce: BIGCOMMERCE_NET_SALES,
+  zeffy: ZEFFY_NET,
 }
 
 export const hasDrawerLine = (connectorKey: string) => Object.hasOwn(DRAWER_ROWS, connectorKey)

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { mapSaleCharge } from './map.ts'
+import { mapSaleChargeback, mapSaleCharge } from './map.ts'
 import type { AccountUpsert, ConnectionRef, NormalizedEvent, ProcessorBalanceTxn } from '@agfn/contracts'
 import { ConnectorError, MemoryRawSink, runSync } from '@agfn/connector-sdk'
 import { assertRedacted, fakeClock, fixtureFetch, runConnectorContract, type FixtureRoute } from '@agfn/connector-sdk/testing'
@@ -114,6 +114,14 @@ describe('gumroad mapping', () => {
     expect(sale({ tax_cents: 80 })?.taxIncluded).toBeUndefined()
   })
 
+  it('a chargeback the seller won is re-sent at zero, so the earlier chargeback row stops counting', () => {
+    const sale = (extra: object) => mapSaleChargeback({ id: 's1', created_at: '2026-09-01T10:00:00Z', price: 1_500, gumroad_fee: 175, ...extra } as never, 'seller', 'c', 'r')
+    expect(sale({ chargedback: true })).toMatchObject({ externalId: 's1:chargeback', gross: { minor: -1500 }, net: { minor: -1325 } })
+    // Won: Gumroad clears chargedback. Same id, nothing moved.
+    expect(sale({ chargedback: false, disputed: true, dispute_won: true })).toMatchObject({ externalId: 's1:chargeback', kind: 'dispute', gross: { minor: 0 }, fee: { minor: 0 }, net: { minor: 0 } })
+    expect(sale({})).toBeUndefined()
+  })
+
   it('records USD payouts leaving the balance; failed ones move nothing; other currencies and upcoming are skipped', async () => {
     const { connector, calls } = make()
     const res = await runSync(connector, conn, null)
@@ -194,5 +202,17 @@ describe('gumroad auth', () => {
     const bad = make([{ match: (u) => u.pathname === '/v2/user', respond: { status: 401, json: fx.errors.unauthorized } }])
     expect((await bad.connector.health(conn)).status).not.toBe('ok')
     expect((await make().connector.health(conn)).status).toBe('ok')
+  })
+})
+
+
+describe('gumroad: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/v2/sales', respond: { text: '' } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make([{ match: (u) => u.pathname === '/v2/sales', respond: { json: 5 } }])
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
   })
 })

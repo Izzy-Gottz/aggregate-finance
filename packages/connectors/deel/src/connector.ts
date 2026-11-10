@@ -14,7 +14,7 @@
 // Deel fees (lines without a contract, or processing_fee) are a software/processor expense, not payroll cost.
 // Limit: 5 requests/second per organization, no rate-limit headers.
 import type { Connector, ConnectionRef, ConnectorDescription, ConnectorHealth, NormalizedEvent, PayrollRun, SyncResult } from '@agfn/contracts'
-import { type ConnectorDeps, ConnectorError, cursorCodec, healthFromError, HttpClient, isRecord, money, normalizeCurrency, OAuthClient, type OAuthTokens, requireSecret, str, systemClock } from '@agfn/connector-sdk'
+import { type ConnectorDeps, ConnectorError, cursorCodec, healthFromError, HttpClient, instantAt, isRecord, money, normalizeCurrency, OAuthClient, type OAuthTokens, requireSecret, str, systemClock } from '@agfn/connector-sdk'
 import { isWindowState, providerRun, startWindow, stepWindow, type WindowPlan, type WindowState } from '@agfn/connector-payroll-detect'
 
 export const PROVIDER = 'deel'
@@ -61,7 +61,9 @@ export function classifyDeelError({ status, body }: { status: number; body: unkn
 
 /** Deel lists come as {data: [...]} or {data: {rows: [...], next_cursor}}; support both. */
 function rows(data: unknown): { items: Obj[]; next?: string } {
-  if (!isRecord(data)) return { items: [] }
+  // A present object with no list is a real empty page; a null/non-object (empty body, or a sign-in/error page the
+  // shared client already rejects as non-JSON) is unreadable and must stop the sync, never read as zero receipts.
+  if (!isRecord(data)) throw new ConnectorError('transient', 'Deel sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
   const d = data.data
   if (Array.isArray(d)) {
     const page = isRecord(data.page) ? data.page : {}
@@ -155,6 +157,9 @@ export function createDeelConnector(opts: DeelOptions): Connector & { authorizat
     provides: ['payroll'],
     freshness: 'syncs daily',
     auth: oauth ? 'oauth' : 'api_key',
+    // 1: payroll runs carry a real `at` instant so the ledger and payroll_runs.pay_date date them by the workspace's
+    // business day. Existing connections re-import once to re-date runs booked before the fix.
+    dataVersion: 1,
   }
 
   return {
@@ -269,6 +274,9 @@ export function createDeelConnector(opts: DeelOptions): Connector & { authorizat
       rawRef,
       provider: 'Deel',
       payDate: paidAt.slice(0, 10),
+      // paid_at is a real instant; let the engine place the pay date in the workspace tz (a late-evening US payrun
+      // otherwise rolls to the next UTC day).
+      ...(instantAt(paidAt) ? { at: instantAt(paidAt) } : {}),
       currency,
       gross,
       net: gross,

@@ -56,6 +56,21 @@ describe('today in the workspace’s time zone', () => {
     }
   })
 
+  it('the cash trend leaves out months before cash is known, and has no trend across a gap', async () => {
+    const { h, s } = await setup('America/New_York')
+    try {
+      const usd = (minor: number) => ({ minor, currency: 'USD' })
+      const r = {} as FinanceReader
+      const at = (days: Array<{ minor: number; currency: string } | null>) => cashTrend({ ...(s as object), ledger: { cashHistory: async () => days } } as never, r, WS, ACME, new Date('2026-11-01T12:00:00Z'))
+      // A company that started in August: three known month-ends and today, never nine $0 months before them.
+      expect(await at([...Array(8).fill(null), usd(100_00), usd(200_00), usd(300_00), usd(400_00)])).toEqual([100, 200, 300, 400])
+      expect(await at([usd(100_00), null, ...Array(10).fill(usd(100_00))])).toEqual([])
+      expect(await at(Array(12).fill(null))).toEqual([])
+    } finally {
+      await h.close()
+    }
+  })
+
   it('the cash trend ends on the workspace’s today and its month ends', async () => {
     const { h, s } = await setup('America/New_York')
     try {

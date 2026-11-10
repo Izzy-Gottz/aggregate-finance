@@ -49,7 +49,7 @@ private records (see `README.md`).
 | Better Stack | Uptime checks of `/healthz` | None | In use |
 | Telegram | Operator alerts | None by design: alerts are scrubbed | In use |
 | Frankfurter | Exchange rates | None: currency codes and dates only | In use |
-| Vercel | Marketing site | Visitor traffic only | In use. No DPA action (decided 2026-11-01) |
+| Vercel | Marketing site until 2026-11-06 (now on Cloudflare) | None now: no traffic since the move | Closed for the site. The unused project is kept as a rollback copy until it is deleted (about 2026-11-20) |
 | GitHub | Source code, CI | None (fixtures are redacted, secrets are scanned) | In use |
 | Google, Apple | Sign in with Google / Apple | Name and email at sign-in | In use |
 | Other connectors (Stripe, QuickBooks, Mercury and others) | Data from those providers | Their data for that customer | Listed on /privacy as a group. Each is approved per connector |

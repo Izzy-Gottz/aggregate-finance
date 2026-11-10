@@ -50,18 +50,35 @@ export async function workspaceTables(db: Kysely<any>): Promise<string[]> {
  * covered. A policy that honors the bypass setting for anyone but this role counts as missing, so the next boot
  * replaces it, including after the owner role changes.
  */
-export async function tablesMissingRls(db: Kysely<any>): Promise<string[]> {
-  const tables = await workspaceTables(db)
-  if (!tables.length) return []
+export async function tablesMissingRls(db: Kysely<any>, opts: { people?: boolean } = {}): Promise<string[]> {
   const owner = await currentRole(db)
-  const r = await sql<{ relname: string }>`
-    select c.relname from pg_class c
-    join pg_namespace n on n.oid = c.relnamespace and n.nspname = current_schema()
-    where c.relrowsecurity and c.relforcerowsecurity
-      and exists (select 1 from pg_policy p where p.polrelid = c.oid and p.polname = 'agfn_workspace'
-        and pg_get_expr(p.polqual, p.polrelid) ilike ${`%current_user = '${owner.replaceAll("'", "''")}'%`})`.execute(db)
-  const covered = new Set(r.rows.map((x) => x.relname))
-  return tables.filter((t) => !covered.has(t))
+  const ownerLike = `%current_user = '${owner.replaceAll("'", "''")}'%`
+  const tables = await workspaceTables(db)
+  const missing: string[] = []
+  if (tables.length) {
+    const r = await sql<{ relname: string }>`
+      select c.relname from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace and n.nspname = current_schema()
+      where c.relrowsecurity and c.relforcerowsecurity
+        and exists (select 1 from pg_policy p where p.polrelid = c.oid and p.polname = 'agfn_workspace'
+          and pg_get_expr(p.polqual, p.polrelid) ilike ${ownerLike})`.execute(db)
+    const covered = new Set(r.rows.map((x) => x.relname))
+    missing.push(...tables.filter((t) => !covered.has(t)))
+  }
+  // `people` carries its own membership policy (agfn_people), but it's applied one release AFTER the code that tolerates
+  // it (the named bypass on the sign-in paths): tightening it while an old machine still serves would fail that
+  // machine's sign-up inserts. So it's reported missing — and so applied/required — only when opts.people is set, which
+  // bootRls derives from AGFN_PEOPLE_RLS. See docs/security/rls.md.
+  if (opts.people) {
+    const p = await sql<{ n: number }>`
+      select count(*)::int as n from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace and n.nspname = current_schema()
+      where c.relname = ${PEOPLE_TABLE} and c.relrowsecurity and c.relforcerowsecurity
+        and exists (select 1 from pg_policy p where p.polrelid = c.oid and p.polname = ${PEOPLE_POLICY}
+          and pg_get_expr(p.polqual, p.polrelid) ilike ${ownerLike})`.execute(db)
+    if (!p.rows[0]?.n) missing.push(PEOPLE_TABLE)
+  }
+  return missing
 }
 
 interface PoolClientLike {
@@ -118,7 +135,18 @@ const POLICY = 'agfn_workspace'
 // The bypass setting is honored only for the role that runs bypass work, named here so that a role added later starts
 // closed. Any session can write the setting, so naming the role is what makes it mean anything. Neon's owner has
 // BYPASSRLS and doesn't need it; a plain Postgres owner does.
-const check = (owner: string) => sql.raw(`workspace_id = current_setting('agfn.workspace_id', true) or (current_setting('agfn.rls_bypass', true) = 'on' and current_user = ${"'"}${owner.replaceAll("'", "''")}${"'"})`)
+const bypassClause = (owner: string) => `current_setting('agfn.rls_bypass', true) = 'on' and current_user = '${owner.replaceAll("'", "''")}'`
+const check = (owner: string) => sql.raw(`workspace_id = current_setting('agfn.workspace_id', true) or (${bypassClause(owner)})`)
+
+// `people` has no workspace_id: a person spans workspaces through memberships, so it can't use the workspace policy. Its
+// own policy (agfn_people) shows a person row only to bypass work or to a request whose workspace the person is a current
+// member of — so the app role with no workspace set (e.g. reached through SQL injection) reads no names or emails. The
+// memberships lookup is itself RLS-scoped to the current workspace, which is exactly the set we want. Sign-in, invites
+// and other cross-workspace reads run under bypass (auth lookups do), where the first clause covers them.
+const PEOPLE_TABLE = 'people'
+const PEOPLE_POLICY = 'agfn_people'
+const peopleCheck = (owner: string) =>
+  sql.raw(`(${bypassClause(owner)}) or exists (select 1 from memberships m where m.person_id = people.id and m.workspace_id = current_setting('agfn.workspace_id', true) and m.revoked_at is null)`)
 
 const currentRole = async (db: Kysely<any>): Promise<string> => (await sql<{ r: string }>`select current_user as r`.execute(db)).rows[0]?.r as string
 
@@ -129,7 +157,8 @@ const currentRole = async (db: Kysely<any>): Promise<string> => (await sql<{ r: 
  */
 export async function enableRls(db: Kysely<any>, tables: readonly string[]): Promise<void> {
   const owner = await currentRole(db)
-  for (const t of tables) await policyOn(db, t, owner)
+  // `people` carries its own membership policy; every workspace_id table carries the standard workspace one.
+  for (const t of tables) await policyOn(db, t, owner, t === PEOPLE_TABLE ? { name: PEOPLE_POLICY, expr: peopleCheck(owner) } : { name: POLICY, expr: check(owner) })
 }
 
 const LOCK_TRIES = 5
@@ -138,20 +167,21 @@ const LOCK_TRIES = 5
  * One table, in one transaction. Changing a policy waits for reads on the table, and every new query queues behind it,
  * so a short wait and a few tries keep one long read from stalling the table. `set local` holds through poolers too.
  */
-async function policyOn(db: Kysely<any>, t: string, owner: string): Promise<void> {
+async function policyOn(db: Kysely<any>, t: string, _owner: string, policy: { name: string; expr: ReturnType<typeof sql.raw> }): Promise<void> {
   const id = sql.id(t)
+  const pid = sql.id(policy.name)
   for (let attempt = 1; ; attempt++) {
     try {
       await db.transaction().execute(async (tx) => {
         await sql`set local lock_timeout = '2s'`.execute(tx)
         const on = await sql<{ rls: boolean; forced: boolean; policies: number }>`
-          select c.relrowsecurity as rls, c.relforcerowsecurity as forced, (select count(*)::int from pg_policy p where p.polrelid = c.oid and p.polname = ${POLICY}) as policies
+          select c.relrowsecurity as rls, c.relforcerowsecurity as forced, (select count(*)::int from pg_policy p where p.polrelid = c.oid and p.polname = ${policy.name}) as policies
           from pg_class c where c.oid = quote_ident(${t})::regclass`.execute(tx)
         const now = on.rows[0]
         if (!now?.rls) await sql`alter table ${id} enable row level security`.execute(tx)
         if (!now?.forced) await sql`alter table ${id} force row level security`.execute(tx)
-        if (now?.policies) await sql`alter policy ${sql.id(POLICY)} on ${id} using (${check(owner)}) with check (${check(owner)})`.execute(tx)
-        else await sql`create policy ${sql.id(POLICY)} on ${id} using (${check(owner)}) with check (${check(owner)})`.execute(tx)
+        if (now?.policies) await sql`alter policy ${pid} on ${id} using (${policy.expr}) with check (${policy.expr})`.execute(tx)
+        else await sql`create policy ${pid} on ${id} using (${policy.expr}) with check (${policy.expr})`.execute(tx)
       })
       return
     } catch (err) {
@@ -172,6 +202,8 @@ export async function disableRls(db: Kysely<any>, tables: readonly string[]): Pr
   for (const t of tables) {
     const id = sql.id(t)
     await sql`drop policy if exists ${sql.id(POLICY)} on ${id}`.execute(db)
+    // `people` carries its own policy name; drop it too where present so the rollback leaves nothing behind.
+    if (t === PEOPLE_TABLE) await sql`drop policy if exists ${sql.id(PEOPLE_POLICY)} on ${id}`.execute(db)
     await sql`alter table ${id} no force row level security`.execute(db)
     await sql`alter table ${id} disable row level security`.execute(db)
   }
@@ -292,13 +324,15 @@ export async function ensureAppRole(db: Kysely<any>, role = 'agfn_app'): Promise
  * next boot, and a restart takes no locks on covered tables). Disabled: RLS left on by an earlier boot is turned off.
  * Boot doesn't call this directly: it goes through bootRls, which decides whether turning it off is allowed at all.
  */
-export async function syncRlsPolicies(db: Kysely<any>, enabled: boolean): Promise<{ enabled: string[]; disabled: string[] }> {
+export async function syncRlsPolicies(db: Kysely<any>, enabled: boolean, opts: { people?: boolean } = {}): Promise<{ enabled: string[]; disabled: string[] }> {
   if (enabled) {
-    const missing = await tablesMissingRls(db)
+    // `opts.people` gates the people policy (applied one release after the code that tolerates it; see tablesMissingRls).
+    const missing = await tablesMissingRls(db, opts)
     await enableRls(db, missing)
     return { enabled: missing, disabled: [] }
   }
-  const on = await rlsStatus(db, await workspaceTables(db))
+  // Include `people` in the rollback: it carries its own policy, so RLS left on there must come off too.
+  const on = await rlsStatus(db, [...(await workspaceTables(db)), PEOPLE_TABLE])
   if (on.length) {
     await disableRls(db, on)
     console.warn(`[agfn] AGFN_PG_RLS is off: turned row-level security off again on ${on.length} table(s)`)
@@ -310,22 +344,68 @@ export class RlsBootError extends Error {
   override name = 'RlsBootError'
 }
 
-/** A database URL on Neon (hosted Aggregate's provider). Unparseable URLs count as not Neon. */
-function onNeon(url: string | undefined): boolean {
+const NEON_HOST = /(^|\.)neon\.tech$/i
+/** Amazon RDS and Aurora endpoints (instance, cluster and proxy hosts all end this way). */
+const RDS_HOST = /\.rds\.amazonaws\.com$/i
+/** An RDS Proxy endpoint: `<name>.proxy-<id>.<region>.rds.amazonaws.com`. */
+const RDS_PROXY_HOST = /\.proxy-[a-z0-9]+\.[a-z0-9-]+\.rds\.amazonaws\.com$/i
+
+const hostOf = (url: string | undefined): string | null => {
+  if (!url) return null
+  try {
+    return new URL(url).hostname
+  } catch {
+    return null
+  }
+}
+
+/**
+ * A database URL on a managed Postgres that hosted Aggregate runs on: Neon today, Amazon RDS after the move. Either one
+ * means hosted, so a machine started without its config still keeps row-level security on. Unparseable URLs count as
+ * neither.
+ */
+function onManagedPostgres(url: string | undefined): boolean {
+  const host = hostOf(url)
+  return !!host && (NEON_HOST.test(host) || RDS_HOST.test(host))
+}
+
+/**
+ * A Neon URL that routes through the connection pooler (its endpoint host carries the "-pooler" suffix, e.g.
+ * `ep-x-pooler.…neon.tech`). The pooler is PgBouncer in transaction mode, so consecutive statements on one checked-out
+ * "connection" can land on different backends. Our row-level-security context is a per-connection session setting
+ * (`set_config('agfn.workspace_id', …, false)`); on the pooler it may not reach the backend that runs the next
+ * statement — a workspace write then lands with the wrong or empty workspace, and a reused backend could even carry a
+ * prior request's workspace into the next. RLS must use the direct (non-pooler) host. Unparseable URLs count as not a
+ * pooler. */
+export function isPoolerUrl(url: string | undefined): boolean {
+  const host = hostOf(url)
+  if (!host) return false
+  // RDS Proxy multiplexes too: it pins a client to one database connection on SET statements, but our context is set
+  // with set_config() inside a SELECT, which it doesn't treat as session state, so it could hand the next statement to
+  // another backend.
+  return (NEON_HOST.test(host) && /-pooler(\.|$)/i.test(host)) || RDS_PROXY_HOST.test(host)
+}
+
+/**
+ * What looks like PgBouncer: a host named for it, or its default port 6432. Session mode is safe (docs/security/rls.md)
+ * and self-hosters may run it, so this is refused only on hosted Aggregate, which connects directly.
+ */
+export function looksLikePgbouncer(url: string | undefined): boolean {
   if (!url) return false
   try {
-    return /(^|\.)neon\.tech$/i.test(new URL(url).hostname)
+    const u = new URL(url)
+    return /pgbouncer/i.test(u.hostname) || u.port === '6432'
   } catch {
     return false
   }
 }
 
 /**
- * Whether this server is hosted Aggregate (AGFN_HOSTED=1, or its database is on Neon). The database check matters on
- * its own: a machine started without its config file has no AGFN_HOSTED but still has the database secret.
+ * Whether this server is hosted Aggregate (AGFN_HOSTED=1, or its database is on Neon or Amazon RDS). The database check
+ * matters on its own: a machine started without its config file has no AGFN_HOSTED but still has the database secret.
  */
 export function isHostedDb(env: Record<string, string | undefined>, databaseUrl: string): boolean {
-  return env.AGFN_HOSTED === '1' || onNeon(databaseUrl) || onNeon(env.AGFN_PG_APP_URL)
+  return env.AGFN_HOSTED === '1' || onManagedPostgres(databaseUrl) || onManagedPostgres(env.AGFN_PG_APP_URL)
 }
 
 /** AGFN_PG_RLS as boot reads it: '1' on, 'off' (or '0') off on purpose, unset. Anything else is refused. */
@@ -342,7 +422,7 @@ export function rlsSetting(env: Record<string, string | undefined>): 'on' | 'off
  * isolation off for every server sharing the database.
  * - AGFN_PG_RLS=1: cover every workspace table, then check the catalog that every one has RLS forced on with the
  *   policy; any gap refuses to start.
- * - Hosted (AGFN_HOSTED=1 or a Neon database): anything but AGFN_PG_RLS=1 refuses to start.
+ * - Hosted (AGFN_HOSTED=1 or a Neon or RDS database): anything but AGFN_PG_RLS=1 refuses to start; so does any pooler.
  * - AGFN_PG_RLS=off (self-hosted only): the rollback, turns RLS off.
  * - Unset (self-hosted): fine while RLS is off; if an earlier boot turned it on, refuses to start rather than guess.
  */
@@ -350,16 +430,29 @@ export async function bootRls(db: Kysely<any>, env: Record<string, string | unde
   const setting = rlsSetting(env)
   const hosted = isHostedDb(env, databaseUrl)
   if (setting === 'on') {
-    const r = await syncRlsPolicies(db, true)
-    const gaps = await tablesMissingRls(db)
+    // RLS leans on per-connection session GUCs, so it can't run through a transaction pooler (Neon's "-pooler" host, RDS
+    // Proxy; see isPoolerUrl), and hosted connects directly, never through PgBouncer. Guard both the main URL and the
+    // separate app login (phase 2 routes workspace writes through AGFN_PG_APP_URL).
+    const pooler = (url: string | undefined) => isPoolerUrl(url) || (hosted && looksLikePgbouncer(url))
+    const pooled = pooler(databaseUrl) ? 'DATABASE_URL' : pooler(env.AGFN_PG_APP_URL) ? 'AGFN_PG_APP_URL' : null
+    if (pooled)
+      throw new RlsBootError(
+        `${pooled} routes through a connection pooler (Neon's "-pooler" host, RDS Proxy, or PgBouncer), which breaks row-level security: the per-connection session context (set_config of agfn.workspace_id) can't be trusted to reach the backend running each statement, so a workspace write can land with the wrong or empty workspace. Use the database's direct host. Refusing to start.`,
+      )
+    // The people policy ships one release behind the code that tolerates it: apply and require it only once
+    // AGFN_PEOPLE_RLS=1 is set, after every machine runs that code (a rolling restart with the flag on). Until then the
+    // workspace policies are enforced as usual and people stays open, which old and new code both handle.
+    const people = env.AGFN_PEOPLE_RLS === '1'
+    const r = await syncRlsPolicies(db, true, { people })
+    const gaps = await tablesMissingRls(db, { people })
     if (gaps.length) throw new RlsBootError(`row-level security is not on for ${gaps.length} table(s) after boot (${gaps.slice(0, 5).join(', ')}${gaps.length > 5 ? ', …' : ''}). Refusing to start.`)
     return r
   }
   if (hosted) {
     throw new RlsBootError(
       setting === 'off'
-        ? 'AGFN_PG_RLS=off is not allowed on hosted Aggregate (AGFN_HOSTED=1 or a Neon database): row-level security stays on. Refusing to start.'
-        : 'AGFN_PG_RLS is not set, and this is hosted Aggregate (AGFN_HOSTED=1 or a Neon database), which requires AGFN_PG_RLS=1. Is this machine missing its [env] config? Refusing to start, so row-level security stays on for every server.',
+        ? 'AGFN_PG_RLS=off is not allowed on hosted Aggregate (AGFN_HOSTED=1 or a Neon or RDS database): row-level security stays on. Refusing to start.'
+        : 'AGFN_PG_RLS is not set, and this is hosted Aggregate (AGFN_HOSTED=1 or a Neon or RDS database), which requires AGFN_PG_RLS=1. Is this machine missing its [env] config? Refusing to start, so row-level security stays on for every server.',
     )
   }
   if (setting === 'off') return syncRlsPolicies(db, false)

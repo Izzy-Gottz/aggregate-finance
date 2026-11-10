@@ -319,3 +319,15 @@ describe('FreshBooks sign-in', () => {
 describe('mapProfitAndLoss', () => {
   it('needs a report', () => expect(mapProfitAndLoss({}, ctx, { from: '2026-01-01', to: '2026-01-31' })).toBeNull())
 })
+
+
+describe('freshbooks: an unreadable 2xx stops the sync, never a silent $0', () => {
+  it('an empty body (e.g. a followed redirect to a sign-in or error page) fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: '/invoices/invoices', respond: { text: '' } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+  it('a 200 whose body isn’t the expected object fails visibly', async () => {
+    const { connector, conn } = make({ extra: [{ match: '/invoices/invoices', respond: { json: 5 } }] })
+    await expect(runSync(connector, conn, null)).rejects.toThrow()
+  })
+})

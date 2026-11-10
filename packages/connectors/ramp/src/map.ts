@@ -4,7 +4,7 @@
 // separate "Ramp Reimbursements" account. Bills are payable invoices.
 
 import type { AccountUpsert, BalanceSnapshot, InvoiceUpsert, Money, TxnUpsert } from '@agfn/contracts'
-import { isoDate, minorMoney, money, negate, normalizeCurrency } from '@agfn/connector-sdk'
+import { instantAt, isoDate, minorMoney, money, negate, normalizeCurrency } from '@agfn/connector-sdk'
 import type { RampBill, RampBusinessBalance, RampCurrencyAmount, RampReimbursement, RampTransaction } from './types.ts'
 
 export const cardAccountId = (businessId: string) => `${businessId}:card`
@@ -82,6 +82,9 @@ export function mapCardTxn(t: RampTransaction, businessId: string, connectionId:
     rawRef,
     accountExternalId: cardAccountId(businessId),
     date: status === 'posted' && t.settlement_date ? isoDate(t.settlement_date) : isoDate(t.user_transaction_time),
+    // Mirrors the date source: settlement_date is a UTC-midnight day (instantAt → undefined, keep it), while a pending
+    // row's user_transaction_time is a real moment the engine should place in the workspace tz.
+    ...(instantAt(status === 'posted' && t.settlement_date ? t.settlement_date : t.user_transaction_time) ? { at: instantAt(status === 'posted' && t.settlement_date ? t.settlement_date : t.user_transaction_time) } : {}),
     amount: negate(card),
     status,
     ...(t.merchant_name ? { counterparty: t.merchant_name.slice(0, 120) } : {}),

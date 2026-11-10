@@ -154,3 +154,96 @@ describe('deleteAccount and transactions', () => {
     }
   })
 })
+
+describe('anonymizeOrphanedDeletedPeople (backfill)', () => {
+  it('tombstones orphaned real-email rows, leaves invitees/system/active/tombstoned alone, idempotent', async () => {
+    const { connectPglite, migrateToLatest, nowIso } = await import('@agfn/db')
+    const { anonymizeOrphanedDeletedPeople, deletedTombstone } = await import('./delete-account.ts')
+    const h = await connectPglite<import('@agfn/db').CoreTables>()
+    const db = h.db
+    try {
+      await migrateToLatest(db)
+      const t = nowIso()
+      await db.insertInto('workspaces').values({ id: 'w', name: 'W', base_currency: 'USD', created_at: t }).execute()
+      const person = (id: string, auth: string | null, email: string) => db.insertInto('people').values({ id, auth_user_id: auth, name: id, email, created_at: t }).execute()
+      // Fixed: a former account whose email was never cleared — two shapes. (a) no sign-in at all (auth_user_id null);
+      await person('orphan', null, 'real-person@gmail.com')
+      // (b) the real-leak shape: auth_user already deleted but the login reference and email left behind (dangling).
+      await person('dangling', 'u-gone', 'leaked@gmail.com')
+      // Left alone: a pending invitee (real email, live membership); a system row (*.invalid); an active signed-in person
+      // (auth_user_id points at a REAL auth_user); two already-tombstoned rows (@invalid and .invalid); a company owner.
+      await person('invitee', null, 'invitee@company.com')
+      await db.insertInto('memberships').values({ id: 'm-invitee', workspace_id: 'w', person_id: 'invitee', role: 'finance', grid_json: null, expires_at: null, invited_by: null, created_at: t, revoked_at: null }).execute()
+      await person('system', null, 'reviewer-abc@reviewers.aggregate.invalid')
+      await person('active', 'u-active', 'active@company.com')
+      await db.insertInto('memberships').values({ id: 'm-active', workspace_id: 'w', person_id: 'active', role: 'owner', grid_json: null, expires_at: null, invited_by: null, created_at: t, revoked_at: null }).execute()
+      await person('already-at', null, 'deleted-already-at@invalid')
+      await person('already-dot', null, 'deleted-already-dot@deleted.invalid')
+      await person('owner-orphan', null, 'still-owns@gmail.com')
+      await db.insertInto('entities').values({ id: 'e1', workspace_id: 'w', kind: 'company', name: 'Co', base_currency: 'USD', owner_person_id: 'owner-orphan', parent_entity_id: null, fiscal_year_start_month: 1, created_at: t, archived_at: null }).execute()
+
+      const dry = await anonymizeOrphanedDeletedPeople(db)
+      expect(dry.found).toBe(2)
+      expect(dry.anonymized).toBe(0)
+      expect(dry.samples.map((s) => s.id).sort()).toEqual(['dangling', 'orphan'])
+      // Nothing changed on a dry run.
+      expect((await db.selectFrom('people').select('email').where('id', '=', 'orphan').executeTakeFirstOrThrow()).email).toBe('real-person@gmail.com')
+
+      const applied = await anonymizeOrphanedDeletedPeople(db, { apply: true })
+      expect(applied).toMatchObject({ found: 2, anonymized: 2 })
+      for (const id of ['orphan', 'dangling']) {
+        expect((await db.selectFrom('people').select(['name', 'email', 'auth_user_id']).where('id', '=', id).executeTakeFirstOrThrow())).toEqual({ name: 'Former member', email: deletedTombstone(id), auth_user_id: null })
+      }
+      // Untouched rows keep their emails.
+      for (const [id, email] of [['invitee', 'invitee@company.com'], ['system', 'reviewer-abc@reviewers.aggregate.invalid'], ['active', 'active@company.com'], ['already-at', 'deleted-already-at@invalid'], ['already-dot', 'deleted-already-dot@deleted.invalid'], ['owner-orphan', 'still-owns@gmail.com']] as const) {
+        expect((await db.selectFrom('people').select('email').where('id', '=', id).executeTakeFirstOrThrow()).email).toBe(email)
+      }
+      // Idempotent: a second run finds nothing.
+      expect((await anonymizeOrphanedDeletedPeople(db, { apply: true })).found).toBe(0)
+    } finally {
+      await h.close()
+    }
+  })
+})
+
+describe('deleteAccount under people RLS (agfn_app)', () => {
+  it('anonymizes the person row even when AGFN_PEOPLE_RLS hides it — solo owner and invited member both tombstoned', async () => {
+    const { connectPglite, ensureAppRole, exclusivePool, migrateToLatest, newId, nowIso, rlsPool, syncRlsPolicies, withBypass } = await import('@agfn/db')
+    const { deleteAccount, deletedTombstone } = await import('./delete-account.ts')
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    process.env.AGFN_PEOPLE_RLS = '1'
+    process.env.AGFN_PG_RLS = '1'
+    const h = await connectPglite<import('@agfn/db').CoreTables>({ wrapPool: (p: any) => rlsPool(exclusivePool(p), { role: 'agfn_app' }) })
+    const db = h.db
+    const soloWs = newId(), sharedWs = newId(), solo = newId(), mainOwner = newId(), invited = newId()
+    try {
+      await withBypass('setup', async () => {
+        await migrateToLatest(db)
+        await ensureAppRole(db as any)
+        await syncRlsPolicies(db as any, true, { people: true })
+        const t = nowIso()
+        for (const id of [soloWs, sharedWs]) await db.insertInto('workspaces').values({ id, name: id, base_currency: 'USD', time_zone: 'UTC', created_at: t }).execute()
+        const person = (id: string) => db.insertInto('people').values({ id, auth_user_id: null, name: `Real ${id}`, email: `${id}@gmail.com`, created_at: t }).execute()
+        const member = (ws: string, pid: string, role: 'owner' | 'finance') => db.insertInto('memberships').values({ id: newId(), workspace_id: ws, person_id: pid, role, grid_json: null, expires_at: null, invited_by: null, created_at: t, revoked_at: null }).execute()
+        await person(solo); await person(mainOwner); await person(invited)
+        await member(soloWs, solo, 'owner')
+        await member(sharedWs, mainOwner, 'owner')
+        await member(sharedWs, invited, 'finance')
+      })
+      const deps = { db, files: { delete: async () => {} } as any, sync: { disconnect: async () => ({ revoked: true }) } as any }
+      const tombstoned = (id: string) => withBypass('check', () => db.selectFrom('people').select(['name', 'email', 'auth_user_id']).where('id', '=', id).executeTakeFirstOrThrow())
+
+      // Invited member: not a sole owner, so just loses membership and is anonymized.
+      await deleteAccount(deps, invited)
+      expect(await tombstoned(invited)).toEqual({ name: 'Former member', email: deletedTombstone(invited), auth_user_id: null })
+
+      // Solo owner: their workspace is deleted first, then they are anonymized.
+      await deleteAccount(deps, solo)
+      expect(await tombstoned(solo)).toEqual({ name: 'Former member', email: deletedTombstone(solo), auth_user_id: null })
+    } finally {
+      delete process.env.AGFN_PEOPLE_RLS
+      delete process.env.AGFN_PG_RLS
+      await h.close()
+    }
+  }, 120_000)
+})

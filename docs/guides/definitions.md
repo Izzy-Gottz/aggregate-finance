@@ -1,5 +1,6 @@
 ---
 description: How Aggregate counts cash, burn, runway, MRR and reports: fixed definitions, where each number comes from, and what counts as reconciled.
+updated: 2026-11-03
 ---
 
 # Definitions: how Aggregate counts cash, burn, runway, MRR and the rest

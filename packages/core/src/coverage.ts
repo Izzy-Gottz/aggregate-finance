@@ -31,6 +31,12 @@ export interface AccountCoverage {
   months: CoverageMonth[]
   /** One plain line per gap or mismatch, e.g. "Chase ··4411: August statement missing". */
   problems: string[]
+  /**
+   * The exact day this account has data through — the balance/statement as-of (OFX DTASOF/DTEND, PDF period end, a
+   * CSV's closing-balance date, all stored on the latest balance snapshot) or, failing a balance, the last
+   * transaction date. Exact, not the month bucket, so freshness never rounds an Oct-15 statement up to Oct 31.
+   */
+  dataThrough?: IsoDate
 }
 
 /** An account usually this busy (median rows per month with activity) is expected to show rows every month. */
@@ -158,12 +164,15 @@ export async function coverage(rc: ReadContext, opts: CoverageOptions = {}): Pro
 
 async function computeCoverage(rc: ReadContext, opts: CoverageOptions): Promise<AccountCoverage[]> {
   const entities = await scopeEntities(rc, opts.entityIds ?? 'all')
-  const { primaries, twins } = await primaryAccounts(rc, entities.map((e) => e.id))
+  // Cash on hand has no statements to cover, but we still want a data-as-of for it (its latest entry or pinned
+  // balance), so include it here and short-circuit its per-month coverage below.
+  const { primaries, twins } = await primaryAccounts(rc, entities.map((e) => e.id), true)
   const now = (await todayFor(rc))
   const thisMonth = now.slice(0, 7)
   const last = opts.to ?? thisMonth
   const uploadConns = new Set((await rc.directory.listConnections(rc.ws)).filter((c) => c.connectorKey === 'files').map((c) => c.id))
-  const counts = await rc.store.monthlyRowCounts(rc.ws, primaries.flatMap((a) => [a.id, ...(twins.get(a.id) ?? [])]))
+  const allIds = primaries.flatMap((a) => [a.id, ...(twins.get(a.id) ?? [])])
+  const counts = await rc.store.monthlyRowCounts(rc.ws, allIds)
   const rowsBy = new Map<string, number>()
   const owner = new Map<Id, Id>()
   for (const a of primaries) for (const t of [a.id, ...(twins.get(a.id) ?? [])]) owner.set(t, a.id)
@@ -171,15 +180,32 @@ async function computeCoverage(rc: ReadContext, opts: CoverageOptions): Promise<
     const k = `${owner.get(c.accountId)}|${c.month}`
     rowsBy.set(k, (rowsBy.get(k) ?? 0) + c.rows)
   }
+  // Last transaction date per primary (twins rolled up) — the fallback "data through" when there's no balance snapshot.
+  // Capped at today (ws timezone): a future-dated (scheduled) row must not move the "data as of" into the future.
+  const lastRowBy = new Map<Id, string>()
+  for (const r of await rc.store.lastRowDates(rc.ws, allIds, now)) {
+    const o = owner.get(r.accountId)
+    if (o && (!lastRowBy.get(o) || r.date > lastRowBy.get(o)!)) lastRowBy.set(o, r.date)
+  }
   const assertions = await rc.store.listAssertions(rc.ws, primaries.map((a) => a.id))
   const failing = new Set((await assertionChecks(rc, entities.map((e) => e.id), now)).filter((c) => c.status === 'fail').map((c) => c.subjectId))
   const out: AccountCoverage[] = []
+  // The exact day an account has data through: the latest balance/statement as-of (snapshot) or, with no balance, the
+  // last transaction date — whichever is later. Never a month bucket, never after today (both inputs are capped).
+  const dataThroughOf = (accountId: Id, snaps: SourceRecord[]): IsoDate | undefined =>
+    [snaps.filter((s) => s.date <= now).at(-1)?.date, lastRowBy.get(accountId)].filter((x): x is IsoDate => Boolean(x)).sort().at(-1)
   for (const a of primaries) {
     const active = [...rowsBy].filter(([k, n]) => k.startsWith(`${a.id}|`) && n > 0).map(([k]) => k.slice(a.id.length + 1)).sort()
     const snaps = latestPerDay(await snapshotsOf(rc, a.id))
+    const dataThrough = dataThroughOf(a.id, snaps)
+    // Cash on hand: no statements, so no per-month coverage — carry only the data-as-of (latest entry / pinned balance).
+    if (a.accountType === 'cash_on_hand') {
+      out.push({ accountId: a.id, entityId: a.entityId as EntityId, name: a.name, mask: a.mask ?? null, months: [], problems: [], ...(dataThrough ? { dataThrough } : {}) })
+      continue
+    }
     const firstData = [active[0], snaps[0]?.date.slice(0, 7)].filter((x): x is string => Boolean(x)).sort()[0]
     if (!firstData) {
-      out.push({ accountId: a.id, entityId: a.entityId as EntityId, name: a.name, mask: a.mask ?? null, months: [], problems: [] })
+      out.push({ accountId: a.id, entityId: a.entityId as EntityId, name: a.name, mask: a.mask ?? null, months: [], problems: [], ...(dataThrough ? { dataThrough } : {}) })
       continue
     }
     const busy = (() => {
@@ -229,7 +255,7 @@ async function computeCoverage(rc: ReadContext, opts: CoverageOptions): Promise<
       if (status === 'missing') problems.push(`${label(a)}: ${monthName(m, now)} ${uploaded ? 'statement missing' : 'has no transactions'}`)
       if (status === 'mismatched') problems.push(`${label(a)}: ${monthName(m, now)} doesn't add up (${detail})`)
     }
-    out.push({ accountId: a.id, entityId: a.entityId as EntityId, name: a.name, mask: a.mask ?? null, months, problems })
+    out.push({ accountId: a.id, entityId: a.entityId as EntityId, name: a.name, mask: a.mask ?? null, months, problems, ...(dataThrough ? { dataThrough } : {}) })
   }
   return out
 }

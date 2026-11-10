@@ -58,6 +58,16 @@ function normalized(tokens: OAuthTokens, now: number): OAuthTokens {
   return { ...rest, expiresAt: Number.isFinite(stated) && stated > 0 ? stated * 1000 : now + ACCESS_MS }
 }
 
+/** The connect drawer test reads this too, so its wording can't drift from the manifest. */
+export const SQUARESPACE_DESCRIPTION: ConnectorDescription = {
+  key: PROVIDER,
+  name: 'Squarespace',
+  group: 'payments',
+  provides: ['reports'],
+  freshness: 'updates every few hours',
+  auth: 'oauth',
+}
+
 export interface SquarespaceConnector extends Connector {
   begin(ctx: Pick<ConnectBeginContext, 'state'>): Promise<ConnectBegin>
 }
@@ -82,15 +92,6 @@ export function createSquarespaceConnector(opts: SquarespaceConnectorOptions, de
     fetch: tokenFetch,
     clock,
   })
-
-  const description: ConnectorDescription = {
-    key: PROVIDER,
-    name: 'Squarespace',
-    group: 'payments',
-    provides: ['reports'],
-    freshness: 'updates every few hours',
-    auth: 'oauth',
-  }
 
   /** An access token for this connection, renewing it first (when asked) if it's close to running out. */
   async function tokenFor(conn: ConnectionRef, renew: boolean): Promise<{ token: string; renewed?: SquarespaceSecret }> {
@@ -117,7 +118,7 @@ export function createSquarespaceConnector(opts: SquarespaceConnectorOptions, de
   }
 
   return {
-    describe: () => description,
+    describe: () => SQUARESPACE_DESCRIPTION,
 
     async begin(ctx) {
       // offline: without it there's no refresh token, and syncs stop in 30 minutes.

@@ -48,8 +48,8 @@ export type IncomeRole = (typeof INCOME_ROLES)[number]
 
 export const PAYROLL_ROLES = ['payroll_expense', 'payroll_taxes', 'payroll_benefits', 'contractors'] as const satisfies readonly ExpenseRole[]
 
-/** Balance-sheet roles a bill or purchase line may name (inventory bought, equipment, a prepayment, a loan paid down). */
-export const BILL_BALANCE_SHEET_ROLES: readonly string[] = ['inventory', 'fixed_assets', 'prepaid', 'other_assets', 'other_liabilities']
+/** Balance-sheet roles a bill or purchase line may name (inventory bought, equipment, a prepayment, a loan paid down, sales tax paid). */
+export const BILL_BALANCE_SHEET_ROLES: readonly string[] = ['inventory', 'fixed_assets', 'prepaid', 'other_assets', 'other_liabilities', 'sales_tax_payable']
 
 /** Expense roles that are not cash spending (excluded from burn even on a cash basis). */
 export const NON_CASH_EXPENSE_ROLES: readonly string[] = ['bad_debt', 'investment_writeoffs']

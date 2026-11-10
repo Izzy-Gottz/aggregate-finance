@@ -15,7 +15,7 @@ marketplace review of the Aggregate app finishes. Until then, the steps below wo
 ## Set it up
 
 ### 1. Connect Deel to Aggregate
-Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + More connections → Deel**, sign in to Deel, and approve read access to your
+Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). Open **Workspace → Connections → + Add a connection → Deel**, sign in to Deel, and approve read access to your
 accounting data.
 
 ### 2. Add Aggregate to Claude

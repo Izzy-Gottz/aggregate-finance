@@ -16,7 +16,7 @@ choose exactly what ChatGPT can see.
 ### 1. Connect BILL to Aggregate
 Sign up at [app.aggregate.finance](https://app.aggregate.finance) (free during beta). In BILL, open **Settings → Sync &
 Integrations → Tokens**, choose **New**, give the token a name (for example `aggregate`) and save. Then in Aggregate open
-**Workspace → Connections → + More connections → BILL** and paste the sync token's name, the sync token, and your BILL
+**Workspace → Connections → + Add a connection → BILL** and paste the sync token's name, the sync token, and your BILL
 organization ID.
 
 ### 2. Add Aggregate to ChatGPT

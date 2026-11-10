@@ -23,6 +23,7 @@ import type {
   AccountDirectory,
   AccountTotal,
   ConnectionInfo,
+  DuplicateDismissal,
   LedgerStore,
   LineFilter,
   LineRow,
@@ -51,6 +52,7 @@ interface State {
   settle: Map<string, IsoTimestamp>
   seen: Map<Id, IsoTimestamp>
   listings: Map<string, ListingOutcome>
+  dupDismissals: Map<string, DuplicateDismissal>
   matched: Map<WorkspaceId, number>
 }
 
@@ -73,6 +75,7 @@ function emptyState(): State {
     settle: new Map(),
     seen: new Map(),
     listings: new Map(),
+    dupDismissals: new Map(),
     matched: new Map(),
   }
 }
@@ -87,7 +90,9 @@ export class MemoryLedgerStore implements LedgerStore {
     return this.#inTx
   }
 
-  async transaction<T>(fn: (store: LedgerStore) => Promise<T>): Promise<T> {
+  // readOnly is accepted for interface parity; the in-memory store has no SQL layer to enforce it (the Postgres path
+  // enforces it, and the dry run writes nothing by construction regardless).
+  async transaction<T>(fn: (store: LedgerStore) => Promise<T>, _opts: { readOnly?: boolean } = {}): Promise<T> {
     if (this.#inTx) return fn(this)
     const snapshot = clone(this.#s)
     this.#inTx = true
@@ -156,6 +161,18 @@ export class MemoryLedgerStore implements LedgerStore {
       counts.set(k, (counts.get(k) ?? 0) + 1)
     }
     return [...counts].map(([k, rows]) => ({ accountId: k.split('|')[0] as Id, month: k.split('|')[1] as string, rows }))
+  }
+
+  async lastRowDates(ws: WorkspaceId, accountIds: Id[], onOrBefore?: string): Promise<Array<{ accountId: Id; date: string }>> {
+    const latest = new Map<Id, string>()
+    for (const r of this.#s.records.values()) {
+      if (r.workspaceId !== ws || !r.sourceAccountId || !accountIds.includes(r.sourceAccountId)) continue
+      if ((r.eventType !== 'txn.upsert' && r.eventType !== 'processor.balance_txn') || (r.status !== 'posted' && r.status !== 'recorded')) continue
+      if (onOrBefore && r.date > onOrBefore) continue
+      const prev = latest.get(r.sourceAccountId)
+      if (!prev || r.date > prev) latest.set(r.sourceAccountId, r.date)
+    }
+    return [...latest].map(([accountId, date]) => ({ accountId, date }))
   }
 
   async addMrrPoint(p: MrrPoint): Promise<void> {
@@ -279,6 +296,14 @@ export class MemoryLedgerStore implements LedgerStore {
 
   async listListings(ws: WorkspaceId): Promise<ListingOutcome[]> {
     return [...this.#s.listings.values()].filter((l) => l.workspaceId === ws).sort((a, b) => (a.connectionId < b.connectionId ? -1 : a.connectionId > b.connectionId ? 1 : a.kind < b.kind ? -1 : 1)).map(clone)
+  }
+
+  async saveDuplicateDismissal(d: DuplicateDismissal): Promise<void> {
+    this.#s.dupDismissals.set(`${d.workspaceId}|${d.subjectId}|${d.relatedId}`, clone(d))
+  }
+
+  async listDuplicateDismissals(ws: WorkspaceId): Promise<DuplicateDismissal[]> {
+    return [...this.#s.dupDismissals.values()].filter((d) => d.workspaceId === ws).map(clone)
   }
 
   async listRecords(ws: WorkspaceId, f: RecordFilter = {}): Promise<SourceRecord[]> {

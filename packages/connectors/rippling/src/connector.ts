@@ -67,7 +67,12 @@ export function classifyRipplingError({ status, body }: { status: number; body: 
 
 function results(data: unknown): Obj[] {
   if (Array.isArray(data)) return data.filter(isRecord)
-  return isRecord(data) && Array.isArray(data.results) ? data.results.filter(isRecord) : isRecord(data) && Array.isArray(data.data) ? data.data.filter(isRecord) : []
+  // A present object with the list key omitted is a real empty page; a null/non-object (empty body, or the sign-in/
+  // error page the shared client rejects as non-JSON) is unreadable and must stop the sync, never read as zero.
+  if (!isRecord(data)) throw new ConnectorError('transient', 'Rippling sent a response Aggregate couldn’t read, so this sync stopped. No totals were changed.', { provider: PROVIDER })
+  if (Array.isArray(data.results)) return data.results.filter(isRecord)
+  if (Array.isArray(data.data)) return data.data.filter(isRecord)
+  return []
 }
 
 function nextLink(data: unknown, keep: Record<string, string> = {}): string | null {
@@ -199,6 +204,8 @@ export function createRipplingConnector(opts: RipplingOptions): Connector {
       link = nextLink(res.data, { limit: '100' })
       if (!link) break
     }
+    // The run still has worker-record pages after the cap: stop visibly rather than sum a partial run as complete.
+    if (link) throw new ConnectorError('permanent', 'Rippling returned more worker records for one payroll run than Aggregate can page through, so this sync stopped. No totals were changed.', { provider: PROVIDER, forUser: true })
     const rawRef = await deps.raw.put(conn.id, `${PROVIDER}.payroll_run`, id, { run: r, records })
     const period = isRecord(r.pay_period) ? r.pay_period : {}
     const byCur = new Map<string, Obj[]>()
